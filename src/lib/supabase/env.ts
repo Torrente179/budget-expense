@@ -20,19 +20,12 @@ function readFirstDefined(names: readonly string[]) {
   return null;
 }
 
-export function getSupabaseEnv() {
+export function getSupabaseEnv(): { url: string; key: string } | null {
   const url = readFirstDefined(SUPABASE_URL_CANDIDATES);
   const key = readFirstDefined(SUPABASE_KEY_CANDIDATES);
 
   if (!url || !key) {
-    const required = [
-      `URL: ${SUPABASE_URL_CANDIDATES.join(" | ")}`,
-      `KEY: ${SUPABASE_KEY_CANDIDATES.join(" | ")}`,
-    ].join("; ");
-
-    throw new Error(
-      `Missing Supabase environment variables. Configure one variable per group -> ${required}`
-    );
+    return null;
   }
 
   return { url, key };
