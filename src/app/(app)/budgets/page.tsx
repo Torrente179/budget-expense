@@ -206,17 +206,17 @@ export default function BudgetsPage() {
       </PageHeader>
 
       <section className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
-        <div className="rounded-[2rem] border border-border/70 bg-card/84 p-6 shadow-[0_28px_70px_-46px_rgba(31,29,23,0.48)]">
+        <div className="rounded-[2rem] border border-border/80 bg-card/96 p-6 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.92)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-3">
-              <Badge variant="outline" className="bg-background/70 text-foreground">
+              <Badge variant="outline" className="bg-secondary/70 text-foreground">
                 {metrics.hasPlan ? "Monthly pool active" : "Envelope fallback"}
               </Badge>
               <div>
                 <p className="text-[0.72rem] font-medium uppercase tracking-[0.3em] text-muted-foreground">
                   {metrics.hasPlan ? "Protected pool" : "Envelope total"}
                 </p>
-                <p className="mt-3 font-heading text-5xl leading-none tracking-tight text-foreground">
+                <p className="mt-3 font-heading text-[3.6rem] font-semibold leading-none tracking-[-0.05em] text-foreground">
                   {formatCurrency(metrics.poolAmount, baseCurrency)}
                 </p>
               </div>
@@ -227,19 +227,19 @@ export default function BudgetsPage() {
               </p>
             </div>
 
-            <div className="rounded-[1.5rem] border border-border/70 bg-background/70 px-4 py-3">
+            <div className="rounded-[1.5rem] border border-border/70 bg-secondary/60 px-4 py-3">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 {getMonthName(month)} {year}
               </p>
               <p className="mt-2 flex items-center gap-2 text-sm font-medium text-foreground">
-                <Sparkles className="h-4 w-4 text-primary" />
+                <Sparkles className="h-4 w-4 text-emerald-300" />
                 {metrics.hasPlan ? "Stewardship plan in place" : "No monthly plan yet"}
               </p>
             </div>
           </div>
 
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.35rem] border border-border/60 bg-background/74 p-4">
+            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 Consumed
               </p>
@@ -247,7 +247,7 @@ export default function BudgetsPage() {
                 {formatCurrency(metrics.consumedAmount, baseCurrency)}
               </p>
             </div>
-            <div className="rounded-[1.35rem] border border-border/60 bg-background/74 p-4">
+            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 Left
               </p>
@@ -255,7 +255,7 @@ export default function BudgetsPage() {
                 {formatCurrency(Math.abs(metrics.remainingAmount), baseCurrency)}
               </p>
             </div>
-            <div className="rounded-[1.35rem] border border-border/60 bg-background/74 p-4">
+            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 Assigned to envelopes
               </p>
@@ -274,23 +274,23 @@ export default function BudgetsPage() {
             </div>
             <Progress
               value={Math.min(metrics.consumedPercent, 100)}
-              className="[&_[data-slot=progress-indicator]]:bg-primary"
+              className="[&_[data-slot=progress-indicator]]:bg-[var(--chart-1)]"
             />
           </div>
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-[2rem] border border-border/70 bg-card/82 p-5 shadow-[0_24px_60px_-44px_rgba(31,29,23,0.42)]">
+          <div className="rounded-[2rem] border border-border/80 bg-card/96 p-5 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.9)]">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
                   Envelope balance
                 </p>
-                <p className="font-heading text-3xl leading-none tracking-tight">
+                <p className="font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em]">
                   {formatCurrency(Math.abs(metrics.unassignedAmount), baseCurrency)}
                 </p>
               </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-muted-foreground">
                 <PiggyBank className="h-5 w-5" />
               </div>
             </div>
@@ -316,9 +316,9 @@ export default function BudgetsPage() {
             )}
           </div>
 
-          <div className="rounded-[2rem] border border-border/70 bg-card/82 p-5 shadow-[0_24px_60px_-44px_rgba(31,29,23,0.42)]">
+          <div className="rounded-[2rem] border border-border/80 bg-card/96 p-5 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.9)]">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-muted-foreground">
                 <CircleDollarSign className="h-5 w-5" />
               </div>
               <div>
@@ -375,7 +375,7 @@ export default function BudgetsPage() {
               <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
                 Category envelopes
               </p>
-              <h2 className="mt-2 font-heading text-3xl leading-none tracking-tight">
+              <h2 className="mt-2 font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em]">
                 Reserved with intention
               </h2>
             </div>

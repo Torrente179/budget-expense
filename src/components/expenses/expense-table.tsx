@@ -82,17 +82,14 @@ export function ExpenseTable({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.03, duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="group rounded-[1.5rem] border border-border/70 bg-card/80 p-4 shadow-[0_22px_55px_-42px_rgba(31,29,23,0.42)] transition-transform duration-200 hover:-translate-y-0.5"
+            className="group rounded-[1.5rem] border border-border/80 bg-card/96 p-4 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.84)] transition-colors duration-200 hover:bg-secondary/35"
           >
-            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_180px_minmax(0,1fr)_auto] lg:items-start">
+            <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="min-w-0">
-                <p className="text-[0.68rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                  Expense
-                </p>
-                <p className="mt-2 truncate text-base font-medium text-foreground">
+                <p className="truncate text-base font-medium text-foreground">
                   {expense.description || expense.categories.name}
                 </p>
-                <div className="mt-3 flex flex-wrap items-center gap-2">
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <CategoryBadge
                     name={expense.categories.name}
                     icon={expense.categories.icon}
@@ -100,35 +97,26 @@ export function ExpenseTable({
                     size="md"
                     className="rounded-xl px-2.5 py-1"
                   />
-                  <span className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                  <span>
                     {formatDate(expense.date, "MMM d, yyyy")}
                   </span>
+                  <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-flex" />
+                  <span className="hidden sm:inline-flex">
+                    {expense.currency}
+                  </span>
                 </div>
+                {expense.description && expense.description !== expense.categories.name && (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {expense.categories.name}
+                  </p>
+                )}
               </div>
 
-              <div className="rounded-2xl border border-border/60 bg-background/72 p-3">
-                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                  Date
-                </p>
-                <p className="mt-2 font-mono text-sm text-foreground">
-                  {formatDate(expense.date, "EEEE, MMM d")}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border/60 bg-background/72 p-3">
-                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                  Ledger note
-                </p>
-                <p className="mt-2 text-sm leading-6 text-foreground">
-                  {expense.description || "No description added yet"}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between gap-3 lg:flex-col lg:items-end lg:text-right">
+              <div className="flex items-center justify-between gap-3 md:flex-col md:items-end md:text-right">
                 <CurrencyDisplay
                   amount={expense.amount}
                   currency={expense.currency}
-                  className="font-heading text-2xl leading-none tracking-tight"
+                  className="font-heading text-[1.6rem] font-semibold leading-none tracking-[-0.04em]"
                   showOriginal
                 />
                 <div className="flex items-center gap-1">
@@ -145,7 +133,7 @@ export function ExpenseTable({
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
+                        className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
@@ -175,7 +163,7 @@ export function ExpenseTable({
               category totals will recalculate automatically.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="-mx-5 -mb-5 flex flex-col-reverse gap-2 rounded-b-[1.35rem] border-t border-border/60 bg-background/70 p-4 sm:flex-row sm:justify-end">
+          <DialogFooter className="-mx-5 -mb-5 flex flex-col-reverse gap-2 rounded-b-[1.35rem] border-t border-border/60 bg-secondary/45 p-4 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setDeleteId(null)}>
               Cancel
             </Button>

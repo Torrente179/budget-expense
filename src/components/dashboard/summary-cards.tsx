@@ -1,7 +1,7 @@
 "use client";
 
 import { useCurrency } from "@/providers/currency-provider";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -95,31 +95,38 @@ export function SummaryCards({
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
-            <Card className="border-border/70">
-              <CardContent className="space-y-5 p-5">
+            <Card className="border-border/80 bg-card/96">
+              <CardContent className="space-y-4 p-5">
                 <div className="flex items-start justify-between gap-3">
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
                       {card.label}
                     </p>
-                    <p className="font-heading text-3xl leading-none tracking-tight">
+                    <p className="font-heading text-[2.15rem] font-semibold leading-none tracking-[-0.045em]">
                       {card.value}
                     </p>
                   </div>
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                  <div
+                    className={cn(
+                      "flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground",
+                      card.label === "Pool left" &&
+                        positive &&
+                        "bg-emerald-500/12 text-emerald-300"
+                    )}
+                  >
                     <card.icon className="h-4 w-4" />
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm text-muted-foreground">{card.detail}</p>
+                <div className="flex items-end justify-between gap-3">
+                  <p className="text-sm leading-6 text-muted-foreground">{card.detail}</p>
                   {card.status !== null && (
                     <Badge
                       variant="outline"
                       className={
                         positive
-                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-200"
-                          : "border-destructive/20 bg-destructive/10 text-destructive"
+                          ? "h-7 rounded-full border-emerald-500/18 bg-emerald-500/10 px-2.5 text-emerald-300"
+                          : "h-7 rounded-full border-destructive/20 bg-destructive/10 px-2.5 text-destructive"
                       }
                     >
                       {positive ? (

@@ -63,7 +63,7 @@ export function BudgetCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="group rounded-[1.5rem] border border-border/70 bg-card/76 p-5 shadow-[0_22px_60px_-42px_rgba(31,29,23,0.4)]"
+      className="group rounded-[1.5rem] border border-border/80 bg-card/96 p-5 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.86)]"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -92,7 +92,7 @@ export function BudgetCard({
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
-        <div className="rounded-2xl bg-background/70 p-3">
+        <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
           <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
             Reserved
           </p>
@@ -100,7 +100,7 @@ export function BudgetCard({
             {formatCurrency(budgetAmount, baseCurrency)}
           </p>
         </div>
-        <div className="rounded-2xl bg-background/70 p-3">
+        <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
           <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
             Consumed
           </p>
@@ -108,7 +108,7 @@ export function BudgetCard({
             {formatCurrency(spentAmount, baseCurrency)}
           </p>
         </div>
-        <div className="rounded-2xl bg-background/70 p-3">
+        <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
           <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
             Left
           </p>
@@ -122,7 +122,7 @@ export function BudgetCard({
         <div className="flex items-center justify-between">
           <Badge
             variant="outline"
-            className={`border-current/10 bg-background/70 ${statusColor}`}
+            className={`border-current/10 bg-secondary/60 ${statusColor}`}
           >
             {percentage.toFixed(0)}% used
           </Badge>

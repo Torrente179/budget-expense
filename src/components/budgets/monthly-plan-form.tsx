@@ -97,15 +97,15 @@ export function MonthlyPlanForm({
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full border-l border-border/70 bg-popover/96 p-0 sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-x data-[side=bottom]:border-t"
+        className="w-full border-l border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-x data-[side=bottom]:border-t"
       >
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
           className="flex h-full flex-col"
         >
-          <SheetHeader className="border-b border-border/60 px-5 py-5">
+          <SheetHeader className="border-b border-border/70 px-5 py-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-foreground">
                 <Sparkles className="h-5 w-5" />
               </div>
               <div className="space-y-1">
@@ -123,13 +123,13 @@ export function MonthlyPlanForm({
           </SheetHeader>
 
           <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
-            <div className="rounded-[1.4rem] border border-border/70 bg-background/72 p-4 shadow-[0_20px_60px_-42px_rgba(31,29,23,0.45)]">
+            <div className="rounded-[1.4rem] border border-border/70 bg-card/90 p-4">
               <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
                 Monthly pool preview
               </p>
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
-                  <p className="font-heading text-4xl leading-none tracking-tight text-foreground">
+                  <p className="font-heading text-[2.65rem] font-semibold leading-none tracking-[-0.05em] text-foreground">
                     {poolPreview > 0
                       ? formatCurrency(poolPreview, incomeCurrency)
                       : "--"}
@@ -141,7 +141,7 @@ export function MonthlyPlanForm({
                       : "your income"}
                   </p>
                 </div>
-                <div className="rounded-2xl bg-secondary px-3 py-2 text-right">
+                <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2 text-right">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                     Period
                   </p>
@@ -222,13 +222,13 @@ export function MonthlyPlanForm({
               )}
             </div>
 
-            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4 text-sm text-muted-foreground">
+            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/60 p-4 text-sm text-muted-foreground">
               Category budgets remain optional. When you set them, they work as
               envelopes inside this monthly pool instead of replacing it.
             </div>
           </div>
 
-          <SheetFooter className="border-t border-border/70 bg-background/86 px-5 py-4 sm:flex-row sm:justify-end">
+          <SheetFooter className="border-t border-border/70 bg-background/92 px-5 py-4 sm:flex-row sm:justify-end">
             <Button
               type="button"
               variant="ghost"

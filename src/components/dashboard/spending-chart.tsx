@@ -54,25 +54,35 @@ export function SpendingChart({
   }, [dailySpending, month, year]);
 
   return (
-    <Card className="border-border/70">
-      <CardHeader className="pb-2">
-        <CardTitle className="font-heading text-2xl">
-          Cumulative spending
-        </CardTitle>
+    <Card className="border-border/80 bg-card/96">
+      <CardHeader className="pb-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+              Cash flow
+            </p>
+            <CardTitle className="mt-2 font-heading text-[1.55rem] font-semibold tracking-tight">
+              Cumulative spending
+            </CardTitle>
+          </div>
+          <div className="rounded-full border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-muted-foreground">
+            {format(new Date(year, month - 1), "MMMM yyyy")}
+          </div>
+        </div>
       </CardHeader>
       <CardContent className="pb-4">
-        <div className="h-[240px]">
+        <div className="h-[280px]">
           {mounted ? (
-            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={280}>
               <AreaChart data={data}>
                 <defs>
                   <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.28} />
-                    <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
+                    <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.34} />
+                    <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.02} />
                   </linearGradient>
                 </defs>
                 <CartesianGrid
-                  strokeDasharray="3 3"
+                  strokeDasharray="2 5"
                   stroke="var(--border)"
                   vertical={false}
                 />
@@ -104,7 +114,7 @@ export function SpendingChart({
                     borderRadius: "18px",
                     fontSize: "12px",
                     fontFamily: "var(--font-mono)",
-                    boxShadow: "0 24px 60px -40px rgba(31,29,23,0.5)",
+                    boxShadow: "0 28px 80px -44px rgba(0,0,0,0.9)",
                   }}
                   formatter={(value) => [
                     new Intl.NumberFormat("en", {
@@ -119,7 +129,7 @@ export function SpendingChart({
                   type="monotone"
                   dataKey="cumulative"
                   stroke="var(--chart-1)"
-                  strokeWidth={2.5}
+                  strokeWidth={2.35}
                   fill="url(#spendGrad)"
                 />
               </AreaChart>

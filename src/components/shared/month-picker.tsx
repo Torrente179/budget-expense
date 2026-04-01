@@ -28,22 +28,22 @@ export function MonthPicker({ month, year, onChange }: MonthPickerProps) {
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-2xl border border-border/70 bg-background/72 p-1 shadow-[0_12px_30px_-26px_rgba(42,36,27,0.5)]">
+    <div className="flex items-center gap-1 rounded-[1.25rem] border border-border bg-secondary/70 p-1">
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8"
+        className="h-8 w-8 rounded-xl"
         onClick={handlePrev}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <span className="min-w-[126px] text-center text-sm font-medium">
+      <span className="min-w-[126px] text-center text-sm font-medium tracking-tight">
         {getMonthName(month)} {year}
       </span>
       <Button
         variant="ghost"
         size="icon"
-        className="h-8 w-8"
+        className="h-8 w-8 rounded-xl"
         onClick={handleNext}
       >
         <ChevronRight className="h-4 w-4" />

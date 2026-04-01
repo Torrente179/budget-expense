@@ -44,9 +44,11 @@ export function CategoryBreakdown({
 
   if (data.length === 0) {
     return (
-      <Card className="border-border/70">
+      <Card className="border-border/80 bg-card/96">
         <CardHeader className="pb-2">
-          <CardTitle className="font-heading text-2xl">By category</CardTitle>
+          <CardTitle className="font-heading text-[1.45rem] font-semibold tracking-tight">
+            By category
+          </CardTitle>
         </CardHeader>
         <CardContent className="flex h-[240px] items-center justify-center">
           <p className="text-sm text-muted-foreground">No data yet</p>
@@ -56,12 +58,24 @@ export function CategoryBreakdown({
   }
 
   return (
-    <Card className="border-border/70">
-      <CardHeader className="pb-2">
-        <CardTitle className="font-heading text-2xl">By category</CardTitle>
+    <Card className="border-border/80 bg-card/96">
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+              Spending mix
+            </p>
+            <CardTitle className="mt-2 font-heading text-[1.45rem] font-semibold tracking-tight">
+              By category
+            </CardTitle>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            {data.length} active
+          </p>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="flex flex-col items-center gap-6 sm:flex-row">
+        <div className="grid gap-6 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center">
           <div className="h-[180px] w-[180px]">
             {mounted ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={180}>
@@ -82,14 +96,14 @@ export function CategoryBreakdown({
                   </Pie>
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "var(--popover)",
-                      border: "1px solid var(--border)",
-                      borderRadius: "18px",
-                      fontSize: "12px",
-                      boxShadow: "0 24px 60px -40px rgba(31,29,23,0.5)",
-                    }}
-                    formatter={(value) =>
-                      formatCurrency(Number(value), baseCurrency)
+                    backgroundColor: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "18px",
+                    fontSize: "12px",
+                    boxShadow: "0 28px 80px -44px rgba(0,0,0,0.9)",
+                  }}
+                  formatter={(value) =>
+                    formatCurrency(Number(value), baseCurrency)
                     }
                   />
                 </PieChart>
@@ -98,11 +112,11 @@ export function CategoryBreakdown({
               <div className="h-full w-full animate-pulse rounded-full bg-muted/50" />
             )}
           </div>
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 divide-y divide-border/70 rounded-[1.35rem] border border-border/70 bg-secondary/40 px-4">
             {data.slice(0, 5).map((cat) => (
               <div
                 key={cat.name}
-                className="rounded-2xl border border-border/60 bg-background/70 px-3 py-3 text-sm"
+                className="py-3 text-sm first:pt-4 last:pb-4"
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
@@ -110,7 +124,7 @@ export function CategoryBreakdown({
                       className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: cat.color }}
                     />
-                    <span className="text-muted-foreground">{cat.name}</span>
+                    <span className="font-medium text-foreground">{cat.name}</span>
                   </div>
                   <span className="font-mono text-xs text-muted-foreground">
                     {total > 0 ? ((cat.value / total) * 100).toFixed(0) : 0}%

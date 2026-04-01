@@ -58,12 +58,12 @@ export default function WisdomPage() {
       </PageHeader>
 
       <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
-        <Card className="border-border/70 xl:sticky xl:top-24 xl:h-fit">
+        <Card className="border-border/80 bg-card/96 xl:sticky xl:top-24 xl:h-fit">
           <CardHeader className="space-y-3">
-            <Badge variant="outline" className="bg-background/70 text-foreground">
+            <Badge variant="outline" className="bg-secondary/70 text-foreground">
               Guía temática
             </Badge>
-            <CardTitle className="font-heading text-3xl leading-none">
+            <CardTitle className="font-heading text-[1.9rem] font-semibold leading-none tracking-[-0.04em]">
               Temas para revisar con calma
             </CardTitle>
             <p className="text-sm leading-6 text-muted-foreground">
@@ -83,14 +83,16 @@ export default function WisdomPage() {
                   onClick={() => setActiveThemeSlug(theme.slug)}
                   className={`w-full rounded-[1.35rem] border px-4 py-4 text-left transition-all duration-200 ${
                     active
-                      ? "border-primary bg-primary text-primary-foreground shadow-[0_20px_40px_-26px_rgba(49,84,71,0.65)]"
-                      : "border-border/60 bg-background/72 text-foreground hover:border-foreground/12 hover:bg-card"
+                      ? "border-border bg-secondary text-foreground ring-1 ring-border"
+                      : "border-border/70 bg-card/92 text-foreground hover:border-foreground/12 hover:bg-secondary/70"
                   }`}
                 >
                   <div className="flex items-start gap-3">
                     <div
                       className={`mt-0.5 flex h-10 w-10 items-center justify-center rounded-2xl ${
-                        active ? "bg-primary-foreground/12" : "bg-primary/10 text-primary"
+                        active
+                          ? "bg-foreground text-background"
+                          : "bg-secondary text-muted-foreground"
                       }`}
                     >
                       <Icon className="h-4 w-4" />
@@ -99,7 +101,7 @@ export default function WisdomPage() {
                       <p
                         className={`text-[0.68rem] uppercase tracking-[0.24em] ${
                           active
-                            ? "text-primary-foreground/70"
+                            ? "text-muted-foreground"
                             : "text-muted-foreground"
                         }`}
                       >
@@ -115,15 +117,15 @@ export default function WisdomPage() {
         </Card>
 
         <div className="space-y-4">
-          <Card className="border-border/70">
+          <Card className="border-border/80 bg-card/96">
             <CardHeader className="space-y-4">
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div className="space-y-3">
-                  <Badge variant="outline" className="bg-background/70 text-foreground">
+                  <Badge variant="outline" className="bg-secondary/70 text-foreground">
                     {activeTheme.eyebrow}
                   </Badge>
                   <div>
-                    <CardTitle className="font-heading text-4xl leading-none tracking-tight">
+                    <CardTitle className="font-heading text-[2.6rem] font-semibold leading-none tracking-[-0.05em]">
                       {activeTheme.title}
                     </CardTitle>
                     <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
@@ -131,14 +133,14 @@ export default function WisdomPage() {
                     </p>
                   </div>
                 </div>
-                <div className="flex h-14 w-14 items-center justify-center rounded-[1.6rem] bg-primary/12 text-primary">
+                <div className="flex h-14 w-14 items-center justify-center rounded-[1.6rem] bg-secondary text-emerald-300">
                   <ThemeIcon className="h-6 w-6" />
                 </div>
               </div>
             </CardHeader>
             <CardContent className="grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
               <div className="space-y-4">
-                <div className="rounded-[1.6rem] border border-border/60 bg-background/72 p-5">
+                <div className="rounded-[1.6rem] border border-border/70 bg-secondary/45 p-5">
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
                     Pasajes para consultar en NBLA
                   </p>
@@ -146,7 +148,7 @@ export default function WisdomPage() {
                     {activeTheme.passages.map((passage) => (
                       <article
                         key={passage.reference}
-                        className="rounded-[1.35rem] border border-border/60 bg-card/82 p-4"
+                        className="rounded-[1.35rem] border border-border/70 bg-card/96 p-4"
                       >
                         <div className="flex items-center justify-between gap-3">
                           <p className="font-mono text-sm font-semibold text-foreground">
@@ -175,7 +177,7 @@ export default function WisdomPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="rounded-[1.6rem] border border-border/60 bg-background/72 p-5">
+                <div className="rounded-[1.6rem] border border-border/70 bg-secondary/45 p-5">
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
                     Acción concreta
                   </p>
@@ -183,9 +185,9 @@ export default function WisdomPage() {
                     {activeTheme.actions.map((action, index) => (
                       <li
                         key={action}
-                        className="flex items-start gap-3 rounded-[1.2rem] border border-border/50 bg-card/82 px-4 py-3"
+                        className="flex items-start gap-3 rounded-[1.2rem] border border-border/70 bg-card/96 px-4 py-3"
                       >
-                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/12 text-xs font-semibold text-primary">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground">
                           {index + 1}
                         </div>
                         <p className="text-sm leading-6 text-foreground/90">{action}</p>
@@ -194,7 +196,7 @@ export default function WisdomPage() {
                   </ul>
                 </div>
 
-                <div className="rounded-[1.6rem] border border-border/60 bg-card/82 p-5">
+                <div className="rounded-[1.6rem] border border-border/70 bg-card/96 p-5">
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
                     Nota de uso
                   </p>
@@ -208,7 +210,7 @@ export default function WisdomPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-border/70">
+          <Card className="border-border/80 bg-card/96">
             <CardContent className="flex flex-col gap-3 px-5 py-5 md:flex-row md:items-center md:justify-between">
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">

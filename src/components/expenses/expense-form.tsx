@@ -127,12 +127,12 @@ export function ExpenseForm({
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full overflow-hidden border-border/70 bg-popover/96 p-0 shadow-[0_30px_80px_-50px_rgba(31,29,23,0.5)] data-[side=bottom]:max-h-[90vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-t sm:max-w-[590px] data-[side=right]:sm:max-w-[590px]"
+        className="w-full overflow-hidden border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] data-[side=bottom]:max-h-[90vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-t sm:max-w-[590px] data-[side=right]:sm:max-w-[590px]"
       >
         <form className="flex h-full flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
-          <SheetHeader className="border-b border-border/60 bg-background/80 px-5 py-5">
+          <SheetHeader className="border-b border-border/70 bg-background/90 px-5 py-5">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-foreground">
                 <Plus className="h-5 w-5" />
               </div>
               <div className="space-y-1">
@@ -145,7 +145,7 @@ export function ExpenseForm({
           <div className="flex-1 overflow-y-auto px-5 py-5">
             <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
               <div className="space-y-5">
-                <div className="rounded-[1.5rem] border border-border/70 bg-background/76 p-4 shadow-[0_20px_60px_-44px_rgba(31,29,23,0.42)]">
+                <div className="rounded-[1.5rem] border border-border/70 bg-card/90 p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[0.68rem] font-medium uppercase tracking-[0.26em] text-muted-foreground">
@@ -156,7 +156,7 @@ export function ExpenseForm({
                         belongs to the receipt.
                       </p>
                     </div>
-                    <div className="rounded-2xl bg-secondary px-3 py-2">
+                    <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2">
                       <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                         Base
                       </p>
@@ -283,7 +283,7 @@ export function ExpenseForm({
               </div>
 
               <aside className="lg:sticky lg:top-5">
-                <div className="rounded-[1.75rem] border border-border/70 bg-card/82 p-4 shadow-[0_20px_60px_-44px_rgba(31,29,23,0.5)]">
+                <div className="rounded-[1.75rem] border border-border/80 bg-card/96 p-4 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.88)]">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[0.68rem] font-medium uppercase tracking-[0.26em] text-muted-foreground">
@@ -293,7 +293,7 @@ export function ExpenseForm({
                         What will be stored and shown in the ledger.
                       </p>
                     </div>
-                    <div className="rounded-2xl bg-primary/12 px-3 py-2 text-primary">
+                    <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2 text-foreground">
                       <p className="text-[0.66rem] uppercase tracking-[0.22em]">
                         Month
                       </p>
@@ -303,11 +303,11 @@ export function ExpenseForm({
                     </div>
                   </div>
 
-                  <div className="mt-5 rounded-[1.5rem] border border-border/60 bg-background/78 p-4">
+                  <div className="mt-5 rounded-[1.5rem] border border-border/70 bg-secondary/45 p-4">
                     <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                       Amount in reports
                     </p>
-                    <p className="mt-3 font-heading text-4xl leading-none tracking-tight">
+                    <p className="mt-3 font-heading text-[2.65rem] font-semibold leading-none tracking-[-0.05em]">
                       {amount > 0
                         ? formatCurrency(convertedAmount, baseCurrency)
                         : "--"}
@@ -334,7 +334,7 @@ export function ExpenseForm({
                         </span>
                       )}
                     </div>
-                    <div className="rounded-[1.35rem] border border-border/60 bg-background/70 p-3 text-sm text-muted-foreground">
+                    <div className="rounded-[1.35rem] border border-border/70 bg-secondary/45 p-3 text-sm text-muted-foreground">
                       <p className="text-[0.68rem] uppercase tracking-[0.24em]">
                         Date
                       </p>
@@ -342,7 +342,7 @@ export function ExpenseForm({
                         {format(new Date(date), "EEEE, MMMM d")}
                       </p>
                     </div>
-                    <div className="rounded-[1.35rem] border border-border/60 bg-background/70 p-3 text-sm text-muted-foreground">
+                    <div className="rounded-[1.35rem] border border-border/70 bg-secondary/45 p-3 text-sm text-muted-foreground">
                       <p className="text-[0.68rem] uppercase tracking-[0.24em]">
                         Description
                       </p>
@@ -352,7 +352,7 @@ export function ExpenseForm({
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-[1.35rem] border border-border/60 bg-secondary/50 p-3 text-sm text-muted-foreground">
+                  <div className="mt-4 rounded-[1.35rem] border border-border/70 bg-secondary/60 p-3 text-sm text-muted-foreground">
                     The original currency is preserved, and reporting converts it
                     into your base currency automatically.
                   </div>

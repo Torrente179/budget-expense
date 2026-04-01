@@ -18,9 +18,16 @@ interface RecentExpensesProps {
 
 export function RecentExpenses({ expenses }: RecentExpensesProps) {
   return (
-    <Card className="border-border/70">
+    <Card className="border-border/80 bg-card/96">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="font-heading text-2xl">Recent expenses</CardTitle>
+        <div>
+          <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+            Ledger
+          </p>
+          <CardTitle className="mt-2 font-heading text-[1.45rem] font-semibold tracking-tight">
+            Recent expenses
+          </CardTitle>
+        </div>
         <Link
           href="/expenses"
           className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
@@ -39,15 +46,15 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
             {expenses.slice(0, 5).map((expense) => (
               <div
                 key={expense.id}
-                className="flex items-center justify-between gap-4 rounded-[1.35rem] border border-border/60 bg-background/70 px-4 py-3"
+                className="flex items-center justify-between gap-4 rounded-[1.25rem] border border-border/70 bg-secondary/45 px-4 py-3 transition-colors duration-200 hover:bg-secondary/70"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
+                    <p className="truncate text-sm font-medium text-foreground">
                       {expense.description || expense.categories.name}
                     </p>
-                    <div className="mt-2 flex items-center gap-2">
-                      <span className="text-xs text-muted-foreground">
+                    <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                      <span>
                         {formatDate(expense.date, "MMM d")}
                       </span>
                       <CategoryBadge
@@ -61,7 +68,7 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
                 <CurrencyDisplay
                   amount={expense.amount}
                   currency={expense.currency}
-                  className="shrink-0 text-sm font-semibold"
+                  className="shrink-0 text-sm font-semibold text-foreground"
                 />
               </div>
             ))}

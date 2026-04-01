@@ -77,18 +77,18 @@ export default function DashboardPage() {
           <CategoryBreakdown
             categoryBreakdown={summary.categoryBreakdown}
           />
-          <Card className="border-border/70">
+          <Card className="border-border/80 bg-card/96">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
                     Sabiduría NBLA
                   </p>
-                  <CardTitle className="mt-3 font-heading text-2xl">
+                  <CardTitle className="mt-2 font-heading text-[1.45rem] font-semibold tracking-tight">
                     Financial wisdom for the month
                   </CardTitle>
                 </div>
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-emerald-300">
                   <HeartHandshake className="h-5 w-5" />
                 </div>
               </div>
@@ -99,14 +99,14 @@ export default function DashboardPage() {
                 planning, and the wise administration of goods.
               </p>
               <Link href="/wisdom">
-                <Button variant="outline" className="w-full justify-between">
+                <Button className="w-full justify-between">
                   Open Sabiduría
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
-              <div className="rounded-[1.35rem] border border-border/60 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+              <div className="rounded-[1.25rem] border border-border/70 bg-secondary/45 px-4 py-3 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2 text-foreground">
-                  <BookOpenText className="h-4 w-4 text-primary" />
+                  <BookOpenText className="h-4 w-4 text-emerald-300" />
                   This week’s rhythm
                 </div>
                 <p className="mt-2 leading-6">
