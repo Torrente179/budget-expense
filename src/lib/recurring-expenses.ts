@@ -1,0 +1,71 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/types/database";
+
+type RecurringExpense = Database["public"]["Tables"]["recurring_expenses"]["Row"];
+
+interface SyncRecurringExpensesOptions {
+  supabase: SupabaseClient<Database>;
+  userId: string;
+  month: number;
+  year: number;
+}
+
+export function getMonthDateRange(month: number, year: number) {
+  const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+  const endMonth = month === 12 ? 1 : month + 1;
+  const endYear = month === 12 ? year + 1 : year;
+  const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
+
+  return { startDate, endDate };
+}
+
+export async function syncRecurringExpensesForMonth({
+  supabase,
+  userId,
+  month,
+  year,
+}: SyncRecurringExpensesOptions) {
+  const { startDate, endDate } = getMonthDateRange(month, year);
+  const { data: recurringExpenses } = await supabase
+    .from("recurring_expenses")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("is_active", true)
+    .lt("start_date", endDate);
+
+  if (!recurringExpenses || recurringExpenses.length === 0) {
+    return;
+  }
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const recurringInsertRows: Database["public"]["Tables"]["expenses"]["Insert"][] = [];
+
+  for (const recurringExpense of recurringExpenses as RecurringExpense[]) {
+    const debitDay = Math.min(recurringExpense.charge_day, daysInMonth);
+    const debitDate = `${year}-${String(month).padStart(2, "0")}-${String(debitDay).padStart(2, "0")}`;
+
+    if (debitDate < recurringExpense.start_date) {
+      continue;
+    }
+
+    recurringInsertRows.push({
+      user_id: userId,
+      category_id: recurringExpense.category_id,
+      recurring_expense_id: recurringExpense.id,
+      recurring_month: startDate,
+      amount: recurringExpense.amount,
+      currency: recurringExpense.currency,
+      description: recurringExpense.description,
+      date: debitDate,
+    });
+  }
+
+  if (recurringInsertRows.length === 0) {
+    return;
+  }
+
+  await supabase.from("expenses").upsert(recurringInsertRows, {
+    onConflict: "user_id,recurring_expense_id,recurring_month",
+    ignoreDuplicates: true,
+  });
+}

@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  getMonthDateRange,
+  syncRecurringExpensesForMonth,
+} from "@/lib/recurring-expenses";
 import type { Database } from "@/types/database";
 
 type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
@@ -22,10 +26,17 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
-    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const endMonth = month === 12 ? 1 : month + 1;
-    const endYear = month === 12 ? year + 1 : year;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
+    const { startDate, endDate } = getMonthDateRange(month, year);
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user) {
+      await syncRecurringExpensesForMonth({
+        supabase,
+        userId: userData.user.id,
+        month,
+        year,
+      });
+    }
 
     let query = supabase
       .from("expenses")

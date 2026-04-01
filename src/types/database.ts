@@ -71,6 +71,8 @@ export interface Database {
           id: string;
           user_id: string;
           category_id: string;
+          recurring_expense_id: string | null;
+          recurring_month: string | null;
           amount: number;
           currency: string;
           description: string | null;
@@ -82,6 +84,8 @@ export interface Database {
           id?: string;
           user_id: string;
           category_id: string;
+          recurring_expense_id?: string | null;
+          recurring_month?: string | null;
           amount: number;
           currency?: string;
           description?: string | null;
@@ -93,6 +97,8 @@ export interface Database {
           id?: string;
           user_id?: string;
           category_id?: string;
+          recurring_expense_id?: string | null;
+          recurring_month?: string | null;
           amount?: number;
           currency?: string;
           description?: string | null;
@@ -103,6 +109,63 @@ export interface Database {
         Relationships: [
           {
             foreignKeyName: "expenses_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "expenses_recurring_expense_id_fkey";
+            columns: ["recurring_expense_id"];
+            isOneToOne: false;
+            referencedRelation: "recurring_expenses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      recurring_expenses: {
+        Row: {
+          id: string;
+          user_id: string;
+          category_id: string;
+          amount: number;
+          currency: string;
+          description: string | null;
+          charge_day: number;
+          start_date: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          category_id: string;
+          amount: number;
+          currency?: string;
+          description?: string | null;
+          charge_day: number;
+          start_date?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          category_id?: string;
+          amount?: number;
+          currency?: string;
+          description?: string | null;
+          charge_day?: number;
+          start_date?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "recurring_expenses_category_id_fkey";
             columns: ["category_id"];
             isOneToOne: false;
             referencedRelation: "categories";

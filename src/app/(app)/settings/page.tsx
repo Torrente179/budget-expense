@@ -85,6 +85,7 @@ export default function SettingsPage() {
     if (user) {
       // Delete user data (RLS will handle cascading)
       await supabase.from("expenses").delete().eq("user_id", user.id);
+      await supabase.from("recurring_expenses").delete().eq("user_id", user.id);
       await supabase.from("income_entries").delete().eq("user_id", user.id);
       await supabase.from("budgets").delete().eq("user_id", user.id);
       await supabase.from("monthly_budget_plans").delete().eq("user_id", user.id);

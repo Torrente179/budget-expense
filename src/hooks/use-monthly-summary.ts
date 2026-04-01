@@ -2,6 +2,10 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  getMonthDateRange,
+  syncRecurringExpensesForMonth,
+} from "@/lib/recurring-expenses";
 import { useCurrency } from "@/providers/currency-provider";
 
 interface MonthlySummary {
@@ -50,10 +54,31 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
-    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const endMonth = month === 12 ? 1 : month + 1;
-    const endYear = month === 12 ? year + 1 : year;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
+    const { startDate, endDate } = getMonthDateRange(month, year);
+    const previousMonth = month === 1 ? 12 : month - 1;
+    const previousYear = month === 1 ? year - 1 : year;
+    const { startDate: previousStartDate } = getMonthDateRange(
+      previousMonth,
+      previousYear
+    );
+
+    const { data: userData } = await supabase.auth.getUser();
+    if (userData.user) {
+      await Promise.all([
+        syncRecurringExpensesForMonth({
+          supabase,
+          userId: userData.user.id,
+          month,
+          year,
+        }),
+        syncRecurringExpensesForMonth({
+          supabase,
+          userId: userData.user.id,
+          month: previousMonth,
+          year: previousYear,
+        }),
+      ]);
+    }
 
     const [
       { data: expenses },
@@ -89,7 +114,7 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
         supabase
           .from("expenses")
           .select("amount, currency")
-          .gte("date", `${month === 1 ? year - 1 : year}-${String(month === 1 ? 12 : month - 1).padStart(2, "0")}-01`)
+          .gte("date", previousStartDate)
           .lt("date", startDate),
       ]);
 

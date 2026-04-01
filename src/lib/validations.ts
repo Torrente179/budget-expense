@@ -10,6 +10,22 @@ export const expenseSchema = z.object({
 
 export type ExpenseFormValues = z.output<typeof expenseSchema>;
 
+export const recurringExpenseSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  currency: z.string().min(3).max(3),
+  category_id: z.string().uuid("Please select a category"),
+  description: z.string().max(255).optional(),
+  charge_day: z.coerce
+    .number()
+    .int("Debit day must be a whole number")
+    .min(1, "Debit day must be at least 1")
+    .max(31, "Debit day cannot exceed 31"),
+  start_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  is_active: z.boolean().default(true),
+});
+
+export type RecurringExpenseFormValues = z.output<typeof recurringExpenseSchema>;
+
 export const incomeSchema = z.object({
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   currency: z.string().min(3).max(3),

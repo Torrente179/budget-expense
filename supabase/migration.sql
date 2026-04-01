@@ -58,7 +58,32 @@ CREATE INDEX idx_expenses_user_id ON public.expenses(user_id);
 CREATE INDEX idx_expenses_date ON public.expenses(user_id, date);
 CREATE INDEX idx_expenses_category ON public.expenses(user_id, category_id);
 
--- 4. Income entries
+-- 4. Recurring expenses
+CREATE TABLE public.recurring_expenses (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    category_id UUID NOT NULL REFERENCES public.categories(id) ON DELETE RESTRICT,
+    amount DECIMAL(12, 2) NOT NULL CHECK (amount > 0),
+    currency TEXT NOT NULL DEFAULT 'EUR',
+    description TEXT,
+    charge_day INTEGER NOT NULL CHECK (charge_day BETWEEN 1 AND 31),
+    start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_recurring_expenses_user_active
+    ON public.recurring_expenses(user_id, is_active, charge_day);
+
+ALTER TABLE public.expenses
+    ADD COLUMN IF NOT EXISTS recurring_expense_id UUID REFERENCES public.recurring_expenses(id) ON DELETE SET NULL,
+    ADD COLUMN IF NOT EXISTS recurring_month DATE;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_expenses_recurring_month_unique
+    ON public.expenses(user_id, recurring_expense_id, recurring_month);
+
+-- 5. Income entries
 CREATE TABLE public.income_entries (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -74,7 +99,7 @@ CREATE TABLE public.income_entries (
 CREATE INDEX idx_income_entries_user_id ON public.income_entries(user_id);
 CREATE INDEX idx_income_entries_date ON public.income_entries(user_id, date);
 
--- 5. Budgets
+-- 6. Budgets
 CREATE TABLE public.budgets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -90,7 +115,7 @@ CREATE TABLE public.budgets (
 
 CREATE INDEX idx_budgets_user_period ON public.budgets(user_id, year, month);
 
--- 5. Monthly budget plans
+-- 7. Monthly budget plans
 CREATE TABLE public.monthly_budget_plans (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -107,7 +132,7 @@ CREATE TABLE public.monthly_budget_plans (
 CREATE INDEX idx_monthly_budget_plans_user_period
     ON public.monthly_budget_plans(user_id, year, month);
 
--- 6. Brokerage accounts
+-- 8. Brokerage accounts
 CREATE TABLE public.brokerage_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -134,7 +159,7 @@ ALTER TABLE public.brokerage_accounts
     ADD CONSTRAINT brokerage_accounts_broker_kind_check
     CHECK (char_length(btrim(broker_kind)) > 0 AND char_length(btrim(broker_kind)) <= 80);
 
--- 7. Investment assets
+-- 9. Investment assets
 CREATE TABLE public.investment_assets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -156,7 +181,7 @@ CREATE TABLE public.investment_assets (
 CREATE INDEX idx_investment_assets_user_lookup
     ON public.investment_assets(user_id, market_code, symbol);
 
--- 8. Investment trades
+-- 10. Investment trades
 CREATE TABLE public.investment_trades (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -189,7 +214,7 @@ CREATE INDEX idx_investment_trades_asset
 CREATE INDEX idx_investment_trades_account
     ON public.investment_trades(user_id, account_id, trade_date DESC);
 
--- 9. Investment cash movements
+-- 11. Investment cash movements
 CREATE TABLE public.investment_cash_movements (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -212,7 +237,7 @@ CREATE INDEX idx_investment_cash_movements_user_date
 CREATE INDEX idx_investment_cash_movements_account
     ON public.investment_cash_movements(user_id, account_id, movement_date DESC);
 
--- 10. Investment watchlist
+-- 12. Investment watchlist
 CREATE TABLE public.investment_watchlist (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -225,7 +250,7 @@ CREATE TABLE public.investment_watchlist (
 CREATE INDEX idx_investment_watchlist_user_id
     ON public.investment_watchlist(user_id, created_at DESC);
 
--- 11. Market price history cache
+-- 13. Market price history cache
 CREATE TABLE public.market_price_history (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     provider TEXT NOT NULL CHECK (provider IN ('twelve_data', 'eodhd')),
@@ -266,6 +291,10 @@ $$ LANGUAGE plpgsql;
 
 CREATE TRIGGER set_updated_at_expenses
     BEFORE UPDATE ON public.expenses
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER set_updated_at_recurring_expenses
+    BEFORE UPDATE ON public.recurring_expenses
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
 CREATE TRIGGER set_updated_at_income_entries
@@ -325,6 +354,7 @@ GROUP BY e.user_id, EXTRACT(YEAR FROM e.date), EXTRACT(MONTH FROM e.date),
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.recurring_expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.income_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.monthly_budget_plans ENABLE ROW LEVEL SECURITY;
@@ -364,6 +394,16 @@ CREATE POLICY "Users can update own expenses"
     ON public.expenses FOR UPDATE USING (user_id = auth.uid());
 CREATE POLICY "Users can delete own expenses"
     ON public.expenses FOR DELETE USING (user_id = auth.uid());
+
+-- Recurring expenses
+CREATE POLICY "Users can view own recurring expenses"
+    ON public.recurring_expenses FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own recurring expenses"
+    ON public.recurring_expenses FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own recurring expenses"
+    ON public.recurring_expenses FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own recurring expenses"
+    ON public.recurring_expenses FOR DELETE USING (user_id = auth.uid());
 
 -- Income entries
 CREATE POLICY "Users can view own income entries"

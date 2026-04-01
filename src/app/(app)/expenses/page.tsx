@@ -7,6 +7,7 @@ import { PageHeader } from "@/components/layout/page-header";
 import { ExpenseForm } from "@/components/expenses/expense-form";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
 import { ExpenseTable } from "@/components/expenses/expense-table";
+import { RecurringExpenseSection } from "@/components/expenses/recurring-expense-section";
 import { getCurrentMonth, getCurrentYear, formatCurrency } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -19,7 +20,14 @@ export default function ExpensesPage() {
   const deferredSearch = useDeferredValue(search);
   const { baseCurrency, convert } = useCurrency();
 
-  const { expenses, loading, addExpense, updateExpense, deleteExpense } =
+  const {
+    expenses,
+    loading,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+    refetch,
+  } =
     useExpenses({
       month,
       year,
@@ -59,6 +67,12 @@ export default function ExpensesPage() {
         onCategoryChange={setCategoryId}
         search={search}
         onSearchChange={setSearch}
+      />
+
+      <RecurringExpenseSection
+        month={month}
+        year={year}
+        onChanged={refetch}
       />
 
       <ExpenseTable
