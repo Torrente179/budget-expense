@@ -137,7 +137,7 @@ export function ExpenseForm({
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full overflow-hidden border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] data-[side=bottom]:max-h-[90vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-t sm:max-w-[590px] data-[side=right]:sm:max-w-[590px]"
+        className="w-full overflow-hidden border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] data-[side=bottom]:max-h-[90vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-t sm:max-w-[760px] data-[side=right]:sm:max-w-[760px]"
       >
         <form className="flex h-full flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
           <SheetHeader className="border-b border-border/70 bg-background/90 px-5 py-5">
@@ -153,32 +153,30 @@ export function ExpenseForm({
           </SheetHeader>
 
           <div className="flex-1 overflow-y-auto px-5 py-5">
-            <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_280px]">
-              <div className="space-y-5">
-                <div className="rounded-[1.5rem] border border-border/70 bg-card/90 p-4">
-                  <div className="flex items-center justify-between gap-3">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+              <section className="space-y-5">
+                <div className="rounded-[1.5rem] border border-border/70 bg-card/90 p-4 sm:p-5">
+                  <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="text-[0.68rem] font-medium uppercase tracking-[0.26em] text-muted-foreground">
-                        {t("Amount first", "Monto primero")}
+                      <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                        {t("Expense details", "Detalles del gasto")}
                       </p>
-                      <p className="mt-2 text-sm text-muted-foreground">
+                      <p className="mt-1 text-sm text-muted-foreground">
                         {t(
-                          "Enter the original amount, then choose the currency that belongs to the receipt.",
-                          "Ingresa el monto original y luego elige la moneda del comprobante."
+                          "Capture the movement exactly as it appears on the receipt.",
+                          "Registra el movimiento tal como aparece en el comprobante."
                         )}
                       </p>
                     </div>
-                    <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2">
-                      <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    <div className="rounded-xl border border-border/70 bg-secondary/65 px-2.5 py-2 text-right">
+                      <p className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
                         {t("Base", "Base")}
                       </p>
-                      <p className="mt-1 font-mono text-xs font-medium">
-                        {baseCurrency}
-                      </p>
+                      <p className="mt-1 font-mono text-xs font-medium">{baseCurrency}</p>
                     </div>
                   </div>
 
-                  <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1.3fr)_150px]">
+                  <div className="mt-4 grid gap-4 sm:grid-cols-[minmax(0,1.3fr)_150px]">
                     <div className="space-y-2">
                       <Label htmlFor="amount">{t("Amount", "Monto")}</Label>
                       <Input
@@ -196,6 +194,7 @@ export function ExpenseForm({
                         </p>
                       )}
                     </div>
+
                     <div className="space-y-2">
                       <Label htmlFor="currency">{t("Currency", "Moneda")}</Label>
                       <Select
@@ -222,169 +221,157 @@ export function ExpenseForm({
                       </Select>
                     </div>
                   </div>
-                </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="category">{t("Category", "Categoría")}</Label>
-                  <Select
-                    value={categoryId}
-                    onValueChange={(value) =>
-                      value &&
-                      form.setValue("category_id", value, {
-                        shouldDirty: true,
-                        shouldTouch: true,
-                        shouldValidate: true,
-                      })
-                    }
-                  >
-                    <SelectTrigger id="category" className="h-11">
-                      <SelectValue placeholder={t("Select category", "Selecciona categoría")} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((category) => (
-                        <SelectItem
-                          key={category.id}
-                          value={category.id}
-                          className="text-sm"
-                        >
-                          <div className="flex items-center gap-2">
-                            <CategoryIcon
-                              icon={category.icon}
-                              color={category.color}
-                              className="h-5 w-5 rounded-xl"
-                            />
-                            <span>{category.name}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {form.formState.errors.category_id && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.category_id.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="date">{t("Date", "Fecha")}</Label>
-                  <Input
-                    id="date"
-                    type="date"
-                    className="h-11"
-                    {...form.register("date")}
-                  />
-                  {form.formState.errors.date && (
-                    <p className="text-xs text-destructive">
-                      {form.formState.errors.date.message}
-                    </p>
-                  )}
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">
-                    {t("Description", "Descripción")}{" "}
-                    <span className="text-muted-foreground">
-                      ({t("optional", "opcional")})
-                    </span>
-                  </Label>
-                  <Input
-                    id="description"
-                    placeholder={t(
-                      "What was this expense for?",
-                      "¿Para qué fue este gasto?"
-                    )}
-                    className="h-11"
-                    {...form.register("description")}
-                  />
-                </div>
-              </div>
-
-              <aside className="lg:sticky lg:top-5">
-                <div className="rounded-[1.75rem] border border-border/80 bg-card/96 p-4 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.88)]">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-[0.68rem] font-medium uppercase tracking-[0.26em] text-muted-foreground">
-                        {t("Live preview", "Vista previa")}
-                      </p>
-                      <p className="mt-1 text-sm text-muted-foreground">
-                        {t(
-                          "What will be stored and shown in the ledger.",
-                          "Lo que se guardará y se mostrará en el registro."
-                        )}
-                      </p>
+                  <div className="mt-4 space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category">{t("Category", "Categoría")}</Label>
+                      <Select
+                        value={categoryId}
+                        onValueChange={(value) =>
+                          value &&
+                          form.setValue("category_id", value, {
+                            shouldDirty: true,
+                            shouldTouch: true,
+                            shouldValidate: true,
+                          })
+                        }
+                      >
+                        <SelectTrigger id="category" className="h-11">
+                          <SelectValue
+                            placeholder={t("Select category", "Selecciona categoría")}
+                          />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id} className="text-sm">
+                              <div className="flex items-center gap-2">
+                                <CategoryIcon
+                                  icon={category.icon}
+                                  color={category.color}
+                                  className="h-5 w-5 rounded-xl"
+                                />
+                                <span>{category.name}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {form.formState.errors.category_id && (
+                        <p className="text-xs text-destructive">
+                          {form.formState.errors.category_id.message}
+                        </p>
+                      )}
                     </div>
-                    <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2 text-foreground">
-                      <p className="text-[0.66rem] uppercase tracking-[0.22em]">
-                        {t("Month", "Mes")}
-                      </p>
-                      <p className="mt-1 font-mono text-xs font-medium">
-                        {format(new Date(date), "MMM d")}
-                      </p>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="date">{t("Date", "Fecha")}</Label>
+                      <Input id="date" type="date" className="h-11" {...form.register("date")} />
+                      {form.formState.errors.date && (
+                        <p className="text-xs text-destructive">
+                          {form.formState.errors.date.message}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="description">
+                        {t("Description", "Descripción")}{" "}
+                        <span className="text-muted-foreground">
+                          ({t("optional", "opcional")})
+                        </span>
+                      </Label>
+                      <Input
+                        id="description"
+                        placeholder={t(
+                          "What was this expense for?",
+                          "¿Para qué fue este gasto?"
+                        )}
+                        className="h-11"
+                        {...form.register("description")}
+                      />
                     </div>
                   </div>
+                </div>
+              </section>
 
-                  <div className="mt-5 rounded-[1.5rem] border border-border/70 bg-secondary/45 p-4">
-                    <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+              <aside className="lg:sticky lg:top-5 lg:self-start">
+                <div className="rounded-[1.5rem] border border-border/80 bg-card/96 p-4 shadow-[0_24px_70px_-50px_rgba(0,0,0,0.88)]">
+                  <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                    {t("Quick summary", "Resumen rápido")}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {t(
+                      "Review how this expense will look before saving.",
+                      "Revisa cómo se verá este gasto antes de guardar."
+                    )}
+                  </p>
+
+                  <div className="mt-4 rounded-xl border border-border/70 bg-secondary/45 p-3.5">
+                    <p className="text-[0.68rem] uppercase tracking-[0.22em] text-muted-foreground">
                       {t("Amount in reports", "Monto en reportes")}
                     </p>
-                    <p className="mt-3 font-heading text-[2.65rem] font-semibold leading-none tracking-[-0.05em]">
-                      {amount > 0
-                        ? formatCurrency(convertedAmount, baseCurrency)
-                        : "--"}
+                    <p className="mt-2 font-heading text-3xl font-semibold leading-none tracking-[-0.04em]">
+                      {amount > 0 ? formatCurrency(convertedAmount, baseCurrency) : "--"}
                     </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
+                    <p className="mt-2 text-xs text-muted-foreground">
                       {amount > 0
                         ? t(
-                            `${formatCurrency(amount, currency)} original entry`,
-                            `${formatCurrency(amount, currency)} registro original`
+                            `Original: ${formatCurrency(amount, currency)}`,
+                            `Original: ${formatCurrency(amount, currency)}`
                           )
                         : t(
-                            "Enter an amount to see how the report will read.",
-                            "Ingresa un monto para ver cómo aparecerá en el reporte."
+                            "Enter an amount to preview conversion.",
+                            "Ingresa un monto para previsualizar la conversión."
                           )}
                     </p>
                   </div>
 
-                  <div className="mt-4 space-y-3">
-                    <div className="flex items-start gap-3 rounded-[1.35rem] border border-border/60 bg-background/70 p-3">
-                      {selectedCategory ? (
-                        <CategoryBadge
-                          name={selectedCategory.name}
-                          icon={selectedCategory.icon}
-                          color={selectedCategory.color}
-                          className="rounded-xl px-2.5 py-1"
-                        />
-                      ) : (
-                        <span className="text-sm text-muted-foreground">
-                          {t("Select a category", "Selecciona una categoría")}
-                        </span>
-                      )}
+                  <div className="mt-3 space-y-2.5">
+                    <div className="rounded-xl border border-border/70 bg-background/70 px-3 py-2.5 text-sm">
+                      <p className="text-[0.64rem] uppercase tracking-[0.2em] text-muted-foreground">
+                        {t("Category", "Categoría")}
+                      </p>
+                      <div className="mt-1.5">
+                        {selectedCategory ? (
+                          <CategoryBadge
+                            name={selectedCategory.name}
+                            icon={selectedCategory.icon}
+                            color={selectedCategory.color}
+                            className="rounded-lg px-2.5 py-1"
+                          />
+                        ) : (
+                          <span className="text-muted-foreground">
+                            {t("Select a category", "Selecciona una categoría")}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="rounded-[1.35rem] border border-border/70 bg-secondary/45 p-3 text-sm text-muted-foreground">
-                      <p className="text-[0.68rem] uppercase tracking-[0.24em]">
+
+                    <div className="rounded-xl border border-border/70 bg-background/70 px-3 py-2.5 text-sm">
+                      <p className="text-[0.64rem] uppercase tracking-[0.2em] text-muted-foreground">
                         {t("Date", "Fecha")}
                       </p>
-                      <p className="mt-2 font-medium text-foreground">
+                      <p className="mt-1.5 text-foreground">
                         {format(new Date(date), "EEEE, MMMM d")}
                       </p>
                     </div>
-                    <div className="rounded-[1.35rem] border border-border/70 bg-secondary/45 p-3 text-sm text-muted-foreground">
-                      <p className="text-[0.68rem] uppercase tracking-[0.24em]">
+
+                    <div className="rounded-xl border border-border/70 bg-background/70 px-3 py-2.5 text-sm">
+                      <p className="text-[0.64rem] uppercase tracking-[0.2em] text-muted-foreground">
                         {t("Description", "Descripción")}
                       </p>
-                      <p className="mt-2 leading-6 text-foreground">
+                      <p className="mt-1.5 text-foreground">
                         {description || t("No description yet", "Sin descripción todavía")}
                       </p>
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-[1.35rem] border border-border/70 bg-secondary/60 p-3 text-sm text-muted-foreground">
+                  <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
                     {t(
-                      "The original currency is preserved, and reporting converts it into your base currency automatically.",
+                      "The original currency is preserved and reports convert it automatically to your base currency.",
                       "La moneda original se conserva y los reportes la convierten automáticamente a tu moneda base."
                     )}
-                  </div>
+                  </p>
                 </div>
               </aside>
             </div>
