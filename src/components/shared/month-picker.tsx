@@ -28,7 +28,7 @@ export function MonthPicker({ month, year, onChange }: MonthPickerProps) {
   }
 
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 rounded-2xl border border-border/70 bg-background/72 p-1 shadow-[0_12px_30px_-26px_rgba(42,36,27,0.5)]">
       <Button
         variant="ghost"
         size="icon"
@@ -37,7 +37,7 @@ export function MonthPicker({ month, year, onChange }: MonthPickerProps) {
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
-      <span className="min-w-[120px] text-center text-sm font-medium">
+      <span className="min-w-[126px] text-center text-sm font-medium">
         {getMonthName(month)} {year}
       </span>
       <Button

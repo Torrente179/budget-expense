@@ -2,10 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useCurrency } from "@/providers/currency-provider";
 
 interface MonthlySummary {
   totalSpent: number;
   totalBudget: number;
+  assignedCategoryBudgetTotal: number;
+  allocationPercent: number | null;
+  incomeAmount: number | null;
   expenseCount: number;
   categoryBreakdown: {
     category_id: string;
@@ -14,7 +18,6 @@ interface MonthlySummary {
     category_icon: string;
     total_amount: number;
     expense_count: number;
-    currency: string;
   }[];
   dailySpending: { date: string; amount: number }[];
   previousMonthTotal: number;
@@ -29,6 +32,9 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
   const [summary, setSummary] = useState<MonthlySummary>({
     totalSpent: 0,
     totalBudget: 0,
+    assignedCategoryBudgetTotal: 0,
+    allocationPercent: null,
+    incomeAmount: null,
     expenseCount: 0,
     categoryBreakdown: [],
     dailySpending: [],
@@ -36,6 +42,7 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
   });
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+  const { convert } = useCurrency();
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
@@ -44,72 +51,87 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     const endYear = month === 12 ? year + 1 : year;
     const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
 
-    // Fetch current month expenses with categories
-    const { data: expenses } = await supabase
-      .from("expenses")
-      .select("*, categories(*)")
-      .gte("date", startDate)
-      .lt("date", endDate)
-      .order("date");
-
-    // Fetch budgets for current month
-    const { data: budgets } = await supabase
-      .from("budgets")
-      .select("amount, currency")
-      .eq("month", month)
-      .eq("year", year);
-
-    // Fetch previous month total
-    const prevMonth = month === 1 ? 12 : month - 1;
-    const prevYear = month === 1 ? year - 1 : year;
-    const prevStartDate = `${prevYear}-${String(prevMonth).padStart(2, "0")}-01`;
-    const { data: prevExpenses } = await supabase
-      .from("expenses")
-      .select("amount")
-      .gte("date", prevStartDate)
-      .lt("date", startDate);
+    const [{ data: expenses }, { data: budgets }, { data: monthlyPlan }, { data: prevExpenses }] =
+      await Promise.all([
+        supabase
+          .from("expenses")
+          .select("amount, currency, date, category_id, categories(*)")
+          .gte("date", startDate)
+          .lt("date", endDate)
+          .order("date"),
+        supabase
+          .from("budgets")
+          .select("amount, currency")
+          .eq("month", month)
+          .eq("year", year),
+        supabase
+          .from("monthly_budget_plans")
+          .select("income_amount, income_currency, allocation_percent")
+          .eq("month", month)
+          .eq("year", year)
+          .maybeSingle(),
+        supabase
+          .from("expenses")
+          .select("amount, currency")
+          .gte("date", `${month === 1 ? year - 1 : year}-${String(month === 1 ? 12 : month - 1).padStart(2, "0")}-01`)
+          .lt("date", startDate),
+      ]);
 
     const totalSpent =
-      expenses?.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0;
-    const totalBudget =
-      budgets?.reduce((sum, b) => sum + Number(b.amount), 0) ?? 0;
+      expenses?.reduce(
+        (sum, expense) => sum + convert(Number(expense.amount), expense.currency),
+        0
+      ) ?? 0;
+    const assignedCategoryBudgetTotal =
+      budgets?.reduce(
+        (sum, budget) => sum + convert(Number(budget.amount), budget.currency),
+        0
+      ) ?? 0;
+    const incomeAmount = monthlyPlan
+      ? convert(Number(monthlyPlan.income_amount), monthlyPlan.income_currency)
+      : null;
+    const totalBudget = monthlyPlan
+      ? incomeAmount! * (Number(monthlyPlan.allocation_percent) / 100)
+      : assignedCategoryBudgetTotal;
     const previousMonthTotal =
-      prevExpenses?.reduce((sum, e) => sum + Number(e.amount), 0) ?? 0;
+      prevExpenses?.reduce(
+        (sum, expense) => sum + convert(Number(expense.amount), expense.currency),
+        0
+      ) ?? 0;
 
-    // Category breakdown
-    const categoryMap = new Map<
-      string,
-      MonthlySummary["categoryBreakdown"][0]
-    >();
-    expenses?.forEach((e) => {
-      const cat = e.categories as {
+    const categoryMap = new Map<string, MonthlySummary["categoryBreakdown"][0]>();
+    expenses?.forEach((expense) => {
+      const category = expense.categories as {
         id: string;
         name: string;
         color: string;
         icon: string;
       };
-      const existing = categoryMap.get(cat.id);
+      const convertedAmount = convert(Number(expense.amount), expense.currency);
+      const existing = categoryMap.get(category.id);
+
       if (existing) {
-        existing.total_amount += Number(e.amount);
+        existing.total_amount += convertedAmount;
         existing.expense_count += 1;
       } else {
-        categoryMap.set(cat.id, {
-          category_id: cat.id,
-          category_name: cat.name,
-          category_color: cat.color,
-          category_icon: cat.icon,
-          total_amount: Number(e.amount),
+        categoryMap.set(category.id, {
+          category_id: category.id,
+          category_name: category.name,
+          category_color: category.color,
+          category_icon: category.icon,
+          total_amount: convertedAmount,
           expense_count: 1,
-          currency: e.currency,
         });
       }
     });
 
-    // Daily spending
     const dailyMap = new Map<string, number>();
-    expenses?.forEach((e) => {
-      const existing = dailyMap.get(e.date) ?? 0;
-      dailyMap.set(e.date, existing + Number(e.amount));
+    expenses?.forEach((expense) => {
+      const existing = dailyMap.get(expense.date) ?? 0;
+      dailyMap.set(
+        expense.date,
+        existing + convert(Number(expense.amount), expense.currency)
+      );
     });
     const dailySpending = Array.from(dailyMap.entries())
       .map(([date, amount]) => ({ date, amount }))
@@ -118,6 +140,11 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     setSummary({
       totalSpent,
       totalBudget,
+      assignedCategoryBudgetTotal,
+      allocationPercent: monthlyPlan
+        ? Number(monthlyPlan.allocation_percent)
+        : null,
+      incomeAmount,
       expenseCount: expenses?.length ?? 0,
       categoryBreakdown: Array.from(categoryMap.values()).sort(
         (a, b) => b.total_amount - a.total_amount
@@ -126,7 +153,7 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
       previousMonthTotal,
     });
     setLoading(false);
-  }, [supabase, month, year]);
+  }, [convert, supabase, month, year]);
 
   useEffect(() => {
     fetchSummary();

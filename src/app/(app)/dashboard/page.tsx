@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useExpenses } from "@/hooks/use-expenses";
 import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
@@ -10,7 +11,10 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { RecentExpenses } from "@/components/dashboard/recent-expenses";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowRight, BookOpenText, HeartHandshake } from "lucide-react";
 
 export default function DashboardPage() {
   const [month, setMonth] = useState(getCurrentMonth());
@@ -28,8 +32,11 @@ export default function DashboardPage() {
       : null;
 
   return (
-    <div className="space-y-6">
-      <PageHeader title="Dashboard">
+    <div className="space-y-8">
+      <PageHeader
+        title="Dashboard"
+        description="Review the month across spending, envelopes, and steady stewardship cues."
+      >
         <MonthPicker
           month={month}
           year={year}
@@ -41,9 +48,9 @@ export default function DashboardPage() {
       </PageHeader>
 
       {loading ? (
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[110px] rounded-lg" />
+            <Skeleton key={i} className="h-[150px] rounded-[1.75rem]" />
           ))}
         </div>
       ) : (
@@ -52,6 +59,9 @@ export default function DashboardPage() {
           totalBudget={summary.totalBudget}
           previousMonthTotal={summary.previousMonthTotal}
           topCategory={topCategory}
+          assignedCategoryBudgetTotal={summary.assignedCategoryBudgetTotal}
+          allocationPercent={summary.allocationPercent}
+          hasPlan={summary.allocationPercent !== null}
         />
       )}
 
@@ -63,10 +73,49 @@ export default function DashboardPage() {
             year={year}
           />
         </div>
-        <div className="lg:col-span-2">
+        <div className="space-y-4 lg:col-span-2">
           <CategoryBreakdown
             categoryBreakdown={summary.categoryBreakdown}
           />
+          <Card className="border-border/70">
+            <CardHeader className="pb-3">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+                    Sabiduría NBLA
+                  </p>
+                  <CardTitle className="mt-3 font-heading text-2xl">
+                    Financial wisdom for the month
+                  </CardTitle>
+                </div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                  <HeartHandshake className="h-5 w-5" />
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm leading-6 text-muted-foreground">
+                Read short Spanish stewardship themes on generosity, work, debt,
+                planning, and the wise administration of goods.
+              </p>
+              <Link href="/wisdom">
+                <Button variant="outline" className="w-full justify-between">
+                  Open Sabiduría
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </Link>
+              <div className="rounded-[1.35rem] border border-border/60 bg-background/70 px-4 py-3 text-sm text-muted-foreground">
+                <div className="flex items-center gap-2 text-foreground">
+                  <BookOpenText className="h-4 w-4 text-primary" />
+                  This week’s rhythm
+                </div>
+                <p className="mt-2 leading-6">
+                  Protect the pool first, then decide where generosity and
+                  diligence need a clearer place in the month.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
 

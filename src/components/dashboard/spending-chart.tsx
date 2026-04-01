@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCurrency } from "@/providers/currency-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -26,6 +26,11 @@ export function SpendingChart({
   year,
 }: SpendingChartProps) {
   const { baseCurrency } = useCurrency();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const data = useMemo(() => {
     const daysInMonth = getDaysInMonth(new Date(year, month - 1));
@@ -49,74 +54,79 @@ export function SpendingChart({
   }, [dailySpending, month, year]);
 
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/70">
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">
+        <CardTitle className="font-heading text-2xl">
           Cumulative spending
         </CardTitle>
       </CardHeader>
       <CardContent className="pb-4">
         <div className="h-[240px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={data}>
-              <defs>
-                <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.2} />
-                  <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="var(--border)"
-                vertical={false}
-              />
-              <XAxis
-                dataKey="label"
-                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                interval="preserveStartEnd"
-              />
-              <YAxis
-                tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={(v) =>
-                  new Intl.NumberFormat("en", {
-                    notation: "compact",
-                    style: "currency",
-                    currency: baseCurrency,
-                    maximumFractionDigits: 0,
-                  }).format(v)
-                }
-                width={60}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "var(--popover)",
-                  border: "1px solid var(--border)",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                  fontFamily: "var(--font-mono)",
-                }}
-                formatter={(value) => [
-                  new Intl.NumberFormat("en", {
-                    style: "currency",
-                    currency: baseCurrency,
-                  }).format(Number(value)),
-                  "Total",
-                ]}
-                labelFormatter={(label) => label}
-              />
-              <Area
-                type="monotone"
-                dataKey="cumulative"
-                stroke="var(--chart-1)"
-                strokeWidth={2}
-                fill="url(#spendGrad)"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          {mounted ? (
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
+              <AreaChart data={data}>
+                <defs>
+                  <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.28} />
+                    <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  stroke="var(--border)"
+                  vertical={false}
+                />
+                <XAxis
+                  dataKey="label"
+                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  interval="preserveStartEnd"
+                />
+                <YAxis
+                  tick={{ fontSize: 10, fill: "var(--muted-foreground)" }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) =>
+                    new Intl.NumberFormat("en", {
+                      notation: "compact",
+                      style: "currency",
+                      currency: baseCurrency,
+                      maximumFractionDigits: 0,
+                    }).format(v)
+                  }
+                  width={60}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: "var(--popover)",
+                    border: "1px solid var(--border)",
+                    borderRadius: "18px",
+                    fontSize: "12px",
+                    fontFamily: "var(--font-mono)",
+                    boxShadow: "0 24px 60px -40px rgba(31,29,23,0.5)",
+                  }}
+                  formatter={(value) => [
+                    new Intl.NumberFormat("en", {
+                      style: "currency",
+                      currency: baseCurrency,
+                    }).format(Number(value)),
+                    "Total",
+                  ]}
+                  labelFormatter={(label) => label}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="cumulative"
+                  stroke="var(--chart-1)"
+                  strokeWidth={2.5}
+                  fill="url(#spendGrad)"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="h-full w-full animate-pulse rounded-[1.5rem] bg-muted/50" />
+          )}
         </div>
       </CardContent>
     </Card>

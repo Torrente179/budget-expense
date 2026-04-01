@@ -88,16 +88,20 @@ export function BudgetForm({
           }
         >
           <Plus className="h-4 w-4" />
-          Add budget
+          Add envelope
         </DialogTrigger>
       )}
-      <DialogContent className="sm:max-w-[400px]">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-[430px]">
+        <DialogHeader className="space-y-3">
           <DialogTitle className="text-base">
-            {defaultValues?.amount ? "Edit budget" : "Set budget"}
+            {defaultValues?.amount ? "Edit envelope" : "Set category envelope"}
           </DialogTitle>
+          <p className="text-sm leading-6 text-muted-foreground">
+            Use envelopes to reserve part of your monthly pool for a specific
+            category without changing the overall plan.
+          </p>
         </DialogHeader>
-        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           <div className="space-y-2">
             <Label htmlFor="budget-category">Category</Label>
             <Select
@@ -131,7 +135,7 @@ export function BudgetForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="budget-amount">Amount</Label>
+              <Label htmlFor="budget-amount">Envelope amount</Label>
               <Input
                 id="budget-amount"
                 type="number"
@@ -171,14 +175,13 @@ export function BudgetForm({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
               onClick={() => setOpen(false)}
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={submitting}>
+            <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              {defaultValues?.amount ? "Save changes" : "Set budget"}
+              {defaultValues?.amount ? "Save envelope" : "Create envelope"}
             </Button>
           </div>
         </form>

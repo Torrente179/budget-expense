@@ -154,6 +154,42 @@ export interface Database {
           },
         ];
       };
+      monthly_budget_plans: {
+        Row: {
+          id: string;
+          user_id: string;
+          income_amount: number;
+          income_currency: string;
+          allocation_percent: number;
+          month: number;
+          year: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          income_amount: number;
+          income_currency?: string;
+          allocation_percent?: number;
+          month: number;
+          year: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          income_amount?: number;
+          income_currency?: string;
+          allocation_percent?: number;
+          month?: number;
+          year?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       monthly_expense_summary: {

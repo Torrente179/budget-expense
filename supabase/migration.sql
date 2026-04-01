@@ -74,7 +74,24 @@ CREATE TABLE public.budgets (
 
 CREATE INDEX idx_budgets_user_period ON public.budgets(user_id, year, month);
 
--- 5. Seed default categories
+-- 5. Monthly budget plans
+CREATE TABLE public.monthly_budget_plans (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    income_amount DECIMAL(12, 2) NOT NULL CHECK (income_amount > 0),
+    income_currency TEXT NOT NULL DEFAULT 'EUR',
+    allocation_percent DECIMAL(5, 2) NOT NULL DEFAULT 20 CHECK (allocation_percent > 0 AND allocation_percent <= 100),
+    month INTEGER NOT NULL CHECK (month BETWEEN 1 AND 12),
+    year INTEGER NOT NULL CHECK (year BETWEEN 2020 AND 2100),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(user_id, month, year)
+);
+
+CREATE INDEX idx_monthly_budget_plans_user_period
+    ON public.monthly_budget_plans(user_id, year, month);
+
+-- 6. Seed default categories
 INSERT INTO public.categories (user_id, name, icon, color, is_default) VALUES
     (NULL, 'Food & Dining',    'utensils',       '#ef4444', true),
     (NULL, 'Transportation',    'car',            '#f97316', true),
@@ -89,7 +106,7 @@ INSERT INTO public.categories (user_id, name, icon, color, is_default) VALUES
     (NULL, 'Groceries',         'shopping-cart',  '#22c55e', true),
     (NULL, 'Other',             'more-horizontal','#64748b', true);
 
--- 6. Auto-update updated_at timestamps
+-- 7. Auto-update updated_at timestamps
 CREATE OR REPLACE FUNCTION public.update_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -106,11 +123,15 @@ CREATE TRIGGER set_updated_at_budgets
     BEFORE UPDATE ON public.budgets
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+CREATE TRIGGER set_updated_at_monthly_budget_plans
+    BEFORE UPDATE ON public.monthly_budget_plans
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
 CREATE TRIGGER set_updated_at_profiles
     BEFORE UPDATE ON public.profiles
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
--- 7. Monthly expense summary view
+-- 8. Monthly expense summary view
 CREATE OR REPLACE VIEW public.monthly_expense_summary AS
 SELECT
     e.user_id,
@@ -136,6 +157,7 @@ ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.monthly_budget_plans ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
 CREATE POLICY "Users can view own profile"
@@ -176,3 +198,13 @@ CREATE POLICY "Users can update own budgets"
     ON public.budgets FOR UPDATE USING (user_id = auth.uid());
 CREATE POLICY "Users can delete own budgets"
     ON public.budgets FOR DELETE USING (user_id = auth.uid());
+
+-- Monthly budget plans
+CREATE POLICY "Users can view own monthly budget plans"
+    ON public.monthly_budget_plans FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own monthly budget plans"
+    ON public.monthly_budget_plans FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own monthly budget plans"
+    ON public.monthly_budget_plans FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own monthly budget plans"
+    ON public.monthly_budget_plans FOR DELETE USING (user_id = auth.uid());

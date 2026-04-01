@@ -12,7 +12,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <CurrencyProvider>
-      <div className="flex h-screen overflow-hidden">
+      <div className="flex min-h-screen overflow-hidden">
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
           <Topbar />
@@ -23,8 +23,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.2, ease: "easeOut" }}
-                className="p-4 lg:p-6"
+                transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                className="mx-auto w-full max-w-[1480px] p-4 sm:p-5 lg:p-8"
               >
                 {children}
               </motion.div>

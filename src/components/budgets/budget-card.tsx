@@ -5,6 +5,7 @@ import { formatCurrency } from "@/lib/utils";
 import { CategoryIcon } from "@/components/shared/category-badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Database } from "@/types/database";
@@ -18,6 +19,7 @@ interface BudgetCardProps {
   spent: number;
   spentCurrency: string;
   index: number;
+  poolAmount?: number;
   onDelete: (id: string) => void;
 }
 
@@ -26,6 +28,7 @@ export function BudgetCard({
   spent,
   spentCurrency,
   index,
+  poolAmount = 0,
   onDelete,
 }: BudgetCardProps) {
   const { baseCurrency, convert } = useCurrency();
@@ -34,6 +37,7 @@ export function BudgetCard({
   const remaining = budgetAmount - spentAmount;
   const percentage = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
   const cappedPercentage = Math.min(percentage, 100);
+  const shareOfPool = poolAmount > 0 ? (budgetAmount / poolAmount) * 100 : 0;
 
   const status =
     percentage >= 90
@@ -49,54 +53,84 @@ export function BudgetCard({
   }[status];
 
   const progressColor = {
-    good: "[&>div]:bg-emerald-500",
-    warning: "[&>div]:bg-amber-500",
-    danger: "[&>div]:bg-red-500",
+    good: "[&_[data-slot=progress-indicator]]:bg-emerald-500",
+    warning: "[&_[data-slot=progress-indicator]]:bg-amber-500",
+    danger: "[&_[data-slot=progress-indicator]]:bg-red-500",
   }[status];
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.05, duration: 0.2, ease: "easeOut" }}
-      className="group rounded-lg border border-border/50 p-4"
+      transition={{ delay: index * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+      className="group rounded-[1.5rem] border border-border/70 bg-card/76 p-5 shadow-[0_22px_60px_-42px_rgba(31,29,23,0.4)]"
     >
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <CategoryIcon
             icon={budget.categories.icon}
             color={budget.categories.color}
+            className="h-10 w-10 rounded-2xl"
           />
           <div>
-            <p className="text-sm font-medium">{budget.categories.name}</p>
-            <p className="font-mono text-xs text-muted-foreground">
-              {formatCurrency(spentAmount, baseCurrency)} /{" "}
-              {formatCurrency(budgetAmount, baseCurrency)}
+            <p className="text-base font-medium">{budget.categories.name}</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {shareOfPool > 0
+                ? `${shareOfPool.toFixed(0)}% of the monthly pool`
+                : "Category envelope"}
             </p>
           </div>
         </div>
         <Button
           variant="ghost"
           size="icon"
-          className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 text-muted-foreground hover:text-destructive"
+          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
           onClick={() => onDelete(budget.id)}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
 
-      <div className="mt-3 space-y-1.5">
-        <Progress value={cappedPercentage} className={`h-1.5 ${progressColor}`} />
+      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-2xl bg-background/70 p-3">
+          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+            Reserved
+          </p>
+          <p className="mt-2 font-mono text-base font-semibold">
+            {formatCurrency(budgetAmount, baseCurrency)}
+          </p>
+        </div>
+        <div className="rounded-2xl bg-background/70 p-3">
+          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+            Consumed
+          </p>
+          <p className="mt-2 font-mono text-base font-semibold">
+            {formatCurrency(spentAmount, baseCurrency)}
+          </p>
+        </div>
+        <div className="rounded-2xl bg-background/70 p-3">
+          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+            Left
+          </p>
+          <p className={`mt-2 font-mono text-base font-semibold ${statusColor}`}>
+            {formatCurrency(Math.abs(remaining), baseCurrency)}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-2">
         <div className="flex items-center justify-between">
-          <span className={`font-mono text-xs font-medium ${statusColor}`}>
-            {percentage.toFixed(0)}%
-          </span>
-          <span className="font-mono text-xs text-muted-foreground">
-            {remaining >= 0
-              ? `${formatCurrency(remaining, baseCurrency)} left`
-              : `${formatCurrency(Math.abs(remaining), baseCurrency)} over`}
+          <Badge
+            variant="outline"
+            className={`border-current/10 bg-background/70 ${statusColor}`}
+          >
+            {percentage.toFixed(0)}% used
+          </Badge>
+          <span className="text-sm text-muted-foreground">
+            {remaining >= 0 ? "Within envelope" : "Overspent"}
           </span>
         </div>
+        <Progress value={cappedPercentage} className={`gap-0 ${progressColor}`} />
       </div>
     </motion.div>
   );

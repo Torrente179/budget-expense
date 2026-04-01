@@ -1,0 +1,248 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  monthlyBudgetPlanSchema,
+  type MonthlyBudgetPlanFormValues,
+} from "@/lib/validations";
+import { useCurrency } from "@/providers/currency-provider";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import { formatCurrency } from "@/lib/utils";
+import { CURRENCIES } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { CircleDollarSign, Loader2, Sparkles } from "lucide-react";
+
+interface MonthlyPlanFormProps {
+  month: number;
+  year: number;
+  onSubmit: (values: MonthlyBudgetPlanFormValues) => Promise<unknown>;
+  defaultValues?: Partial<MonthlyBudgetPlanFormValues>;
+  trigger?: React.ReactNode;
+}
+
+export function MonthlyPlanForm({
+  month,
+  year,
+  onSubmit,
+  defaultValues,
+  trigger,
+}: MonthlyPlanFormProps) {
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const isMobile = useMediaQuery("(max-width: 767px)");
+  const { baseCurrency } = useCurrency();
+
+  const form = useForm<MonthlyBudgetPlanFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(monthlyBudgetPlanSchema) as any,
+    defaultValues: {
+      income_amount:
+        defaultValues?.income_amount ?? (undefined as unknown as number),
+      income_currency: defaultValues?.income_currency ?? baseCurrency,
+      allocation_percent: defaultValues?.allocation_percent ?? 20,
+      month,
+      year,
+    },
+  });
+
+  const incomeAmount = Number(form.watch("income_amount")) || 0;
+  const allocationPercent = Number(form.watch("allocation_percent")) || 0;
+  const incomeCurrency = form.watch("income_currency");
+
+  const poolPreview = useMemo(
+    () => incomeAmount * (allocationPercent / 100),
+    [incomeAmount, allocationPercent]
+  );
+
+  async function handleSubmit(values: MonthlyBudgetPlanFormValues) {
+    setSubmitting(true);
+    const error = await onSubmit({ ...values, month, year });
+    setSubmitting(false);
+
+    if (!error) {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      {trigger ? (
+        <SheetTrigger render={trigger as React.ReactElement} />
+      ) : (
+        <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
+          <CircleDollarSign className="h-4 w-4" />
+          Set monthly plan
+        </SheetTrigger>
+      )}
+
+      <SheetContent
+        side={isMobile ? "bottom" : "right"}
+        className="w-full border-l border-border/70 bg-popover/96 p-0 sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-x data-[side=bottom]:border-t"
+      >
+        <form
+          onSubmit={form.handleSubmit(handleSubmit)}
+          className="flex h-full flex-col"
+        >
+          <SheetHeader className="border-b border-border/60 px-5 py-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/12 text-primary">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <div className="space-y-1">
+                <SheetTitle>
+                  {defaultValues?.income_amount
+                    ? "Refine monthly plan"
+                    : "Set monthly plan"}
+                </SheetTitle>
+                <SheetDescription>
+                  Start with your monthly income and define the stewardship pool
+                  you want to protect first.
+                </SheetDescription>
+              </div>
+            </div>
+          </SheetHeader>
+
+          <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
+            <div className="rounded-[1.4rem] border border-border/70 bg-background/72 p-4 shadow-[0_20px_60px_-42px_rgba(31,29,23,0.45)]">
+              <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+                Monthly pool preview
+              </p>
+              <div className="mt-3 flex items-end justify-between gap-3">
+                <div>
+                  <p className="font-heading text-4xl leading-none tracking-tight text-foreground">
+                    {poolPreview > 0
+                      ? formatCurrency(poolPreview, incomeCurrency)
+                      : "--"}
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {allocationPercent || 0}% of{" "}
+                    {incomeAmount > 0
+                      ? formatCurrency(incomeAmount, incomeCurrency)
+                      : "your income"}
+                  </p>
+                </div>
+                <div className="rounded-2xl bg-secondary px-3 py-2 text-right">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    Period
+                  </p>
+                  <p className="mt-1 text-sm font-medium">
+                    {month.toString().padStart(2, "0")}/{year}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="income-amount">Monthly income</Label>
+                <Input
+                  id="income-amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="0.00"
+                  className="font-mono"
+                  {...form.register("income_amount")}
+                />
+                {form.formState.errors.income_amount && (
+                  <p className="text-xs text-destructive">
+                    {form.formState.errors.income_amount.message}
+                  </p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="income-currency">Income currency</Label>
+                <Select
+                  value={form.watch("income_currency")}
+                  onValueChange={(value) =>
+                    value && form.setValue("income_currency", value)
+                  }
+                >
+                  <SelectTrigger
+                    id="income-currency"
+                    className="font-mono text-sm"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((currency) => (
+                      <SelectItem
+                        key={currency.code}
+                        value={currency.code}
+                        className="text-sm"
+                      >
+                        {currency.flag} {currency.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="allocation-percent">Protected budget %</Label>
+              <Input
+                id="allocation-percent"
+                type="number"
+                step="1"
+                min="1"
+                max="100"
+                placeholder="20"
+                className="font-mono"
+                {...form.register("allocation_percent")}
+              />
+              <p className="text-sm text-muted-foreground">
+                Use 20% as the default target, then adjust the percentage when
+                you need a tighter or wider pool for the month.
+              </p>
+              {form.formState.errors.allocation_percent && (
+                <p className="text-xs text-destructive">
+                  {form.formState.errors.allocation_percent.message}
+                </p>
+              )}
+            </div>
+
+            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4 text-sm text-muted-foreground">
+              Category budgets remain optional. When you set them, they work as
+              envelopes inside this monthly pool instead of replacing it.
+            </div>
+          </div>
+
+          <SheetFooter className="border-t border-border/70 bg-background/86 px-5 py-4 sm:flex-row sm:justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {defaultValues?.income_amount ? "Save plan" : "Create plan"}
+            </Button>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    </Sheet>
+  );
+}

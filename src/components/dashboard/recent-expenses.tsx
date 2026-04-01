@@ -18,12 +18,12 @@ interface RecentExpensesProps {
 
 export function RecentExpenses({ expenses }: RecentExpensesProps) {
   return (
-    <Card className="border-border/50">
+    <Card className="border-border/70">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-sm font-medium">Recent expenses</CardTitle>
+        <CardTitle className="font-heading text-2xl">Recent expenses</CardTitle>
         <Link
           href="/expenses"
-          className="flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
         >
           View all
           <ArrowRight className="h-3 w-3" />
@@ -39,14 +39,14 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
             {expenses.slice(0, 5).map((expense) => (
               <div
                 key={expense.id}
-                className="flex items-center justify-between"
+                className="flex items-center justify-between gap-4 rounded-[1.35rem] border border-border/60 bg-background/70 px-4 py-3"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="min-w-0">
-                    <p className="truncate text-sm">
+                    <p className="truncate text-sm font-medium">
                       {expense.description || expense.categories.name}
                     </p>
-                    <div className="flex items-center gap-2">
+                    <div className="mt-2 flex items-center gap-2">
                       <span className="text-xs text-muted-foreground">
                         {formatDate(expense.date, "MMM d")}
                       </span>
@@ -61,7 +61,7 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
                 <CurrencyDisplay
                   amount={expense.amount}
                   currency={expense.currency}
-                  className="shrink-0 text-sm font-medium"
+                  className="shrink-0 text-sm font-semibold"
                 />
               </div>
             ))}

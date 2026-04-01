@@ -7,14 +7,6 @@ import { CurrencyDisplay } from "@/components/shared/currency-display";
 import { formatDate } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -22,10 +14,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Pencil, Trash2, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Loader2, Receipt } from "lucide-react";
 import { ExpenseForm } from "./expense-form";
 import { EmptyState } from "@/components/shared/empty-state";
-import { Receipt } from "lucide-react";
 import { motion } from "framer-motion";
 
 type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
@@ -62,10 +53,10 @@ export function ExpenseTable({
   if (loading) {
     return (
       <div className="space-y-3">
-        {Array.from({ length: 5 }).map((_, i) => (
+        {Array.from({ length: 4 }).map((_, i) => (
           <div
             key={i}
-            className="h-14 animate-pulse rounded-lg bg-muted/50"
+            className="h-[148px] animate-pulse rounded-[1.5rem] border border-border/60 bg-muted/50"
           />
         ))}
       </div>
@@ -77,183 +68,118 @@ export function ExpenseTable({
       <EmptyState
         icon={Receipt}
         title="No expenses yet"
-        description="Add your first expense to start tracking your spending."
+        description="Add your first expense to start tracking spending with more context and clarity."
       />
     );
   }
 
   return (
     <>
-      {/* Desktop table */}
-      <div className="hidden md:block">
-        <div className="rounded-lg border border-border/50">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+      <div className="space-y-3">
+        {expenses.map((expense, index) => (
+          <motion.div
+            key={expense.id}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.03, duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+            className="group rounded-[1.5rem] border border-border/70 bg-card/80 p-4 shadow-[0_22px_55px_-42px_rgba(31,29,23,0.42)] transition-transform duration-200 hover:-translate-y-0.5"
+          >
+            <div className="grid gap-4 lg:grid-cols-[minmax(0,1.2fr)_180px_minmax(0,1fr)_auto] lg:items-start">
+              <div className="min-w-0">
+                <p className="text-[0.68rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
+                  Expense
+                </p>
+                <p className="mt-2 truncate text-base font-medium text-foreground">
+                  {expense.description || expense.categories.name}
+                </p>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <CategoryBadge
+                    name={expense.categories.name}
+                    icon={expense.categories.icon}
+                    color={expense.categories.color}
+                    size="md"
+                    className="rounded-xl px-2.5 py-1"
+                  />
+                  <span className="text-xs uppercase tracking-[0.22em] text-muted-foreground">
+                    {formatDate(expense.date, "MMM d, yyyy")}
+                  </span>
+                </div>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/72 p-3">
+                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                   Date
-                </TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Category
-                </TableHead>
-                <TableHead className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Description
-                </TableHead>
-                <TableHead className="text-right text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                  Amount
-                </TableHead>
-                <TableHead className="w-[80px]" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {expenses.map((expense, i) => (
-                <motion.tr
-                  key={expense.id}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: i * 0.03, duration: 0.15 }}
-                  className="border-b border-border/50 last:border-0 hover:bg-muted/30"
-                >
-                  <TableCell className="font-mono text-sm text-muted-foreground">
-                    {formatDate(expense.date, "MMM d")}
-                  </TableCell>
-                  <TableCell>
-                    <CategoryBadge
-                      name={expense.categories.name}
-                      icon={expense.categories.icon}
-                      color={expense.categories.color}
-                    />
-                  </TableCell>
-                  <TableCell className="text-sm">
-                    {expense.description || (
-                      <span className="text-muted-foreground/50">--</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <CurrencyDisplay
-                      amount={expense.amount}
-                      currency={expense.currency}
-                      className="text-sm font-medium"
-                      showOriginal
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center justify-end gap-1">
-                      <ExpenseForm
-                        defaultValues={{
-                          amount: expense.amount,
-                          currency: expense.currency,
-                          category_id: expense.category_id,
-                          description: expense.description ?? "",
-                          date: expense.date,
-                        }}
-                        onSubmit={async (values) =>
-                          onUpdate(expense.id, values)
-                        }
-                        trigger={
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7"
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        }
-                      />
+                </p>
+                <p className="mt-2 font-mono text-sm text-foreground">
+                  {formatDate(expense.date, "EEEE, MMM d")}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border/60 bg-background/72 p-3">
+                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                  Ledger note
+                </p>
+                <p className="mt-2 text-sm leading-6 text-foreground">
+                  {expense.description || "No description added yet"}
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between gap-3 lg:flex-col lg:items-end lg:text-right">
+                <CurrencyDisplay
+                  amount={expense.amount}
+                  currency={expense.currency}
+                  className="font-heading text-2xl leading-none tracking-tight"
+                  showOriginal
+                />
+                <div className="flex items-center gap-1">
+                  <ExpenseForm
+                    defaultValues={{
+                      amount: expense.amount,
+                      currency: expense.currency,
+                      category_id: expense.category_id,
+                      description: expense.description ?? "",
+                      date: expense.date,
+                    }}
+                    onSubmit={async (values) => onUpdate(expense.id, values)}
+                    trigger={
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                        onClick={() => setDeleteId(expense.id)}
+                        className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-primary/10 hover:text-foreground"
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                    </div>
-                  </TableCell>
-                </motion.tr>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-
-      {/* Mobile cards */}
-      <div className="space-y-2 md:hidden">
-        {expenses.map((expense, i) => (
-          <motion.div
-            key={expense.id}
-            initial={{ opacity: 0, y: 4 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.03, duration: 0.15 }}
-            className="flex items-center justify-between rounded-lg border border-border/50 p-3"
-          >
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
-                style={{
-                  backgroundColor: `${expense.categories.color}15`,
-                }}
-              >
-                <CategoryBadge
-                  name=""
-                  icon={expense.categories.icon}
-                  color={expense.categories.color}
-                  className="border-0 bg-transparent px-0"
-                />
+                    }
+                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                    onClick={() => setDeleteId(expense.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="truncate text-sm font-medium">
-                  {expense.description || expense.categories.name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(expense.date, "MMM d")} &middot;{" "}
-                  {expense.categories.name}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <CurrencyDisplay
-                amount={expense.amount}
-                currency={expense.currency}
-                className="text-sm font-medium"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive"
-                onClick={() => setDeleteId(expense.id)}
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
             </div>
           </motion.div>
         ))}
       </div>
 
-      {/* Delete confirmation */}
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
-        <DialogContent className="sm:max-w-[360px]">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-[380px] rounded-[1.75rem] border-border/70 bg-popover/96 p-5">
+          <DialogHeader className="space-y-3">
             <DialogTitle>Delete expense</DialogTitle>
             <DialogDescription>
-              This action cannot be undone. This expense will be permanently
-              removed.
+              This removes the record from the current month. Your budget and
+              category totals will recalculate automatically.
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setDeleteId(null)}
-            >
+          <DialogFooter className="-mx-5 -mb-5 flex flex-col-reverse gap-2 rounded-b-[1.35rem] border-t border-border/60 bg-background/70 p-4 sm:flex-row sm:justify-end">
+            <Button variant="ghost" onClick={() => setDeleteId(null)}>
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              size="sm"
-              onClick={handleDelete}
-              disabled={deleting}
-            >
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
               Delete
             </Button>
