@@ -1,32 +1,49 @@
-const SUPABASE_URL_CANDIDATES = [
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "SUPABASE_URL",
-] as const;
-
-const SUPABASE_KEY_CANDIDATES = [
-  "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-  "SUPABASE_ANON_KEY",
-  "SUPABASE_PUBLISHABLE_KEY",
-] as const;
-
-function readFirstDefined(names: readonly string[]) {
-  for (const name of names) {
-    const value = process.env[name];
-    if (typeof value === "string" && value.trim().length > 0) {
-      return value;
-    }
+function normalize(value: string | undefined) {
+  if (typeof value !== "string") {
+    return null;
   }
-  return null;
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
 }
 
-export function getSupabaseEnv(): { url: string; key: string } | null {
-  const url = readFirstDefined(SUPABASE_URL_CANDIDATES);
-  const key = readFirstDefined(SUPABASE_KEY_CANDIDATES);
+function getPublicEnv() {
+  const url = normalize(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const key =
+    normalize(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ??
+    normalize(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
 
   if (!url || !key) {
     return null;
   }
 
   return { url, key };
+}
+
+function getServerOnlyEnv() {
+  const url = normalize(process.env.SUPABASE_URL);
+  const key =
+    normalize(process.env.SUPABASE_ANON_KEY) ??
+    normalize(process.env.SUPABASE_PUBLISHABLE_KEY);
+
+  if (!url || !key) {
+    return null;
+  }
+
+  return { url, key };
+}
+
+export function getSupabaseEnv(): { url: string; key: string } | null {
+  // In client bundles, environment variables must be referenced directly.
+  // Dynamic lookups (e.g. process.env[name]) are not reliably available.
+  const publicEnv = getPublicEnv();
+  if (publicEnv) {
+    return publicEnv;
+  }
+
+  if (typeof window === "undefined") {
+    return getServerOnlyEnv();
+  }
+
+  return null;
 }
