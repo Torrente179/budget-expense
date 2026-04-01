@@ -41,3 +41,104 @@ export const profileSchema = z.object({
 });
 
 export type ProfileFormValues = z.output<typeof profileSchema>;
+
+const isoDate = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format");
+
+export const brokerKindSchema = z.enum(["IBKR", "HAPI"]);
+export const feeModeSchema = z.enum([
+  "manual",
+  "percent",
+  "fixed",
+  "percent_plus_fixed",
+]);
+export const assetTypeSchema = z.enum(["stock", "etf", "crypto"]);
+export const marketCodeSchema = z.enum(["US", "CO", "CRYPTO"]);
+export const tradeSideSchema = z.enum(["buy", "sell"]);
+export const movementTypeSchema = z.enum(["deposit", "withdrawal"]);
+export const referenceStatusSchema = z.enum([
+  "fetched",
+  "fallback_previous_trading_day",
+  "unavailable",
+  "manual_only",
+]);
+
+export const brokerageAccountSchema = z.object({
+  broker_kind: brokerKindSchema,
+  name: z.string().min(1, "Account name is required").max(120),
+  account_currency: z.string().min(3).max(3),
+  fee_mode: feeModeSchema,
+  fee_percent: z.coerce.number().min(0),
+  fee_fixed_amount: z.coerce.number().min(0),
+  fee_min_amount: z.coerce.number().min(0),
+  fee_currency: z.string().min(3).max(3),
+});
+
+export type BrokerageAccountFormValues = z.output<
+  typeof brokerageAccountSchema
+>;
+
+export const investmentAssetSchema = z.object({
+  symbol: z
+    .string()
+    .min(1, "Symbol is required")
+    .max(32)
+    .transform((value) => value.trim().toUpperCase()),
+  display_name: z.string().max(160).optional().or(z.literal("")),
+  asset_type: assetTypeSchema,
+  market_code: marketCodeSchema,
+  exchange_code: z.string().max(16).optional().or(z.literal("")),
+  quote_currency: z.string().min(3).max(3),
+  provider_symbol_twelve: z.string().max(64).optional().or(z.literal("")),
+  provider_symbol_eodhd: z.string().max(64).optional().or(z.literal("")),
+  is_price_supported: z.boolean().default(true),
+});
+
+export type InvestmentAssetFormValues = z.output<typeof investmentAssetSchema>;
+
+export const investmentTradeSchema = z.object({
+  account_id: z.string().uuid("Please select a brokerage account"),
+  asset: investmentAssetSchema,
+  side: tradeSideSchema,
+  trade_date: isoDate,
+  quantity: z.coerce.number().positive("Quantity must be greater than 0"),
+  execution_price: z.coerce
+    .number()
+    .positive("Execution price must be greater than 0"),
+  execution_currency: z.string().min(3).max(3),
+  fee_amount: z.coerce.number().min(0),
+  fee_currency: z.string().min(3).max(3),
+  notes: z.string().max(255).optional(),
+  reference_close_price: z.coerce.number().min(0).optional().nullable(),
+  reference_close_currency: z.string().min(3).max(3).optional().nullable(),
+  reference_price_date: isoDate.optional().nullable(),
+  reference_source: z.string().max(64).optional().nullable(),
+  reference_status: referenceStatusSchema.default("manual_only"),
+});
+
+export type InvestmentTradeFormValues = z.output<typeof investmentTradeSchema>;
+
+export const investmentCashMovementSchema = z.object({
+  account_id: z.string().uuid("Please select a brokerage account"),
+  movement_type: movementTypeSchema,
+  movement_date: isoDate,
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  currency: z.string().min(3).max(3),
+  fee_amount: z.coerce.number().min(0),
+  fee_currency: z.string().min(3).max(3),
+  notes: z.string().max(255).optional(),
+});
+
+export type InvestmentCashMovementFormValues = z.output<
+  typeof investmentCashMovementSchema
+>;
+
+export const investmentWatchlistSchema = z.object({
+  asset: investmentAssetSchema,
+  note: z.string().max(255).optional(),
+});
+
+export type InvestmentWatchlistFormValues = z.output<
+  typeof investmentWatchlistSchema
+>;

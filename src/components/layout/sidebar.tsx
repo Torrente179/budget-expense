@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   BookOpenText,
+  CandlestickChart,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/expenses", label: "Expenses", icon: Receipt },
   { href: "/budgets", label: "Budgets", icon: PiggyBank },
+  { href: "/investments", label: "Investments", icon: CandlestickChart },
   { href: "/wisdom", label: "Sabiduría", icon: BookOpenText },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

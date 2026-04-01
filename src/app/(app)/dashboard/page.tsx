@@ -11,6 +11,7 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { RecentExpenses } from "@/components/dashboard/recent-expenses";
+import { InvestmentDashboardSnapshot } from "@/components/investments/investment-dashboard-snapshot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -120,6 +121,8 @@ export default function DashboardPage() {
       </div>
 
       <RecentExpenses expenses={expenses} />
+
+      <InvestmentDashboardSnapshot />
     </div>
   );
 }

@@ -1,0 +1,424 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  investmentTradeSchema,
+  type InvestmentTradeFormValues,
+} from "@/lib/validations";
+import { estimateTradeFee, type MarketPriceResponse } from "@/lib/investments";
+import { CURRENCIES } from "@/lib/constants";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { InvestmentAssetFields } from "@/components/investments/investment-asset-fields";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Loader2, Plus } from "lucide-react";
+import { format } from "date-fns";
+
+interface BrokerageAccountOption {
+  id: string;
+  broker_kind: string;
+  name: string;
+  account_currency: string;
+  fee_mode: string;
+  fee_percent: number;
+  fee_fixed_amount: number;
+  fee_min_amount: number;
+  fee_currency: string;
+}
+
+interface TradeFormProps {
+  accounts: BrokerageAccountOption[];
+  onSubmit: (values: InvestmentTradeFormValues) => Promise<unknown>;
+  lookupPrice: (params: {
+    asset: InvestmentTradeFormValues["asset"];
+    date?: string;
+  }) => Promise<MarketPriceResponse | null>;
+  defaultValues?: Partial<InvestmentTradeFormValues>;
+  trigger?: React.ReactNode;
+}
+
+function getTradeDefaults(defaultValues?: Partial<InvestmentTradeFormValues>) {
+  return {
+    account_id: defaultValues?.account_id ?? "",
+    asset: {
+      symbol: defaultValues?.asset?.symbol ?? "",
+      display_name: defaultValues?.asset?.display_name ?? "",
+      asset_type: defaultValues?.asset?.asset_type ?? "stock",
+      market_code: defaultValues?.asset?.market_code ?? "US",
+      exchange_code: defaultValues?.asset?.exchange_code ?? "",
+      quote_currency: defaultValues?.asset?.quote_currency ?? "USD",
+      provider_symbol_twelve:
+        defaultValues?.asset?.provider_symbol_twelve ?? "",
+      provider_symbol_eodhd: defaultValues?.asset?.provider_symbol_eodhd ?? "",
+      is_price_supported: defaultValues?.asset?.is_price_supported ?? true,
+    },
+    side: defaultValues?.side ?? "buy",
+    trade_date: defaultValues?.trade_date ?? format(new Date(), "yyyy-MM-dd"),
+    quantity: defaultValues?.quantity ?? (undefined as unknown as number),
+    execution_price:
+      defaultValues?.execution_price ?? (undefined as unknown as number),
+    execution_currency: defaultValues?.execution_currency ?? "USD",
+    fee_amount: defaultValues?.fee_amount ?? 0,
+    fee_currency: defaultValues?.fee_currency ?? "USD",
+    notes: defaultValues?.notes ?? "",
+    reference_close_price: defaultValues?.reference_close_price ?? null,
+    reference_close_currency: defaultValues?.reference_close_currency ?? null,
+    reference_price_date: defaultValues?.reference_price_date ?? null,
+    reference_source: defaultValues?.reference_source ?? null,
+    reference_status: defaultValues?.reference_status ?? "manual_only",
+  } satisfies InvestmentTradeFormValues;
+}
+
+export function TradeForm({
+  accounts,
+  onSubmit,
+  lookupPrice,
+  defaultValues,
+  trigger,
+}: TradeFormProps) {
+  const [open, setOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [quoteLoading, setQuoteLoading] = useState(false);
+
+  const form = useForm<InvestmentTradeFormValues>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(investmentTradeSchema) as any,
+    defaultValues: getTradeDefaults(defaultValues),
+  });
+
+  const accountId = form.watch("account_id");
+  const selectedAccount = accounts.find((account) => account.id === accountId);
+  const quantity = Number(form.watch("quantity")) || 0;
+  const executionPrice = Number(form.watch("execution_price")) || 0;
+  const tradeDate = form.watch("trade_date");
+  const asset = form.watch("asset");
+
+  useEffect(() => {
+    if (!open) return;
+    form.reset(getTradeDefaults(defaultValues));
+  }, [defaultValues, form, open]);
+
+  useEffect(() => {
+    if (!selectedAccount) return;
+    if (!form.getValues("execution_currency")) {
+      form.setValue("execution_currency", selectedAccount.account_currency);
+    }
+    if (!form.getValues("fee_currency")) {
+      form.setValue("fee_currency", selectedAccount.fee_currency);
+    }
+  }, [form, selectedAccount]);
+
+  useEffect(() => {
+    if (!selectedAccount) return;
+    if (form.getFieldState("fee_amount").isDirty) return;
+
+    const estimatedFee = estimateTradeFee(selectedAccount, quantity * executionPrice);
+    form.setValue("fee_amount", Number(estimatedFee.toFixed(4)));
+    form.setValue("fee_currency", selectedAccount.fee_currency);
+  }, [executionPrice, form, quantity, selectedAccount]);
+
+  useEffect(() => {
+    if (!open || !asset?.symbol || !tradeDate) {
+      return;
+    }
+
+    let cancelled = false;
+    setQuoteLoading(true);
+
+    const timeout = setTimeout(async () => {
+      const quote = await lookupPrice({
+        asset,
+        date: tradeDate,
+      });
+
+      if (cancelled) return;
+
+      if (quote?.close) {
+        form.setValue("reference_close_price", quote.close);
+        form.setValue("reference_close_currency", quote.currency ?? "USD");
+        form.setValue("reference_price_date", quote.resolvedDate);
+        form.setValue("reference_source", quote.source ?? null);
+        form.setValue("reference_status", quote.status);
+
+        if (
+          !form.getFieldState("execution_price").isDirty ||
+          Number(form.getValues("execution_price")) === 0
+        ) {
+          form.setValue("execution_price", quote.close, {
+            shouldValidate: true,
+          });
+        }
+
+        if (
+          !form.getFieldState("execution_currency").isDirty &&
+          quote.currency
+        ) {
+          form.setValue("execution_currency", quote.currency, {
+            shouldValidate: true,
+          });
+        }
+      } else {
+        form.setValue("reference_close_price", null);
+        form.setValue("reference_close_currency", null);
+        form.setValue("reference_price_date", null);
+        form.setValue("reference_source", null);
+        form.setValue("reference_status", quote?.status ?? "manual_only");
+      }
+
+      setQuoteLoading(false);
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timeout);
+      setQuoteLoading(false);
+    };
+  }, [asset, form, lookupPrice, open, tradeDate]);
+
+  async function handleSubmit(values: InvestmentTradeFormValues) {
+    setSubmitting(true);
+    const error = await onSubmit(values);
+    setSubmitting(false);
+
+    if (!error) {
+      setOpen(false);
+    }
+  }
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      {trigger ? (
+        <SheetTrigger render={trigger as React.ReactElement} />
+      ) : (
+        <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
+          <Plus className="h-4 w-4" />
+          Add order
+        </SheetTrigger>
+      )}
+
+      <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-[760px]">
+        <form className="flex h-full flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
+          <SheetHeader className="border-b border-border/70 px-5 py-5">
+            <SheetTitle>
+              {defaultValues ? "Edit order" : "Add stock or crypto order"}
+            </SheetTitle>
+            <SheetDescription>
+              Store the exact execution price, while keeping the fetched daily
+              close as reference when it is available.
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="flex-1 space-y-5 px-5 py-5">
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="trade-account">Brokerage account</Label>
+                <Select
+                  value={accountId}
+                  onValueChange={(value) =>
+                    value &&
+                    form.setValue("account_id", value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger id="trade-account" className="h-11">
+                    <SelectValue placeholder="Select an account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {accounts.map((account) => (
+                      <SelectItem key={account.id} value={account.id}>
+                        {account.name} · {account.broker_kind}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="trade-side">Side</Label>
+                <Select
+                  value={form.watch("side")}
+                  onValueChange={(value) =>
+                    value &&
+                    form.setValue("side", value as "buy" | "sell", {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger id="trade-side" className="h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="buy">Buy</SelectItem>
+                    <SelectItem value="sell">Sell</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <InvestmentAssetFields form={form} />
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="trade-date">Trade date</Label>
+                <Input
+                  id="trade-date"
+                  type="date"
+                  className="h-11"
+                  {...form.register("trade_date")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trade-quantity">Quantity</Label>
+                <Input
+                  id="trade-quantity"
+                  type="number"
+                  step="0.00000001"
+                  min="0.00000001"
+                  className="h-11 font-mono"
+                  {...form.register("quantity")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trade-price">Execution price</Label>
+                <Input
+                  id="trade-price"
+                  type="number"
+                  step="0.00000001"
+                  min="0.00000001"
+                  className="h-11 font-mono"
+                  {...form.register("execution_price")}
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-3">
+              <div className="space-y-2">
+                <Label htmlFor="trade-price-currency">Price currency</Label>
+                <Select
+                  value={form.watch("execution_currency")}
+                  onValueChange={(value) =>
+                    value &&
+                    form.setValue("execution_currency", value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger id="trade-price-currency" className="h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        {currency.flag} {currency.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trade-fee">Fee amount</Label>
+                <Input
+                  id="trade-fee"
+                  type="number"
+                  step="0.00000001"
+                  min="0"
+                  className="h-11 font-mono"
+                  {...form.register("fee_amount")}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trade-fee-currency">Fee currency</Label>
+                <Select
+                  value={form.watch("fee_currency")}
+                  onValueChange={(value) =>
+                    value &&
+                    form.setValue("fee_currency", value, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger id="trade-fee-currency" className="h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        {currency.flag} {currency.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="trade-notes">Notes</Label>
+              <Input
+                id="trade-notes"
+                placeholder="Optional notes about the fill or the setup"
+                className="h-11"
+                {...form.register("notes")}
+              />
+            </div>
+
+            <div className="rounded-[1.4rem] border border-border/70 bg-secondary/35 p-4 text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <p className="font-medium text-foreground">Reference market close</p>
+                {quoteLoading && (
+                  <span className="inline-flex items-center gap-2 text-muted-foreground">
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Looking up price
+                  </span>
+                )}
+              </div>
+              <p className="mt-2 text-muted-foreground">
+                {form.watch("reference_close_price")
+                  ? `${form.watch("reference_source") ?? "Provider"} returned ${form
+                      .watch("reference_close_price")
+                      ?.toFixed(4)} ${form.watch("reference_close_currency") ?? ""} for ${
+                      form.watch("reference_price_date") ?? tradeDate
+                    }.`
+                  : "No provider quote locked yet. Manual execution pricing still works."}
+              </p>
+            </div>
+          </div>
+
+          <SheetFooter className="border-t border-border/60 px-5 py-4">
+            <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={submitting}>
+                {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+                {defaultValues ? "Save order" : "Create order"}
+              </Button>
+            </div>
+          </SheetFooter>
+        </form>
+      </SheetContent>
+    </Sheet>
+  );
+}

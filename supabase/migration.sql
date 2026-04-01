@@ -91,6 +91,131 @@ CREATE TABLE public.monthly_budget_plans (
 CREATE INDEX idx_monthly_budget_plans_user_period
     ON public.monthly_budget_plans(user_id, year, month);
 
+-- 6. Brokerage accounts
+CREATE TABLE public.brokerage_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    broker_kind TEXT NOT NULL CHECK (broker_kind IN ('IBKR', 'HAPI')),
+    name TEXT NOT NULL,
+    account_currency TEXT NOT NULL DEFAULT 'USD',
+    fee_mode TEXT NOT NULL DEFAULT 'manual' CHECK (fee_mode IN ('manual', 'percent', 'fixed', 'percent_plus_fixed')),
+    fee_percent DECIMAL(10, 6) NOT NULL DEFAULT 0 CHECK (fee_percent >= 0),
+    fee_fixed_amount DECIMAL(12, 4) NOT NULL DEFAULT 0 CHECK (fee_fixed_amount >= 0),
+    fee_min_amount DECIMAL(12, 4) NOT NULL DEFAULT 0 CHECK (fee_min_amount >= 0),
+    fee_currency TEXT NOT NULL DEFAULT 'USD',
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_brokerage_accounts_user_id
+    ON public.brokerage_accounts(user_id, created_at);
+
+-- 7. Investment assets
+CREATE TABLE public.investment_assets (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    asset_key TEXT NOT NULL,
+    symbol TEXT NOT NULL,
+    display_name TEXT,
+    asset_type TEXT NOT NULL CHECK (asset_type IN ('stock', 'etf', 'crypto')),
+    market_code TEXT NOT NULL CHECK (market_code IN ('US', 'CO', 'CRYPTO')),
+    exchange_code TEXT,
+    quote_currency TEXT NOT NULL DEFAULT 'USD',
+    provider_symbol_twelve TEXT,
+    provider_symbol_eodhd TEXT,
+    is_price_supported BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(user_id, asset_key)
+);
+
+CREATE INDEX idx_investment_assets_user_lookup
+    ON public.investment_assets(user_id, market_code, symbol);
+
+-- 8. Investment trades
+CREATE TABLE public.investment_trades (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    account_id UUID NOT NULL REFERENCES public.brokerage_accounts(id) ON DELETE CASCADE,
+    asset_id UUID NOT NULL REFERENCES public.investment_assets(id) ON DELETE CASCADE,
+    side TEXT NOT NULL CHECK (side IN ('buy', 'sell')),
+    trade_date DATE NOT NULL,
+    quantity DECIMAL(18, 8) NOT NULL CHECK (quantity > 0),
+    execution_price DECIMAL(18, 8) NOT NULL CHECK (execution_price > 0),
+    execution_currency TEXT NOT NULL,
+    reference_close_price DECIMAL(18, 8),
+    reference_close_currency TEXT,
+    reference_price_date DATE,
+    reference_source TEXT,
+    reference_status TEXT NOT NULL DEFAULT 'manual_only'
+        CHECK (reference_status IN ('fetched', 'fallback_previous_trading_day', 'unavailable', 'manual_only')),
+    fee_amount DECIMAL(18, 8) NOT NULL DEFAULT 0 CHECK (fee_amount >= 0),
+    fee_currency TEXT NOT NULL DEFAULT 'USD',
+    notes TEXT,
+    source_kind TEXT NOT NULL DEFAULT 'manual' CHECK (source_kind IN ('manual', 'ibkr_import', 'hapi_statement')),
+    external_ref TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_investment_trades_user_date
+    ON public.investment_trades(user_id, trade_date DESC, created_at DESC);
+CREATE INDEX idx_investment_trades_asset
+    ON public.investment_trades(user_id, asset_id, trade_date DESC);
+CREATE INDEX idx_investment_trades_account
+    ON public.investment_trades(user_id, account_id, trade_date DESC);
+
+-- 9. Investment cash movements
+CREATE TABLE public.investment_cash_movements (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    account_id UUID NOT NULL REFERENCES public.brokerage_accounts(id) ON DELETE CASCADE,
+    movement_type TEXT NOT NULL CHECK (movement_type IN ('deposit', 'withdrawal')),
+    movement_date DATE NOT NULL,
+    amount DECIMAL(18, 8) NOT NULL CHECK (amount > 0),
+    currency TEXT NOT NULL,
+    fee_amount DECIMAL(18, 8) NOT NULL DEFAULT 0 CHECK (fee_amount >= 0),
+    fee_currency TEXT NOT NULL DEFAULT 'USD',
+    notes TEXT,
+    source_kind TEXT NOT NULL DEFAULT 'manual' CHECK (source_kind IN ('manual', 'ibkr_import', 'hapi_statement')),
+    external_ref TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_investment_cash_movements_user_date
+    ON public.investment_cash_movements(user_id, movement_date DESC, created_at DESC);
+CREATE INDEX idx_investment_cash_movements_account
+    ON public.investment_cash_movements(user_id, account_id, movement_date DESC);
+
+-- 10. Investment watchlist
+CREATE TABLE public.investment_watchlist (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    asset_id UUID NOT NULL REFERENCES public.investment_assets(id) ON DELETE CASCADE,
+    note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(user_id, asset_id)
+);
+
+CREATE INDEX idx_investment_watchlist_user_id
+    ON public.investment_watchlist(user_id, created_at DESC);
+
+-- 11. Market price history cache
+CREATE TABLE public.market_price_history (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    provider TEXT NOT NULL CHECK (provider IN ('twelve_data', 'eodhd')),
+    provider_symbol TEXT NOT NULL,
+    quote_date DATE NOT NULL,
+    close DECIMAL(18, 8) NOT NULL CHECK (close >= 0),
+    currency TEXT NOT NULL,
+    fetched_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(provider, provider_symbol, quote_date)
+);
+
+CREATE INDEX idx_market_price_history_lookup
+    ON public.market_price_history(provider, provider_symbol, quote_date DESC);
+
 -- 6. Seed default categories
 INSERT INTO public.categories (user_id, name, icon, color, is_default) VALUES
     (NULL, 'Food & Dining',    'utensils',       '#ef4444', true),
@@ -131,6 +256,22 @@ CREATE TRIGGER set_updated_at_profiles
     BEFORE UPDATE ON public.profiles
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+CREATE TRIGGER set_updated_at_brokerage_accounts
+    BEFORE UPDATE ON public.brokerage_accounts
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER set_updated_at_investment_assets
+    BEFORE UPDATE ON public.investment_assets
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER set_updated_at_investment_trades
+    BEFORE UPDATE ON public.investment_trades
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER set_updated_at_investment_cash_movements
+    BEFORE UPDATE ON public.investment_cash_movements
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
 -- 8. Monthly expense summary view
 CREATE OR REPLACE VIEW public.monthly_expense_summary AS
 SELECT
@@ -158,6 +299,12 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.monthly_budget_plans ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.brokerage_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investment_assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investment_trades ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investment_cash_movements ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investment_watchlist ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.market_price_history ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
 CREATE POLICY "Users can view own profile"
@@ -208,3 +355,61 @@ CREATE POLICY "Users can update own monthly budget plans"
     ON public.monthly_budget_plans FOR UPDATE USING (user_id = auth.uid());
 CREATE POLICY "Users can delete own monthly budget plans"
     ON public.monthly_budget_plans FOR DELETE USING (user_id = auth.uid());
+
+-- Brokerage accounts
+CREATE POLICY "Users can view own brokerage accounts"
+    ON public.brokerage_accounts FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own brokerage accounts"
+    ON public.brokerage_accounts FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own brokerage accounts"
+    ON public.brokerage_accounts FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own brokerage accounts"
+    ON public.brokerage_accounts FOR DELETE USING (user_id = auth.uid());
+
+-- Investment assets
+CREATE POLICY "Users can view own investment assets"
+    ON public.investment_assets FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own investment assets"
+    ON public.investment_assets FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own investment assets"
+    ON public.investment_assets FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own investment assets"
+    ON public.investment_assets FOR DELETE USING (user_id = auth.uid());
+
+-- Investment trades
+CREATE POLICY "Users can view own investment trades"
+    ON public.investment_trades FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own investment trades"
+    ON public.investment_trades FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own investment trades"
+    ON public.investment_trades FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own investment trades"
+    ON public.investment_trades FOR DELETE USING (user_id = auth.uid());
+
+-- Investment cash movements
+CREATE POLICY "Users can view own investment cash movements"
+    ON public.investment_cash_movements FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own investment cash movements"
+    ON public.investment_cash_movements FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own investment cash movements"
+    ON public.investment_cash_movements FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own investment cash movements"
+    ON public.investment_cash_movements FOR DELETE USING (user_id = auth.uid());
+
+-- Investment watchlist
+CREATE POLICY "Users can view own investment watchlist"
+    ON public.investment_watchlist FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own investment watchlist"
+    ON public.investment_watchlist FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own investment watchlist"
+    ON public.investment_watchlist FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own investment watchlist"
+    ON public.investment_watchlist FOR DELETE USING (user_id = auth.uid());
+
+-- Market price history
+CREATE POLICY "Authenticated users can view market price history"
+    ON public.market_price_history FOR SELECT USING (auth.uid() IS NOT NULL);
+CREATE POLICY "Authenticated users can insert market price history"
+    ON public.market_price_history FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
+CREATE POLICY "Authenticated users can update market price history"
+    ON public.market_price_history FOR UPDATE USING (auth.uid() IS NOT NULL);

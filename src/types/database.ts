@@ -190,6 +190,310 @@ export interface Database {
         };
         Relationships: [];
       };
+      brokerage_accounts: {
+        Row: {
+          id: string;
+          user_id: string;
+          broker_kind: string;
+          name: string;
+          account_currency: string;
+          fee_mode: string;
+          fee_percent: number;
+          fee_fixed_amount: number;
+          fee_min_amount: number;
+          fee_currency: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          broker_kind: string;
+          name: string;
+          account_currency?: string;
+          fee_mode?: string;
+          fee_percent?: number;
+          fee_fixed_amount?: number;
+          fee_min_amount?: number;
+          fee_currency?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          broker_kind?: string;
+          name?: string;
+          account_currency?: string;
+          fee_mode?: string;
+          fee_percent?: number;
+          fee_fixed_amount?: number;
+          fee_min_amount?: number;
+          fee_currency?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      investment_assets: {
+        Row: {
+          id: string;
+          user_id: string;
+          asset_key: string;
+          symbol: string;
+          display_name: string | null;
+          asset_type: string;
+          market_code: string;
+          exchange_code: string | null;
+          quote_currency: string;
+          provider_symbol_twelve: string | null;
+          provider_symbol_eodhd: string | null;
+          is_price_supported: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          asset_key: string;
+          symbol: string;
+          display_name?: string | null;
+          asset_type: string;
+          market_code: string;
+          exchange_code?: string | null;
+          quote_currency?: string;
+          provider_symbol_twelve?: string | null;
+          provider_symbol_eodhd?: string | null;
+          is_price_supported?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          asset_key?: string;
+          symbol?: string;
+          display_name?: string | null;
+          asset_type?: string;
+          market_code?: string;
+          exchange_code?: string | null;
+          quote_currency?: string;
+          provider_symbol_twelve?: string | null;
+          provider_symbol_eodhd?: string | null;
+          is_price_supported?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      investment_trades: {
+        Row: {
+          id: string;
+          user_id: string;
+          account_id: string;
+          asset_id: string;
+          side: string;
+          trade_date: string;
+          quantity: number;
+          execution_price: number;
+          execution_currency: string;
+          reference_close_price: number | null;
+          reference_close_currency: string | null;
+          reference_price_date: string | null;
+          reference_source: string | null;
+          reference_status: string;
+          fee_amount: number;
+          fee_currency: string;
+          notes: string | null;
+          source_kind: string;
+          external_ref: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          account_id: string;
+          asset_id: string;
+          side: string;
+          trade_date: string;
+          quantity: number;
+          execution_price: number;
+          execution_currency: string;
+          reference_close_price?: number | null;
+          reference_close_currency?: string | null;
+          reference_price_date?: string | null;
+          reference_source?: string | null;
+          reference_status?: string;
+          fee_amount?: number;
+          fee_currency?: string;
+          notes?: string | null;
+          source_kind?: string;
+          external_ref?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          account_id?: string;
+          asset_id?: string;
+          side?: string;
+          trade_date?: string;
+          quantity?: number;
+          execution_price?: number;
+          execution_currency?: string;
+          reference_close_price?: number | null;
+          reference_close_currency?: string | null;
+          reference_price_date?: string | null;
+          reference_source?: string | null;
+          reference_status?: string;
+          fee_amount?: number;
+          fee_currency?: string;
+          notes?: string | null;
+          source_kind?: string;
+          external_ref?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "investment_trades_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "brokerage_accounts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "investment_trades_asset_id_fkey";
+            columns: ["asset_id"];
+            isOneToOne: false;
+            referencedRelation: "investment_assets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      investment_cash_movements: {
+        Row: {
+          id: string;
+          user_id: string;
+          account_id: string;
+          movement_type: string;
+          movement_date: string;
+          amount: number;
+          currency: string;
+          fee_amount: number;
+          fee_currency: string;
+          notes: string | null;
+          source_kind: string;
+          external_ref: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          account_id: string;
+          movement_type: string;
+          movement_date: string;
+          amount: number;
+          currency: string;
+          fee_amount?: number;
+          fee_currency?: string;
+          notes?: string | null;
+          source_kind?: string;
+          external_ref?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          account_id?: string;
+          movement_type?: string;
+          movement_date?: string;
+          amount?: number;
+          currency?: string;
+          fee_amount?: number;
+          fee_currency?: string;
+          notes?: string | null;
+          source_kind?: string;
+          external_ref?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "investment_cash_movements_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "brokerage_accounts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      investment_watchlist: {
+        Row: {
+          id: string;
+          user_id: string;
+          asset_id: string;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          asset_id: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          asset_id?: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "investment_watchlist_asset_id_fkey";
+            columns: ["asset_id"];
+            isOneToOne: false;
+            referencedRelation: "investment_assets";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      market_price_history: {
+        Row: {
+          id: string;
+          provider: string;
+          provider_symbol: string;
+          quote_date: string;
+          close: number;
+          currency: string;
+          fetched_at: string;
+        };
+        Insert: {
+          id?: string;
+          provider: string;
+          provider_symbol: string;
+          quote_date: string;
+          close: number;
+          currency: string;
+          fetched_at?: string;
+        };
+        Update: {
+          id?: string;
+          provider?: string;
+          provider_symbol?: string;
+          quote_date?: string;
+          close?: number;
+          currency?: string;
+          fetched_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: {
       monthly_expense_summary: {
