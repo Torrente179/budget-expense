@@ -108,7 +108,7 @@ export function MobileBottomNav() {
   ];
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-[4.6rem] items-center justify-around border-t border-border bg-background/92 px-3 backdrop-blur-2xl md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-[4.75rem] items-center gap-1 border-t border-border bg-background/92 px-2 backdrop-blur-2xl md:hidden">
       {navItems.map((item) => {
         const isActive = pathname === item.href;
         return (
@@ -116,14 +116,14 @@ export function MobileBottomNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "flex min-w-0 flex-col items-center gap-1 rounded-[1.15rem] px-3 py-2 text-[10px] font-medium transition-all duration-150",
+              "flex min-w-0 flex-1 basis-0 flex-col items-center justify-center gap-1 rounded-[1rem] px-1 py-2 text-[9px] font-medium leading-none tracking-[-0.01em] transition-all duration-150",
               isActive
                 ? "bg-secondary text-foreground ring-1 ring-border"
                 : "text-muted-foreground"
             )}
           >
-            <item.icon className="h-5 w-5" />
-            {item.label}
+            <item.icon className="h-[1.05rem] w-[1.05rem]" />
+            <span className="w-full truncate text-center">{item.label}</span>
           </Link>
         );
       })}

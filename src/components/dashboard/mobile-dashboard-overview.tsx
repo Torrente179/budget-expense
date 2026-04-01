@@ -84,6 +84,22 @@ export function MobileDashboardOverview({
     );
   }, [dailySpending, month, year]);
 
+  const chartSeries = useMemo(() => {
+    if (chartData.length === 0) {
+      return [];
+    }
+
+    if (chartData.length === 1) {
+      const singlePoint = chartData[0];
+      return [
+        { ...singlePoint, day: Math.max(singlePoint.day - 1, 0), daily: 0, cumulative: 0 },
+        singlePoint,
+      ];
+    }
+
+    return chartData;
+  }, [chartData]);
+
   const weeklyChange = useMemo(() => {
     const currentWeek = chartData
       .slice(-7)
@@ -149,6 +165,11 @@ export function MobileDashboardOverview({
       value: formatCurrency(assignedCategoryBudgetTotal, baseCurrency),
     },
   ];
+
+  const movementSummaryLabel = t(
+    `${expenseCount} movement${expenseCount === 1 ? "" : "s"} registered this month`,
+    `${expenseCount} movimiento${expenseCount === 1 ? "" : "s"} registrado${expenseCount === 1 ? "" : "s"} este mes`
+  );
 
   return (
     <div className="space-y-4 md:hidden">
@@ -296,9 +317,9 @@ export function MobileDashboardOverview({
         </CardHeader>
         <CardContent className="pb-4">
           <div className="h-[140px]">
-            {chartData.length > 0 ? (
+            {chartSeries.length > 0 ? (
               <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={140}>
-                <AreaChart data={chartData}>
+                <AreaChart data={chartSeries}>
                   <defs>
                     <linearGradient id="mobileSpendGrad" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.32} />
@@ -308,9 +329,11 @@ export function MobileDashboardOverview({
                   <Area
                     type="monotone"
                     dataKey="cumulative"
-                    stroke="var(--foreground)"
+                    stroke="var(--chart-1)"
                     strokeWidth={2.2}
                     fill="url(#mobileSpendGrad)"
+                    dot={false}
+                    activeDot={false}
                   />
                 </AreaChart>
               </ResponsiveContainer>
@@ -329,10 +352,7 @@ export function MobileDashboardOverview({
             </p>
           </div>
           <p className="mt-2 text-xs text-muted-foreground">
-            {t(
-              `${expenseCount} movements registered this month`,
-              `${expenseCount} movimientos registrados este mes`
-            )}
+            {movementSummaryLabel}
           </p>
         </CardContent>
       </Card>
