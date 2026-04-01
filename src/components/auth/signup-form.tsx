@@ -30,11 +30,16 @@ export function SignupForm() {
     setError(null);
     setLoading(true);
 
+    const appOrigin =
+      process.env.NEXT_PUBLIC_SITE_URL ?? window.location.origin;
+    const emailRedirectTo = `${appOrigin.replace(/\/$/, "")}/auth/callback`;
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: { full_name: displayName },
+        emailRedirectTo,
       },
     });
 
