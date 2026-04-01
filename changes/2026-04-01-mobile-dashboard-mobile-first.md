@@ -19,6 +19,12 @@
   - reduce recent activity density on dashboard mobile
 - Updated `src/components/dashboard/recent-expenses.tsx` to support configurable list density via `maxItems`.
 
+## Follow-up Polish
+- Refined the three mobile metric boxes (`Spent`, `Budget`, `Envelopes`) so they read as framed data tiles instead of cramped chips:
+  - stronger border contrast and subtle depth shadow
+  - consistent tile height and vertical alignment
+  - tighter label tracking and clearer amount typography
+
 ## Verification
 - `npm run lint` passes.
 - `npm run build` passes.
