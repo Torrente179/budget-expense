@@ -74,10 +74,11 @@ export default function DashboardPage() {
       ) : (
         <>
           <MobileDashboardOverview
+            totalIncome={summary.totalIncome}
             totalSpent={summary.totalSpent}
+            availableBalance={summary.availableBalance}
             totalBudget={summary.totalBudget}
             previousMonthTotal={summary.previousMonthTotal}
-            assignedCategoryBudgetTotal={summary.assignedCategoryBudgetTotal}
             expenseCount={summary.expenseCount}
             topCategory={topCategory}
             dailySpending={summary.dailySpending}
@@ -86,11 +87,10 @@ export default function DashboardPage() {
           />
           <div className="hidden md:block">
             <SummaryCards
+              totalIncome={summary.totalIncome}
               totalSpent={summary.totalSpent}
-              totalBudget={summary.totalBudget}
+              availableBalance={summary.availableBalance}
               previousMonthTotal={summary.previousMonthTotal}
-              topCategory={topCategory}
-              assignedCategoryBudgetTotal={summary.assignedCategoryBudgetTotal}
               allocationPercent={summary.allocationPercent}
               hasPlan={summary.allocationPercent !== null}
             />

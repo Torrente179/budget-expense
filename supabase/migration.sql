@@ -58,7 +58,23 @@ CREATE INDEX idx_expenses_user_id ON public.expenses(user_id);
 CREATE INDEX idx_expenses_date ON public.expenses(user_id, date);
 CREATE INDEX idx_expenses_category ON public.expenses(user_id, category_id);
 
--- 4. Budgets
+-- 4. Income entries
+CREATE TABLE public.income_entries (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    source TEXT NOT NULL CHECK (char_length(btrim(source)) > 0 AND char_length(source) <= 100),
+    amount DECIMAL(12, 2) NOT NULL CHECK (amount > 0),
+    currency TEXT NOT NULL DEFAULT 'EUR',
+    description TEXT,
+    date DATE NOT NULL DEFAULT CURRENT_DATE,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_income_entries_user_id ON public.income_entries(user_id);
+CREATE INDEX idx_income_entries_date ON public.income_entries(user_id, date);
+
+-- 5. Budgets
 CREATE TABLE public.budgets (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -252,6 +268,10 @@ CREATE TRIGGER set_updated_at_expenses
     BEFORE UPDATE ON public.expenses
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+CREATE TRIGGER set_updated_at_income_entries
+    BEFORE UPDATE ON public.income_entries
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
 CREATE TRIGGER set_updated_at_budgets
     BEFORE UPDATE ON public.budgets
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
@@ -305,6 +325,7 @@ GROUP BY e.user_id, EXTRACT(YEAR FROM e.date), EXTRACT(MONTH FROM e.date),
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.expenses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.income_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.monthly_budget_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.brokerage_accounts ENABLE ROW LEVEL SECURITY;
@@ -343,6 +364,16 @@ CREATE POLICY "Users can update own expenses"
     ON public.expenses FOR UPDATE USING (user_id = auth.uid());
 CREATE POLICY "Users can delete own expenses"
     ON public.expenses FOR DELETE USING (user_id = auth.uid());
+
+-- Income entries
+CREATE POLICY "Users can view own income entries"
+    ON public.income_entries FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own income entries"
+    ON public.income_entries FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own income entries"
+    ON public.income_entries FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own income entries"
+    ON public.income_entries FOR DELETE USING (user_id = auth.uid());
 
 -- Budgets
 CREATE POLICY "Users can view own budgets"

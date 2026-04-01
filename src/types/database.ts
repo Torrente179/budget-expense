@@ -110,6 +110,42 @@ export interface Database {
           },
         ];
       };
+      income_entries: {
+        Row: {
+          id: string;
+          user_id: string;
+          source: string;
+          amount: number;
+          currency: string;
+          description: string | null;
+          date: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          source: string;
+          amount: number;
+          currency?: string;
+          description?: string | null;
+          date?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          source?: string;
+          amount?: number;
+          currency?: string;
+          description?: string | null;
+          date?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       budgets: {
         Row: {
           id: string;

@@ -11,10 +11,12 @@ import {
   LogOut,
   BookOpenText,
   CandlestickChart,
+  TrendingUp,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/providers/locale-provider";
+import { TotalNavIcon } from "./total-nav-icon";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -23,7 +25,9 @@ export function Sidebar() {
   const { t } = useLocale();
   const navItems = [
     { href: "/dashboard", label: t("Dashboard", "Panel"), icon: LayoutDashboard },
+    { href: "/available-now", label: t("Total", "Total"), icon: TotalNavIcon },
     { href: "/expenses", label: t("Expenses", "Gastos"), icon: Receipt },
+    { href: "/incomes", label: t("Incomes", "Ingresos"), icon: TrendingUp },
     { href: "/budgets", label: t("Budgets", "Presupuestos"), icon: PiggyBank },
     {
       href: "/investments",

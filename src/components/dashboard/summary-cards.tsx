@@ -7,30 +7,26 @@ import { Badge } from "@/components/ui/badge";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  PiggyBank,
-  Target,
+  TrendingUp,
   Wallet,
-  WalletCards,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/providers/locale-provider";
 
 interface SummaryCardsProps {
+  totalIncome: number;
   totalSpent: number;
-  totalBudget: number;
+  availableBalance: number;
   previousMonthTotal: number;
-  topCategory: { name: string; amount: number } | null;
-  assignedCategoryBudgetTotal: number;
   allocationPercent: number | null;
   hasPlan: boolean;
 }
 
 export function SummaryCards({
+  totalIncome,
   totalSpent,
-  totalBudget,
+  availableBalance,
   previousMonthTotal,
-  topCategory,
-  assignedCategoryBudgetTotal,
   allocationPercent,
   hasPlan,
 }: SummaryCardsProps) {
@@ -41,7 +37,6 @@ export function SummaryCards({
     previousMonthTotal > 0
       ? ((totalSpent - previousMonthTotal) / previousMonthTotal) * 100
       : 0;
-  const budgetRemaining = totalBudget - totalSpent;
   const cards = [
     {
       id: "spent",
@@ -62,52 +57,38 @@ export function SummaryCards({
       icon: Wallet,
     },
     {
-      id: "pool",
-      label: hasPlan
-        ? t("Pool left", "Fondo disponible")
-        : t("Budget left", "Presupuesto disponible"),
-      value: formatCurrency(Math.max(budgetRemaining, 0), baseCurrency),
+      id: "income",
+      label: t("Income this month", "Ingresos del mes"),
+      value: formatCurrency(totalIncome, baseCurrency),
+      detail: t(
+        "Registered gains and incoming cash flow",
+        "Ganancias registradas y flujo de entrada"
+      ),
+      status: null,
+      icon: TrendingUp,
+    },
+    {
+      id: "total",
+      label: t("Available total", "Total disponible"),
+      value: formatCurrency(availableBalance, baseCurrency),
       detail: hasPlan
         ? t(
-            `${allocationPercent}% of income protected`,
-            `${allocationPercent}% del ingreso protegido`
+            `${allocationPercent}% of income protected as budget pool`,
+            `${allocationPercent}% del ingreso protegido como fondo`
           )
         : t(
-            "Using envelope totals as the active budget",
-            "Usando el total de sobres como presupuesto activo"
+            "Income minus expenses. Can go negative.",
+            "Ingresos menos gastos. Puede ir a negativo."
           ),
-      status: budgetRemaining,
+      status: availableBalance,
       statusKind: "currency",
-      icon: PiggyBank,
+      icon: Wallet,
       invert: true,
-    },
-    {
-      id: "envelopes",
-      label: t("Envelopes assigned", "Sobres asignados"),
-      value: formatCurrency(assignedCategoryBudgetTotal, baseCurrency),
-      detail: hasPlan
-        ? t(
-            "Reserved across category envelopes",
-            "Reservado entre sobres por categoría"
-          )
-        : t("Current reserved amount", "Monto reservado actual"),
-      status: null,
-      icon: WalletCards,
-    },
-    {
-      id: "top-category",
-      label: t("Top category", "Categoría principal"),
-      value: topCategory?.name ?? "--",
-      detail: topCategory
-        ? formatCurrency(topCategory.amount, baseCurrency)
-        : t("No activity yet", "Sin actividad todavía"),
-      status: null,
-      icon: Target,
     },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {cards.map((card, index) => {
         const positive = card.invert
           ? (card.status ?? 0) >= 0
@@ -134,7 +115,7 @@ export function SummaryCards({
                   <div
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground",
-                      card.id === "pool" &&
+                      card.id === "total" &&
                         positive &&
                         "bg-emerald-500/12 text-emerald-300"
                     )}

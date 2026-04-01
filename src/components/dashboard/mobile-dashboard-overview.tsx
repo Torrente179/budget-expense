@@ -12,7 +12,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ArrowDownRight,
   ArrowUpRight,
-  BookOpenText,
   CandlestickChart,
   PiggyBank,
   Receipt,
@@ -20,10 +19,11 @@ import {
 } from "lucide-react";
 
 interface MobileDashboardOverviewProps {
+  totalIncome: number;
   totalSpent: number;
+  availableBalance: number;
   totalBudget: number;
   previousMonthTotal: number;
-  assignedCategoryBudgetTotal: number;
   expenseCount: number;
   topCategory: { name: string; amount: number } | null;
   dailySpending: { date: string; amount: number }[];
@@ -32,10 +32,11 @@ interface MobileDashboardOverviewProps {
 }
 
 export function MobileDashboardOverview({
+  totalIncome,
   totalSpent,
+  availableBalance,
   totalBudget,
   previousMonthTotal,
-  assignedCategoryBudgetTotal,
   expenseCount,
   topCategory,
   dailySpending,
@@ -76,7 +77,7 @@ export function MobileDashboardOverview({
         const previousTotal = acc[acc.length - 1]?.cumulative ?? 0;
         acc.push({
           ...point,
-          cumulative: previousTotal + point.daily,
+          cumulative: previousTotal - point.daily,
         });
         return acc;
       },
@@ -120,49 +121,48 @@ export function MobileDashboardOverview({
       ? ((totalSpent - previousMonthTotal) / previousMonthTotal) * 100
       : null;
 
-  const budgetRemaining = totalBudget - totalSpent;
   const hasBudget = totalBudget > 0;
   const spentPercent = hasBudget ? (totalSpent / totalBudget) * 100 : 0;
   const progressWidth = hasBudget ? Math.min(Math.max(spentPercent, 2), 100) : 0;
 
   const quickActions = [
     {
-      href: "/expenses",
-      label: t("Log", "Registrar"),
-      icon: Receipt,
-    },
-    {
       href: "/budgets",
       label: t("Budget", "Presupuesto"),
       icon: PiggyBank,
+    },
+    {
+      href: "/incomes",
+      label: t("Income", "Ingresos"),
+      icon: ArrowUpRight,
+    },
+    {
+      href: "/expenses",
+      label: t("Expense", "Gastos"),
+      icon: Receipt,
     },
     {
       href: "/investments",
       label: t("Invest", "Invertir"),
       icon: CandlestickChart,
     },
-    {
-      href: "/wisdom",
-      label: t("Wisdom", "Sabiduría"),
-      icon: BookOpenText,
-    },
   ];
 
   const metricTiles = [
     {
       id: "spent",
-      label: t("Spent", "Gastado"),
+      label: t("Expenses", "Gastos"),
       value: formatCurrency(totalSpent, baseCurrency),
     },
     {
-      id: "budget",
-      label: t("Budget", "Presupuesto"),
-      value: formatCurrency(totalBudget, baseCurrency),
+      id: "income",
+      label: t("Income", "Ingresos"),
+      value: formatCurrency(totalIncome, baseCurrency),
     },
     {
-      id: "envelopes",
-      label: t("Envelopes", "Sobres"),
-      value: formatCurrency(assignedCategoryBudgetTotal, baseCurrency),
+      id: "total",
+      label: t("Total", "Total"),
+      value: formatCurrency(availableBalance, baseCurrency),
     },
   ];
 
@@ -180,8 +180,13 @@ export function MobileDashboardOverview({
               <p className="text-[0.68rem] uppercase tracking-[0.26em] text-muted-foreground">
                 {t("Available now", "Disponible ahora")}
               </p>
-              <p className="font-heading text-[2.45rem] font-semibold leading-none tracking-[-0.05em]">
-                {formatCurrency(Math.max(budgetRemaining, 0), baseCurrency)}
+              <p
+                className={cn(
+                  "font-heading text-[2.45rem] font-semibold leading-none tracking-[-0.05em]",
+                  availableBalance < 0 && "text-destructive"
+                )}
+              >
+                {formatCurrency(availableBalance, baseCurrency)}
               </p>
               <p className="text-xs text-muted-foreground">{monthLabel}</p>
             </div>
@@ -288,7 +293,7 @@ export function MobileDashboardOverview({
                 {t("Analytics", "Analítica")}
               </p>
               <CardTitle className="mt-2 font-heading text-[1.35rem] font-semibold tracking-tight">
-                {t("Spending curve", "Curva de gasto")}
+                {t("Cumulative impact", "Impacto acumulado")}
               </CardTitle>
             </div>
             {weeklyChange !== null ? (

@@ -13,6 +13,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { MobileNavContent } from "./mobile-nav";
+import { MobileCommandPalette } from "./mobile-command-palette";
 
 export function Topbar() {
   const { theme, setTheme } = useTheme();
@@ -56,6 +57,7 @@ export function Topbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <MobileCommandPalette />
           <LanguageSwitch compact />
           <CurrencyQuickSwitch />
           <Button

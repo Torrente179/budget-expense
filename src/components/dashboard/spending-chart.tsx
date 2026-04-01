@@ -36,26 +36,27 @@ export function SpendingChart({
 
   const data = useMemo(() => {
     const daysInMonth = getDaysInMonth(new Date(year, month - 1));
-    let cumulative = 0;
 
-    return Array.from({ length: daysInMonth }, (_, i) => {
-      const day = i + 1;
+    return Array.from({ length: daysInMonth }, (_, i) => i + 1).reduce<
+      { day: number; date: string; daily: number; cumulative: number; label: string }[]
+    >((acc, day) => {
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const daySpend =
-        dailySpending.find((d) => d.date === dateStr)?.amount ?? 0;
-      cumulative += daySpend;
+      const daySpend = dailySpending.find((d) => d.date === dateStr)?.amount ?? 0;
+      const previousTotal = acc[acc.length - 1]?.cumulative ?? 0;
 
-      return {
+      acc.push({
         day,
         date: dateStr,
         daily: daySpend,
-        cumulative,
+        cumulative: previousTotal - daySpend,
         label: new Intl.DateTimeFormat(intlLocale, {
           month: "short",
           day: "numeric",
         }).format(parseISO(dateStr)),
-      };
-    });
+      });
+
+      return acc;
+    }, []);
   }, [dailySpending, intlLocale, month, year]);
 
   const monthLabel = useMemo(
@@ -76,7 +77,7 @@ export function SpendingChart({
               {t("Cash flow", "Flujo de caja")}
             </p>
             <CardTitle className="mt-2 font-heading text-[1.55rem] font-semibold tracking-tight">
-              {t("Cumulative spending", "Gasto acumulado")}
+              {t("Cumulative expense impact", "Impacto acumulado de gastos")}
             </CardTitle>
           </div>
           <div className="rounded-full border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-muted-foreground">

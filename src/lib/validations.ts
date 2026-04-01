@@ -10,6 +10,16 @@ export const expenseSchema = z.object({
 
 export type ExpenseFormValues = z.output<typeof expenseSchema>;
 
+export const incomeSchema = z.object({
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  currency: z.string().min(3).max(3),
+  source: z.string().min(1, "Source is required").max(100),
+  description: z.string().max(255).optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+});
+
+export type IncomeFormValues = z.output<typeof incomeSchema>;
+
 export const budgetSchema = z.object({
   amount: z.coerce.number().positive("Amount must be greater than 0"),
   currency: z.string().min(3).max(3),

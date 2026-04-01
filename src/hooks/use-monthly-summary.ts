@@ -6,6 +6,8 @@ import { useCurrency } from "@/providers/currency-provider";
 
 interface MonthlySummary {
   totalSpent: number;
+  totalIncome: number;
+  availableBalance: number;
   totalBudget: number;
   assignedCategoryBudgetTotal: number;
   allocationPercent: number | null;
@@ -31,6 +33,8 @@ interface UseMonthlySummaryOptions {
 export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
   const [summary, setSummary] = useState<MonthlySummary>({
     totalSpent: 0,
+    totalIncome: 0,
+    availableBalance: 0,
     totalBudget: 0,
     assignedCategoryBudgetTotal: 0,
     allocationPercent: null,
@@ -51,11 +55,23 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     const endYear = month === 12 ? year + 1 : year;
     const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
 
-    const [{ data: expenses }, { data: budgets }, { data: monthlyPlan }, { data: prevExpenses }] =
+    const [
+      { data: expenses },
+      { data: incomes },
+      { data: budgets },
+      { data: monthlyPlan },
+      { data: prevExpenses },
+    ] =
       await Promise.all([
         supabase
           .from("expenses")
           .select("amount, currency, date, category_id, categories(*)")
+          .gte("date", startDate)
+          .lt("date", endDate)
+          .order("date"),
+        supabase
+          .from("income_entries")
+          .select("amount, currency, date")
           .gte("date", startDate)
           .lt("date", endDate)
           .order("date"),
@@ -82,6 +98,11 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
         (sum, expense) => sum + convert(Number(expense.amount), expense.currency),
         0
       ) ?? 0;
+    const totalIncome =
+      incomes?.reduce(
+        (sum, income) => sum + convert(Number(income.amount), income.currency),
+        0
+      ) ?? 0;
     const assignedCategoryBudgetTotal =
       budgets?.reduce(
         (sum, budget) => sum + convert(Number(budget.amount), budget.currency),
@@ -93,6 +114,7 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     const totalBudget = monthlyPlan
       ? incomeAmount! * (Number(monthlyPlan.allocation_percent) / 100)
       : assignedCategoryBudgetTotal;
+    const availableBalance = totalIncome - totalSpent;
     const previousMonthTotal =
       prevExpenses?.reduce(
         (sum, expense) => sum + convert(Number(expense.amount), expense.currency),
@@ -139,6 +161,8 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
 
     setSummary({
       totalSpent,
+      totalIncome,
+      availableBalance,
       totalBudget,
       assignedCategoryBudgetTotal,
       allocationPercent: monthlyPlan
