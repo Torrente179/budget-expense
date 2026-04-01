@@ -10,6 +10,7 @@ import {
 import { useCurrency } from "@/providers/currency-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
+import { useLocale } from "@/providers/locale-provider";
 
 interface InvestmentOverviewCardsProps {
   totalMarketValue: number;
@@ -25,30 +26,37 @@ export function InvestmentOverviewCards({
   openPositionsCount,
 }: InvestmentOverviewCardsProps) {
   const { baseCurrency } = useCurrency();
+  const { t } = useLocale();
 
   const cards = [
     {
-      label: "Market value",
+      label: t("Market value", "Valor de mercado"),
       value: formatCurrency(totalMarketValue, baseCurrency),
-      detail: "Marked with latest cached daily prices",
+      detail: t(
+        "Marked with latest cached daily prices",
+        "Valorizado con los últimos precios diarios en caché"
+      ),
       icon: Landmark,
     },
     {
-      label: "Unrealized P&L",
+      label: t("Unrealized P&L", "P&G no realizada"),
       value: formatCurrency(totalUnrealizedPnl, baseCurrency),
-      detail: "Open positions only",
+      detail: t("Open positions only", "Solo posiciones abiertas"),
       icon: TrendingUp,
     },
     {
-      label: "Realized P&L",
+      label: t("Realized P&L", "P&G realizada"),
       value: formatCurrency(totalRealizedPnl, baseCurrency),
-      detail: "FIFO lot accounting",
+      detail: t("FIFO lot accounting", "Contabilidad FIFO por lotes"),
       icon: LineChart,
     },
     {
-      label: "Open positions",
+      label: t("Open positions", "Posiciones abiertas"),
       value: String(openPositionsCount),
-      detail: "Distinct assets with remaining quantity",
+      detail: t(
+        "Distinct assets with remaining quantity",
+        "Activos distintos con cantidad remanente"
+      ),
       icon: WalletCards,
     },
   ];

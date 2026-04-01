@@ -39,8 +39,10 @@ import {
   Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useLocale } from "@/providers/locale-provider";
 
 export default function BudgetsPage() {
+  const { t } = useLocale();
   const [month, setMonth] = useState(getCurrentMonth());
   const [year, setYear] = useState(getCurrentYear());
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -85,8 +87,14 @@ export default function BudgetsPage() {
   });
 
   const sectionDescription = metrics.hasPlan
-    ? `Shape ${getMonthName(month)} with a protected pool and assign envelopes with intention.`
-    : `Your envelopes still work on their own, but a monthly plan will make spending left and consumed progress clearer.`;
+    ? t(
+        `Shape ${getMonthName(month)} with a protected pool and assign envelopes with intention.`,
+        `Diseña ${getMonthName(month)} con un fondo protegido y asigna sobres con intención.`
+      )
+    : t(
+        "Your envelopes still work on their own, but a monthly plan will make spending left and consumed progress clearer.",
+        "Tus sobres aún funcionan solos, pero un plan mensual hará más clara la lectura entre consumido y disponible."
+      );
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -96,11 +104,11 @@ export default function BudgetsPage() {
     setDeleteId(null);
 
     if (error) {
-      toast.error("Could not delete envelope");
+      toast.error(t("Could not delete envelope", "No se pudo eliminar el sobre"));
       return;
     }
 
-    toast.success("Envelope removed");
+    toast.success(t("Envelope removed", "Sobre eliminado"));
   }
 
   async function handleCopy() {
@@ -110,10 +118,13 @@ export default function BudgetsPage() {
 
     if (count && count > 0) {
       toast.success(
-        `Copied ${count} envelope${count !== 1 ? "s" : ""} from the previous month`
+        t(
+          `Copied ${count} envelope${count !== 1 ? "s" : ""} from the previous month`,
+          `Se copiaron ${count} sobre${count !== 1 ? "s" : ""} del mes anterior`
+        )
       );
     } else {
-      toast.info("No envelopes found in the previous month");
+      toast.info(t("No envelopes found in the previous month", "No se encontraron sobres en el mes anterior"));
     }
   }
 
@@ -127,11 +138,11 @@ export default function BudgetsPage() {
     const error = await upsertPlan(values);
 
     if (error) {
-      toast.error("Could not save the monthly plan");
+      toast.error(t("Could not save the monthly plan", "No se pudo guardar el plan mensual"));
       return error;
     }
 
-    toast.success("Monthly plan updated");
+    toast.success(t("Monthly plan updated", "Plan mensual actualizado"));
     return error;
   }
 
@@ -145,17 +156,17 @@ export default function BudgetsPage() {
     const error = await addBudget(values);
 
     if (error) {
-      toast.error("Could not save the envelope");
+      toast.error(t("Could not save the envelope", "No se pudo guardar el sobre"));
       return error;
     }
 
-    toast.success("Envelope saved");
+    toast.success(t("Envelope saved", "Sobre guardado"));
     return error;
   }
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Budgets" description={sectionDescription}>
+      <PageHeader title={t("Budgets", "Presupuestos")} description={sectionDescription}>
         <MonthPicker
           month={month}
           year={year}
@@ -176,7 +187,7 @@ export default function BudgetsPage() {
           ) : (
             <Copy className="h-4 w-4" />
           )}
-          Copy envelopes
+          {t("Copy envelopes", "Copiar sobres")}
         </Button>
         <BudgetForm
           month={month}
@@ -185,7 +196,7 @@ export default function BudgetsPage() {
           trigger={
             <Button variant="outline" size="sm" className="gap-1.5">
               <Plus className="h-4 w-4" />
-              Add envelope
+              {t("Add envelope", "Agregar sobre")}
             </Button>
           }
         />
@@ -210,11 +221,15 @@ export default function BudgetsPage() {
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-3">
               <Badge variant="outline" className="bg-secondary/70 text-foreground">
-                {metrics.hasPlan ? "Monthly pool active" : "Envelope fallback"}
+                {metrics.hasPlan
+                  ? t("Monthly pool active", "Fondo mensual activo")
+                  : t("Envelope fallback", "Modo sobres")}
               </Badge>
               <div>
                 <p className="text-[0.72rem] font-medium uppercase tracking-[0.3em] text-muted-foreground">
-                  {metrics.hasPlan ? "Protected pool" : "Envelope total"}
+                  {metrics.hasPlan
+                    ? t("Protected pool", "Fondo protegido")
+                    : t("Envelope total", "Total de sobres")}
                 </p>
                 <p className="mt-3 font-heading text-[3.6rem] font-semibold leading-none tracking-[-0.05em] text-foreground">
                   {formatCurrency(metrics.poolAmount, baseCurrency)}
@@ -222,8 +237,14 @@ export default function BudgetsPage() {
               </div>
               <p className="max-w-xl text-sm leading-6 text-muted-foreground">
                 {metrics.hasPlan
-                  ? `You are protecting ${metrics.allocationPercent}% of ${formatCurrency(metrics.incomeAmount ?? 0, baseCurrency)} this month.`
-                  : "Create a monthly plan to anchor envelopes to a single income-based pool and make left-versus-consumed progress easier to scan."}
+                  ? t(
+                      `You are protecting ${metrics.allocationPercent}% of ${formatCurrency(metrics.incomeAmount ?? 0, baseCurrency)} this month.`,
+                      `Estás protegiendo el ${metrics.allocationPercent}% de ${formatCurrency(metrics.incomeAmount ?? 0, baseCurrency)} este mes.`
+                    )
+                  : t(
+                      "Create a monthly plan to anchor envelopes to a single income-based pool and make left-versus-consumed progress easier to scan.",
+                      "Crea un plan mensual para anclar los sobres a un solo fondo basado en ingresos y visualizar mejor lo disponible frente a lo consumido."
+                    )}
               </p>
             </div>
 
@@ -233,7 +254,9 @@ export default function BudgetsPage() {
               </p>
               <p className="mt-2 flex items-center gap-2 text-sm font-medium text-foreground">
                 <Sparkles className="h-4 w-4 text-emerald-300" />
-                {metrics.hasPlan ? "Stewardship plan in place" : "No monthly plan yet"}
+                {metrics.hasPlan
+                  ? t("Stewardship plan in place", "Plan de mayordomía activo")
+                  : t("No monthly plan yet", "Aún sin plan mensual")}
               </p>
             </div>
           </div>
@@ -241,7 +264,7 @@ export default function BudgetsPage() {
           <div className="mt-6 grid gap-3 sm:grid-cols-3">
             <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                Consumed
+                {t("Consumed", "Consumido")}
               </p>
               <p className="mt-3 font-mono text-2xl font-semibold">
                 {formatCurrency(metrics.consumedAmount, baseCurrency)}
@@ -249,7 +272,7 @@ export default function BudgetsPage() {
             </div>
             <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                Left
+                {t("Left", "Disponible")}
               </p>
               <p className="mt-3 font-mono text-2xl font-semibold">
                 {formatCurrency(Math.abs(metrics.remainingAmount), baseCurrency)}
@@ -257,7 +280,7 @@ export default function BudgetsPage() {
             </div>
             <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                Assigned to envelopes
+                {t("Assigned to envelopes", "Asignado a sobres")}
               </p>
               <p className="mt-3 font-mono text-2xl font-semibold">
                 {formatCurrency(metrics.assignedCategoryBudgetTotal, baseCurrency)}
@@ -267,7 +290,9 @@ export default function BudgetsPage() {
 
           <div className="mt-6 space-y-3">
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Pool usage</span>
+              <span className="text-muted-foreground">
+                {t("Pool usage", "Uso del fondo")}
+              </span>
               <span className="font-mono text-foreground">
                 {metrics.consumedPercent.toFixed(0)}%
               </span>
@@ -284,7 +309,7 @@ export default function BudgetsPage() {
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-                  Envelope balance
+                  {t("Envelope balance", "Balance de sobres")}
                 </p>
                 <p className="font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em]">
                   {formatCurrency(Math.abs(metrics.unassignedAmount), baseCurrency)}
@@ -297,15 +322,27 @@ export default function BudgetsPage() {
             <p className="mt-4 text-sm leading-6 text-muted-foreground">
               {metrics.hasPlan
                 ? metrics.isOverAssigned
-                  ? "Your envelopes are larger than the protected pool. Keep them if intentional, but the month will feel tighter from the start."
-                  : "This is still free inside the monthly pool. Use it for categories you have not assigned yet or leave it as flexibility."
-                : "Without a monthly plan, this section reflects the total reserved by envelopes only."}
+                  ? t(
+                      "Your envelopes are larger than the protected pool. Keep them if intentional, but the month will feel tighter from the start.",
+                      "Tus sobres superan el fondo protegido. Si es intencional, mantenlos, pero el mes empezará con menos margen."
+                    )
+                  : t(
+                      "This is still free inside the monthly pool. Use it for categories you have not assigned yet or leave it as flexibility.",
+                      "Este monto sigue libre dentro del fondo mensual. Úsalo para categorías sin asignar o déjalo como flexibilidad."
+                    )
+                : t(
+                    "Without a monthly plan, this section reflects the total reserved by envelopes only.",
+                    "Sin plan mensual, esta sección muestra solo el total reservado por sobres."
+                  )}
             </p>
             {metrics.isOverAssigned && (
               <div className="mt-4 flex items-start gap-3 rounded-[1.35rem] border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                 <span>
-                  Assigned envelopes exceed the monthly pool by{" "}
+                  {t(
+                    "Assigned envelopes exceed the monthly pool by",
+                    "Los sobres asignados superan el fondo mensual por"
+                  )}{" "}
                   {formatCurrency(
                     metrics.assignedCategoryBudgetTotal - metrics.poolAmount,
                     baseCurrency
@@ -323,19 +360,25 @@ export default function BudgetsPage() {
               </div>
               <div>
                 <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-                  Monthly income
+                  {t("Monthly income", "Ingreso mensual")}
                 </p>
                 <p className="mt-1 text-lg font-medium">
                   {metrics.hasPlan
                     ? formatCurrency(metrics.incomeAmount ?? 0, baseCurrency)
-                    : "Not set"}
+                    : t("Not set", "No definido")}
                 </p>
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-muted-foreground">
               {metrics.hasPlan
-                ? `${metrics.allocationPercent}% of income is protected for this month. Update it when your obligations or generosity goals change.`
-                : "Start with a 20% plan if you want a simple default, then adjust the percentage when your month needs more room."}
+                ? t(
+                    `${metrics.allocationPercent}% of income is protected for this month. Update it when your obligations or generosity goals change.`,
+                    `Este mes está protegido el ${metrics.allocationPercent}% del ingreso. Actualízalo cuando cambien tus obligaciones o metas de generosidad.`
+                  )
+                : t(
+                    "Start with a 20% plan if you want a simple default, then adjust the percentage when your month needs more room.",
+                    "Comienza con un plan del 20% como base simple y ajusta el porcentaje cuando el mes necesite más margen."
+                  )}
             </p>
           </div>
         </div>
@@ -353,8 +396,11 @@ export default function BudgetsPage() {
       ) : budgets.length === 0 ? (
         <EmptyState
           icon={PiggyBank}
-          title="No category envelopes yet"
-          description="Start with a monthly plan, then reserve a few category envelopes for areas you want to guard more closely."
+          title={t("No category envelopes yet", "Aún no hay sobres por categoría")}
+          description={t(
+            "Start with a monthly plan, then reserve a few category envelopes for areas you want to guard more closely.",
+            "Empieza con un plan mensual y luego reserva sobres por categoría para las áreas que quieras cuidar más."
+          )}
         >
           <BudgetForm
             month={month}
@@ -363,7 +409,7 @@ export default function BudgetsPage() {
             trigger={
               <Button variant="outline" className="gap-1.5">
                 <Plus className="h-4 w-4" />
-                Add your first envelope
+                {t("Add your first envelope", "Agrega tu primer sobre")}
               </Button>
             }
           />
@@ -373,15 +419,17 @@ export default function BudgetsPage() {
           <div className="flex items-end justify-between gap-4">
             <div>
               <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                Category envelopes
+                {t("Category envelopes", "Sobres por categoría")}
               </p>
               <h2 className="mt-2 font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em]">
-                Reserved with intention
+                {t("Reserved with intention", "Reservado con intención")}
               </h2>
             </div>
             <p className="max-w-md text-right text-sm leading-6 text-muted-foreground">
-              Review each envelope as a guardrail inside the month, not as a
-              separate budget system.
+              {t(
+                "Review each envelope as a guardrail inside the month, not as a separate budget system.",
+                "Revisa cada sobre como un límite dentro del mes, no como un sistema de presupuesto aparte."
+              )}
             </p>
           </div>
 
@@ -408,15 +456,17 @@ export default function BudgetsPage() {
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-[380px]">
           <DialogHeader>
-            <DialogTitle>Delete envelope</DialogTitle>
+            <DialogTitle>{t("Delete envelope", "Eliminar sobre")}</DialogTitle>
             <DialogDescription>
-              This only removes the category reserve. Your expense history will
-              stay intact.
+              {t(
+                "This only removes the category reserve. Your expense history will stay intact.",
+                "Esto solo elimina la reserva de la categoría. Tu historial de gastos permanecerá intacto."
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="ghost" onClick={() => setDeleteId(null)}>
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button
               variant="destructive"
@@ -424,7 +474,7 @@ export default function BudgetsPage() {
               disabled={deleting}
             >
               {deleting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              Delete
+              {t("Delete", "Eliminar")}
             </Button>
           </DialogFooter>
         </DialogContent>

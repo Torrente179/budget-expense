@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/shared/empty-state";
 import { formatCurrency } from "@/lib/utils";
 import type { LatestQuote, InvestmentWatchlistWithJoins } from "@/lib/investments";
+import { useLocale } from "@/providers/locale-provider";
 
 interface WatchlistGridProps {
   items: InvestmentWatchlistWithJoins[];
@@ -18,12 +19,17 @@ export function WatchlistGrid({
   latestQuotes,
   onDelete,
 }: WatchlistGridProps) {
+  const { t } = useLocale();
+
   if (items.length === 0) {
     return (
       <EmptyState
         icon={Eye}
-        title="No watchlist assets yet"
-        description="Add ideas you want to monitor, even before you open a position."
+        title={t("No watchlist assets yet", "Aún no hay activos en seguimiento")}
+        description={t(
+          "Add ideas you want to monitor, even before you open a position.",
+          "Agrega ideas que quieras monitorear, incluso antes de abrir una posición."
+        )}
       />
     );
   }
@@ -57,17 +63,17 @@ export function WatchlistGrid({
 
               <div className="rounded-[1.25rem] border border-border/70 bg-secondary/35 p-4">
                 <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                  Latest reference
+                  {t("Latest reference", "Última referencia")}
                 </p>
                 <p className="mt-3 font-heading text-[1.75rem] font-semibold leading-none tracking-[-0.04em]">
                   {quote?.close
                     ? formatCurrency(quote.close, quote.currency ?? "USD")
-                    : "Manual"}
+                    : t("Manual", "Manual")}
                 </p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   {quote?.resolvedDate
-                    ? `${quote.source ?? "Provider"} · ${quote.resolvedDate}`
-                    : "No automatic quote cached yet"}
+                    ? `${quote.source ?? t("Provider", "Proveedor")} · ${quote.resolvedDate}`
+                    : t("No automatic quote cached yet", "Aún no hay cotización automática en caché")}
                 </p>
               </div>
 

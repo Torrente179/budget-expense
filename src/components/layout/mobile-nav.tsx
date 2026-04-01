@@ -13,20 +13,25 @@ import {
   CandlestickChart,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/expenses", label: "Expenses", icon: Receipt },
-  { href: "/budgets", label: "Budgets", icon: PiggyBank },
-  { href: "/investments", label: "Investments", icon: CandlestickChart },
-  { href: "/wisdom", label: "Sabiduría", icon: BookOpenText },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+import { useLocale } from "@/providers/locale-provider";
 
 export function MobileNavContent() {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLocale();
+  const navItems = [
+    { href: "/dashboard", label: t("Dashboard", "Panel"), icon: LayoutDashboard },
+    { href: "/expenses", label: t("Expenses", "Gastos"), icon: Receipt },
+    { href: "/budgets", label: t("Budgets", "Presupuestos"), icon: PiggyBank },
+    {
+      href: "/investments",
+      label: t("Investments", "Inversiones"),
+      icon: CandlestickChart,
+    },
+    { href: "/wisdom", label: t("Wisdom", "Sabiduría"), icon: BookOpenText },
+    { href: "/settings", label: t("Settings", "Ajustes"), icon: Settings },
+  ];
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -45,7 +50,7 @@ export function MobileNavContent() {
           </div>
           <div className="space-y-1">
             <span className="block text-[0.7rem] uppercase tracking-[0.24em] text-muted-foreground">
-              Stewardship
+              {t("Stewardship", "Mayordomía")}
             </span>
             <span className="block text-lg font-semibold leading-none tracking-tight">
               Budget & Expense
@@ -79,7 +84,7 @@ export function MobileNavContent() {
           className="flex w-full items-center gap-3 rounded-[1.15rem] px-3.5 py-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-accent hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
-          Log out
+          {t("Log out", "Cerrar sesión")}
         </button>
       </div>
     </div>
@@ -88,6 +93,19 @@ export function MobileNavContent() {
 
 export function MobileBottomNav() {
   const pathname = usePathname();
+  const { t } = useLocale();
+  const navItems = [
+    { href: "/dashboard", label: t("Dashboard", "Panel"), icon: LayoutDashboard },
+    { href: "/expenses", label: t("Expenses", "Gastos"), icon: Receipt },
+    { href: "/budgets", label: t("Budgets", "Presupuestos"), icon: PiggyBank },
+    {
+      href: "/investments",
+      label: t("Investments", "Inversiones"),
+      icon: CandlestickChart,
+    },
+    { href: "/wisdom", label: t("Wisdom", "Sabiduría"), icon: BookOpenText },
+    { href: "/settings", label: t("Settings", "Ajustes"), icon: Settings },
+  ];
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 flex h-[4.6rem] items-center justify-around border-t border-border bg-background/92 px-3 backdrop-blur-2xl md:hidden">

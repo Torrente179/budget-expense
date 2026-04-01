@@ -15,6 +15,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { useLocale } from "@/providers/locale-provider";
 
 export function SignupForm() {
   const [email, setEmail] = useState("");
@@ -24,6 +25,7 @@ export function SignupForm() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLocale();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -59,10 +61,13 @@ export function SignupForm() {
           <span className="text-lg font-bold text-primary">B</span>
         </div>
         <CardTitle className="text-xl tracking-tight">
-          Create an account
+          {t("Create an account", "Crear una cuenta")}
         </CardTitle>
         <CardDescription>
-          Start tracking your expenses and budgets
+          {t(
+            "Start tracking your expenses and budgets",
+            "Empieza a registrar tus gastos y presupuestos"
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -73,11 +78,11 @@ export function SignupForm() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="name">Name</Label>
+            <Label htmlFor="name">{t("Name", "Nombre")}</Label>
             <Input
               id="name"
               type="text"
-              placeholder="Your name"
+              placeholder={t("Your name", "Tu nombre")}
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               required
@@ -85,7 +90,7 @@ export function SignupForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t("Email", "Correo")}</Label>
             <Input
               id="email"
               type="email"
@@ -97,11 +102,11 @@ export function SignupForm() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("Password", "Contraseña")}</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Min 6 characters"
+              placeholder={t("Min 6 characters", "Mínimo 6 caracteres")}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -111,15 +116,15 @@ export function SignupForm() {
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Create account
+            {t("Create account", "Crear cuenta")}
           </Button>
           <p className="text-center text-sm text-muted-foreground">
-            Already have an account?{" "}
+            {t("Already have an account?", "¿Ya tienes una cuenta?")}{" "}
             <Link
               href="/login"
               className="font-medium text-primary underline-offset-4 hover:underline"
             >
-              Log in
+              {t("Log in", "Iniciar sesión")}
             </Link>
           </p>
         </form>

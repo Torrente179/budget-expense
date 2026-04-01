@@ -26,6 +26,7 @@ import {
 import { CURRENCIES } from "@/lib/constants";
 import { Loader2, Plus } from "lucide-react";
 import { CategoryIcon } from "@/components/shared/category-badge";
+import { useLocale } from "@/providers/locale-provider";
 
 interface BudgetFormProps {
   month: number;
@@ -42,6 +43,7 @@ export function BudgetForm({
   defaultValues,
   trigger,
 }: BudgetFormProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { baseCurrency } = useCurrency();
@@ -88,28 +90,32 @@ export function BudgetForm({
           }
         >
           <Plus className="h-4 w-4" />
-          Add envelope
+          {t("Add envelope", "Agregar sobre")}
         </DialogTrigger>
       )}
       <DialogContent className="sm:max-w-[430px]">
         <DialogHeader className="space-y-3">
           <DialogTitle className="text-base">
-            {defaultValues?.amount ? "Edit envelope" : "Set category envelope"}
+            {defaultValues?.amount
+              ? t("Edit envelope", "Editar sobre")
+              : t("Set category envelope", "Definir sobre por categoría")}
           </DialogTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            Use envelopes to reserve part of your monthly pool for a specific
-            category without changing the overall plan.
+            {t(
+              "Use envelopes to reserve part of your monthly pool for a specific category without changing the overall plan.",
+              "Usa sobres para reservar parte de tu fondo mensual para una categoría específica sin cambiar el plan general."
+            )}
           </p>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="budget-category">Category</Label>
+            <Label htmlFor="budget-category">{t("Category", "Categoría")}</Label>
             <Select
               value={form.watch("category_id")}
               onValueChange={(v) => v && form.setValue("category_id", v)}
             >
               <SelectTrigger id="budget-category">
-                <SelectValue placeholder="Select category" />
+                <SelectValue placeholder={t("Select category", "Selecciona categoría")} />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -135,7 +141,9 @@ export function BudgetForm({
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-2">
-              <Label htmlFor="budget-amount">Envelope amount</Label>
+              <Label htmlFor="budget-amount">
+                {t("Envelope amount", "Monto del sobre")}
+              </Label>
               <Input
                 id="budget-amount"
                 type="number"
@@ -152,7 +160,7 @@ export function BudgetForm({
               )}
             </div>
             <div className="space-y-2">
-              <Label htmlFor="budget-currency">Currency</Label>
+              <Label htmlFor="budget-currency">{t("Currency", "Moneda")}</Label>
               <Select
                 value={form.watch("currency")}
                 onValueChange={(v) => v && form.setValue("currency", v)}
@@ -177,11 +185,13 @@ export function BudgetForm({
               variant="ghost"
               onClick={() => setOpen(false)}
             >
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              {defaultValues?.amount ? "Save envelope" : "Create envelope"}
+              {defaultValues?.amount
+                ? t("Save envelope", "Guardar sobre")
+                : t("Create envelope", "Crear sobre")}
             </Button>
           </div>
         </form>

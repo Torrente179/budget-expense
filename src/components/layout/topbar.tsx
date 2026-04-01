@@ -4,6 +4,8 @@ import { useTheme } from "next-themes";
 import { Moon, Sun, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { CurrencyQuickSwitch } from "@/components/shared/currency-quick-switch";
+import { LanguageSwitch } from "@/components/shared/language-switch";
+import { useLocale } from "@/providers/locale-provider";
 import {
   Sheet,
   SheetContent,
@@ -14,6 +16,7 @@ import { MobileNavContent } from "./mobile-nav";
 
 export function Topbar() {
   const { theme, setTheme } = useTheme();
+  const { t } = useLocale();
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-2xl sm:px-5 lg:px-8">
@@ -30,10 +33,12 @@ export function Topbar() {
               }
             >
               <Menu className="h-4 w-4" />
-              <span className="sr-only">Open menu</span>
+              <span className="sr-only">{t("Open menu", "Abrir menú")}</span>
             </SheetTrigger>
             <SheetContent side="left" className="w-[240px] p-0">
-              <SheetTitle className="sr-only">Navigation menu</SheetTitle>
+              <SheetTitle className="sr-only">
+                {t("Navigation menu", "Menú de navegación")}
+              </SheetTitle>
               <MobileNavContent />
             </SheetContent>
           </Sheet>
@@ -46,11 +51,12 @@ export function Topbar() {
 
         <div className="hidden md:block">
           <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-            Monthly ledger
+            {t("Monthly ledger", "Registro mensual")}
           </p>
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageSwitch compact />
           <CurrencyQuickSwitch />
           <Button
             variant="ghost"
@@ -60,7 +66,9 @@ export function Topbar() {
           >
             <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
             <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">Toggle theme</span>
+            <span className="sr-only">
+              {t("Toggle theme", "Cambiar tema")}
+            </span>
           </Button>
         </div>
       </div>

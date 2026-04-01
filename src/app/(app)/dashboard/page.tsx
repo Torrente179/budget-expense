@@ -16,8 +16,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, BookOpenText, HeartHandshake } from "lucide-react";
+import { useLocale } from "@/providers/locale-provider";
 
 export default function DashboardPage() {
+  const { t } = useLocale();
   const [month, setMonth] = useState(getCurrentMonth());
   const [year, setYear] = useState(getCurrentYear());
 
@@ -35,8 +37,11 @@ export default function DashboardPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Dashboard"
-        description="Review the month across spending, envelopes, and steady stewardship cues."
+        title={t("Dashboard", "Panel")}
+        description={t(
+          "Review the month across spending, envelopes, and steady stewardship cues.",
+          "Revisa el mes con una vista clara de gastos, sobres y señales de mayordomía."
+        )}
       >
         <MonthPicker
           month={month}
@@ -83,10 +88,13 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-                    Sabiduría NBLA
+                    {t("NBLA Wisdom", "Sabiduría NBLA")}
                   </p>
                   <CardTitle className="mt-2 font-heading text-[1.45rem] font-semibold tracking-tight">
-                    Financial wisdom for the month
+                    {t(
+                      "Financial wisdom for the month",
+                      "Sabiduría financiera para el mes"
+                    )}
                   </CardTitle>
                 </div>
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-emerald-300">
@@ -96,23 +104,27 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <p className="text-sm leading-6 text-muted-foreground">
-                Read short Spanish stewardship themes on generosity, work, debt,
-                planning, and the wise administration of goods.
+                {t(
+                  "Read short stewardship themes on generosity, work, debt, planning, and the wise administration of goods.",
+                  "Lee temas breves de mayordomía sobre generosidad, trabajo, deuda, planeación y administración sabia."
+                )}
               </p>
               <Link href="/wisdom">
                 <Button className="w-full justify-between">
-                  Open Sabiduría
+                  {t("Open Wisdom", "Abrir Sabiduría")}
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </Link>
               <div className="rounded-[1.25rem] border border-border/70 bg-secondary/45 px-4 py-3 text-sm text-muted-foreground">
                 <div className="flex items-center gap-2 text-foreground">
                   <BookOpenText className="h-4 w-4 text-emerald-300" />
-                  This week’s rhythm
+                  {t("This week's rhythm", "Ritmo de esta semana")}
                 </div>
                 <p className="mt-2 leading-6">
-                  Protect the pool first, then decide where generosity and
-                  diligence need a clearer place in the month.
+                  {t(
+                    "Protect the pool first, then decide where generosity and diligence need a clearer place in the month.",
+                    "Protege primero el fondo mensual y luego decide dónde la generosidad y la diligencia necesitan más claridad."
+                  )}
                 </p>
               </div>
             </CardContent>

@@ -21,6 +21,7 @@ import {
   Landmark,
   Scale,
 } from "lucide-react";
+import { useLocale } from "@/providers/locale-provider";
 
 const themeIconMap: Record<string, ComponentType<{ className?: string }>> = {
   "administracion-de-bienes": Landmark,
@@ -32,6 +33,7 @@ const themeIconMap: Record<string, ComponentType<{ className?: string }>> = {
 };
 
 export default function WisdomPage() {
+  const { t } = useLocale();
   const [activeThemeSlug, setActiveThemeSlug] = useState(biblicalThemes[0].slug);
 
   const activeTheme = useMemo(
@@ -46,8 +48,11 @@ export default function WisdomPage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Sabiduría"
-        description="Principios financieros en español para administrar bienes, tiempo, generosidad y decisiones con más claridad."
+        title={t("Wisdom", "Sabiduría")}
+        description={t(
+          "Financial principles in Spanish to manage resources, time, generosity, and decisions with more clarity.",
+          "Principios financieros en español para administrar bienes, tiempo, generosidad y decisiones con más claridad."
+        )}
       >
         <Link href={nblaLink} target="_blank" rel="noreferrer">
           <Button variant="outline" size="sm" className="gap-1.5">
@@ -61,14 +66,16 @@ export default function WisdomPage() {
         <Card className="border-border/80 bg-card/96 xl:sticky xl:top-24 xl:h-fit">
           <CardHeader className="space-y-3">
             <Badge variant="outline" className="bg-secondary/70 text-foreground">
-              Guía temática
+              {t("Theme guide", "Guía temática")}
             </Badge>
             <CardTitle className="font-heading text-[1.9rem] font-semibold leading-none tracking-[-0.04em]">
-              Temas para revisar con calma
+              {t("Themes to review calmly", "Temas para revisar con calma")}
             </CardTitle>
             <p className="text-sm leading-6 text-muted-foreground">
-              No es un catálogo de frases. Es un marco para pensar tu mes con
-              administración, diligencia y generosidad.
+              {t(
+                "This is not a quote catalog. It is a framework to think through your month with stewardship, diligence, and generosity.",
+                "No es un catálogo de frases. Es un marco para pensar tu mes con administración, diligencia y generosidad."
+              )}
             </p>
           </CardHeader>
           <CardContent className="space-y-2">
@@ -142,7 +149,7 @@ export default function WisdomPage() {
               <div className="space-y-4">
                 <div className="rounded-[1.6rem] border border-border/70 bg-secondary/45 p-5">
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-                    Pasajes para consultar en NBLA
+                    {t("Passages to review in NBLA", "Pasajes para consultar en NBLA")}
                   </p>
                   <div className="mt-4 space-y-3">
                     {activeTheme.passages.map((passage) => (
@@ -156,7 +163,7 @@ export default function WisdomPage() {
                           </p>
                           <Link href={nblaLink} target="_blank" rel="noreferrer">
                             <Button variant="ghost" size="sm" className="gap-1">
-                              Leer en NBLA
+                              {t("Read in NBLA", "Leer en NBLA")}
                               <ArrowUpRight className="h-3.5 w-3.5" />
                             </Button>
                           </Link>
@@ -166,7 +173,7 @@ export default function WisdomPage() {
                         </p>
                         <div className="mt-4 rounded-2xl bg-secondary/65 px-4 py-3 text-sm leading-6 text-secondary-foreground">
                           <span className="font-medium text-foreground">
-                            Práctica:
+                            {t("Practice", "Práctica")}:
                           </span>{" "}
                           {passage.practice}
                         </div>
@@ -179,7 +186,7 @@ export default function WisdomPage() {
               <div className="space-y-4">
                 <div className="rounded-[1.6rem] border border-border/70 bg-secondary/45 p-5">
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-                    Acción concreta
+                    {t("Concrete action", "Acción concreta")}
                   </p>
                   <ul className="mt-4 space-y-3">
                     {activeTheme.actions.map((action, index) => (
@@ -198,12 +205,13 @@ export default function WisdomPage() {
 
                 <div className="rounded-[1.6rem] border border-border/70 bg-card/96 p-5">
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-                    Nota de uso
+                    {t("Usage note", "Nota de uso")}
                   </p>
                   <p className="mt-4 text-sm leading-6 text-muted-foreground">
-                    Esta sección resume principios y referencias para ayudarte a
-                    pensar con más orden. Úsala como guía de revisión mensual,
-                    no como reemplazo del texto bíblico completo.
+                    {t(
+                      "This section summarizes principles and references to help you think with better structure. Use it as a monthly review guide, not as a replacement for the full biblical text.",
+                      "Esta sección resume principios y referencias para ayudarte a pensar con más orden. Úsala como guía de revisión mensual, no como reemplazo del texto bíblico completo."
+                    )}
                   </p>
                 </div>
               </div>
@@ -214,7 +222,7 @@ export default function WisdomPage() {
             <CardContent className="flex flex-col gap-3 px-5 py-5 md:flex-row md:items-center md:justify-between">
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-                  Aviso NBLA
+                  {t("NBLA notice", "Aviso NBLA")}
                 </p>
                 <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
                   {nblaAttribution}
@@ -222,7 +230,7 @@ export default function WisdomPage() {
               </div>
               <Link href={nblaLink} target="_blank" rel="noreferrer">
                 <Button variant="outline" className="gap-1.5">
-                  Visitar NuevaBiblia.com
+                  {t("Visit NuevaBiblia.com", "Visitar NuevaBiblia.com")}
                   <ArrowUpRight className="h-4 w-4" />
                 </Button>
               </Link>

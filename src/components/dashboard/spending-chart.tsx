@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useCurrency } from "@/providers/currency-provider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useLocale } from "@/providers/locale-provider";
 import {
   AreaChart,
   Area,
@@ -12,7 +13,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import { format, parseISO, getDaysInMonth } from "date-fns";
+import { parseISO, getDaysInMonth } from "date-fns";
 
 interface SpendingChartProps {
   dailySpending: { date: string; amount: number }[];
@@ -26,6 +27,7 @@ export function SpendingChart({
   year,
 }: SpendingChartProps) {
   const { baseCurrency } = useCurrency();
+  const { t, intlLocale } = useLocale();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -48,10 +50,22 @@ export function SpendingChart({
         date: dateStr,
         daily: daySpend,
         cumulative,
-        label: format(parseISO(dateStr), "MMM d"),
+        label: new Intl.DateTimeFormat(intlLocale, {
+          month: "short",
+          day: "numeric",
+        }).format(parseISO(dateStr)),
       };
     });
-  }, [dailySpending, month, year]);
+  }, [dailySpending, intlLocale, month, year]);
+
+  const monthLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat(intlLocale, {
+        month: "long",
+        year: "numeric",
+      }).format(new Date(year, month - 1)),
+    [intlLocale, month, year]
+  );
 
   return (
     <Card className="border-border/80 bg-card/96">
@@ -59,14 +73,14 @@ export function SpendingChart({
         <div className="flex items-start justify-between gap-3">
           <div>
             <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-              Cash flow
+              {t("Cash flow", "Flujo de caja")}
             </p>
             <CardTitle className="mt-2 font-heading text-[1.55rem] font-semibold tracking-tight">
-              Cumulative spending
+              {t("Cumulative spending", "Gasto acumulado")}
             </CardTitle>
           </div>
           <div className="rounded-full border border-border bg-secondary/80 px-3 py-1.5 text-xs font-medium text-muted-foreground">
-            {format(new Date(year, month - 1), "MMMM yyyy")}
+            {monthLabel}
           </div>
         </div>
       </CardHeader>
@@ -98,7 +112,7 @@ export function SpendingChart({
                   tickLine={false}
                   axisLine={false}
                   tickFormatter={(v) =>
-                    new Intl.NumberFormat("en", {
+                    new Intl.NumberFormat(intlLocale, {
                       notation: "compact",
                       style: "currency",
                       currency: baseCurrency,
@@ -117,11 +131,11 @@ export function SpendingChart({
                     boxShadow: "0 28px 80px -44px rgba(0,0,0,0.9)",
                   }}
                   formatter={(value) => [
-                    new Intl.NumberFormat("en", {
+                    new Intl.NumberFormat(intlLocale, {
                       style: "currency",
                       currency: baseCurrency,
                     }).format(Number(value)),
-                    "Total",
+                    t("Total", "Total"),
                   ]}
                   labelFormatter={(label) => label}
                 />

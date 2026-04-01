@@ -7,6 +7,7 @@ import { formatDate } from "@/lib/utils";
 import type { Database } from "@/types/database";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
+import { useLocale } from "@/providers/locale-provider";
 
 type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
   categories: Database["public"]["Tables"]["categories"]["Row"];
@@ -17,29 +18,31 @@ interface RecentExpensesProps {
 }
 
 export function RecentExpenses({ expenses }: RecentExpensesProps) {
+  const { t } = useLocale();
+
   return (
     <Card className="border-border/80 bg-card/96">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div>
           <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-            Ledger
+            {t("Ledger", "Registro")}
           </p>
           <CardTitle className="mt-2 font-heading text-[1.45rem] font-semibold tracking-tight">
-            Recent expenses
+            {t("Recent expenses", "Gastos recientes")}
           </CardTitle>
         </div>
         <Link
           href="/expenses"
           className="flex items-center gap-1 text-xs uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
         >
-          View all
+          {t("View all", "Ver todo")}
           <ArrowRight className="h-3 w-3" />
         </Link>
       </CardHeader>
       <CardContent>
         {expenses.length === 0 ? (
           <p className="py-6 text-center text-sm text-muted-foreground">
-            No expenses this month
+            {t("No expenses this month", "No hay gastos este mes")}
           </p>
         ) : (
           <div className="space-y-3">

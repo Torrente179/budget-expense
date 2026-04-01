@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { CircleDollarSign, Loader2, Sparkles } from "lucide-react";
+import { useLocale } from "@/providers/locale-provider";
 
 interface MonthlyPlanFormProps {
   month: number;
@@ -47,6 +48,7 @@ export function MonthlyPlanForm({
   defaultValues,
   trigger,
 }: MonthlyPlanFormProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
@@ -91,7 +93,7 @@ export function MonthlyPlanForm({
       ) : (
         <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
           <CircleDollarSign className="h-4 w-4" />
-          Set monthly plan
+          {t("Set monthly plan", "Definir plan mensual")}
         </SheetTrigger>
       )}
 
@@ -111,12 +113,14 @@ export function MonthlyPlanForm({
               <div className="space-y-1">
                 <SheetTitle>
                   {defaultValues?.income_amount
-                    ? "Refine monthly plan"
-                    : "Set monthly plan"}
+                    ? t("Refine monthly plan", "Refinar plan mensual")
+                    : t("Set monthly plan", "Definir plan mensual")}
                 </SheetTitle>
                 <SheetDescription>
-                  Start with your monthly income and define the stewardship pool
-                  you want to protect first.
+                  {t(
+                    "Start with your monthly income and define the stewardship pool you want to protect first.",
+                    "Comienza con tu ingreso mensual y define primero el fondo de mayordomía que deseas proteger."
+                  )}
                 </SheetDescription>
               </div>
             </div>
@@ -125,7 +129,7 @@ export function MonthlyPlanForm({
           <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
             <div className="rounded-[1.4rem] border border-border/70 bg-card/90 p-4">
               <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
-                Monthly pool preview
+                {t("Monthly pool preview", "Vista previa del fondo mensual")}
               </p>
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
@@ -138,12 +142,12 @@ export function MonthlyPlanForm({
                     {allocationPercent || 0}% of{" "}
                     {incomeAmount > 0
                       ? formatCurrency(incomeAmount, incomeCurrency)
-                      : "your income"}
+                      : t("your income", "tu ingreso")}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2 text-right">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                    Period
+                    {t("Period", "Periodo")}
                   </p>
                   <p className="mt-1 text-sm font-medium">
                     {month.toString().padStart(2, "0")}/{year}
@@ -154,7 +158,9 @@ export function MonthlyPlanForm({
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="income-amount">Monthly income</Label>
+                <Label htmlFor="income-amount">
+                  {t("Monthly income", "Ingreso mensual")}
+                </Label>
                 <Input
                   id="income-amount"
                   type="number"
@@ -171,7 +177,9 @@ export function MonthlyPlanForm({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="income-currency">Income currency</Label>
+                <Label htmlFor="income-currency">
+                  {t("Income currency", "Moneda del ingreso")}
+                </Label>
                 <Select
                   value={form.watch("income_currency")}
                   onValueChange={(value) =>
@@ -200,7 +208,9 @@ export function MonthlyPlanForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="allocation-percent">Protected budget %</Label>
+              <Label htmlFor="allocation-percent">
+                {t("Protected budget %", "% de presupuesto protegido")}
+              </Label>
               <Input
                 id="allocation-percent"
                 type="number"
@@ -212,8 +222,10 @@ export function MonthlyPlanForm({
                 {...form.register("allocation_percent")}
               />
               <p className="text-sm text-muted-foreground">
-                Use 20% as the default target, then adjust the percentage when
-                you need a tighter or wider pool for the month.
+                {t(
+                  "Use 20% as the default target, then adjust the percentage when you need a tighter or wider pool for the month.",
+                  "Usa 20% como objetivo inicial y luego ajusta el porcentaje cuando el mes necesite un fondo más ajustado o más amplio."
+                )}
               </p>
               {form.formState.errors.allocation_percent && (
                 <p className="text-xs text-destructive">
@@ -223,8 +235,10 @@ export function MonthlyPlanForm({
             </div>
 
             <div className="rounded-[1.35rem] border border-border/70 bg-secondary/60 p-4 text-sm text-muted-foreground">
-              Category budgets remain optional. When you set them, they work as
-              envelopes inside this monthly pool instead of replacing it.
+              {t(
+                "Category budgets remain optional. When you set them, they work as envelopes inside this monthly pool instead of replacing it.",
+                "Los presupuestos por categoría son opcionales. Cuando los defines, funcionan como sobres dentro de este fondo mensual en lugar de reemplazarlo."
+              )}
             </div>
           </div>
 
@@ -234,11 +248,13 @@ export function MonthlyPlanForm({
               variant="ghost"
               onClick={() => setOpen(false)}
             >
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {defaultValues?.income_amount ? "Save plan" : "Create plan"}
+              {defaultValues?.income_amount
+                ? t("Save plan", "Guardar plan")
+                : t("Create plan", "Crear plan")}
             </Button>
           </SheetFooter>
         </form>

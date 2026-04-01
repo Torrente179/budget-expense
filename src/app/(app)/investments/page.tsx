@@ -26,8 +26,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLocale } from "@/providers/locale-provider";
 
 export default function InvestmentsPage() {
+  const { t } = useLocale();
   const [search, setSearch] = useState("");
   const [brokerFilter, setBrokerFilter] = useState("all");
   const [sideFilter, setSideFilter] = useState("all");
@@ -87,7 +89,14 @@ export default function InvestmentsPage() {
   });
 
   async function handleDeleteAccount(id: string) {
-    if (!window.confirm("Delete this brokerage account and all linked records?")) {
+    if (
+      !window.confirm(
+        t(
+          "Delete this brokerage account and all linked records?",
+          "¿Eliminar esta cuenta de broker y todos los registros vinculados?"
+        )
+      )
+    ) {
       return;
     }
 
@@ -97,11 +106,17 @@ export default function InvestmentsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Investments"
+        title={t("Investments", "Inversiones")}
         description={
           loading
-            ? "Manual-first portfolio tracking across brokers, Colombian stocks, US assets, and crypto."
-            : `${overview.openPositionsCount} open position${overview.openPositionsCount !== 1 ? "s" : ""} · ${watchlist.length} watchlist asset${watchlist.length !== 1 ? "s" : ""}`
+            ? t(
+                "Manual-first portfolio tracking across brokers, Colombian stocks, US assets, and crypto.",
+                "Seguimiento manual del portafolio entre brokers, acciones colombianas, activos de EE. UU. y cripto."
+              )
+            : t(
+                `${overview.openPositionsCount} open position${overview.openPositionsCount !== 1 ? "s" : ""} · ${watchlist.length} watchlist asset${watchlist.length !== 1 ? "s" : ""}`,
+                `${overview.openPositionsCount} posición${overview.openPositionsCount !== 1 ? "es" : ""} abierta${overview.openPositionsCount !== 1 ? "s" : ""} · ${watchlist.length} activo${watchlist.length !== 1 ? "s" : ""} en seguimiento`
+              )
         }
       >
         <TradeForm
@@ -117,12 +132,13 @@ export default function InvestmentsPage() {
           <CardContent className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-2">
               <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                Add positions directly
+                {t("Add positions directly", "Agrega posiciones directamente")}
               </p>
               <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                Pick a broker like Trii, Interactive Brokers, Hapi, or any custom
-                broker, enter the asset, quantity, and price, and the app will
-                create the saved broker entry automatically if it does not exist yet.
+                {t(
+                  "Pick a broker like Trii, Interactive Brokers, Hapi, or any custom broker, enter the asset, quantity, and price, and the app will create the saved broker entry automatically if it does not exist yet.",
+                  "Elige un broker como Trii, Interactive Brokers, Hapi u otro personalizado, ingresa el activo, cantidad y precio, y la app creará automáticamente el registro del broker si aún no existe."
+                )}
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -139,10 +155,12 @@ export default function InvestmentsPage() {
 
       <Tabs defaultValue="overview" className="space-y-5">
         <TabsList variant="line" className="w-full justify-start">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="orders">Orders</TabsTrigger>
-          <TabsTrigger value="cash">Cash</TabsTrigger>
-          <TabsTrigger value="watchlist">Watchlist</TabsTrigger>
+          <TabsTrigger value="overview">{t("Overview", "Resumen")}</TabsTrigger>
+          <TabsTrigger value="orders">{t("Orders", "Órdenes")}</TabsTrigger>
+          <TabsTrigger value="cash">{t("Cash", "Caja")}</TabsTrigger>
+          <TabsTrigger value="watchlist">
+            {t("Watchlist", "Seguimiento")}
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-5">
@@ -159,13 +177,13 @@ export default function InvestmentsPage() {
             <div className="space-y-5">
               <Card className="border-border/80 bg-card/96">
                 <CardHeader className="border-b border-border/70">
-                  <CardTitle>Broker summary</CardTitle>
+                  <CardTitle>{t("Broker summary", "Resumen por broker")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="rounded-[1.25rem] border border-border/70 bg-secondary/35 p-4">
                       <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                        Estimated cash
+                        {t("Estimated cash", "Caja estimada")}
                       </p>
                       <p className="mt-3 font-heading text-[1.5rem] font-semibold leading-none tracking-[-0.04em]">
                         {formatCurrency(overview.estimatedCash, baseCurrency)}
@@ -173,7 +191,7 @@ export default function InvestmentsPage() {
                     </div>
                     <div className="rounded-[1.25rem] border border-border/70 bg-secondary/35 p-4">
                       <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                        Net contributions
+                        {t("Net contributions", "Aportes netos")}
                       </p>
                       <p className="mt-3 font-heading text-[1.5rem] font-semibold leading-none tracking-[-0.04em]">
                         {formatCurrency(overview.netContributions, baseCurrency)}
@@ -184,8 +202,10 @@ export default function InvestmentsPage() {
                   <div className="space-y-3">
                     {overview.accountSummaries.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
-                        Add deposits, withdrawals, or positions to populate broker
-                        cash summaries.
+                        {t(
+                          "Add deposits, withdrawals, or positions to populate broker cash summaries.",
+                          "Agrega depósitos, retiros o posiciones para completar el resumen de caja por broker."
+                        )}
                       </p>
                     ) : (
                       overview.accountSummaries.map((account) => (
@@ -207,7 +227,7 @@ export default function InvestmentsPage() {
                                 {formatCurrency(account.estimatedCash, baseCurrency)}
                               </p>
                               <p className="text-xs text-muted-foreground">
-                                est. cash
+                                {t("est. cash", "caja est.")}
                               </p>
                             </div>
                           </div>
@@ -220,13 +240,15 @@ export default function InvestmentsPage() {
 
               <Card className="border-border/80 bg-card/96">
                 <CardHeader className="border-b border-border/70">
-                  <CardTitle>Saved brokers</CardTitle>
+                  <CardTitle>{t("Saved brokers", "Brokers guardados")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-4">
                   {accounts.length === 0 ? (
                     <p className="text-sm text-muted-foreground">
-                      Saved brokers will appear here after your first position or
-                      cash movement.
+                      {t(
+                        "Saved brokers will appear here after your first position or cash movement.",
+                        "Los brokers guardados aparecerán aquí después de tu primera posición o movimiento de caja."
+                      )}
                     </p>
                   ) : (
                     accounts.map((account) => (
@@ -264,7 +286,7 @@ export default function InvestmentsPage() {
                               }
                               trigger={
                                 <Button variant="ghost" size="sm">
-                                  Edit
+                                  {t("Edit", "Editar")}
                                 </Button>
                               }
                             />
@@ -279,7 +301,8 @@ export default function InvestmentsPage() {
                           </div>
                         </div>
                         <p className="mt-3 text-sm text-muted-foreground">
-                          Saved label: {account.name} · Fee mode:{" "}
+                          {t("Saved label", "Etiqueta guardada")}: {account.name} ·{" "}
+                          {t("Fee mode", "Modo de comisión")}:{" "}
                           {account.fee_mode.replaceAll("_", " ")}
                         </p>
                       </div>
@@ -296,12 +319,15 @@ export default function InvestmentsPage() {
             <div className="flex flex-col gap-4 xl:flex-row xl:items-end">
               <div className="flex-1 space-y-2">
                 <p className="text-[0.68rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                  Search
+                  {t("Search", "Buscar")}
                 </p>
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search symbols, names, or brokers..."
+                    placeholder={t(
+                      "Search symbols, names, or brokers...",
+                      "Busca símbolos, nombres o brokers..."
+                    )}
                     className="h-11 rounded-2xl pl-9 text-sm"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
@@ -312,7 +338,7 @@ export default function InvestmentsPage() {
               <div className="grid gap-4 md:grid-cols-[220px_160px_auto]">
                 <div className="space-y-2">
                   <p className="text-[0.68rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                    Broker
+                    {t("Broker", "Broker")}
                   </p>
                   <Select
                     value={brokerFilter}
@@ -322,7 +348,9 @@ export default function InvestmentsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All brokers</SelectItem>
+                      <SelectItem value="all">
+                        {t("All brokers", "Todos los brokers")}
+                      </SelectItem>
                       {brokerChoices.map((broker) => (
                         <SelectItem key={broker} value={broker}>
                           {broker}
@@ -334,7 +362,7 @@ export default function InvestmentsPage() {
 
                 <div className="space-y-2">
                   <p className="text-[0.68rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                    Side
+                    {t("Side", "Lado")}
                   </p>
                   <Select
                     value={sideFilter}
@@ -344,9 +372,9 @@ export default function InvestmentsPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="buy">Buy</SelectItem>
-                      <SelectItem value="sell">Sell</SelectItem>
+                      <SelectItem value="all">{t("All", "Todos")}</SelectItem>
+                      <SelectItem value="buy">{t("Buy", "Compra")}</SelectItem>
+                      <SelectItem value="sell">{t("Sell", "Venta")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -376,7 +404,7 @@ export default function InvestmentsPage() {
               <CardContent className="grid gap-3 p-5 sm:grid-cols-2">
                 <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                    Estimated cash
+                    {t("Estimated cash", "Caja estimada")}
                   </p>
                   <p className="mt-3 font-heading text-[1.6rem] font-semibold leading-none tracking-[-0.04em]">
                     {formatCurrency(overview.estimatedCash, baseCurrency)}
@@ -384,7 +412,7 @@ export default function InvestmentsPage() {
                 </div>
                 <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                    Net contributions
+                    {t("Net contributions", "Aportes netos")}
                   </p>
                   <p className="mt-3 font-heading text-[1.6rem] font-semibold leading-none tracking-[-0.04em]">
                     {formatCurrency(overview.netContributions, baseCurrency)}
@@ -410,7 +438,7 @@ export default function InvestmentsPage() {
               <CardContent className="grid gap-3 p-5 sm:grid-cols-3">
                 <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                    Watchlist assets
+                    {t("Watchlist assets", "Activos en seguimiento")}
                   </p>
                   <p className="mt-3 font-heading text-[1.6rem] font-semibold leading-none tracking-[-0.04em]">
                     {overview.watchlistCount}
@@ -418,7 +446,7 @@ export default function InvestmentsPage() {
                 </div>
                 <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                    Tracked assets
+                    {t("Tracked assets", "Activos rastreados")}
                   </p>
                   <p className="mt-3 font-heading text-[1.6rem] font-semibold leading-none tracking-[-0.04em]">
                     {overview.trackedAssetsCount}
@@ -426,10 +454,12 @@ export default function InvestmentsPage() {
                 </div>
                 <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                    Price refresh
+                    {t("Price refresh", "Actualización de precios")}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">
-                    {quoteLoading ? "Refreshing quotes..." : "Latest daily cache loaded"}
+                    {quoteLoading
+                      ? t("Refreshing quotes...", "Actualizando cotizaciones...")
+                      : t("Latest daily cache loaded", "Último caché diario cargado")}
                   </p>
                 </div>
               </CardContent>
@@ -451,8 +481,10 @@ export default function InvestmentsPage() {
             <div className="flex items-center gap-3 rounded-[1.25rem] border border-border/70 bg-secondary/35 p-4">
               <Wallet className="h-5 w-5 text-muted-foreground" />
               <p className="text-sm leading-6 text-muted-foreground">
-                Broker entries are lightweight now. Save a position first, then
-                adjust broker defaults later if you want.
+                {t(
+                  "Broker entries are lightweight now. Save a position first, then adjust broker defaults later if you want.",
+                  "Los registros de broker son simples al inicio. Guarda primero una posición y luego ajusta los valores por defecto si quieres."
+                )}
               </p>
             </div>
           </CardContent>

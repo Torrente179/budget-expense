@@ -20,6 +20,7 @@ import type {
   MarketPriceResponse,
 } from "@/lib/investments";
 import type { InvestmentTradeFormValues } from "@/lib/validations";
+import { useLocale } from "@/providers/locale-provider";
 
 interface BrokerageAccountOption {
   id: string;
@@ -55,6 +56,16 @@ export function TradeTable({
 }: TradeTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { t } = useLocale();
+  const referenceStatusLabel: Record<string, string> = {
+    fetched: t("fetched", "obtenido"),
+    fallback_previous_trading_day: t(
+      "fallback previous trading day",
+      "día hábil anterior"
+    ),
+    unavailable: t("unavailable", "no disponible"),
+    manual_only: t("manual only", "solo manual"),
+  };
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -81,8 +92,11 @@ export function TradeTable({
     return (
       <EmptyState
         icon={ReceiptText}
-        title="No orders yet"
-        description="Store your first buy or sell order to start building the investment ledger."
+        title={t("No orders yet", "Aún no hay órdenes")}
+        description={t(
+          "Store your first buy or sell order to start building the investment ledger.",
+          "Guarda tu primera orden de compra o venta para empezar a construir el registro de inversiones."
+        )}
       />
     );
   }
@@ -105,7 +119,7 @@ export function TradeTable({
                         : "rounded-full border border-amber-500/20 bg-amber-500/10 px-2.5 py-1 text-xs font-medium uppercase tracking-[0.22em] text-amber-300"
                     }
                   >
-                    {trade.side}
+                    {trade.side === "buy" ? t("buy", "compra") : t("sell", "venta")}
                   </span>
                   <p className="text-base font-medium text-foreground">
                     {trade.investment_assets.symbol}
@@ -131,23 +145,27 @@ export function TradeTable({
                     {Number(trade.quantity).toFixed(
                       trade.investment_assets.asset_type === "crypto" ? 6 : 4
                     )}{" "}
-                    units
+                    {t("units", "unidades")}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                   <span>
-                    Fill:{" "}
+                    {t("Fill", "Ejecución")}:{" "}
                     <span className="font-mono text-foreground">
                       {Number(trade.execution_price).toFixed(4)} {trade.execution_currency}
                     </span>
                   </span>
                   <span>
-                    Fee:{" "}
+                    {t("Fee", "Comisión")}:{" "}
                     <span className="font-mono text-foreground">
                       {Number(trade.fee_amount).toFixed(4)} {trade.fee_currency}
                     </span>
                   </span>
-                  <span>Reference: {trade.reference_status.replaceAll("_", " ")}</span>
+                  <span>
+                    {t("Reference", "Referencia")}:{" "}
+                    {referenceStatusLabel[trade.reference_status] ??
+                      trade.reference_status.replaceAll("_", " ")}
+                  </span>
                 </div>
               </div>
 
@@ -223,19 +241,21 @@ export function TradeTable({
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-[380px] rounded-[1.75rem] border-border/70 bg-popover/96 p-5">
           <DialogHeader className="space-y-3">
-            <DialogTitle>Delete order</DialogTitle>
+            <DialogTitle>{t("Delete order", "Eliminar orden")}</DialogTitle>
             <DialogDescription>
-              This will recompute holdings and FIFO realized profit or loss
-              automatically.
+              {t(
+                "This will recompute holdings and FIFO realized profit or loss automatically.",
+                "Esto recalculará automáticamente tenencias y ganancia o pérdida realizada bajo FIFO."
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="-mx-5 -mb-5 flex flex-col-reverse gap-2 rounded-b-[1.35rem] border-t border-border/60 bg-secondary/45 p-4 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setDeleteId(null)}>
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              Delete
+              {t("Delete", "Eliminar")}
             </Button>
           </DialogFooter>
         </DialogContent>

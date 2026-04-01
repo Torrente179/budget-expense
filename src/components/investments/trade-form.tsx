@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/sheet";
 import { Loader2, Plus } from "lucide-react";
 import { format } from "date-fns";
+import { useLocale } from "@/providers/locale-provider";
 
 interface BrokerageAccountOption {
   id: string;
@@ -101,6 +102,7 @@ export function TradeForm({
   defaultValues,
   trigger,
 }: TradeFormProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [quoteLoading, setQuoteLoading] = useState(false);
@@ -235,7 +237,7 @@ export function TradeForm({
       ) : (
         <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          Add position
+          {t("Add position", "Agregar posición")}
         </SheetTrigger>
       )}
 
@@ -243,19 +245,22 @@ export function TradeForm({
         <form className="flex h-full flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
           <SheetHeader className="border-b border-border/70 px-5 py-5">
             <SheetTitle>
-              {defaultValues ? "Edit position" : "Add stock or crypto position"}
+              {defaultValues
+                ? t("Edit position", "Editar posición")
+                : t("Add stock or crypto position", "Agregar posición de acción o cripto")}
             </SheetTitle>
             <SheetDescription>
-              Pick the broker, asset, quantity, and purchase or sale price. The
-              app saves the position and keeps the fetched daily close as an
-              optional reference.
+              {t(
+                "Pick the broker, asset, quantity, and purchase or sale price. The app saves the position and keeps the fetched daily close as an optional reference.",
+                "Elige broker, activo, cantidad y precio de compra o venta. La app guarda la posición y mantiene el cierre diario consultado como referencia opcional."
+              )}
             </SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-5 px-5 py-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="trade-broker">Broker</Label>
+                <Label htmlFor="trade-broker">{t("Broker", "Broker")}</Label>
                 <Select
                   value={brokerSelectValue}
                   onValueChange={(value) => {
@@ -288,7 +293,7 @@ export function TradeForm({
                   }}
                 >
                   <SelectTrigger id="trade-broker" className="h-11">
-                    <SelectValue placeholder="Select a broker" />
+                    <SelectValue placeholder={t("Select a broker", "Selecciona un broker")} />
                   </SelectTrigger>
                   <SelectContent>
                     {brokerChoices.map((choice) => (
@@ -297,14 +302,14 @@ export function TradeForm({
                       </SelectItem>
                     ))}
                     <SelectItem value={CUSTOM_BROKER_VALUE}>
-                      Other broker
+                      {t("Other broker", "Otro broker")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="trade-side">Side</Label>
+                <Label htmlFor="trade-side">{t("Side", "Lado")}</Label>
                 <Select
                   value={form.watch("side")}
                   onValueChange={(value) =>
@@ -319,8 +324,8 @@ export function TradeForm({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="buy">Buy</SelectItem>
-                    <SelectItem value="sell">Sell</SelectItem>
+                    <SelectItem value="buy">{t("Buy", "Compra")}</SelectItem>
+                    <SelectItem value="sell">{t("Sell", "Venta")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -328,10 +333,12 @@ export function TradeForm({
 
             {brokerSelectValue === CUSTOM_BROKER_VALUE && (
               <div className="space-y-2">
-                <Label htmlFor="custom-broker-name">Custom broker</Label>
+                <Label htmlFor="custom-broker-name">
+                  {t("Custom broker", "Broker personalizado")}
+                </Label>
                 <Input
                   id="custom-broker-name"
-                  placeholder="Trii, Webull, Scotiabank..."
+                  placeholder={t("Trii, Webull, Scotiabank...", "Trii, Webull, Scotiabank...")}
                   className="h-11"
                   {...form.register("broker_name")}
                 />
@@ -342,7 +349,7 @@ export function TradeForm({
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="trade-date">Trade date</Label>
+                <Label htmlFor="trade-date">{t("Trade date", "Fecha de operación")}</Label>
                 <Input
                   id="trade-date"
                   type="date"
@@ -351,7 +358,7 @@ export function TradeForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="trade-quantity">Quantity</Label>
+                <Label htmlFor="trade-quantity">{t("Quantity", "Cantidad")}</Label>
                 <Input
                   id="trade-quantity"
                   type="number"
@@ -362,7 +369,9 @@ export function TradeForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="trade-price">Execution price</Label>
+                <Label htmlFor="trade-price">
+                  {t("Execution price", "Precio de ejecución")}
+                </Label>
                 <Input
                   id="trade-price"
                   type="number"
@@ -376,7 +385,9 @@ export function TradeForm({
 
             <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="trade-price-currency">Price currency</Label>
+                <Label htmlFor="trade-price-currency">
+                  {t("Price currency", "Moneda del precio")}
+                </Label>
                 <Select
                   value={form.watch("execution_currency")}
                   onValueChange={(value) =>
@@ -400,7 +411,7 @@ export function TradeForm({
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="trade-fee">Fee amount</Label>
+                <Label htmlFor="trade-fee">{t("Fee amount", "Monto de comisión")}</Label>
                 <Input
                   id="trade-fee"
                   type="number"
@@ -411,7 +422,9 @@ export function TradeForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="trade-fee-currency">Fee currency</Label>
+                <Label htmlFor="trade-fee-currency">
+                  {t("Fee currency", "Moneda de comisión")}
+                </Label>
                 <Select
                   value={form.watch("fee_currency")}
                   onValueChange={(value) =>
@@ -437,10 +450,13 @@ export function TradeForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="trade-notes">Notes</Label>
+              <Label htmlFor="trade-notes">{t("Notes", "Notas")}</Label>
               <Input
                 id="trade-notes"
-                placeholder="Optional notes about the fill or the setup"
+                placeholder={t(
+                  "Optional notes about the fill or the setup",
+                  "Notas opcionales sobre la ejecución o la operación"
+                )}
                 className="h-11"
                 {...form.register("notes")}
               />
@@ -448,22 +464,27 @@ export function TradeForm({
 
             <div className="rounded-[1.4rem] border border-border/70 bg-secondary/35 p-4 text-sm">
               <div className="flex items-center justify-between gap-3">
-                <p className="font-medium text-foreground">Reference market close</p>
+                <p className="font-medium text-foreground">
+                  {t("Reference market close", "Cierre de mercado de referencia")}
+                </p>
                 {quoteLoading && (
                   <span className="inline-flex items-center gap-2 text-muted-foreground">
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                    Looking up price
+                    {t("Looking up price", "Consultando precio")}
                   </span>
                 )}
               </div>
               <p className="mt-2 text-muted-foreground">
                 {form.watch("reference_close_price")
-                  ? `${form.watch("reference_source") ?? "Provider"} returned ${form
+                  ? `${form.watch("reference_source") ?? t("Provider", "Proveedor")} ${t("returned", "devolvió")} ${form
                       .watch("reference_close_price")
                       ?.toFixed(4)} ${form.watch("reference_close_currency") ?? ""} for ${
                       form.watch("reference_price_date") ?? tradeDate
                     }.`
-                  : "No provider quote locked yet. Manual execution pricing still works."}
+                  : t(
+                      "No provider quote locked yet. Manual execution pricing still works.",
+                      "Aún no hay cotización del proveedor fijada. El precio manual de ejecución sigue funcionando."
+                    )}
               </p>
             </div>
           </div>
@@ -471,11 +492,13 @@ export function TradeForm({
           <SheetFooter className="border-t border-border/60 px-5 py-4">
             <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                Cancel
+                {t("Cancel", "Cancelar")}
               </Button>
               <Button type="submit" disabled={submitting}>
                 {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-                {defaultValues ? "Save position" : "Save position"}
+                {defaultValues
+                  ? t("Save position", "Guardar posición")
+                  : t("Save position", "Guardar posición")}
               </Button>
             </div>
           </SheetFooter>

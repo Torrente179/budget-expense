@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Database } from "@/types/database";
+import { useLocale } from "@/providers/locale-provider";
 
 type Budget = Database["public"]["Tables"]["budgets"]["Row"] & {
   categories: Database["public"]["Tables"]["categories"]["Row"];
@@ -32,6 +33,7 @@ export function BudgetCard({
   onDelete,
 }: BudgetCardProps) {
   const { baseCurrency, convert } = useCurrency();
+  const { t } = useLocale();
   const budgetAmount = convert(budget.amount, budget.currency);
   const spentAmount = convert(spent, spentCurrency);
   const remaining = budgetAmount - spentAmount;
@@ -76,8 +78,11 @@ export function BudgetCard({
             <p className="text-base font-medium">{budget.categories.name}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {shareOfPool > 0
-                ? `${shareOfPool.toFixed(0)}% of the monthly pool`
-                : "Category envelope"}
+                ? t(
+                    `${shareOfPool.toFixed(0)}% of the monthly pool`,
+                    `${shareOfPool.toFixed(0)}% del fondo mensual`
+                  )
+                : t("Category envelope", "Sobre de categoría")}
             </p>
           </div>
         </div>
@@ -94,7 +99,7 @@ export function BudgetCard({
       <div className="mt-5 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
           <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-            Reserved
+            {t("Reserved", "Reservado")}
           </p>
           <p className="mt-2 font-mono text-base font-semibold">
             {formatCurrency(budgetAmount, baseCurrency)}
@@ -102,7 +107,7 @@ export function BudgetCard({
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
           <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-            Consumed
+            {t("Consumed", "Consumido")}
           </p>
           <p className="mt-2 font-mono text-base font-semibold">
             {formatCurrency(spentAmount, baseCurrency)}
@@ -110,7 +115,7 @@ export function BudgetCard({
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
           <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-            Left
+            {t("Left", "Disponible")}
           </p>
           <p className={`mt-2 font-mono text-base font-semibold ${statusColor}`}>
             {formatCurrency(Math.abs(remaining), baseCurrency)}
@@ -124,10 +129,12 @@ export function BudgetCard({
             variant="outline"
             className={`border-current/10 bg-secondary/60 ${statusColor}`}
           >
-            {percentage.toFixed(0)}% used
+            {t(`${percentage.toFixed(0)}% used`, `${percentage.toFixed(0)}% usado`)}
           </Badge>
           <span className="text-sm text-muted-foreground">
-            {remaining >= 0 ? "Within envelope" : "Overspent"}
+            {remaining >= 0
+              ? t("Within envelope", "Dentro del sobre")
+              : t("Overspent", "Excedido")}
           </span>
         </div>
         <Progress value={cappedPercentage} className={`gap-0 ${progressColor}`} />

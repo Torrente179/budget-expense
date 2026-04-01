@@ -6,6 +6,7 @@ import { formatCurrency } from "@/lib/utils";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { HoldingSummary } from "@/lib/investments";
+import { useLocale } from "@/providers/locale-provider";
 
 interface HoldingsTableProps {
   holdings: HoldingSummary[];
@@ -13,13 +14,26 @@ interface HoldingsTableProps {
 
 export function HoldingsTable({ holdings }: HoldingsTableProps) {
   const { baseCurrency } = useCurrency();
+  const { t } = useLocale();
+  const priceStatusLabel: Record<string, string> = {
+    fetched: t("fetched", "obtenido"),
+    fallback_previous_trading_day: t(
+      "fallback previous trading day",
+      "día hábil anterior"
+    ),
+    unavailable: t("unavailable", "no disponible"),
+    manual_only: t("manual only", "solo manual"),
+  };
 
   if (holdings.length === 0) {
     return (
       <EmptyState
         icon={AreaChart}
-        title="No open positions yet"
-        description="Add a buy order to start tracking holdings, FIFO lots, and marked market value."
+        title={t("No open positions yet", "Aún no hay posiciones abiertas")}
+        description={t(
+          "Add a buy order to start tracking holdings, FIFO lots, and marked market value.",
+          "Agrega una orden de compra para empezar a seguir tenencias, lotes FIFO y valor de mercado."
+        )}
       />
     );
   }
@@ -27,18 +41,26 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
   return (
     <Card className="border-border/80 bg-card/96">
       <CardHeader className="border-b border-border/70">
-        <CardTitle>Holdings</CardTitle>
+        <CardTitle>{t("Holdings", "Tenencias")}</CardTitle>
       </CardHeader>
       <CardContent className="overflow-x-auto p-0">
         <table className="min-w-full text-sm">
           <thead className="border-b border-border/60 bg-secondary/35 text-left text-[0.72rem] uppercase tracking-[0.24em] text-muted-foreground">
             <tr>
-              <th className="px-4 py-3 font-medium">Asset</th>
-              <th className="px-4 py-3 font-medium">Quantity</th>
-              <th className="px-4 py-3 font-medium">Avg cost</th>
-              <th className="px-4 py-3 font-medium">Latest</th>
-              <th className="px-4 py-3 font-medium">Market value</th>
-              <th className="px-4 py-3 font-medium">Unrealized</th>
+              <th className="px-4 py-3 font-medium">{t("Asset", "Activo")}</th>
+              <th className="px-4 py-3 font-medium">
+                {t("Quantity", "Cantidad")}
+              </th>
+              <th className="px-4 py-3 font-medium">
+                {t("Avg cost", "Costo prom.")}
+              </th>
+              <th className="px-4 py-3 font-medium">{t("Latest", "Último")}</th>
+              <th className="px-4 py-3 font-medium">
+                {t("Market value", "Valor de mercado")}
+              </th>
+              <th className="px-4 py-3 font-medium">
+                {t("Unrealized", "No realizada")}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -62,11 +84,12 @@ export function HoldingsTable({ holdings }: HoldingsTableProps) {
                   <div className="space-y-1">
                     <p className="font-mono">
                       {holding.latestPrice === null
-                        ? "Manual"
+                        ? t("Manual", "Manual")
                         : formatCurrency(holding.latestPrice, holding.latestCurrency)}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {holding.priceStatus.replaceAll("_", " ")}
+                      {priceStatusLabel[holding.priceStatus] ??
+                        holding.priceStatus.replaceAll("_", " ")}
                     </p>
                   </div>
                 </td>

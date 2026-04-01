@@ -18,6 +18,7 @@ import { Pencil, Trash2, Loader2, Receipt } from "lucide-react";
 import { ExpenseForm } from "./expense-form";
 import { EmptyState } from "@/components/shared/empty-state";
 import { motion } from "framer-motion";
+import { useLocale } from "@/providers/locale-provider";
 
 type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
   categories: Database["public"]["Tables"]["categories"]["Row"];
@@ -41,6 +42,7 @@ export function ExpenseTable({
 }: ExpenseTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { t } = useLocale();
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -67,8 +69,11 @@ export function ExpenseTable({
     return (
       <EmptyState
         icon={Receipt}
-        title="No expenses yet"
-        description="Add your first expense to start tracking spending with more context and clarity."
+        title={t("No expenses yet", "Aún no hay gastos")}
+        description={t(
+          "Add your first expense to start tracking spending with more context and clarity.",
+          "Agrega tu primer gasto para empezar a registrar con más contexto y claridad."
+        )}
       />
     );
   }
@@ -157,19 +162,21 @@ export function ExpenseTable({
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-[380px] rounded-[1.75rem] border-border/70 bg-popover/96 p-5">
           <DialogHeader className="space-y-3">
-            <DialogTitle>Delete expense</DialogTitle>
+            <DialogTitle>{t("Delete expense", "Eliminar gasto")}</DialogTitle>
             <DialogDescription>
-              This removes the record from the current month. Your budget and
-              category totals will recalculate automatically.
+              {t(
+                "This removes the record from the current month. Your budget and category totals will recalculate automatically.",
+                "Esto elimina el registro del mes actual. Los totales de presupuesto y categorías se recalcularán automáticamente."
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="-mx-5 -mb-5 flex flex-col-reverse gap-2 rounded-b-[1.35rem] border-t border-border/60 bg-secondary/45 p-4 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setDeleteId(null)}>
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              Delete
+              {t("Delete", "Eliminar")}
             </Button>
           </DialogFooter>
         </DialogContent>

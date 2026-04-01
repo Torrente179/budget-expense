@@ -30,6 +30,7 @@ import { CURRENCIES } from "@/lib/constants";
 import { CategoryBadge, CategoryIcon } from "@/components/shared/category-badge";
 import { Loader2, Plus } from "lucide-react";
 import { format } from "date-fns";
+import { useLocale } from "@/providers/locale-provider";
 
 interface ExpenseFormProps {
   onSubmit: (values: ExpenseFormValues) => Promise<unknown>;
@@ -42,6 +43,7 @@ export function ExpenseForm({
   defaultValues,
   trigger,
 }: ExpenseFormProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -109,10 +111,18 @@ export function ExpenseForm({
     }
   }
 
-  const composerTitle = defaultValues?.amount ? "Edit expense" : "Add expense";
+  const composerTitle = defaultValues?.amount
+    ? t("Edit expense", "Editar gasto")
+    : t("Add expense", "Agregar gasto");
   const composerDescription = defaultValues?.amount
-    ? "Refine the entry without losing the original rhythm of the record."
-    : "Capture the amount first, then attach context while the detail is still fresh.";
+    ? t(
+        "Refine the entry without losing the original rhythm of the record.",
+        "Ajusta el registro sin perder el ritmo original del movimiento."
+      )
+    : t(
+        "Capture the amount first, then attach context while the detail is still fresh.",
+        "Captura primero el monto y luego agrega contexto mientras el detalle sigue fresco."
+      );
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
@@ -121,7 +131,7 @@ export function ExpenseForm({
       ) : (
         <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          Add expense
+          {t("Add expense", "Agregar gasto")}
         </SheetTrigger>
       )}
 
@@ -149,16 +159,18 @@ export function ExpenseForm({
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-[0.68rem] font-medium uppercase tracking-[0.26em] text-muted-foreground">
-                        Amount first
+                        {t("Amount first", "Monto primero")}
                       </p>
                       <p className="mt-2 text-sm text-muted-foreground">
-                        Enter the original amount, then choose the currency that
-                        belongs to the receipt.
+                        {t(
+                          "Enter the original amount, then choose the currency that belongs to the receipt.",
+                          "Ingresa el monto original y luego elige la moneda del comprobante."
+                        )}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2">
                       <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                        Base
+                        {t("Base", "Base")}
                       </p>
                       <p className="mt-1 font-mono text-xs font-medium">
                         {baseCurrency}
@@ -168,7 +180,7 @@ export function ExpenseForm({
 
                   <div className="mt-4 grid gap-3 sm:grid-cols-[minmax(0,1.3fr)_150px]">
                     <div className="space-y-2">
-                      <Label htmlFor="amount">Amount</Label>
+                      <Label htmlFor="amount">{t("Amount", "Monto")}</Label>
                       <Input
                         id="amount"
                         type="number"
@@ -185,7 +197,7 @@ export function ExpenseForm({
                       )}
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="currency">Currency</Label>
+                      <Label htmlFor="currency">{t("Currency", "Moneda")}</Label>
                       <Select
                         value={currency}
                         onValueChange={(value) =>
@@ -213,7 +225,7 @@ export function ExpenseForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category</Label>
+                  <Label htmlFor="category">{t("Category", "Categoría")}</Label>
                   <Select
                     value={categoryId}
                     onValueChange={(value) =>
@@ -226,7 +238,7 @@ export function ExpenseForm({
                     }
                   >
                     <SelectTrigger id="category" className="h-11">
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder={t("Select category", "Selecciona categoría")} />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((category) => (
@@ -255,7 +267,7 @@ export function ExpenseForm({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="date">Date</Label>
+                  <Label htmlFor="date">{t("Date", "Fecha")}</Label>
                   <Input
                     id="date"
                     type="date"
@@ -271,11 +283,17 @@ export function ExpenseForm({
 
                 <div className="space-y-2">
                   <Label htmlFor="description">
-                    Description <span className="text-muted-foreground">(optional)</span>
+                    {t("Description", "Descripción")}{" "}
+                    <span className="text-muted-foreground">
+                      ({t("optional", "opcional")})
+                    </span>
                   </Label>
                   <Input
                     id="description"
-                    placeholder="What was this expense for?"
+                    placeholder={t(
+                      "What was this expense for?",
+                      "¿Para qué fue este gasto?"
+                    )}
                     className="h-11"
                     {...form.register("description")}
                   />
@@ -287,15 +305,18 @@ export function ExpenseForm({
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-[0.68rem] font-medium uppercase tracking-[0.26em] text-muted-foreground">
-                        Live preview
+                        {t("Live preview", "Vista previa")}
                       </p>
                       <p className="mt-1 text-sm text-muted-foreground">
-                        What will be stored and shown in the ledger.
+                        {t(
+                          "What will be stored and shown in the ledger.",
+                          "Lo que se guardará y se mostrará en el registro."
+                        )}
                       </p>
                     </div>
                     <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2 text-foreground">
                       <p className="text-[0.66rem] uppercase tracking-[0.22em]">
-                        Month
+                        {t("Month", "Mes")}
                       </p>
                       <p className="mt-1 font-mono text-xs font-medium">
                         {format(new Date(date), "MMM d")}
@@ -305,7 +326,7 @@ export function ExpenseForm({
 
                   <div className="mt-5 rounded-[1.5rem] border border-border/70 bg-secondary/45 p-4">
                     <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
-                      Amount in reports
+                      {t("Amount in reports", "Monto en reportes")}
                     </p>
                     <p className="mt-3 font-heading text-[2.65rem] font-semibold leading-none tracking-[-0.05em]">
                       {amount > 0
@@ -314,8 +335,14 @@ export function ExpenseForm({
                     </p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       {amount > 0
-                        ? `${formatCurrency(amount, currency)} original entry`
-                        : "Enter an amount to see how the report will read."}
+                        ? t(
+                            `${formatCurrency(amount, currency)} original entry`,
+                            `${formatCurrency(amount, currency)} registro original`
+                          )
+                        : t(
+                            "Enter an amount to see how the report will read.",
+                            "Ingresa un monto para ver cómo aparecerá en el reporte."
+                          )}
                     </p>
                   </div>
 
@@ -330,13 +357,13 @@ export function ExpenseForm({
                         />
                       ) : (
                         <span className="text-sm text-muted-foreground">
-                          Select a category
+                          {t("Select a category", "Selecciona una categoría")}
                         </span>
                       )}
                     </div>
                     <div className="rounded-[1.35rem] border border-border/70 bg-secondary/45 p-3 text-sm text-muted-foreground">
                       <p className="text-[0.68rem] uppercase tracking-[0.24em]">
-                        Date
+                        {t("Date", "Fecha")}
                       </p>
                       <p className="mt-2 font-medium text-foreground">
                         {format(new Date(date), "EEEE, MMMM d")}
@@ -344,17 +371,19 @@ export function ExpenseForm({
                     </div>
                     <div className="rounded-[1.35rem] border border-border/70 bg-secondary/45 p-3 text-sm text-muted-foreground">
                       <p className="text-[0.68rem] uppercase tracking-[0.24em]">
-                        Description
+                        {t("Description", "Descripción")}
                       </p>
                       <p className="mt-2 leading-6 text-foreground">
-                        {description || "No description yet"}
+                        {description || t("No description yet", "Sin descripción todavía")}
                       </p>
                     </div>
                   </div>
 
                   <div className="mt-4 rounded-[1.35rem] border border-border/70 bg-secondary/60 p-3 text-sm text-muted-foreground">
-                    The original currency is preserved, and reporting converts it
-                    into your base currency automatically.
+                    {t(
+                      "The original currency is preserved, and reporting converts it into your base currency automatically.",
+                      "La moneda original se conserva y los reportes la convierten automáticamente a tu moneda base."
+                    )}
                   </div>
                 </div>
               </aside>
@@ -364,11 +393,13 @@ export function ExpenseForm({
           <SheetFooter className="border-t border-border/60 bg-background/82 px-5 py-4 backdrop-blur-sm">
             <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-                Cancel
+                {t("Cancel", "Cancelar")}
               </Button>
               <Button type="submit" disabled={submitting}>
                 {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-                {defaultValues?.amount ? "Save changes" : "Add expense"}
+                {defaultValues?.amount
+                  ? t("Save changes", "Guardar cambios")
+                  : t("Add expense", "Agregar gasto")}
               </Button>
             </div>
           </SheetFooter>

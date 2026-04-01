@@ -17,6 +17,7 @@ import {
 import { CashMovementForm } from "@/components/investments/cash-movement-form";
 import type { InvestmentCashMovementWithJoins } from "@/lib/investments";
 import type { InvestmentCashMovementFormValues } from "@/lib/validations";
+import { useLocale } from "@/providers/locale-provider";
 
 interface BrokerageAccountOption {
   id: string;
@@ -46,6 +47,7 @@ export function CashMovementTable({
 }: CashMovementTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const { t } = useLocale();
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -72,8 +74,11 @@ export function CashMovementTable({
     return (
       <EmptyState
         icon={ArrowRightLeft}
-        title="No cash movements yet"
-        description="Track deposits and withdrawals separately from the expense ledger."
+        title={t("No cash movements yet", "Aún no hay movimientos de caja")}
+        description={t(
+          "Track deposits and withdrawals separately from the expense ledger.",
+          "Registra depósitos y retiros por separado del registro de gastos."
+        )}
       />
     );
   }
@@ -96,7 +101,9 @@ export function CashMovementTable({
                         : "rounded-full border border-sky-500/20 bg-sky-500/10 px-2.5 py-1 text-xs font-medium uppercase tracking-[0.22em] text-sky-300"
                     }
                   >
-                    {movement.movement_type}
+                    {movement.movement_type === "deposit"
+                      ? t("deposit", "depósito")
+                      : t("withdrawal", "retiro")}
                   </span>
                   <p className="text-base font-medium text-foreground">
                     {movement.brokerage_accounts.broker_kind}
@@ -113,7 +120,8 @@ export function CashMovementTable({
                   ) : null}
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Fee {Number(movement.fee_amount).toFixed(2)} {movement.fee_currency}
+                  {t("Fee", "Comisión")} {Number(movement.fee_amount).toFixed(2)}{" "}
+                  {movement.fee_currency}
                   {movement.notes ? ` · ${movement.notes}` : ""}
                 </p>
               </div>
@@ -168,19 +176,23 @@ export function CashMovementTable({
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-[380px] rounded-[1.75rem] border-border/70 bg-popover/96 p-5">
           <DialogHeader className="space-y-3">
-            <DialogTitle>Delete cash movement</DialogTitle>
+            <DialogTitle>
+              {t("Delete cash movement", "Eliminar movimiento de caja")}
+            </DialogTitle>
             <DialogDescription>
-              This removes the movement from contribution and account cash
-              summaries.
+              {t(
+                "This removes the movement from contribution and account cash summaries.",
+                "Esto elimina el movimiento de los resúmenes de aportes y caja de la cuenta."
+              )}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="-mx-5 -mb-5 flex flex-col-reverse gap-2 rounded-b-[1.35rem] border-t border-border/60 bg-secondary/45 p-4 sm:flex-row sm:justify-end">
             <Button variant="ghost" onClick={() => setDeleteId(null)}>
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               {deleting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              Delete
+              {t("Delete", "Eliminar")}
             </Button>
           </DialogFooter>
         </DialogContent>

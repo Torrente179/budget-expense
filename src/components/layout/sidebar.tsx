@@ -14,20 +14,25 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
-
-const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/expenses", label: "Expenses", icon: Receipt },
-  { href: "/budgets", label: "Budgets", icon: PiggyBank },
-  { href: "/investments", label: "Investments", icon: CandlestickChart },
-  { href: "/wisdom", label: "Sabiduría", icon: BookOpenText },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+import { useLocale } from "@/providers/locale-provider";
 
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
+  const { t } = useLocale();
+  const navItems = [
+    { href: "/dashboard", label: t("Dashboard", "Panel"), icon: LayoutDashboard },
+    { href: "/expenses", label: t("Expenses", "Gastos"), icon: Receipt },
+    { href: "/budgets", label: t("Budgets", "Presupuestos"), icon: PiggyBank },
+    {
+      href: "/investments",
+      label: t("Investments", "Inversiones"),
+      icon: CandlestickChart,
+    },
+    { href: "/wisdom", label: t("Wisdom", "Sabiduría"), icon: BookOpenText },
+    { href: "/settings", label: t("Settings", "Ajustes"), icon: Settings },
+  ];
 
   async function handleLogout() {
     await supabase.auth.signOut();
@@ -46,7 +51,7 @@ export function Sidebar() {
           </div>
           <div className="space-y-1">
             <span className="block text-[0.7rem] uppercase tracking-[0.26em] text-muted-foreground">
-              Stewardship
+              {t("Stewardship", "Mayordomía")}
             </span>
             <span className="block text-lg font-semibold leading-none tracking-tight">
               Budget & Expense
@@ -80,7 +85,7 @@ export function Sidebar() {
           className="flex w-full items-center gap-3 rounded-[1.15rem] px-3.5 py-3 text-sm font-medium text-muted-foreground transition-colors duration-150 hover:bg-sidebar-accent hover:text-foreground"
         >
           <LogOut className="h-4 w-4" />
-          Log out
+          {t("Log out", "Cerrar sesión")}
         </button>
       </div>
     </aside>

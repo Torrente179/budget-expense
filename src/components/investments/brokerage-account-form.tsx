@@ -31,6 +31,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2, Plus } from "lucide-react";
+import { useLocale } from "@/providers/locale-provider";
 
 interface BrokerageAccountFormProps {
   onSubmit: (values: BrokerageAccountFormValues) => Promise<unknown>;
@@ -43,6 +44,7 @@ export function BrokerageAccountForm({
   defaultValues,
   trigger,
 }: BrokerageAccountFormProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -93,25 +95,29 @@ export function BrokerageAccountForm({
       ) : (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          Add broker
+          {t("Add broker", "Agregar broker")}
         </DialogTrigger>
       )}
 
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader className="space-y-3">
           <DialogTitle>
-            {defaultValues ? "Edit broker defaults" : "Add broker defaults"}
+            {defaultValues
+              ? t("Edit broker defaults", "Editar valores de broker")
+              : t("Add broker defaults", "Agregar valores de broker")}
           </DialogTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            Save a broker entry, optional label, currency, and fee defaults that
-            the trade forms can prefill later.
+            {t(
+              "Save a broker entry, optional label, currency, and fee defaults that the trade forms can prefill later.",
+              "Guarda un broker con etiqueta opcional, moneda y comisiones por defecto para autocompletar operaciones."
+            )}
           </p>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="account-broker-kind">Broker</Label>
+              <Label htmlFor="account-broker-kind">{t("Broker", "Broker")}</Label>
               <Select
                 value={brokerSelectValue}
                 onValueChange={(value) => {
@@ -140,7 +146,7 @@ export function BrokerageAccountForm({
                 }}
               >
                 <SelectTrigger id="account-broker-kind" className="h-11">
-                  <SelectValue placeholder="Select a broker" />
+                  <SelectValue placeholder={t("Select a broker", "Selecciona un broker")} />
                 </SelectTrigger>
                 <SelectContent>
                   {POPULAR_BROKERS.map((broker) => (
@@ -149,17 +155,20 @@ export function BrokerageAccountForm({
                     </SelectItem>
                   ))}
                   <SelectItem value={CUSTOM_BROKER_VALUE}>
-                    Other broker
+                    {t("Other broker", "Otro broker")}
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="account-name">Account name</Label>
+              <Label htmlFor="account-name">{t("Account name", "Nombre de cuenta")}</Label>
               <Input
                 id="account-name"
-                placeholder="Long-term account, Colombia book..."
+                placeholder={t(
+                  "Long-term account, Colombia book...",
+                  "Cuenta largo plazo, cuenta Colombia..."
+                )}
                 className="h-11"
                 {...form.register("name")}
               />
@@ -168,10 +177,12 @@ export function BrokerageAccountForm({
 
           {brokerSelectValue === CUSTOM_BROKER_VALUE && (
             <div className="space-y-2">
-              <Label htmlFor="account-custom-broker">Custom broker</Label>
+              <Label htmlFor="account-custom-broker">
+                {t("Custom broker", "Broker personalizado")}
+              </Label>
               <Input
                 id="account-custom-broker"
-                placeholder="Trii, Scotiabank, Webull..."
+                placeholder={t("Trii, Scotiabank, Webull...", "Trii, Scotiabank, Webull...")}
                 className="h-11"
                 {...form.register("broker_kind")}
               />
@@ -180,7 +191,9 @@ export function BrokerageAccountForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="account-currency">Account currency</Label>
+              <Label htmlFor="account-currency">
+                {t("Account currency", "Moneda de la cuenta")}
+              </Label>
               <Select
                 value={form.watch("account_currency")}
                 onValueChange={(value) =>
@@ -205,7 +218,7 @@ export function BrokerageAccountForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fee-mode">Fee mode</Label>
+              <Label htmlFor="fee-mode">{t("Fee mode", "Modo de comisión")}</Label>
               <Select
                 value={form.watch("fee_mode")}
                 onValueChange={(value) =>
@@ -223,25 +236,29 @@ export function BrokerageAccountForm({
                     }
                   )
                 }
-              >
-                <SelectTrigger id="fee-mode" className="h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manual">Manual only</SelectItem>
-                  <SelectItem value="percent">Percent</SelectItem>
-                  <SelectItem value="fixed">Fixed</SelectItem>
-                  <SelectItem value="percent_plus_fixed">
-                    Percent + fixed
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+                >
+                  <SelectTrigger id="fee-mode" className="h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="manual">
+                      {t("Manual only", "Solo manual")}
+                    </SelectItem>
+                    <SelectItem value="percent">{t("Percent", "Porcentaje")}</SelectItem>
+                    <SelectItem value="fixed">{t("Fixed", "Fijo")}</SelectItem>
+                    <SelectItem value="percent_plus_fixed">
+                      {t("Percent + fixed", "Porcentaje + fijo")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
-          </div>
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="fee-percent">Fee percent</Label>
+              <Label htmlFor="fee-percent">
+                {t("Fee percent", "Porcentaje de comisión")}
+              </Label>
               <Input
                 id="fee-percent"
                 type="number"
@@ -252,7 +269,7 @@ export function BrokerageAccountForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fee-fixed">Fixed fee</Label>
+              <Label htmlFor="fee-fixed">{t("Fixed fee", "Comisión fija")}</Label>
               <Input
                 id="fee-fixed"
                 type="number"
@@ -266,7 +283,7 @@ export function BrokerageAccountForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="fee-min">Minimum fee</Label>
+              <Label htmlFor="fee-min">{t("Minimum fee", "Comisión mínima")}</Label>
               <Input
                 id="fee-min"
                 type="number"
@@ -277,7 +294,9 @@ export function BrokerageAccountForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="fee-currency">Fee currency</Label>
+              <Label htmlFor="fee-currency">
+                {t("Fee currency", "Moneda de comisión")}
+              </Label>
               <Select
                 value={form.watch("fee_currency")}
                 onValueChange={(value) =>
@@ -304,11 +323,13 @@ export function BrokerageAccountForm({
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              {defaultValues ? "Save broker" : "Create broker"}
+              {defaultValues
+                ? t("Save broker", "Guardar broker")
+                : t("Create broker", "Crear broker")}
             </Button>
           </div>
         </form>

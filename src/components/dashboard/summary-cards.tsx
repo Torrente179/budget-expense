@@ -13,6 +13,7 @@ import {
   WalletCards,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useLocale } from "@/providers/locale-provider";
 
 interface SummaryCardsProps {
   totalSpent: number;
@@ -34,6 +35,7 @@ export function SummaryCards({
   hasPlan,
 }: SummaryCardsProps) {
   const { baseCurrency } = useCurrency();
+  const { t } = useLocale();
 
   const monthChange =
     previousMonthTotal > 0
@@ -42,40 +44,63 @@ export function SummaryCards({
   const budgetRemaining = totalBudget - totalSpent;
   const cards = [
     {
-      label: "Spent this month",
+      id: "spent",
+      label: t("Spent this month", "Gastado este mes"),
       value: formatCurrency(totalSpent, baseCurrency),
       detail:
         previousMonthTotal > 0
-          ? `${Math.abs(monthChange).toFixed(1)}% vs last month`
-          : "First month with comparable data",
+          ? t(
+              `${Math.abs(monthChange).toFixed(1)}% vs last month`,
+              `${Math.abs(monthChange).toFixed(1)}% vs mes anterior`
+            )
+          : t(
+              "First month with comparable data",
+              "Primer mes con datos comparables"
+            ),
       status: previousMonthTotal > 0 ? monthChange : null,
       statusKind: "delta",
       icon: Wallet,
     },
     {
-      label: hasPlan ? "Pool left" : "Budget left",
+      id: "pool",
+      label: hasPlan
+        ? t("Pool left", "Fondo disponible")
+        : t("Budget left", "Presupuesto disponible"),
       value: formatCurrency(Math.max(budgetRemaining, 0), baseCurrency),
       detail: hasPlan
-        ? `${allocationPercent}% of income protected`
-        : "Using envelope totals as the active budget",
+        ? t(
+            `${allocationPercent}% of income protected`,
+            `${allocationPercent}% del ingreso protegido`
+          )
+        : t(
+            "Using envelope totals as the active budget",
+            "Usando el total de sobres como presupuesto activo"
+          ),
       status: budgetRemaining,
       statusKind: "currency",
       icon: PiggyBank,
       invert: true,
     },
     {
-      label: "Envelopes assigned",
+      id: "envelopes",
+      label: t("Envelopes assigned", "Sobres asignados"),
       value: formatCurrency(assignedCategoryBudgetTotal, baseCurrency),
-      detail: hasPlan ? "Reserved across category envelopes" : "Current reserved amount",
+      detail: hasPlan
+        ? t(
+            "Reserved across category envelopes",
+            "Reservado entre sobres por categoría"
+          )
+        : t("Current reserved amount", "Monto reservado actual"),
       status: null,
       icon: WalletCards,
     },
     {
-      label: "Top category",
+      id: "top-category",
+      label: t("Top category", "Categoría principal"),
       value: topCategory?.name ?? "--",
       detail: topCategory
         ? formatCurrency(topCategory.amount, baseCurrency)
-        : "No activity yet",
+        : t("No activity yet", "Sin actividad todavía"),
       status: null,
       icon: Target,
     },
@@ -90,7 +115,7 @@ export function SummaryCards({
 
         return (
           <motion.div
-            key={card.label}
+            key={card.id}
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: index * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
@@ -109,7 +134,7 @@ export function SummaryCards({
                   <div
                     className={cn(
                       "flex h-10 w-10 items-center justify-center rounded-full bg-secondary text-muted-foreground",
-                      card.label === "Pool left" &&
+                      card.id === "pool" &&
                         positive &&
                         "bg-emerald-500/12 text-emerald-300"
                     )}

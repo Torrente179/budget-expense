@@ -19,6 +19,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Loader2, Plus } from "lucide-react";
+import { useLocale } from "@/providers/locale-provider";
 
 interface WatchlistFormProps {
   onSubmit: (values: InvestmentWatchlistFormValues) => Promise<unknown>;
@@ -49,6 +50,7 @@ export function WatchlistForm({
   defaultValues,
   trigger,
 }: WatchlistFormProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -80,18 +82,22 @@ export function WatchlistForm({
       ) : (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          Add watchlist asset
+          {t("Add watchlist asset", "Agregar activo en seguimiento")}
         </DialogTrigger>
       )}
 
       <DialogContent className="sm:max-w-[620px]">
         <DialogHeader className="space-y-3">
           <DialogTitle>
-            {defaultValues ? "Edit watchlist item" : "Add watchlist item"}
+            {defaultValues
+              ? t("Edit watchlist item", "Editar activo en seguimiento")
+              : t("Add watchlist item", "Agregar activo en seguimiento")}
           </DialogTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            Track ideas even before you own them. Price coverage stays best
-            effort for Colombian assets in v1.
+            {t(
+              "Track ideas even before you own them. Price coverage stays best effort for Colombian assets in v1.",
+              "Sigue ideas incluso antes de tenerlas. La cobertura de precios para activos colombianos es de mejor esfuerzo en v1."
+            )}
           </p>
         </DialogHeader>
 
@@ -99,10 +105,13 @@ export function WatchlistForm({
           <InvestmentAssetFields form={form} />
 
           <div className="space-y-2">
-            <Label htmlFor="watchlist-note">Note</Label>
+            <Label htmlFor="watchlist-note">{t("Note", "Nota")}</Label>
             <Input
               id="watchlist-note"
-              placeholder="Reason for tracking, thesis, entry zone..."
+              placeholder={t(
+                "Reason for tracking, thesis, entry zone...",
+                "Motivo de seguimiento, tesis, zona de entrada..."
+              )}
               className="h-11"
               {...form.register("note")}
             />
@@ -110,11 +119,13 @@ export function WatchlistForm({
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              {defaultValues ? "Save asset" : "Add to watchlist"}
+              {defaultValues
+                ? t("Save asset", "Guardar activo")
+                : t("Add to watchlist", "Agregar al seguimiento")}
             </Button>
           </div>
         </form>

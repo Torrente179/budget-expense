@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Instrument_Serif } from "next/font/google";
 import { ThemeProvider } from "@/providers/theme-provider";
+import { LocaleProvider } from "@/providers/locale-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
@@ -24,7 +25,7 @@ const instrumentSerif = Instrument_Serif({
 export const metadata: Metadata = {
   title: "Budget & Expense",
   description:
-    "Track expenses, shape monthly stewardship plans, and review wise financial rhythms with calm, conversion-aware reporting.",
+    "Track expenses and monthly stewardship plans / Registra gastos y planes mensuales de mayordomía.",
 };
 
 export default function RootLayout({
@@ -40,10 +41,12 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col">
         <ThemeProvider>
-          <TooltipProvider>
-            {children}
-            <Toaster />
-          </TooltipProvider>
+          <LocaleProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster />
+            </TooltipProvider>
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -12,6 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLocale } from "@/providers/locale-provider";
 
 interface InvestmentAssetFieldsProps {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,6 +32,7 @@ export function InvestmentAssetFields({
   form,
   prefix = "asset",
 }: InvestmentAssetFieldsProps) {
+  const { t } = useLocale();
   const marketCode = form.watch(assetField(prefix, "market_code"));
   const assetType = form.watch(assetField(prefix, "asset_type"));
 
@@ -55,19 +57,23 @@ export function InvestmentAssetFields({
     <div className="space-y-4 rounded-[1.4rem] border border-border/70 bg-card/80 p-4">
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
-          <Label htmlFor={assetField(prefix, "symbol")}>Symbol</Label>
+          <Label htmlFor={assetField(prefix, "symbol")}>
+            {t("Symbol", "Símbolo")}
+          </Label>
           <Input
             id={assetField(prefix, "symbol")}
-            placeholder="AAPL, BTC, ECOPETROL..."
+            placeholder={t("AAPL, BTC, ECOPETROL...", "AAPL, BTC, ECOPETROL...")}
             className="h-11 uppercase"
             {...form.register(assetField(prefix, "symbol"))}
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor={assetField(prefix, "display_name")}>Display name</Label>
+          <Label htmlFor={assetField(prefix, "display_name")}>
+            {t("Display name", "Nombre visible")}
+          </Label>
           <Input
             id={assetField(prefix, "display_name")}
-            placeholder="Apple, Bitcoin, Ecopetrol..."
+            placeholder={t("Apple, Bitcoin, Ecopetrol...", "Apple, Bitcoin, Ecopetrol...")}
             className="h-11"
             {...form.register(assetField(prefix, "display_name"))}
           />
@@ -76,7 +82,9 @@ export function InvestmentAssetFields({
 
       <div className="grid gap-4 md:grid-cols-3">
         <div className="space-y-2">
-          <Label htmlFor={assetField(prefix, "asset_type")}>Asset type</Label>
+          <Label htmlFor={assetField(prefix, "asset_type")}>
+            {t("Asset type", "Tipo de activo")}
+          </Label>
           <Select
             value={form.watch(assetField(prefix, "asset_type"))}
             onValueChange={(value) =>
@@ -94,14 +102,16 @@ export function InvestmentAssetFields({
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="stock">Stock</SelectItem>
+              <SelectItem value="stock">{t("Stock", "Acción")}</SelectItem>
               <SelectItem value="etf">ETF</SelectItem>
-              <SelectItem value="crypto">Crypto</SelectItem>
+              <SelectItem value="crypto">{t("Crypto", "Cripto")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
-          <Label htmlFor={assetField(prefix, "market_code")}>Market</Label>
+          <Label htmlFor={assetField(prefix, "market_code")}>
+            {t("Market", "Mercado")}
+          </Label>
           <Select
             value={form.watch(assetField(prefix, "market_code"))}
             onValueChange={(value) => {
@@ -127,14 +137,14 @@ export function InvestmentAssetFields({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="US">US</SelectItem>
-              <SelectItem value="CO">Colombia</SelectItem>
-              <SelectItem value="CRYPTO">Crypto</SelectItem>
+              <SelectItem value="CO">{t("Colombia", "Colombia")}</SelectItem>
+              <SelectItem value="CRYPTO">{t("Crypto", "Cripto")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="space-y-2">
           <Label htmlFor={assetField(prefix, "quote_currency")}>
-            Quote currency
+            {t("Quote currency", "Moneda de cotización")}
           </Label>
           <Select
             value={form.watch(assetField(prefix, "quote_currency"))}
@@ -166,11 +176,11 @@ export function InvestmentAssetFields({
       <div className="grid gap-4 md:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor={assetField(prefix, "exchange_code")}>
-            Exchange code
+            {t("Exchange code", "Código de bolsa")}
           </Label>
           <Input
             id={assetField(prefix, "exchange_code")}
-            placeholder={marketCode === "CO" ? "XBOG" : "Optional"}
+            placeholder={marketCode === "CO" ? "XBOG" : t("Optional", "Opcional")}
             className="h-11 uppercase"
             {...form.register(assetField(prefix, "exchange_code"))}
           />
@@ -181,7 +191,9 @@ export function InvestmentAssetFields({
           </Label>
           <Input
             id={assetField(prefix, "provider_symbol_twelve")}
-            placeholder={marketCode === "CRYPTO" ? "BTC/USD" : "Optional"}
+            placeholder={
+              marketCode === "CRYPTO" ? "BTC/USD" : t("Optional", "Opcional")
+            }
             className="h-11"
             {...form.register(assetField(prefix, "provider_symbol_twelve"))}
           />
@@ -196,15 +208,20 @@ export function InvestmentAssetFields({
           id={assetField(prefix, "provider_symbol_eodhd")}
           placeholder={
             marketCode === "CO"
-              ? "Best-effort for Colombian stocks. Add if you know the provider symbol."
-              : "Optional fallback symbol"
+              ? t(
+                  "Best-effort for Colombian stocks. Add if you know the provider symbol.",
+                  "Soporte limitado para acciones colombianas. Agrégalo si conoces el símbolo del proveedor."
+                )
+              : t("Optional fallback symbol", "Símbolo alterno opcional")
           }
           className="h-11"
           {...form.register(assetField(prefix, "provider_symbol_eodhd"))}
         />
         <p className="text-xs leading-5 text-muted-foreground">
-          Colombian price autofill is best effort in v1. Leave the provider
-          fields blank if you want to track the asset manually.
+          {t(
+            "Colombian price autofill is best effort in v1. Leave the provider fields blank if you want to track the asset manually.",
+            "El autocompletado de precios colombianos es de mejor esfuerzo en v1. Deja estos campos vacíos si quieres seguir el activo manualmente."
+          )}
         </p>
       </div>
     </div>

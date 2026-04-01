@@ -32,6 +32,7 @@ import {
 } from "@/components/ui/dialog";
 import { ArrowRightLeft, Loader2, Plus } from "lucide-react";
 import { format } from "date-fns";
+import { useLocale } from "@/providers/locale-provider";
 
 interface BrokerageAccountOption {
   id: string;
@@ -69,6 +70,7 @@ export function CashMovementForm({
   defaultValues,
   trigger,
 }: CashMovementFormProps) {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -131,24 +133,28 @@ export function CashMovementForm({
       ) : (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          Add cash movement
+          {t("Add cash movement", "Agregar movimiento de caja")}
         </DialogTrigger>
       )}
 
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader className="space-y-3">
           <DialogTitle>
-            {defaultValues ? "Edit cash movement" : "Add cash movement"}
+            {defaultValues
+              ? t("Edit cash movement", "Editar movimiento de caja")
+              : t("Add cash movement", "Agregar movimiento de caja")}
           </DialogTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            Record deposits and withdrawals without mixing them into the budget
-            ledger.
+            {t(
+              "Record deposits and withdrawals without mixing them into the budget ledger.",
+              "Registra depósitos y retiros sin mezclarlos con el registro de presupuesto."
+            )}
           </p>
         </DialogHeader>
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="movement-broker">Broker</Label>
+            <Label htmlFor="movement-broker">{t("Broker", "Broker")}</Label>
             <Select
               value={brokerSelectValue}
               onValueChange={(value) => {
@@ -181,7 +187,7 @@ export function CashMovementForm({
               }}
             >
               <SelectTrigger id="movement-broker" className="h-11">
-                <SelectValue placeholder="Select a broker" />
+                <SelectValue placeholder={t("Select a broker", "Selecciona un broker")} />
               </SelectTrigger>
               <SelectContent>
                 {brokerChoices.map((choice) => (
@@ -190,7 +196,7 @@ export function CashMovementForm({
                   </SelectItem>
                 ))}
                 <SelectItem value={CUSTOM_BROKER_VALUE}>
-                  Other broker
+                  {t("Other broker", "Otro broker")}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -198,10 +204,15 @@ export function CashMovementForm({
 
           {brokerSelectValue === CUSTOM_BROKER_VALUE && (
             <div className="space-y-2">
-              <Label htmlFor="movement-custom-broker">Custom broker</Label>
+              <Label htmlFor="movement-custom-broker">
+                {t("Custom broker", "Broker personalizado")}
+              </Label>
               <Input
                 id="movement-custom-broker"
-                placeholder="Trii, Webull, local bank broker..."
+                placeholder={t(
+                  "Trii, Webull, local bank broker...",
+                  "Trii, Webull, broker bancario local..."
+                )}
                 className="h-11"
                 {...form.register("broker_name")}
               />
@@ -210,7 +221,7 @@ export function CashMovementForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="movement-type">Type</Label>
+              <Label htmlFor="movement-type">{t("Type", "Tipo")}</Label>
               <Select
                 value={form.watch("movement_type")}
                 onValueChange={(value) =>
@@ -224,21 +235,25 @@ export function CashMovementForm({
                     }
                   )
                 }
-              >
-                <SelectTrigger id="movement-type" className="h-11">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="deposit">Deposit</SelectItem>
-                  <SelectItem value="withdrawal">Withdrawal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+                >
+                  <SelectTrigger id="movement-type" className="h-11">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="deposit">
+                      {t("Deposit", "Depósito")}
+                    </SelectItem>
+                    <SelectItem value="withdrawal">
+                      {t("Withdrawal", "Retiro")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="movement-date">Date</Label>
-              <Input
-                id="movement-date"
+              <div className="space-y-2">
+                <Label htmlFor="movement-date">{t("Date", "Fecha")}</Label>
+                <Input
+                  id="movement-date"
                 type="date"
                 className="h-11"
                 {...form.register("movement_date")}
@@ -248,7 +263,7 @@ export function CashMovementForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="movement-amount">Amount</Label>
+              <Label htmlFor="movement-amount">{t("Amount", "Monto")}</Label>
               <Input
                 id="movement-amount"
                 type="number"
@@ -259,7 +274,7 @@ export function CashMovementForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="movement-currency">Currency</Label>
+              <Label htmlFor="movement-currency">{t("Currency", "Moneda")}</Label>
               <Select
                 value={form.watch("currency")}
                 onValueChange={(value) =>
@@ -286,7 +301,7 @@ export function CashMovementForm({
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="movement-fee">Fee amount</Label>
+              <Label htmlFor="movement-fee">{t("Fee amount", "Monto de comisión")}</Label>
               <Input
                 id="movement-fee"
                 type="number"
@@ -297,7 +312,9 @@ export function CashMovementForm({
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="movement-fee-currency">Fee currency</Label>
+              <Label htmlFor="movement-fee-currency">
+                {t("Fee currency", "Moneda de comisión")}
+              </Label>
               <Select
                 value={form.watch("fee_currency")}
                 onValueChange={(value) =>
@@ -323,10 +340,13 @@ export function CashMovementForm({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="movement-notes">Notes</Label>
+            <Label htmlFor="movement-notes">{t("Notes", "Notas")}</Label>
             <Input
               id="movement-notes"
-              placeholder="Wire transfer, local bank withdrawal..."
+              placeholder={t(
+                "Wire transfer, local bank withdrawal...",
+                "Transferencia bancaria, retiro local..."
+              )}
               className="h-11"
               {...form.register("notes")}
             />
@@ -335,21 +355,28 @@ export function CashMovementForm({
           <div className="rounded-[1.3rem] border border-border/70 bg-secondary/35 p-4 text-sm text-muted-foreground">
             <div className="flex items-center gap-2 text-foreground">
               <ArrowRightLeft className="h-4 w-4" />
-              Cash movements stay inside the investment ledger.
+              {t(
+                "Cash movements stay inside the investment ledger.",
+                "Los movimientos de caja permanecen dentro del registro de inversiones."
+              )}
             </div>
             <p className="mt-2 leading-6">
-              Deposits and withdrawals affect account cash and contribution
-              tracking, but they do not change your expense budget.
+              {t(
+                "Deposits and withdrawals affect account cash and contribution tracking, but they do not change your expense budget.",
+                "Los depósitos y retiros afectan la caja y el seguimiento de aportes, pero no cambian tu presupuesto de gastos."
+              )}
             </p>
           </div>
 
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
-              Cancel
+              {t("Cancel", "Cancelar")}
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              {defaultValues ? "Save movement" : "Create movement"}
+              {defaultValues
+                ? t("Save movement", "Guardar movimiento")
+                : t("Create movement", "Crear movimiento")}
             </Button>
           </div>
         </form>

@@ -2,7 +2,7 @@ import { SignupForm } from "@/components/auth/signup-form";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Sign up — Budget Tracker",
+  title: "Sign up / Crear cuenta — Budget Tracker",
 };
 
 export default function SignupPage() {

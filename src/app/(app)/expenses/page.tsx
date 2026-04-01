@@ -8,8 +8,10 @@ import { ExpenseForm } from "@/components/expenses/expense-form";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
 import { ExpenseTable } from "@/components/expenses/expense-table";
 import { getCurrentMonth, getCurrentYear, formatCurrency } from "@/lib/utils";
+import { useLocale } from "@/providers/locale-provider";
 
 export default function ExpensesPage() {
+  const { t } = useLocale();
   const [month, setMonth] = useState(getCurrentMonth());
   const [year, setYear] = useState(getCurrentYear());
   const [categoryId, setCategoryId] = useState("all");
@@ -33,10 +35,13 @@ export default function ExpensesPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Expenses"
+        title={t("Expenses", "Gastos")}
         description={
           !loading && expenses.length > 0
-            ? `${expenses.length} expense${expenses.length !== 1 ? "s" : ""} — ${formatCurrency(total, baseCurrency)} total`
+            ? t(
+                `${expenses.length} expense${expenses.length !== 1 ? "s" : ""} — ${formatCurrency(total, baseCurrency)} total`,
+                `${expenses.length} gasto${expenses.length !== 1 ? "s" : ""} — ${formatCurrency(total, baseCurrency)} en total`
+              )
             : undefined
         }
       >
