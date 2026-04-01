@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useExpenses } from "@/hooks/use-expenses";
+import { getBiblicalWisdomContent } from "@/lib/biblical-wisdom";
 import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { MonthPicker } from "@/components/shared/month-picker";
@@ -20,9 +21,13 @@ import { ArrowRight, BookOpenText, HeartHandshake } from "lucide-react";
 import { useLocale } from "@/providers/locale-provider";
 
 export default function DashboardPage() {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [month, setMonth] = useState(getCurrentMonth());
   const [year, setYear] = useState(getCurrentYear());
+  const wisdomContent = getBiblicalWisdomContent(locale);
+  const wisdomSourcesLabel = wisdomContent.translations
+    .map((translation) => translation.code)
+    .join(" / ");
 
   const { summary, loading } = useMonthlySummary({ month, year });
   const { expenses } = useExpenses({ month, year });
@@ -110,12 +115,12 @@ export default function DashboardPage() {
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
-                    {t("NBLA Wisdom", "Sabiduría NBLA")}
+                    {wisdomSourcesLabel}
                   </p>
                   <CardTitle className="mt-2 font-heading text-[1.45rem] font-semibold tracking-tight">
                     {t(
-                      "Financial wisdom for the month",
-                      "Sabiduría financiera para el mes"
+                      "Bible wisdom for the month",
+                      "Sabiduría bíblica para el mes"
                     )}
                   </CardTitle>
                 </div>

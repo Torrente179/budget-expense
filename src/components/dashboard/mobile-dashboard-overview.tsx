@@ -63,20 +63,25 @@ export function MobileDashboardOverview({
       ? now.getDate()
       : getDaysInMonth(new Date(year, month - 1));
 
-    let cumulative = 0;
-
     return Array.from({ length: visibleDays }, (_, index) => {
       const day = index + 1;
       const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const daily = spendMap.get(date) ?? 0;
-      cumulative += daily;
 
       return {
         day,
-        daily,
-        cumulative,
+        daily: spendMap.get(date) ?? 0,
       };
-    });
+    }).reduce<{ day: number; daily: number; cumulative: number }[]>(
+      (acc, point) => {
+        const previousTotal = acc[acc.length - 1]?.cumulative ?? 0;
+        acc.push({
+          ...point,
+          cumulative: previousTotal + point.daily,
+        });
+        return acc;
+      },
+      []
+    );
   }, [dailySpending, month, year]);
 
   const weeklyChange = useMemo(() => {
@@ -127,6 +132,24 @@ export function MobileDashboardOverview({
     },
   ];
 
+  const metricTiles = [
+    {
+      id: "spent",
+      label: t("Spent", "Gastado"),
+      value: formatCurrency(totalSpent, baseCurrency),
+    },
+    {
+      id: "budget",
+      label: t("Budget", "Presupuesto"),
+      value: formatCurrency(totalBudget, baseCurrency),
+    },
+    {
+      id: "envelopes",
+      label: t("Envelopes", "Sobres"),
+      value: formatCurrency(assignedCategoryBudgetTotal, baseCurrency),
+    },
+  ];
+
   return (
     <div className="space-y-4 md:hidden">
       <Card className="border-border/80 bg-card/96">
@@ -146,30 +169,21 @@ export function MobileDashboardOverview({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-[1rem] border border-border/70 bg-secondary/45 p-2.5">
-              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
-                {t("Spent", "Gastado")}
-              </p>
-              <p className="mt-1 font-mono text-xs font-medium text-foreground">
-                {formatCurrency(totalSpent, baseCurrency)}
-              </p>
-            </div>
-            <div className="rounded-[1rem] border border-border/70 bg-secondary/45 p-2.5">
-              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
-                {t("Budget", "Presupuesto")}
-              </p>
-              <p className="mt-1 font-mono text-xs font-medium text-foreground">
-                {formatCurrency(totalBudget, baseCurrency)}
-              </p>
-            </div>
-            <div className="rounded-[1rem] border border-border/70 bg-secondary/45 p-2.5">
-              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
-                {t("Envelopes", "Sobres")}
-              </p>
-              <p className="mt-1 font-mono text-xs font-medium text-foreground">
-                {formatCurrency(assignedCategoryBudgetTotal, baseCurrency)}
-              </p>
+          <div className="rounded-[1.1rem] border border-border/65 bg-secondary/25 p-1.5">
+            <div className="grid grid-cols-3 gap-1.5">
+              {metricTiles.map((tile) => (
+                <div
+                  key={tile.id}
+                  className="flex min-h-[74px] flex-col justify-between rounded-[0.9rem] border border-border/85 bg-card/80 px-2.5 py-2.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.045),0_14px_26px_-20px_rgba(0,0,0,0.95)]"
+                >
+                  <p className="text-[0.56rem] uppercase tracking-[0.14em] text-muted-foreground">
+                    {tile.label}
+                  </p>
+                  <p className="font-mono text-[1.02rem] font-semibold leading-none tracking-tight tabular-nums text-foreground">
+                    {tile.value}
+                  </p>
+                </div>
+              ))}
             </div>
           </div>
 

@@ -1,3 +1,5 @@
+import { type AppLocale } from "@/lib/utils";
+
 export interface BiblicalPassage {
   reference: string;
   takeaway: string;
@@ -13,7 +15,190 @@ export interface BiblicalTheme {
   passages: BiblicalPassage[];
 }
 
-export const biblicalThemes: BiblicalTheme[] = [
+export interface BibleTranslationSource {
+  code: string;
+  name: string;
+  link: string;
+  notice: string;
+}
+
+export interface BiblicalWisdomContent {
+  themes: BiblicalTheme[];
+  translations: BibleTranslationSource[];
+}
+
+const ENGLISH_THEMES: BiblicalTheme[] = [
+  {
+    slug: "administracion-de-bienes",
+    title: "Stewardship of resources",
+    eyebrow: "Stewardship",
+    summary:
+      "Scripture presents money, possessions, and capacity as entrusted resources. The goal is not accumulation for its own sake, but faithful management with clarity and purpose.",
+    actions: [
+      "Set a monthly plan before spending starts.",
+      "Separate essentials, generosity, and optional desires.",
+      "Review decisions honestly instead of reactively.",
+    ],
+    passages: [
+      {
+        reference: "Luke 16:10-11",
+        takeaway:
+          "Faithfulness in small decisions prepares the heart for greater responsibility.",
+        practice:
+          "Treat small expenses as character decisions rather than harmless exceptions.",
+      },
+      {
+        reference: "1 Corinthians 4:2",
+        takeaway:
+          "Stewards are measured by faithfulness before appearance, speed, or improvisation.",
+        practice:
+          "Judge the month by steady obedience and consistency, not only by visible wins.",
+      },
+    ],
+  },
+  {
+    slug: "trabajo-y-tiempo-sabio",
+    title: "Work and wise time",
+    eyebrow: "Calling",
+    summary:
+      "Money and time are tied together. Biblical wisdom calls for diligent work, clear priorities, and resistance to frantic busyness that drains judgment.",
+    actions: [
+      "Protect clear hours for deep work.",
+      "Watch for impulse spending driven by fatigue or distraction.",
+      "Tie financial goals to repeatable weekly habits.",
+    ],
+    passages: [
+      {
+        reference: "Proverbs 21:5",
+        takeaway:
+          "Diligent plans tend toward abundance, while hurried decisions create avoidable pressure.",
+        practice:
+          "Budget ahead of time instead of reacting after money is already committed.",
+      },
+      {
+        reference: "Ephesians 5:15-16",
+        takeaway:
+          "Wisdom redeems time because it recognizes both spiritual and practical value.",
+        practice:
+          "Review where your energy is being spent before it starts weakening your financial decisions.",
+      },
+    ],
+  },
+  {
+    slug: "generosidad-y-ayuda-al-pobre",
+    title: "Generosity and care for the poor",
+    eyebrow: "Compassion",
+    summary:
+      "Biblical stewardship is never only self-protection. Generosity toward those in need is part of the right use of resources, not an afterthought.",
+    actions: [
+      "Reserve a realistic amount for mercy and practical help.",
+      "Give intentionally, not only from leftovers.",
+      "Look for concrete ways to lighten someone else’s burden.",
+    ],
+    passages: [
+      {
+        reference: "Proverbs 19:17",
+        takeaway:
+          "Serving the poor is a way of honoring God with what has been entrusted to you.",
+        practice:
+          "Include a giving category in your monthly plan, even if it starts small.",
+      },
+      {
+        reference: "Deuteronomy 15:7-8",
+        takeaway:
+          "Hardness of heart has no place in an economy shaped by God’s character.",
+        practice:
+          "Practice a prompt but prudent response when you encounter a real need.",
+      },
+    ],
+  },
+  {
+    slug: "ofrenda-y-donacion",
+    title: "Offering and giving",
+    eyebrow: "Giving",
+    summary:
+      "Giving should not be treated as a leftover line item. Biblical offering flows from gratitude, order, and willingness rather than pressure or religious performance.",
+    actions: [
+      "Decide ahead of time what you plan to give.",
+      "Distinguish regular support from exceptional help.",
+      "Check whether your generosity reflects gratitude or inertia.",
+    ],
+    passages: [
+      {
+        reference: "2 Corinthians 9:6-8",
+        takeaway:
+          "Disciplined generosity grows out of a willing and trusting heart.",
+        practice:
+          "Schedule your giving with the same seriousness as fixed expenses.",
+      },
+      {
+        reference: "1 Chronicles 29:14",
+        takeaway:
+          "Everything comes from God, so giving is a response to grace rather than a display of self-importance.",
+        practice:
+          "Use gratitude as the filter before each act of giving.",
+      },
+    ],
+  },
+  {
+    slug: "contentamiento-y-deuda",
+    title: "Contentment and debt",
+    eyebrow: "Freedom",
+    summary:
+      "Scripture calls for a life that is not inwardly enslaved to money. Contentment protects against impulsive consumption, and debt requires sober honesty rather than denial.",
+    actions: [
+      "Identify purchases driven by comparison or anxiety.",
+      "Create a simple route for reducing outstanding obligations.",
+      "Celebrate quiet progress instead of chasing status.",
+    ],
+    passages: [
+      {
+        reference: "Hebrews 13:5",
+        takeaway:
+          "Contentment breaks the pressure to keep acquiring in order to feel secure.",
+        practice:
+          "Before buying, ask whether the decision is driven by need, service, or image.",
+      },
+      {
+        reference: "Proverbs 22:7",
+        takeaway:
+          "Debt creates dependency and should be met with clarity rather than elegant excuses.",
+        practice:
+          "Prioritize costly obligations before expanding your lifestyle.",
+      },
+    ],
+  },
+  {
+    slug: "consejo-planeacion-e-integridad",
+    title: "Counsel, planning, and integrity",
+    eyebrow: "Discernment",
+    summary:
+      "Biblical financial wisdom values planning and honest counsel. An economy of integrity avoids manipulation, self-deception, and opaque decision-making.",
+    actions: [
+      "Review each month with real numbers instead of vague impressions.",
+      "Seek counsel when a major decision is larger than your own clarity.",
+      "Keep records clean enough to review without confusion.",
+    ],
+    passages: [
+      {
+        reference: "Proverbs 15:22",
+        takeaway:
+          "Plans mature more wisely when they receive faithful and competent counsel.",
+        practice:
+          "Ask for a second opinion before committing to large or long-term expenses.",
+      },
+      {
+        reference: "Proverbs 11:1",
+        takeaway:
+          "Integrity also shows up in fair measures, clear books, and honest reporting.",
+        practice:
+          "Make sure your numbers can be reviewed without shame or ambiguity.",
+      },
+    ],
+  },
+];
+
+const SPANISH_THEMES: BiblicalTheme[] = [
   {
     slug: "administracion-de-bienes",
     title: "Administración de bienes",
@@ -184,7 +369,51 @@ export const biblicalThemes: BiblicalTheme[] = [
   },
 ];
 
-export const nblaAttribution =
-  "Escrituras tomadas de la Nueva Biblia de las Américas (NBLA), Copyright © 2005 por The Lockman Foundation. Usadas con permiso.";
+const ENGLISH_TRANSLATIONS: BibleTranslationSource[] = [
+  {
+    code: "ESV",
+    name: "English Standard Version",
+    link: "https://www.esv.org/",
+    notice:
+      "Use the official ESV text as one of the English reference families for the wisdom themes and verse lookups.",
+  },
+  {
+    code: "NIV",
+    name: "New International Version",
+    link: "https://www.thenivbible.com/",
+    notice:
+      "Use the official NIV text as the second English reference family for reading, comparison, and study.",
+  },
+];
 
-export const nblaLink = "https://www.NuevaBiblia.com";
+const SPANISH_TRANSLATIONS: BibleTranslationSource[] = [
+  {
+    code: "NBLA",
+    name: "Nueva Biblia de las Américas",
+    link: "https://www.NuevaBiblia.com",
+    notice:
+      "Usa la NBLA como una de las referencias principales en español para estos temas y pasajes.",
+  },
+  {
+    code: "NVI",
+    name: "Nueva Versión Internacional",
+    link: "https://www.biblica.com/bible/nvi/",
+    notice:
+      "Usa la NVI como la segunda referencia principal en español para contraste, lectura y estudio.",
+  },
+];
+
+const BIBLICAL_WISDOM_BY_LOCALE: Record<AppLocale, BiblicalWisdomContent> = {
+  en: {
+    themes: ENGLISH_THEMES,
+    translations: ENGLISH_TRANSLATIONS,
+  },
+  es: {
+    themes: SPANISH_THEMES,
+    translations: SPANISH_TRANSLATIONS,
+  },
+};
+
+export function getBiblicalWisdomContent(locale: AppLocale): BiblicalWisdomContent {
+  return BIBLICAL_WISDOM_BY_LOCALE[locale];
+}
