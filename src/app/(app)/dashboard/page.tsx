@@ -11,6 +11,7 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { RecentExpenses } from "@/components/dashboard/recent-expenses";
+import { MobileDashboardOverview } from "@/components/dashboard/mobile-dashboard-overview";
 import { InvestmentDashboardSnapshot } from "@/components/investments/investment-dashboard-snapshot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,24 +55,45 @@ export default function DashboardPage() {
       </PageHeader>
 
       {loading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-[150px] rounded-[1.75rem]" />
-          ))}
+        <div className="space-y-4">
+          <div className="space-y-4 md:hidden">
+            <Skeleton className="h-[338px] rounded-[1.75rem]" />
+            <Skeleton className="h-[246px] rounded-[1.75rem]" />
+          </div>
+          <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton key={i} className="h-[150px] rounded-[1.75rem]" />
+            ))}
+          </div>
         </div>
       ) : (
-        <SummaryCards
-          totalSpent={summary.totalSpent}
-          totalBudget={summary.totalBudget}
-          previousMonthTotal={summary.previousMonthTotal}
-          topCategory={topCategory}
-          assignedCategoryBudgetTotal={summary.assignedCategoryBudgetTotal}
-          allocationPercent={summary.allocationPercent}
-          hasPlan={summary.allocationPercent !== null}
-        />
+        <>
+          <MobileDashboardOverview
+            totalSpent={summary.totalSpent}
+            totalBudget={summary.totalBudget}
+            previousMonthTotal={summary.previousMonthTotal}
+            assignedCategoryBudgetTotal={summary.assignedCategoryBudgetTotal}
+            expenseCount={summary.expenseCount}
+            topCategory={topCategory}
+            dailySpending={summary.dailySpending}
+            month={month}
+            year={year}
+          />
+          <div className="hidden md:block">
+            <SummaryCards
+              totalSpent={summary.totalSpent}
+              totalBudget={summary.totalBudget}
+              previousMonthTotal={summary.previousMonthTotal}
+              topCategory={topCategory}
+              assignedCategoryBudgetTotal={summary.assignedCategoryBudgetTotal}
+              allocationPercent={summary.allocationPercent}
+              hasPlan={summary.allocationPercent !== null}
+            />
+          </div>
+        </>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-5">
+      <div className="hidden gap-4 md:grid lg:grid-cols-5">
         <div className="lg:col-span-3">
           <SpendingChart
             dailySpending={summary.dailySpending}
@@ -132,7 +154,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <RecentExpenses expenses={expenses} />
+      <RecentExpenses expenses={expenses} maxItems={4} />
 
       <InvestmentDashboardSnapshot />
     </div>

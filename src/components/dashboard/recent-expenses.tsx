@@ -15,10 +15,12 @@ type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
 
 interface RecentExpensesProps {
   expenses: Expense[];
+  maxItems?: number;
 }
 
-export function RecentExpenses({ expenses }: RecentExpensesProps) {
+export function RecentExpenses({ expenses, maxItems = 5 }: RecentExpensesProps) {
   const { t } = useLocale();
+  const visibleExpenses = expenses.slice(0, maxItems);
 
   return (
     <Card className="border-border/80 bg-card/96">
@@ -46,7 +48,7 @@ export function RecentExpenses({ expenses }: RecentExpensesProps) {
           </p>
         ) : (
           <div className="space-y-3">
-            {expenses.slice(0, 5).map((expense) => (
+            {visibleExpenses.map((expense) => (
               <div
                 key={expense.id}
                 className="flex items-center justify-between gap-4 rounded-[1.25rem] border border-border/70 bg-secondary/45 px-4 py-3 transition-colors duration-200 hover:bg-secondary/70"

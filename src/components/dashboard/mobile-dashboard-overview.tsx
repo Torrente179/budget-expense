@@ -1,0 +1,327 @@
+"use client";
+
+import Link from "next/link";
+import { useMemo } from "react";
+import { getDaysInMonth } from "date-fns";
+import { Area, AreaChart, ResponsiveContainer } from "recharts";
+import { cn, formatCurrency } from "@/lib/utils";
+import { useCurrency } from "@/providers/currency-provider";
+import { useLocale } from "@/providers/locale-provider";
+import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ArrowDownRight,
+  ArrowUpRight,
+  BookOpenText,
+  CandlestickChart,
+  PiggyBank,
+  Receipt,
+  Wallet,
+} from "lucide-react";
+
+interface MobileDashboardOverviewProps {
+  totalSpent: number;
+  totalBudget: number;
+  previousMonthTotal: number;
+  assignedCategoryBudgetTotal: number;
+  expenseCount: number;
+  topCategory: { name: string; amount: number } | null;
+  dailySpending: { date: string; amount: number }[];
+  month: number;
+  year: number;
+}
+
+export function MobileDashboardOverview({
+  totalSpent,
+  totalBudget,
+  previousMonthTotal,
+  assignedCategoryBudgetTotal,
+  expenseCount,
+  topCategory,
+  dailySpending,
+  month,
+  year,
+}: MobileDashboardOverviewProps) {
+  const { baseCurrency } = useCurrency();
+  const { t, intlLocale } = useLocale();
+
+  const monthLabel = useMemo(
+    () =>
+      new Intl.DateTimeFormat(intlLocale, {
+        month: "long",
+        year: "numeric",
+      }).format(new Date(year, month - 1)),
+    [intlLocale, month, year]
+  );
+
+  const chartData = useMemo(() => {
+    const spendMap = new Map(dailySpending.map((item) => [item.date, item.amount]));
+    const now = new Date();
+    const isCurrentMonth =
+      now.getFullYear() === year && now.getMonth() + 1 === month;
+    const visibleDays = isCurrentMonth
+      ? now.getDate()
+      : getDaysInMonth(new Date(year, month - 1));
+
+    let cumulative = 0;
+
+    return Array.from({ length: visibleDays }, (_, index) => {
+      const day = index + 1;
+      const date = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const daily = spendMap.get(date) ?? 0;
+      cumulative += daily;
+
+      return {
+        day,
+        daily,
+        cumulative,
+      };
+    });
+  }, [dailySpending, month, year]);
+
+  const weeklyChange = useMemo(() => {
+    const currentWeek = chartData
+      .slice(-7)
+      .reduce((sum, point) => sum + point.daily, 0);
+    const previousWeek = chartData
+      .slice(-14, -7)
+      .reduce((sum, point) => sum + point.daily, 0);
+
+    if (previousWeek <= 0) {
+      return null;
+    }
+
+    return ((currentWeek - previousWeek) / previousWeek) * 100;
+  }, [chartData]);
+
+  const monthChange =
+    previousMonthTotal > 0
+      ? ((totalSpent - previousMonthTotal) / previousMonthTotal) * 100
+      : null;
+
+  const budgetRemaining = totalBudget - totalSpent;
+  const hasBudget = totalBudget > 0;
+  const spentPercent = hasBudget ? (totalSpent / totalBudget) * 100 : 0;
+  const progressWidth = hasBudget ? Math.min(Math.max(spentPercent, 2), 100) : 0;
+
+  const quickActions = [
+    {
+      href: "/expenses",
+      label: t("Log", "Registrar"),
+      icon: Receipt,
+    },
+    {
+      href: "/budgets",
+      label: t("Budget", "Presupuesto"),
+      icon: PiggyBank,
+    },
+    {
+      href: "/investments",
+      label: t("Invest", "Invertir"),
+      icon: CandlestickChart,
+    },
+    {
+      href: "/wisdom",
+      label: t("Wisdom", "Sabiduría"),
+      icon: BookOpenText,
+    },
+  ];
+
+  return (
+    <div className="space-y-4 md:hidden">
+      <Card className="border-border/80 bg-card/96">
+        <CardContent className="space-y-5 p-5">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-2">
+              <p className="text-[0.68rem] uppercase tracking-[0.26em] text-muted-foreground">
+                {t("Available now", "Disponible ahora")}
+              </p>
+              <p className="font-heading text-[2.45rem] font-semibold leading-none tracking-[-0.05em]">
+                {formatCurrency(Math.max(budgetRemaining, 0), baseCurrency)}
+              </p>
+              <p className="text-xs text-muted-foreground">{monthLabel}</p>
+            </div>
+            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-muted-foreground">
+              <Wallet className="h-4 w-4" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-[1rem] border border-border/70 bg-secondary/45 p-2.5">
+              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
+                {t("Spent", "Gastado")}
+              </p>
+              <p className="mt-1 font-mono text-xs font-medium text-foreground">
+                {formatCurrency(totalSpent, baseCurrency)}
+              </p>
+            </div>
+            <div className="rounded-[1rem] border border-border/70 bg-secondary/45 p-2.5">
+              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
+                {t("Budget", "Presupuesto")}
+              </p>
+              <p className="mt-1 font-mono text-xs font-medium text-foreground">
+                {formatCurrency(totalBudget, baseCurrency)}
+              </p>
+            </div>
+            <div className="rounded-[1rem] border border-border/70 bg-secondary/45 p-2.5">
+              <p className="text-[0.62rem] uppercase tracking-[0.2em] text-muted-foreground">
+                {t("Envelopes", "Sobres")}
+              </p>
+              <p className="mt-1 font-mono text-xs font-medium text-foreground">
+                {formatCurrency(assignedCategoryBudgetTotal, baseCurrency)}
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2">
+            {quickActions.map((action) => (
+              <Link
+                key={action.href}
+                href={action.href}
+                className="flex flex-col items-center gap-2 rounded-[1rem] border border-border/70 bg-secondary/45 px-2 py-2.5 text-center"
+              >
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-card ring-1 ring-border/70">
+                  <action.icon className="h-4 w-4 text-muted-foreground" />
+                </div>
+                <span className="text-[0.66rem] font-medium tracking-tight text-muted-foreground">
+                  {action.label}
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          <div className="rounded-[1rem] border border-border/70 bg-secondary/35 p-3">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs font-medium text-foreground">
+                {t("Budget pace", "Ritmo del presupuesto")}
+              </p>
+              {monthChange !== null && (
+                <Badge
+                  variant="outline"
+                  className={cn(
+                    "h-6 rounded-full px-2 text-[0.65rem]",
+                    monthChange <= 0
+                      ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                      : "border-destructive/20 bg-destructive/10 text-destructive"
+                  )}
+                >
+                  {monthChange <= 0 ? (
+                    <ArrowDownRight className="h-3 w-3" />
+                  ) : (
+                    <ArrowUpRight className="h-3 w-3" />
+                  )}
+                  {Math.abs(monthChange).toFixed(1)}%
+                </Badge>
+              )}
+            </div>
+            <div className="mt-3 h-1.5 w-full rounded-full bg-muted">
+              <div
+                className={cn(
+                  "h-full rounded-full",
+                  hasBudget && spentPercent <= 100
+                    ? "bg-emerald-400/80"
+                    : "bg-destructive/85"
+                )}
+                style={{ width: `${progressWidth}%` }}
+              />
+            </div>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground">
+              {hasBudget
+                ? spentPercent <= 100
+                  ? t(
+                      `${spentPercent.toFixed(0)}% of this month's limit used`,
+                      `${spentPercent.toFixed(0)}% del límite mensual usado`
+                    )
+                  : t(
+                      `${(spentPercent - 100).toFixed(0)}% over this month's limit`,
+                      `${(spentPercent - 100).toFixed(0)}% por encima del límite mensual`
+                    )
+                : t(
+                    "Set a monthly budget to activate pacing alerts",
+                    "Define un presupuesto mensual para activar alertas de ritmo"
+                  )}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/80 bg-card/96">
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[0.68rem] uppercase tracking-[0.26em] text-muted-foreground">
+                {t("Analytics", "Analítica")}
+              </p>
+              <CardTitle className="mt-2 font-heading text-[1.35rem] font-semibold tracking-tight">
+                {t("Spending curve", "Curva de gasto")}
+              </CardTitle>
+            </div>
+            {weeklyChange !== null ? (
+              <Badge
+                variant="outline"
+                className={cn(
+                  "rounded-full px-2.5 py-1 text-xs",
+                  weeklyChange <= 0
+                    ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                    : "border-destructive/20 bg-destructive/10 text-destructive"
+                )}
+              >
+                {weeklyChange > 0 ? "+" : ""}
+                {weeklyChange.toFixed(1)}%
+                {t(" this week", " esta semana")}
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className="rounded-full border-border/70 bg-secondary/60 px-2.5 py-1 text-xs text-muted-foreground"
+              >
+                {t("Building baseline", "Construyendo base")}
+              </Badge>
+            )}
+          </div>
+        </CardHeader>
+        <CardContent className="pb-4">
+          <div className="h-[140px]">
+            {chartData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={140}>
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="mobileSpendGrad" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="var(--chart-1)" stopOpacity={0.32} />
+                      <stop offset="100%" stopColor="var(--chart-1)" stopOpacity={0.03} />
+                    </linearGradient>
+                  </defs>
+                  <Area
+                    type="monotone"
+                    dataKey="cumulative"
+                    stroke="var(--foreground)"
+                    strokeWidth={2.2}
+                    fill="url(#mobileSpendGrad)"
+                  />
+                </AreaChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="h-full w-full rounded-[1rem] bg-secondary/45" />
+            )}
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3 rounded-[1rem] border border-border/70 bg-secondary/35 px-3 py-2.5">
+            <p className="text-xs text-muted-foreground">
+              {t("Top category", "Categoría principal")}
+            </p>
+            <p className="text-right text-xs font-medium text-foreground">
+              {topCategory
+                ? `${topCategory.name} · ${formatCurrency(topCategory.amount, baseCurrency)}`
+                : t("No activity yet", "Sin actividad todavía")}
+            </p>
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {t(
+              `${expenseCount} movements registered this month`,
+              `${expenseCount} movimientos registrados este mes`
+            )}
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
