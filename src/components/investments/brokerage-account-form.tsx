@@ -7,6 +7,11 @@ import {
   brokerageAccountSchema,
   type BrokerageAccountFormValues,
 } from "@/lib/validations";
+import {
+  CUSTOM_BROKER_VALUE,
+  POPULAR_BROKERS,
+  normalizeBrokerName,
+} from "@/lib/investments";
 import { CURRENCIES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,8 +50,11 @@ export function BrokerageAccountForm({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(brokerageAccountSchema) as any,
     defaultValues: {
-      broker_kind: defaultValues?.broker_kind ?? "IBKR",
-      name: defaultValues?.name ?? "",
+      broker_kind: defaultValues?.broker_kind ?? "Interactive Brokers",
+      name:
+        defaultValues?.name ??
+        defaultValues?.broker_kind ??
+        "Interactive Brokers",
       account_currency: defaultValues?.account_currency ?? "USD",
       fee_mode: defaultValues?.fee_mode ?? "manual",
       fee_percent: defaultValues?.fee_percent ?? 0,
@@ -57,14 +65,26 @@ export function BrokerageAccountForm({
   });
 
   async function handleSubmit(values: BrokerageAccountFormValues) {
+    const normalizedBroker = normalizeBrokerName(values.broker_kind);
     setSubmitting(true);
-    const error = await onSubmit(values);
+    const error = await onSubmit({
+      ...values,
+      broker_kind: normalizedBroker,
+      name: values.name.trim() || normalizedBroker,
+    });
     setSubmitting(false);
 
     if (!error) {
       setOpen(false);
     }
   }
+
+  const brokerKind = form.watch("broker_kind");
+  const brokerSelectValue = POPULAR_BROKERS.includes(
+    brokerKind as (typeof POPULAR_BROKERS)[number]
+  )
+    ? brokerKind
+    : CUSTOM_BROKER_VALUE;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -73,18 +93,18 @@ export function BrokerageAccountForm({
       ) : (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          Add account
+          Add broker
         </DialogTrigger>
       )}
 
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader className="space-y-3">
           <DialogTitle>
-            {defaultValues ? "Edit brokerage account" : "Add brokerage account"}
+            {defaultValues ? "Edit broker defaults" : "Add broker defaults"}
           </DialogTitle>
           <p className="text-sm leading-6 text-muted-foreground">
-            Store the broker, account currency, and fee defaults you want the
-            trade forms to prefill.
+            Save a broker entry, optional label, currency, and fee defaults that
+            the trade forms can prefill later.
           </p>
         </DialogHeader>
 
@@ -93,21 +113,44 @@ export function BrokerageAccountForm({
             <div className="space-y-2">
               <Label htmlFor="account-broker-kind">Broker</Label>
               <Select
-                value={form.watch("broker_kind")}
-                onValueChange={(value) =>
-                  value &&
-                  form.setValue("broker_kind", value as "IBKR" | "HAPI", {
+                value={brokerSelectValue}
+                onValueChange={(value) => {
+                  if (!value) return;
+
+                  if (value === CUSTOM_BROKER_VALUE) {
+                    form.setValue("broker_kind", "", {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                    if (!form.getValues("name")) {
+                      form.setValue("name", "");
+                    }
+                    return;
+                  }
+
+                  form.setValue("broker_kind", value, {
                     shouldDirty: true,
                     shouldValidate: true,
-                  })
-                }
+                  });
+                  if (!form.getFieldState("name").isDirty) {
+                    form.setValue("name", value, {
+                      shouldDirty: true,
+                    });
+                  }
+                }}
               >
                 <SelectTrigger id="account-broker-kind" className="h-11">
-                  <SelectValue />
+                  <SelectValue placeholder="Select a broker" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="IBKR">IBKR</SelectItem>
-                  <SelectItem value="HAPI">Hapi</SelectItem>
+                  {POPULAR_BROKERS.map((broker) => (
+                    <SelectItem key={broker} value={broker}>
+                      {broker}
+                    </SelectItem>
+                  ))}
+                  <SelectItem value={CUSTOM_BROKER_VALUE}>
+                    Other broker
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -116,12 +159,24 @@ export function BrokerageAccountForm({
               <Label htmlFor="account-name">Account name</Label>
               <Input
                 id="account-name"
-                placeholder="Main IBKR, Hapi cash..."
+                placeholder="Long-term account, Colombia book..."
                 className="h-11"
                 {...form.register("name")}
               />
             </div>
           </div>
+
+          {brokerSelectValue === CUSTOM_BROKER_VALUE && (
+            <div className="space-y-2">
+              <Label htmlFor="account-custom-broker">Custom broker</Label>
+              <Input
+                id="account-custom-broker"
+                placeholder="Trii, Scotiabank, Webull..."
+                className="h-11"
+                {...form.register("broker_kind")}
+              />
+            </div>
+          )}
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -253,7 +308,7 @@ export function BrokerageAccountForm({
             </Button>
             <Button type="submit" disabled={submitting}>
               {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-              {defaultValues ? "Save account" : "Create account"}
+              {defaultValues ? "Save broker" : "Create broker"}
             </Button>
           </div>
         </form>

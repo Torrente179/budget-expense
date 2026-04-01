@@ -1,17 +1,11 @@
 "use client";
 
 import { useDeferredValue, useState } from "react";
-import {
-  Search,
-  ShieldPlus,
-  Trash2,
-  Wallet,
-} from "lucide-react";
+import { Search, Trash2, Wallet } from "lucide-react";
 import { useCurrency } from "@/providers/currency-provider";
 import { useInvestments } from "@/hooks/use-investments";
 import { formatCurrency } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
-import { EmptyState } from "@/components/shared/empty-state";
 import { InvestmentOverviewCards } from "@/components/investments/investment-overview-cards";
 import { HoldingsTable } from "@/components/investments/holdings-table";
 import { BrokerageAccountForm } from "@/components/investments/brokerage-account-form";
@@ -35,7 +29,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function InvestmentsPage() {
   const [search, setSearch] = useState("");
-  const [accountFilter, setAccountFilter] = useState("all");
+  const [brokerFilter, setBrokerFilter] = useState("all");
   const [sideFilter, setSideFilter] = useState("all");
   const deferredSearch = useDeferredValue(search);
   const { baseCurrency } = useCurrency();
@@ -61,6 +55,12 @@ export default function InvestmentsPage() {
     addWatchlistItem,
     deleteWatchlistItem,
   } = useInvestments();
+  const brokerChoices = Array.from(
+    new Set([
+      ...accounts.map((account) => account.broker_kind),
+      ...trades.map((trade) => trade.brokerage_accounts.broker_kind),
+    ])
+  ).sort((left, right) => left.localeCompare(right));
 
   const filteredTrades = trades.filter((trade) => {
     const matchesSearch =
@@ -71,15 +71,19 @@ export default function InvestmentsPage() {
       (trade.investment_assets.display_name ?? "")
         .toLowerCase()
         .includes(deferredSearch.toLowerCase()) ||
+      trade.brokerage_accounts.broker_kind
+        .toLowerCase()
+        .includes(deferredSearch.toLowerCase()) ||
       trade.brokerage_accounts.name
         .toLowerCase()
         .includes(deferredSearch.toLowerCase());
 
-    const matchesAccount =
-      accountFilter === "all" || trade.account_id === accountFilter;
+    const matchesBroker =
+      brokerFilter === "all" ||
+      trade.brokerage_accounts.broker_kind === brokerFilter;
     const matchesSide = sideFilter === "all" || trade.side === sideFilter;
 
-    return matchesSearch && matchesAccount && matchesSide;
+    return matchesSearch && matchesBroker && matchesSide;
   });
 
   async function handleDeleteAccount(id: string) {
@@ -96,26 +100,41 @@ export default function InvestmentsPage() {
         title="Investments"
         description={
           loading
-            ? "Manual-first portfolio tracking for IBKR, Hapi, Colombian stocks, US assets, and crypto."
+            ? "Manual-first portfolio tracking across brokers, Colombian stocks, US assets, and crypto."
             : `${overview.openPositionsCount} open position${overview.openPositionsCount !== 1 ? "s" : ""} · ${watchlist.length} watchlist asset${watchlist.length !== 1 ? "s" : ""}`
         }
       >
-        <BrokerageAccountForm onSubmit={addBrokerageAccount} />
         <TradeForm
           accounts={accounts}
           lookupPrice={lookupMarketPrice}
           onSubmit={addTrade}
         />
+        <BrokerageAccountForm onSubmit={addBrokerageAccount} />
       </PageHeader>
 
       {accounts.length === 0 && !loading ? (
-        <EmptyState
-          icon={ShieldPlus}
-          title="Start with a brokerage account"
-          description="Add your IBKR or Hapi account first so trades, withdrawals, and watchlist ideas have a home."
-        >
-          <BrokerageAccountForm onSubmit={addBrokerageAccount} />
-        </EmptyState>
+        <Card className="border-border/80 bg-card/96">
+          <CardContent className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-2">
+              <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
+                Add positions directly
+              </p>
+              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
+                Pick a broker like Trii, Interactive Brokers, Hapi, or any custom
+                broker, enter the asset, quantity, and price, and the app will
+                create the saved broker entry automatically if it does not exist yet.
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <TradeForm
+                accounts={accounts}
+                lookupPrice={lookupMarketPrice}
+                onSubmit={addTrade}
+              />
+              <BrokerageAccountForm onSubmit={addBrokerageAccount} />
+            </div>
+          </CardContent>
+        </Card>
       ) : null}
 
       <Tabs defaultValue="overview" className="space-y-5">
@@ -140,7 +159,7 @@ export default function InvestmentsPage() {
             <div className="space-y-5">
               <Card className="border-border/80 bg-card/96">
                 <CardHeader className="border-b border-border/70">
-                  <CardTitle>Account summary</CardTitle>
+                  <CardTitle>Broker summary</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4 pt-4">
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -165,7 +184,7 @@ export default function InvestmentsPage() {
                   <div className="space-y-3">
                     {overview.accountSummaries.length === 0 ? (
                       <p className="text-sm text-muted-foreground">
-                        Add deposits, withdrawals, or trades to populate account
+                        Add deposits, withdrawals, or positions to populate broker
                         cash summaries.
                       </p>
                     ) : (
@@ -201,63 +220,71 @@ export default function InvestmentsPage() {
 
               <Card className="border-border/80 bg-card/96">
                 <CardHeader className="border-b border-border/70">
-                  <CardTitle>Brokerage accounts</CardTitle>
+                  <CardTitle>Saved brokers</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 pt-4">
-                  {accounts.map((account) => (
-                    <div
-                      key={account.id}
-                      className="rounded-[1.25rem] border border-border/70 bg-secondary/25 p-4"
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="font-medium text-foreground">
-                            {account.name}
-                          </p>
-                          <p className="text-sm text-muted-foreground">
-                            {account.broker_kind} · {account.account_currency}
-                          </p>
+                  {accounts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">
+                      Saved brokers will appear here after your first position or
+                      cash movement.
+                    </p>
+                  ) : (
+                    accounts.map((account) => (
+                      <div
+                        key={account.id}
+                        className="rounded-[1.25rem] border border-border/70 bg-secondary/25 p-4"
+                      >
+                        <div className="flex items-start justify-between gap-3">
+                          <div>
+                            <p className="font-medium text-foreground">
+                              {account.broker_kind}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {account.account_currency}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <BrokerageAccountForm
+                              defaultValues={{
+                                broker_kind: account.broker_kind,
+                                name: account.name,
+                                account_currency: account.account_currency,
+                                fee_mode: account.fee_mode as
+                                  | "manual"
+                                  | "percent"
+                                  | "fixed"
+                                  | "percent_plus_fixed",
+                                fee_percent: Number(account.fee_percent),
+                                fee_fixed_amount: Number(account.fee_fixed_amount),
+                                fee_min_amount: Number(account.fee_min_amount),
+                                fee_currency: account.fee_currency,
+                              }}
+                              onSubmit={(values) =>
+                                updateBrokerageAccount(account.id, values)
+                              }
+                              trigger={
+                                <Button variant="ghost" size="sm">
+                                  Edit
+                                </Button>
+                              }
+                            />
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                              onClick={() => void handleDeleteAccount(account.id)}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-1">
-                          <BrokerageAccountForm
-                            defaultValues={{
-                              broker_kind: account.broker_kind as "IBKR" | "HAPI",
-                              name: account.name,
-                              account_currency: account.account_currency,
-                              fee_mode: account.fee_mode as
-                                | "manual"
-                                | "percent"
-                                | "fixed"
-                                | "percent_plus_fixed",
-                              fee_percent: Number(account.fee_percent),
-                              fee_fixed_amount: Number(account.fee_fixed_amount),
-                              fee_min_amount: Number(account.fee_min_amount),
-                              fee_currency: account.fee_currency,
-                            }}
-                            onSubmit={(values) =>
-                              updateBrokerageAccount(account.id, values)
-                            }
-                            trigger={
-                              <Button variant="ghost" size="sm">
-                                Edit
-                              </Button>
-                            }
-                          />
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                            onClick={() => void handleDeleteAccount(account.id)}
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
+                        <p className="mt-3 text-sm text-muted-foreground">
+                          Saved label: {account.name} · Fee mode:{" "}
+                          {account.fee_mode.replaceAll("_", " ")}
+                        </p>
                       </div>
-                      <p className="mt-3 text-sm text-muted-foreground">
-                        Fee mode: {account.fee_mode.replaceAll("_", " ")}
-                      </p>
-                    </div>
-                  ))}
+                    ))
+                  )}
                 </CardContent>
               </Card>
             </div>
@@ -274,7 +301,7 @@ export default function InvestmentsPage() {
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search symbols, names, or accounts..."
+                    placeholder="Search symbols, names, or brokers..."
                     className="h-11 rounded-2xl pl-9 text-sm"
                     value={search}
                     onChange={(event) => setSearch(event.target.value)}
@@ -285,20 +312,20 @@ export default function InvestmentsPage() {
               <div className="grid gap-4 md:grid-cols-[220px_160px_auto]">
                 <div className="space-y-2">
                   <p className="text-[0.68rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                    Account
+                    Broker
                   </p>
                   <Select
-                    value={accountFilter}
-                    onValueChange={(value) => value && setAccountFilter(value)}
+                    value={brokerFilter}
+                    onValueChange={(value) => value && setBrokerFilter(value)}
                   >
                     <SelectTrigger className="h-11 rounded-2xl text-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">All accounts</SelectItem>
-                      {accounts.map((account) => (
-                        <SelectItem key={account.id} value={account.id}>
-                          {account.name}
+                      <SelectItem value="all">All brokers</SelectItem>
+                      {brokerChoices.map((broker) => (
+                        <SelectItem key={broker} value={broker}>
+                          {broker}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -424,7 +451,8 @@ export default function InvestmentsPage() {
             <div className="flex items-center gap-3 rounded-[1.25rem] border border-border/70 bg-secondary/35 p-4">
               <Wallet className="h-5 w-5 text-muted-foreground" />
               <p className="text-sm leading-6 text-muted-foreground">
-                Add a brokerage account before creating cash movements or trades.
+                Broker entries are lightweight now. Save a position first, then
+                adjust broker defaults later if you want.
               </p>
             </div>
           </CardContent>

@@ -99,13 +99,18 @@ export function CashMovementTable({
                     {movement.movement_type}
                   </span>
                   <p className="text-base font-medium text-foreground">
-                    {movement.brokerage_accounts.name}
+                    {movement.brokerage_accounts.broker_kind}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>{formatDate(movement.movement_date, "MMM d, yyyy")}</span>
-                  <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-flex" />
-                  <span>{movement.brokerage_accounts.broker_kind}</span>
+                  {movement.brokerage_accounts.name !==
+                  movement.brokerage_accounts.broker_kind ? (
+                    <>
+                      <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-flex" />
+                      <span>{movement.brokerage_accounts.name}</span>
+                    </>
+                  ) : null}
                 </div>
                 <p className="text-sm text-muted-foreground">
                   Fee {Number(movement.fee_amount).toFixed(2)} {movement.fee_currency}
@@ -125,6 +130,7 @@ export function CashMovementTable({
                     accounts={accounts}
                     defaultValues={{
                       account_id: movement.account_id,
+                      broker_name: movement.brokerage_accounts.broker_kind,
                       movement_type: movement.movement_type as "deposit" | "withdrawal",
                       movement_date: movement.movement_date,
                       amount: Number(movement.amount),

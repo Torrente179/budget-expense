@@ -46,7 +46,13 @@ const isoDate = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format");
 
-export const brokerKindSchema = z.enum(["IBKR", "HAPI"]);
+const optionalUuid = z.string().uuid().optional().or(z.literal(""));
+
+export const brokerKindSchema = z
+  .string()
+  .max(80)
+  .transform((value) => value.trim())
+  .refine((value) => value.length > 0, "Broker is required");
 export const feeModeSchema = z.enum([
   "manual",
   "percent",
@@ -98,7 +104,8 @@ export const investmentAssetSchema = z.object({
 export type InvestmentAssetFormValues = z.output<typeof investmentAssetSchema>;
 
 export const investmentTradeSchema = z.object({
-  account_id: z.string().uuid("Please select a brokerage account"),
+  account_id: optionalUuid,
+  broker_name: brokerKindSchema,
   asset: investmentAssetSchema,
   side: tradeSideSchema,
   trade_date: isoDate,
@@ -120,7 +127,8 @@ export const investmentTradeSchema = z.object({
 export type InvestmentTradeFormValues = z.output<typeof investmentTradeSchema>;
 
 export const investmentCashMovementSchema = z.object({
-  account_id: z.string().uuid("Please select a brokerage account"),
+  account_id: optionalUuid,
+  broker_name: brokerKindSchema,
   movement_type: movementTypeSchema,
   movement_date: isoDate,
   amount: z.coerce.number().positive("Amount must be greater than 0"),

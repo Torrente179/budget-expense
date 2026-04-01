@@ -95,7 +95,8 @@ CREATE INDEX idx_monthly_budget_plans_user_period
 CREATE TABLE public.brokerage_accounts (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    broker_kind TEXT NOT NULL CHECK (broker_kind IN ('IBKR', 'HAPI')),
+    broker_kind TEXT NOT NULL
+        CHECK (char_length(btrim(broker_kind)) > 0 AND char_length(btrim(broker_kind)) <= 80),
     name TEXT NOT NULL,
     account_currency TEXT NOT NULL DEFAULT 'USD',
     fee_mode TEXT NOT NULL DEFAULT 'manual' CHECK (fee_mode IN ('manual', 'percent', 'fixed', 'percent_plus_fixed')),
@@ -109,6 +110,13 @@ CREATE TABLE public.brokerage_accounts (
 
 CREATE INDEX idx_brokerage_accounts_user_id
     ON public.brokerage_accounts(user_id, created_at);
+
+ALTER TABLE public.brokerage_accounts
+    DROP CONSTRAINT IF EXISTS brokerage_accounts_broker_kind_check;
+
+ALTER TABLE public.brokerage_accounts
+    ADD CONSTRAINT brokerage_accounts_broker_kind_check
+    CHECK (char_length(btrim(broker_kind)) > 0 AND char_length(btrim(broker_kind)) <= 80);
 
 -- 7. Investment assets
 CREATE TABLE public.investment_assets (

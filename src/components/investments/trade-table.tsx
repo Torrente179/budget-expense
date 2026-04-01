@@ -111,13 +111,21 @@ export function TradeTable({
                     {trade.investment_assets.symbol}
                   </p>
                   <span className="text-sm text-muted-foreground">
-                    {trade.investment_assets.display_name ?? trade.brokerage_accounts.name}
+                    {trade.investment_assets.display_name ??
+                      trade.brokerage_accounts.broker_kind}
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>{formatDate(trade.trade_date, "MMM d, yyyy")}</span>
                   <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-flex" />
-                  <span>{trade.brokerage_accounts.name}</span>
+                  <span>{trade.brokerage_accounts.broker_kind}</span>
+                  {trade.brokerage_accounts.name !==
+                  trade.brokerage_accounts.broker_kind ? (
+                    <>
+                      <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-flex" />
+                      <span>{trade.brokerage_accounts.name}</span>
+                    </>
+                  ) : null}
                   <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-flex" />
                   <span>
                     {Number(trade.quantity).toFixed(
@@ -156,6 +164,7 @@ export function TradeTable({
                     lookupPrice={lookupPrice}
                     defaultValues={{
                       account_id: trade.account_id,
+                      broker_name: trade.brokerage_accounts.broker_kind,
                       asset: {
                         symbol: trade.investment_assets.symbol,
                         display_name: trade.investment_assets.display_name ?? "",

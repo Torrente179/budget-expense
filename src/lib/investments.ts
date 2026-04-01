@@ -1,6 +1,19 @@
 import type { Database } from "@/types/database";
 
-export const BROKER_KINDS = ["IBKR", "HAPI"] as const;
+export const POPULAR_BROKERS = [
+  "Interactive Brokers",
+  "Hapi",
+  "Trii",
+  "Fidelity",
+  "Charles Schwab",
+  "Robinhood",
+  "eToro",
+  "Trading 212",
+  "DEGIRO",
+  "XTB",
+  "Alpaca",
+] as const;
+export const CUSTOM_BROKER_VALUE = "__custom_broker__";
 export const FEE_MODES = [
   "manual",
   "percent",
@@ -18,7 +31,7 @@ export const REFERENCE_STATUSES = [
   "manual_only",
 ] as const;
 
-export type BrokerKind = (typeof BROKER_KINDS)[number];
+export type BrokerKind = string;
 export type FeeMode = (typeof FEE_MODES)[number];
 export type AssetType = (typeof ASSET_TYPES)[number];
 export type MarketCode = (typeof MARKET_CODES)[number];
@@ -136,6 +149,31 @@ function cleanNullable(value?: string | null) {
 
   const trimmed = value.trim();
   return trimmed.length > 0 ? trimmed : null;
+}
+
+export function normalizeBrokerName(value: string) {
+  return value.trim().replace(/\s+/g, " ");
+}
+
+export function buildBrokerChoices(
+  accounts: Array<Pick<BrokerageAccountRow, "broker_kind">>
+) {
+  const choices = new Map<string, string>();
+
+  POPULAR_BROKERS.forEach((broker) => {
+    choices.set(broker.toLowerCase(), broker);
+  });
+
+  accounts.forEach((account) => {
+    const brokerName = normalizeBrokerName(account.broker_kind);
+    if (brokerName.length > 0) {
+      choices.set(brokerName.toLowerCase(), brokerName);
+    }
+  });
+
+  return Array.from(choices.values()).sort((left, right) =>
+    left.localeCompare(right)
+  );
 }
 
 export function buildAssetKey(

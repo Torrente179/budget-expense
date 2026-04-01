@@ -7,6 +7,11 @@ import {
   investmentCashMovementSchema,
   type InvestmentCashMovementFormValues,
 } from "@/lib/validations";
+import {
+  CUSTOM_BROKER_VALUE,
+  buildBrokerChoices,
+  normalizeBrokerName,
+} from "@/lib/investments";
 import { CURRENCIES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -46,6 +51,7 @@ interface CashMovementFormProps {
 function getDefaults(defaultValues?: Partial<InvestmentCashMovementFormValues>) {
   return {
     account_id: defaultValues?.account_id ?? "",
+    broker_name: defaultValues?.broker_name ?? "",
     movement_type: defaultValues?.movement_type ?? "deposit",
     movement_date:
       defaultValues?.movement_date ?? format(new Date(), "yyyy-MM-dd"),
@@ -73,7 +79,21 @@ export function CashMovementForm({
   });
 
   const accountId = form.watch("account_id");
-  const selectedAccount = accounts.find((account) => account.id === accountId);
+  const brokerName = form.watch("broker_name");
+  const brokerChoices = buildBrokerChoices(accounts);
+  const normalizedBrokerName = normalizeBrokerName(brokerName ?? "");
+  const brokerSelectValue =
+    brokerChoices.find(
+      (choice) => choice.toLowerCase() === normalizedBrokerName.toLowerCase()
+    ) ??
+    (normalizedBrokerName.length > 0 ? CUSTOM_BROKER_VALUE : "");
+  const selectedAccount =
+    accounts.find((account) => account.id === accountId) ??
+    accounts.find(
+      (account) =>
+        normalizeBrokerName(account.broker_kind).toLowerCase() ===
+        normalizedBrokerName.toLowerCase()
+    );
 
   useEffect(() => {
     if (!open) return;
@@ -82,11 +102,15 @@ export function CashMovementForm({
 
   useEffect(() => {
     if (!selectedAccount) return;
-    if (!form.getValues("currency")) {
-      form.setValue("currency", selectedAccount.account_currency);
+    if (!form.getFieldState("currency").isDirty) {
+      form.setValue("currency", selectedAccount.account_currency, {
+        shouldValidate: true,
+      });
     }
-    if (!form.getValues("fee_currency")) {
-      form.setValue("fee_currency", selectedAccount.fee_currency);
+    if (!form.getFieldState("fee_currency").isDirty) {
+      form.setValue("fee_currency", selectedAccount.fee_currency, {
+        shouldValidate: true,
+      });
     }
   }, [form, selectedAccount]);
 
@@ -124,29 +148,65 @@ export function CashMovementForm({
 
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-5">
           <div className="space-y-2">
-            <Label htmlFor="movement-account">Brokerage account</Label>
+            <Label htmlFor="movement-broker">Broker</Label>
             <Select
-              value={accountId}
-              onValueChange={(value) =>
-                value &&
-                form.setValue("account_id", value, {
+              value={brokerSelectValue}
+              onValueChange={(value) => {
+                if (!value) return;
+
+                if (value === CUSTOM_BROKER_VALUE) {
+                  form.setValue("broker_name", "", {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                  form.setValue("account_id", "", {
+                    shouldDirty: true,
+                  });
+                  return;
+                }
+
+                const matchedAccount = accounts.find(
+                  (account) =>
+                    normalizeBrokerName(account.broker_kind).toLowerCase() ===
+                    value.toLowerCase()
+                );
+
+                form.setValue("broker_name", value, {
                   shouldDirty: true,
                   shouldValidate: true,
-                })
-              }
+                });
+                form.setValue("account_id", matchedAccount?.id ?? "", {
+                  shouldDirty: true,
+                });
+              }}
             >
-              <SelectTrigger id="movement-account" className="h-11">
-                <SelectValue placeholder="Select an account" />
+              <SelectTrigger id="movement-broker" className="h-11">
+                <SelectValue placeholder="Select a broker" />
               </SelectTrigger>
               <SelectContent>
-                {accounts.map((account) => (
-                  <SelectItem key={account.id} value={account.id}>
-                    {account.name} · {account.broker_kind}
+                {brokerChoices.map((choice) => (
+                  <SelectItem key={choice} value={choice}>
+                    {choice}
                   </SelectItem>
                 ))}
+                <SelectItem value={CUSTOM_BROKER_VALUE}>
+                  Other broker
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
+
+          {brokerSelectValue === CUSTOM_BROKER_VALUE && (
+            <div className="space-y-2">
+              <Label htmlFor="movement-custom-broker">Custom broker</Label>
+              <Input
+                id="movement-custom-broker"
+                placeholder="Trii, Webull, local bank broker..."
+                className="h-11"
+                {...form.register("broker_name")}
+              />
+            </div>
+          )}
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">

@@ -3,7 +3,7 @@
 ## Summary
 - Added a dedicated `Investments` module with overview, orders, cash movements, and watchlist tabs.
 - Added a portfolio snapshot card to the main dashboard without mixing investment metrics into the budget ledger.
-- Kept `v1` manual-first for `IBKR` and `Hapi`, while supporting US stocks, US ETFs, `BTC`, `ETH`, and Colombian stocks.
+- Kept `v1` manual-first while supporting broker-first entry across `Interactive Brokers`, `Hapi`, `Trii`, and custom brokers, plus US stocks, US ETFs, `BTC`, `ETH`, and Colombian stocks.
 
 ## Data Model
 - Added `brokerage_accounts`, `investment_assets`, `investment_trades`, `investment_cash_movements`, `investment_watchlist`, and `market_price_history` to `supabase/migration.sql`.
@@ -24,8 +24,14 @@
   - Manual order ledger with editable reference-price autofill
   - Cash deposit/withdrawal tracking
   - Watchlist tracking
-  - Brokerage account management
+  - Broker management with lightweight auto-created broker entries from position or cash saves
 - Added `Investments` navigation to desktop and mobile shells.
+
+## Broker-First Flow
+- Positions and cash movements no longer require a broker row to be created first.
+- Selecting a broker in the form now auto-creates the saved broker entry if it does not already exist.
+- Expanded the built-in broker list to include popular options such as `Trii`, `Fidelity`, `Charles Schwab`, `Robinhood`, `eToro`, `Trading 212`, `DEGIRO`, `XTB`, and `Alpaca`.
+- Generalized the `broker_kind` schema from the original `IBKR` / `HAPI` restriction so custom brokers can persist.
 
 ## Portfolio Logic
 - Added FIFO lot accounting in `src/lib/investments.ts`.

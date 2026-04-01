@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrency } from "@/providers/currency-provider";
 import {
+  normalizeBrokerName,
   buildInvestmentOverview,
   normalizeInvestmentAsset,
   type InvestmentAssetRow,
@@ -46,10 +47,15 @@ function buildLatestQuoteMap(quotes: LatestQuote[]) {
 function getNetQuantityForAsset(
   trades: InvestmentTradeWithJoins[],
   assetId: string,
+  accountId?: string,
   excludeTradeId?: string
 ) {
   return trades.reduce((sum, trade) => {
-    if (trade.asset_id !== assetId || trade.id === excludeTradeId) {
+    if (
+      trade.asset_id !== assetId ||
+      trade.id === excludeTradeId ||
+      (accountId && trade.account_id !== accountId)
+    ) {
       return sum;
     }
 
@@ -57,6 +63,39 @@ function getNetQuantityForAsset(
       trade.side === "buy" ? Number(trade.quantity) : -Number(trade.quantity);
     return sum + signedQuantity;
   }, 0);
+}
+
+function findMatchingBrokerAccount(
+  accounts: BrokerageAccount[],
+  options: {
+    accountId?: string;
+    brokerName?: string;
+  }
+) {
+  if (options.accountId) {
+    const directMatch = accounts.find((account) => account.id === options.accountId);
+    if (directMatch) {
+      return directMatch;
+    }
+  }
+
+  if (!options.brokerName) {
+    return null;
+  }
+
+  const normalizedBroker = normalizeBrokerName(options.brokerName).toLowerCase();
+
+  return (
+    accounts.find(
+      (account) =>
+        normalizeBrokerName(account.broker_kind).toLowerCase() === normalizedBroker
+    ) ??
+    accounts.find(
+      (account) =>
+        normalizeBrokerName(account.name).toLowerCase() === normalizedBroker
+    ) ??
+    null
+  );
 }
 
 export function useInvestments() {
@@ -99,6 +138,12 @@ export function useInvestments() {
 
           if (asset.exchange_code) {
             params.set("exchangeCode", asset.exchange_code);
+          }
+          if (asset.provider_symbol_twelve) {
+            params.set("providerSymbolTwelve", asset.provider_symbol_twelve);
+          }
+          if (asset.provider_symbol_eodhd) {
+            params.set("providerSymbolEodhd", asset.provider_symbol_eodhd);
           }
 
           try {
@@ -198,6 +243,69 @@ export function useInvestments() {
 
     return user?.id ?? null;
   }, [supabase]);
+
+  const ensureBrokerageAccount = useCallback(
+    async ({
+      userId,
+      accountId,
+      brokerName,
+      accountCurrency,
+      feeCurrency,
+    }: {
+      userId: string;
+      accountId?: string;
+      brokerName: string;
+      accountCurrency: string;
+      feeCurrency: string;
+    }) => {
+      const existing = findMatchingBrokerAccount(accounts, {
+        accountId,
+        brokerName,
+      });
+
+      if (existing) {
+        return existing;
+      }
+
+      const brokerLabel = normalizeBrokerName(brokerName);
+      const { data: remoteExisting } = await supabase
+        .from("brokerage_accounts")
+        .select("*")
+        .eq("user_id", userId)
+        .eq("broker_kind", brokerLabel)
+        .order("created_at", { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+      if (remoteExisting) {
+        return remoteExisting as BrokerageAccount;
+      }
+
+      const { data, error } = await supabase
+        .from("brokerage_accounts")
+        .insert({
+          user_id: userId,
+          broker_kind: brokerLabel,
+          name: brokerLabel,
+          account_currency: accountCurrency,
+          fee_mode: "manual",
+          fee_percent: 0,
+          fee_fixed_amount: 0,
+          fee_min_amount: 0,
+          fee_currency: feeCurrency,
+        })
+        .select("*")
+        .single();
+
+      if (error) {
+        toast.error("Failed to save broker selection");
+        return null;
+      }
+
+      return data as BrokerageAccount;
+    },
+    [accounts, supabase]
+  );
 
   const upsertAsset = useCallback(
     async (assetInput: InvestmentAssetFormValues) => {
@@ -321,13 +429,28 @@ export function useInvestments() {
     const userId = await getUserId();
     if (!userId) return;
 
+    const brokerageAccount = await ensureBrokerageAccount({
+      userId,
+      accountId: values.account_id || undefined,
+      brokerName: values.broker_name,
+      accountCurrency: values.execution_currency,
+      feeCurrency: values.fee_currency,
+    });
+    if (!brokerageAccount) {
+      return new Error("Broker could not be saved");
+    }
+
     const asset = await upsertAsset(values.asset);
     if (!asset) {
       return new Error("Asset could not be saved");
     }
 
     if (values.side === "sell") {
-      const availableQuantity = getNetQuantityForAsset(trades, asset.id);
+      const availableQuantity = getNetQuantityForAsset(
+        trades,
+        asset.id,
+        brokerageAccount.id
+      );
       if (values.quantity > availableQuantity) {
         toast.error("Sell quantity exceeds the current position");
         return new Error("Insufficient quantity");
@@ -336,7 +459,7 @@ export function useInvestments() {
 
     const { error } = await supabase.from("investment_trades").insert({
       user_id: userId,
-      account_id: values.account_id,
+      account_id: brokerageAccount.id,
       asset_id: asset.id,
       side: values.side,
       trade_date: values.trade_date,
@@ -367,13 +490,29 @@ export function useInvestments() {
     const userId = await getUserId();
     if (!userId) return;
 
+    const brokerageAccount = await ensureBrokerageAccount({
+      userId,
+      accountId: values.account_id || undefined,
+      brokerName: values.broker_name,
+      accountCurrency: values.execution_currency,
+      feeCurrency: values.fee_currency,
+    });
+    if (!brokerageAccount) {
+      return new Error("Broker could not be saved");
+    }
+
     const asset = await upsertAsset(values.asset);
     if (!asset) {
       return new Error("Asset could not be saved");
     }
 
     if (values.side === "sell") {
-      const availableQuantity = getNetQuantityForAsset(trades, asset.id, id);
+      const availableQuantity = getNetQuantityForAsset(
+        trades,
+        asset.id,
+        brokerageAccount.id,
+        id
+      );
       if (values.quantity > availableQuantity) {
         toast.error("Sell quantity exceeds the current position");
         return new Error("Insufficient quantity");
@@ -383,7 +522,7 @@ export function useInvestments() {
     const { error } = await supabase
       .from("investment_trades")
       .update({
-        account_id: values.account_id,
+        account_id: brokerageAccount.id,
         asset_id: asset.id,
         side: values.side,
         trade_date: values.trade_date,
@@ -430,9 +569,20 @@ export function useInvestments() {
     const userId = await getUserId();
     if (!userId) return;
 
+    const brokerageAccount = await ensureBrokerageAccount({
+      userId,
+      accountId: values.account_id || undefined,
+      brokerName: values.broker_name,
+      accountCurrency: values.currency,
+      feeCurrency: values.fee_currency,
+    });
+    if (!brokerageAccount) {
+      return new Error("Broker could not be saved");
+    }
+
     const { error } = await supabase.from("investment_cash_movements").insert({
       user_id: userId,
-      account_id: values.account_id,
+      account_id: brokerageAccount.id,
       movement_type: values.movement_type,
       movement_date: values.movement_date,
       amount: values.amount,
@@ -459,10 +609,21 @@ export function useInvestments() {
     const userId = await getUserId();
     if (!userId) return;
 
+    const brokerageAccount = await ensureBrokerageAccount({
+      userId,
+      accountId: values.account_id || undefined,
+      brokerName: values.broker_name,
+      accountCurrency: values.currency,
+      feeCurrency: values.fee_currency,
+    });
+    if (!brokerageAccount) {
+      return new Error("Broker could not be saved");
+    }
+
     const { error } = await supabase
       .from("investment_cash_movements")
       .update({
-        account_id: values.account_id,
+        account_id: brokerageAccount.id,
         movement_type: values.movement_type,
         movement_date: values.movement_date,
         amount: values.amount,

@@ -7,7 +7,13 @@ import {
   investmentTradeSchema,
   type InvestmentTradeFormValues,
 } from "@/lib/validations";
-import { estimateTradeFee, type MarketPriceResponse } from "@/lib/investments";
+import {
+  CUSTOM_BROKER_VALUE,
+  buildBrokerChoices,
+  estimateTradeFee,
+  normalizeBrokerName,
+  type MarketPriceResponse,
+} from "@/lib/investments";
 import { CURRENCIES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +64,7 @@ interface TradeFormProps {
 function getTradeDefaults(defaultValues?: Partial<InvestmentTradeFormValues>) {
   return {
     account_id: defaultValues?.account_id ?? "",
+    broker_name: defaultValues?.broker_name ?? "",
     asset: {
       symbol: defaultValues?.asset?.symbol ?? "",
       display_name: defaultValues?.asset?.display_name ?? "",
@@ -105,7 +112,21 @@ export function TradeForm({
   });
 
   const accountId = form.watch("account_id");
-  const selectedAccount = accounts.find((account) => account.id === accountId);
+  const brokerName = form.watch("broker_name");
+  const brokerChoices = buildBrokerChoices(accounts);
+  const normalizedBrokerName = normalizeBrokerName(brokerName ?? "");
+  const brokerSelectValue =
+    brokerChoices.find(
+      (choice) => choice.toLowerCase() === normalizedBrokerName.toLowerCase()
+    ) ??
+    (normalizedBrokerName.length > 0 ? CUSTOM_BROKER_VALUE : "");
+  const selectedAccount =
+    accounts.find((account) => account.id === accountId) ??
+    accounts.find(
+      (account) =>
+        normalizeBrokerName(account.broker_kind).toLowerCase() ===
+        normalizedBrokerName.toLowerCase()
+    );
   const quantity = Number(form.watch("quantity")) || 0;
   const executionPrice = Number(form.watch("execution_price")) || 0;
   const tradeDate = form.watch("trade_date");
@@ -118,11 +139,15 @@ export function TradeForm({
 
   useEffect(() => {
     if (!selectedAccount) return;
-    if (!form.getValues("execution_currency")) {
-      form.setValue("execution_currency", selectedAccount.account_currency);
+    if (!form.getFieldState("execution_currency").isDirty) {
+      form.setValue("execution_currency", selectedAccount.account_currency, {
+        shouldValidate: true,
+      });
     }
-    if (!form.getValues("fee_currency")) {
-      form.setValue("fee_currency", selectedAccount.fee_currency);
+    if (!form.getFieldState("fee_currency").isDirty) {
+      form.setValue("fee_currency", selectedAccount.fee_currency, {
+        shouldValidate: true,
+      });
     }
   }, [form, selectedAccount]);
 
@@ -210,7 +235,7 @@ export function TradeForm({
       ) : (
         <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          Add order
+          Add position
         </SheetTrigger>
       )}
 
@@ -218,37 +243,62 @@ export function TradeForm({
         <form className="flex h-full flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
           <SheetHeader className="border-b border-border/70 px-5 py-5">
             <SheetTitle>
-              {defaultValues ? "Edit order" : "Add stock or crypto order"}
+              {defaultValues ? "Edit position" : "Add stock or crypto position"}
             </SheetTitle>
             <SheetDescription>
-              Store the exact execution price, while keeping the fetched daily
-              close as reference when it is available.
+              Pick the broker, asset, quantity, and purchase or sale price. The
+              app saves the position and keeps the fetched daily close as an
+              optional reference.
             </SheetDescription>
           </SheetHeader>
 
           <div className="flex-1 space-y-5 px-5 py-5">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="trade-account">Brokerage account</Label>
+                <Label htmlFor="trade-broker">Broker</Label>
                 <Select
-                  value={accountId}
-                  onValueChange={(value) =>
-                    value &&
-                    form.setValue("account_id", value, {
+                  value={brokerSelectValue}
+                  onValueChange={(value) => {
+                    if (!value) return;
+
+                    if (value === CUSTOM_BROKER_VALUE) {
+                      form.setValue("broker_name", "", {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                      form.setValue("account_id", "", {
+                        shouldDirty: true,
+                      });
+                      return;
+                    }
+
+                    const matchedAccount = accounts.find(
+                      (account) =>
+                        normalizeBrokerName(account.broker_kind).toLowerCase() ===
+                        value.toLowerCase()
+                    );
+
+                    form.setValue("broker_name", value, {
                       shouldDirty: true,
                       shouldValidate: true,
-                    })
-                  }
+                    });
+                    form.setValue("account_id", matchedAccount?.id ?? "", {
+                      shouldDirty: true,
+                    });
+                  }}
                 >
-                  <SelectTrigger id="trade-account" className="h-11">
-                    <SelectValue placeholder="Select an account" />
+                  <SelectTrigger id="trade-broker" className="h-11">
+                    <SelectValue placeholder="Select a broker" />
                   </SelectTrigger>
                   <SelectContent>
-                    {accounts.map((account) => (
-                      <SelectItem key={account.id} value={account.id}>
-                        {account.name} · {account.broker_kind}
+                    {brokerChoices.map((choice) => (
+                      <SelectItem key={choice} value={choice}>
+                        {choice}
                       </SelectItem>
                     ))}
+                    <SelectItem value={CUSTOM_BROKER_VALUE}>
+                      Other broker
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -275,6 +325,18 @@ export function TradeForm({
                 </Select>
               </div>
             </div>
+
+            {brokerSelectValue === CUSTOM_BROKER_VALUE && (
+              <div className="space-y-2">
+                <Label htmlFor="custom-broker-name">Custom broker</Label>
+                <Input
+                  id="custom-broker-name"
+                  placeholder="Trii, Webull, Scotiabank..."
+                  className="h-11"
+                  {...form.register("broker_name")}
+                />
+              </div>
+            )}
 
             <InvestmentAssetFields form={form} />
 
@@ -413,7 +475,7 @@ export function TradeForm({
               </Button>
               <Button type="submit" disabled={submitting}>
                 {submitting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
-                {defaultValues ? "Save order" : "Create order"}
+                {defaultValues ? "Save position" : "Save position"}
               </Button>
             </div>
           </SheetFooter>
