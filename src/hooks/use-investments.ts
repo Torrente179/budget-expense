@@ -10,6 +10,8 @@ import {
   normalizeInvestmentAsset,
   type InvestmentAssetRow,
   type InvestmentCashMovementWithJoins,
+  type InvestmentSavingsAccountRow,
+  type InvestmentSavingsTransferWithJoins,
   type InvestmentTradeWithJoins,
   type InvestmentWatchlistWithJoins,
   type LatestQuote,
@@ -18,6 +20,8 @@ import type {
   BrokerageAccountFormValues,
   InvestmentAssetFormValues,
   InvestmentCashMovementFormValues,
+  InvestmentSavingsAccountFormValues,
+  InvestmentSavingsTransferFormValues,
   InvestmentTradeFormValues,
   InvestmentWatchlistFormValues,
 } from "@/lib/validations";
@@ -105,6 +109,12 @@ export function useInvestments() {
   const [cashMovements, setCashMovements] = useState<
     InvestmentCashMovementWithJoins[]
   >([]);
+  const [savingsAccounts, setSavingsAccounts] = useState<
+    InvestmentSavingsAccountRow[]
+  >([]);
+  const [savingsTransfers, setSavingsTransfers] = useState<
+    InvestmentSavingsTransferWithJoins[]
+  >([]);
   const [watchlist, setWatchlist] = useState<InvestmentWatchlistWithJoins[]>([]);
   const [latestQuotes, setLatestQuotes] = useState<Record<string, LatestQuote>>({});
   const [loading, setLoading] = useState(true);
@@ -119,6 +129,27 @@ export function useInvestments() {
     latestQuotes,
     convert,
   });
+  const savingsAccountSummaries = savingsAccounts
+    .map((account) => {
+      const balance = savingsTransfers
+        .filter((transfer) => transfer.savings_account_id === account.id)
+        .reduce(
+          (sum, transfer) =>
+            sum + convert(Number(transfer.amount), transfer.currency),
+          0
+        );
+
+      return {
+        ...account,
+        balance,
+      };
+    })
+    .sort((left, right) => right.balance - left.balance);
+
+  const totalSavingsBalance = savingsAccountSummaries.reduce(
+    (sum, account) => sum + account.balance,
+    0
+  );
 
   const fetchMarketPrices = useCallback(
     async (targetAssets: InvestmentAssetRow[]) => {
@@ -181,6 +212,8 @@ export function useInvestments() {
       assetsResult,
       tradesResult,
       cashMovementsResult,
+      savingsAccountsResult,
+      savingsTransfersResult,
       watchlistResult,
     ] = await Promise.all([
       supabase
@@ -202,6 +235,15 @@ export function useInvestments() {
         .order("movement_date", { ascending: false })
         .order("created_at", { ascending: false }),
       supabase
+        .from("investment_savings_accounts")
+        .select("*")
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("investment_savings_transfers")
+        .select("*, investment_savings_accounts(*)")
+        .order("transfer_date", { ascending: false })
+        .order("created_at", { ascending: false }),
+      supabase
         .from("investment_watchlist")
         .select("*, investment_assets(*)")
         .order("created_at", { ascending: false }),
@@ -212,6 +254,12 @@ export function useInvestments() {
     setTrades((tradesResult.data ?? []) as InvestmentTradeWithJoins[]);
     setCashMovements(
       (cashMovementsResult.data ?? []) as InvestmentCashMovementWithJoins[]
+    );
+    setSavingsAccounts(
+      (savingsAccountsResult.data ?? []) as InvestmentSavingsAccountRow[]
+    );
+    setSavingsTransfers(
+      (savingsTransfersResult.data ?? []) as InvestmentSavingsTransferWithJoins[]
     );
     setWatchlist((watchlistResult.data ?? []) as InvestmentWatchlistWithJoins[]);
     setLoading(false);
@@ -701,11 +749,133 @@ export function useInvestments() {
     return error;
   }
 
+  async function addSavingsAccount(values: InvestmentSavingsAccountFormValues) {
+    const userId = await getUserId();
+    if (!userId) return;
+
+    const { error } = await supabase.from("investment_savings_accounts").insert({
+      ...values,
+      user_id: userId,
+    });
+
+    if (!error) {
+      await fetchData();
+      return null;
+    }
+
+    toast.error("Failed to save savings account");
+    return error;
+  }
+
+  async function updateSavingsAccount(
+    id: string,
+    values: Partial<InvestmentSavingsAccountFormValues>
+  ) {
+    const { error } = await supabase
+      .from("investment_savings_accounts")
+      .update(values)
+      .eq("id", id);
+
+    if (!error) {
+      await fetchData();
+      return null;
+    }
+
+    toast.error("Failed to update savings account");
+    return error;
+  }
+
+  async function deleteSavingsAccount(id: string) {
+    const { error } = await supabase
+      .from("investment_savings_accounts")
+      .delete()
+      .eq("id", id);
+
+    if (!error) {
+      await fetchData();
+      return null;
+    }
+
+    toast.error("Failed to delete savings account");
+    return error;
+  }
+
+  async function addSavingsTransfer(values: InvestmentSavingsTransferFormValues) {
+    const userId = await getUserId();
+    if (!userId) return;
+
+    const { error } = await supabase.from("investment_savings_transfers").insert({
+      user_id: userId,
+      savings_account_id: values.savings_account_id,
+      transfer_date: values.transfer_date,
+      amount: values.amount,
+      currency: values.currency,
+      notes: values.notes ?? null,
+      source_kind: values.source_kind,
+    });
+
+    if (!error) {
+      await fetchData();
+      return null;
+    }
+
+    toast.error("Failed to save savings transfer");
+    return error;
+  }
+
+  async function updateSavingsTransfer(
+    id: string,
+    values: InvestmentSavingsTransferFormValues
+  ) {
+    const userId = await getUserId();
+    if (!userId) return;
+
+    const { error } = await supabase
+      .from("investment_savings_transfers")
+      .update({
+        savings_account_id: values.savings_account_id,
+        transfer_date: values.transfer_date,
+        amount: values.amount,
+        currency: values.currency,
+        notes: values.notes ?? null,
+        source_kind: values.source_kind,
+      })
+      .eq("id", id)
+      .eq("user_id", userId);
+
+    if (!error) {
+      await fetchData();
+      return null;
+    }
+
+    toast.error("Failed to update savings transfer");
+    return error;
+  }
+
+  async function deleteSavingsTransfer(id: string) {
+    const { error } = await supabase
+      .from("investment_savings_transfers")
+      .delete()
+      .eq("id", id);
+
+    if (!error) {
+      await fetchData();
+      return null;
+    }
+
+    toast.error("Failed to delete savings transfer");
+    return error;
+  }
+
   return {
     accounts,
     assets,
     trades,
     cashMovements,
+    savingsAccounts,
+    savingsTransfers,
+    savingsAccountSummaries,
+    totalSavingsBalance,
     watchlist,
     latestQuotes,
     overview,
@@ -722,6 +892,12 @@ export function useInvestments() {
     addCashMovement,
     updateCashMovement,
     deleteCashMovement,
+    addSavingsAccount,
+    updateSavingsAccount,
+    deleteSavingsAccount,
+    addSavingsTransfer,
+    updateSavingsTransfer,
+    deleteSavingsTransfer,
     addWatchlistItem,
     deleteWatchlistItem,
   };

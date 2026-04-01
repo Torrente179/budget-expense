@@ -89,6 +89,12 @@ export const assetTypeSchema = z.enum(["stock", "etf", "crypto"]);
 export const marketCodeSchema = z.enum(["US", "CO", "CRYPTO"]);
 export const tradeSideSchema = z.enum(["buy", "sell"]);
 export const movementTypeSchema = z.enum(["deposit", "withdrawal"]);
+export const savingsCountrySchema = z.enum(["CO", "ES"]);
+export const savingsProductTypeSchema = z.enum([
+  "savings_account",
+  "checking_account",
+  "fiduciary_account",
+]);
 export const referenceStatusSchema = z.enum([
   "fetched",
   "fallback_previous_trading_day",
@@ -166,6 +172,33 @@ export const investmentCashMovementSchema = z.object({
 
 export type InvestmentCashMovementFormValues = z.output<
   typeof investmentCashMovementSchema
+>;
+
+export const investmentSavingsAccountSchema = z.object({
+  country_code: savingsCountrySchema,
+  bank_code: z.string().min(1).max(48),
+  bank_name: z.string().min(1).max(140),
+  product_type: savingsProductTypeSchema,
+  product_name: z.string().min(1).max(140),
+  account_name: z.string().min(1).max(140),
+  currency: z.string().min(3).max(3),
+});
+
+export type InvestmentSavingsAccountFormValues = z.output<
+  typeof investmentSavingsAccountSchema
+>;
+
+export const investmentSavingsTransferSchema = z.object({
+  savings_account_id: z.string().uuid("Please select a savings account"),
+  transfer_date: isoDate,
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  currency: z.string().min(3).max(3),
+  notes: z.string().max(255).optional(),
+  source_kind: z.enum(["manual", "expense_flow"]).default("manual"),
+});
+
+export type InvestmentSavingsTransferFormValues = z.output<
+  typeof investmentSavingsTransferSchema
 >;
 
 export const investmentWatchlistSchema = z.object({

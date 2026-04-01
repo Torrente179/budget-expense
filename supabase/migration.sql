@@ -265,6 +265,58 @@ CREATE TABLE public.market_price_history (
 CREATE INDEX idx_market_price_history_lookup
     ON public.market_price_history(provider, provider_symbol, quote_date DESC);
 
+-- 14. Investment savings accounts
+CREATE TABLE public.investment_savings_accounts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    country_code TEXT NOT NULL CHECK (country_code IN ('CO', 'ES')),
+    bank_code TEXT NOT NULL CHECK (
+        char_length(btrim(bank_code)) > 0
+        AND char_length(btrim(bank_code)) <= 48
+    ),
+    bank_name TEXT NOT NULL CHECK (
+        char_length(btrim(bank_name)) > 0
+        AND char_length(btrim(bank_name)) <= 140
+    ),
+    product_type TEXT NOT NULL CHECK (
+        product_type IN ('savings_account', 'checking_account', 'fiduciary_account')
+    ),
+    product_name TEXT NOT NULL CHECK (
+        char_length(btrim(product_name)) > 0
+        AND char_length(btrim(product_name)) <= 140
+    ),
+    account_name TEXT NOT NULL CHECK (
+        char_length(btrim(account_name)) > 0
+        AND char_length(btrim(account_name)) <= 140
+    ),
+    currency TEXT NOT NULL CHECK (char_length(currency) = 3),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_investment_savings_accounts_user_id
+    ON public.investment_savings_accounts(user_id, created_at DESC);
+
+-- 15. Investment savings transfers
+CREATE TABLE public.investment_savings_transfers (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    savings_account_id UUID NOT NULL REFERENCES public.investment_savings_accounts(id) ON DELETE CASCADE,
+    transfer_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    amount DECIMAL(18, 8) NOT NULL CHECK (amount > 0),
+    currency TEXT NOT NULL CHECK (char_length(currency) = 3),
+    notes TEXT,
+    source_kind TEXT NOT NULL DEFAULT 'manual'
+        CHECK (source_kind IN ('manual', 'expense_flow')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX idx_investment_savings_transfers_user_date
+    ON public.investment_savings_transfers(user_id, transfer_date DESC, created_at DESC);
+CREATE INDEX idx_investment_savings_transfers_account
+    ON public.investment_savings_transfers(user_id, savings_account_id, transfer_date DESC);
+
 -- 6. Seed default categories
 INSERT INTO public.categories (user_id, name, icon, color, is_default) VALUES
     (NULL, 'Food & Dining',    'utensils',       '#ef4444', true),
@@ -329,6 +381,14 @@ CREATE TRIGGER set_updated_at_investment_cash_movements
     BEFORE UPDATE ON public.investment_cash_movements
     FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
 
+CREATE TRIGGER set_updated_at_investment_savings_accounts
+    BEFORE UPDATE ON public.investment_savings_accounts
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
+CREATE TRIGGER set_updated_at_investment_savings_transfers
+    BEFORE UPDATE ON public.investment_savings_transfers
+    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();
+
 -- 8. Monthly expense summary view
 CREATE OR REPLACE VIEW public.monthly_expense_summary AS
 SELECT
@@ -364,6 +424,8 @@ ALTER TABLE public.investment_trades ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.investment_cash_movements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.investment_watchlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.market_price_history ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investment_savings_accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.investment_savings_transfers ENABLE ROW LEVEL SECURITY;
 
 -- Profiles
 CREATE POLICY "Users can view own profile"
@@ -484,6 +546,26 @@ CREATE POLICY "Users can update own investment watchlist"
     ON public.investment_watchlist FOR UPDATE USING (user_id = auth.uid());
 CREATE POLICY "Users can delete own investment watchlist"
     ON public.investment_watchlist FOR DELETE USING (user_id = auth.uid());
+
+-- Investment savings accounts
+CREATE POLICY "Users can view own investment savings accounts"
+    ON public.investment_savings_accounts FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own investment savings accounts"
+    ON public.investment_savings_accounts FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own investment savings accounts"
+    ON public.investment_savings_accounts FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own investment savings accounts"
+    ON public.investment_savings_accounts FOR DELETE USING (user_id = auth.uid());
+
+-- Investment savings transfers
+CREATE POLICY "Users can view own investment savings transfers"
+    ON public.investment_savings_transfers FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own investment savings transfers"
+    ON public.investment_savings_transfers FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can update own investment savings transfers"
+    ON public.investment_savings_transfers FOR UPDATE USING (user_id = auth.uid());
+CREATE POLICY "Users can delete own investment savings transfers"
+    ON public.investment_savings_transfers FOR DELETE USING (user_id = auth.uid());
 
 -- Market price history
 CREATE POLICY "Authenticated users can view market price history"

@@ -1,9 +1,10 @@
 "use client";
 
-import { useDeferredValue, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { Search, Trash2, Wallet } from "lucide-react";
 import { useCurrency } from "@/providers/currency-provider";
 import { useInvestments } from "@/hooks/use-investments";
+import { buildSavingsAccountLabel } from "@/lib/investments";
 import { formatCurrency } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { InvestmentOverviewCards } from "@/components/investments/investment-overview-cards";
@@ -13,6 +14,9 @@ import { TradeForm } from "@/components/investments/trade-form";
 import { TradeTable } from "@/components/investments/trade-table";
 import { CashMovementForm } from "@/components/investments/cash-movement-form";
 import { CashMovementTable } from "@/components/investments/cash-movement-table";
+import { SavingsAccountForm } from "@/components/investments/savings-account-form";
+import { SavingsTransferForm } from "@/components/investments/savings-transfer-form";
+import { SavingsTransferTable } from "@/components/investments/savings-transfer-table";
 import { WatchlistForm } from "@/components/investments/watchlist-form";
 import { WatchlistGrid } from "@/components/investments/watchlist-grid";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -34,11 +38,15 @@ export default function InvestmentsPage() {
   const [brokerFilter, setBrokerFilter] = useState("all");
   const [sideFilter, setSideFilter] = useState("all");
   const deferredSearch = useDeferredValue(search);
-  const { baseCurrency } = useCurrency();
+  const { baseCurrency, rates } = useCurrency();
   const {
     accounts,
     trades,
     cashMovements,
+    savingsAccounts,
+    savingsTransfers,
+    savingsAccountSummaries,
+    totalSavingsBalance,
     watchlist,
     latestQuotes,
     overview,
@@ -54,9 +62,57 @@ export default function InvestmentsPage() {
     addCashMovement,
     updateCashMovement,
     deleteCashMovement,
+    addSavingsAccount,
+    updateSavingsAccount,
+    deleteSavingsAccount,
+    addSavingsTransfer,
+    updateSavingsTransfer,
+    deleteSavingsTransfer,
     addWatchlistItem,
     deleteWatchlistItem,
   } = useInvestments();
+
+  const convertBetween = useMemo(
+    () =>
+      (amount: number, fromCurrency: string, toCurrency: string) => {
+        if (fromCurrency === toCurrency) {
+          return amount;
+        }
+
+        const fromRate = rates[fromCurrency];
+        const toRate = rates[toCurrency];
+        if (!fromRate || !toRate) {
+          return amount;
+        }
+
+        return (amount / fromRate) * toRate;
+      },
+    [rates]
+  );
+
+  const savingsTotalsByCurrency = useMemo(
+    () =>
+      ["USD", "EUR", "COP"].map((currency) => {
+        const stocksValue = convertBetween(
+          overview.totalMarketValue,
+          baseCurrency,
+          currency
+        );
+        const savingsValue = savingsTransfers.reduce(
+          (sum, transfer) =>
+            sum + convertBetween(Number(transfer.amount), transfer.currency, currency),
+          0
+        );
+
+        return {
+          currency,
+          total: stocksValue + savingsValue,
+          stocksValue,
+          savingsValue,
+        };
+      }),
+    [baseCurrency, convertBetween, overview.totalMarketValue, savingsTransfers]
+  );
   const brokerChoices = Array.from(
     new Set([
       ...accounts.map((account) => account.broker_kind),
@@ -101,6 +157,21 @@ export default function InvestmentsPage() {
     }
 
     await deleteBrokerageAccount(id);
+  }
+
+  async function handleDeleteSavingsAccount(id: string) {
+    if (
+      !window.confirm(
+        t(
+          "Delete this savings account and all linked transfers?",
+          "¿Eliminar esta cuenta de ahorro y todas las transferencias vinculadas?"
+        )
+      )
+    ) {
+      return;
+    }
+
+    await deleteSavingsAccount(id);
   }
 
   return (
@@ -158,6 +229,7 @@ export default function InvestmentsPage() {
           <TabsTrigger value="overview">{t("Overview", "Resumen")}</TabsTrigger>
           <TabsTrigger value="orders">{t("Orders", "Órdenes")}</TabsTrigger>
           <TabsTrigger value="cash">{t("Cash", "Caja")}</TabsTrigger>
+          <TabsTrigger value="savings">{t("Savings", "Ahorros")}</TabsTrigger>
           <TabsTrigger value="watchlist">
             {t("Watchlist", "Seguimiento")}
           </TabsTrigger>
@@ -170,6 +242,76 @@ export default function InvestmentsPage() {
             totalRealizedPnl={overview.totalRealizedPnl}
             openPositionsCount={overview.openPositionsCount}
           />
+
+          <Card className="border-border/80 bg-card/96">
+            <CardHeader className="border-b border-border/70">
+              <CardTitle>
+                {t("Total investment net worth", "Patrimonio total de inversiones")}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-4">
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    {t("Stocks", "Stocks")}
+                  </p>
+                  <p className="mt-3 font-heading text-[1.55rem] font-semibold leading-none tracking-[-0.04em]">
+                    {formatCurrency(overview.totalMarketValue, baseCurrency)}
+                  </p>
+                </div>
+                <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    {t("Savings accounts", "Cuentas de ahorro")}
+                  </p>
+                  <p className="mt-3 font-heading text-[1.55rem] font-semibold leading-none tracking-[-0.04em]">
+                    {formatCurrency(totalSavingsBalance, baseCurrency)}
+                  </p>
+                </div>
+                <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    {t("Total in base", "Total en base")}
+                  </p>
+                  <p className="mt-3 font-heading text-[1.55rem] font-semibold leading-none tracking-[-0.04em]">
+                    {formatCurrency(
+                      overview.totalMarketValue + totalSavingsBalance,
+                      baseCurrency
+                    )}
+                  </p>
+                </div>
+                <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    {t("Savings accounts", "Cuentas")}
+                  </p>
+                  <p className="mt-3 font-heading text-[1.55rem] font-semibold leading-none tracking-[-0.04em]">
+                    {savingsAccounts.length}
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid gap-3 md:grid-cols-3">
+                {savingsTotalsByCurrency.map((item) => (
+                  <div
+                    key={item.currency}
+                    className="rounded-[1.2rem] border border-border/70 bg-secondary/25 p-4"
+                  >
+                    <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                      {t("Total at today's rate", "Total a tasa del día")} ·{" "}
+                      {item.currency}
+                    </p>
+                    <p className="mt-3 font-heading text-[1.45rem] font-semibold leading-none tracking-[-0.04em]">
+                      {formatCurrency(item.total, item.currency)}
+                    </p>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {t(
+                        `Stocks ${formatCurrency(item.stocksValue, item.currency)} + savings ${formatCurrency(item.savingsValue, item.currency)}`,
+                        `Stocks ${formatCurrency(item.stocksValue, item.currency)} + ahorros ${formatCurrency(item.savingsValue, item.currency)}`
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
           <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_380px]">
             <HoldingsTable holdings={overview.holdings} />
@@ -430,6 +572,134 @@ export default function InvestmentsPage() {
             onUpdate={updateCashMovement}
             onDelete={deleteCashMovement}
           />
+        </TabsContent>
+
+        <TabsContent value="savings" className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
+            <Card className="border-border/80 bg-card/96">
+              <CardContent className="grid gap-3 p-5 sm:grid-cols-3">
+                <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    {t("Savings balance", "Saldo de ahorros")}
+                  </p>
+                  <p className="mt-3 font-heading text-[1.6rem] font-semibold leading-none tracking-[-0.04em]">
+                    {formatCurrency(totalSavingsBalance, baseCurrency)}
+                  </p>
+                </div>
+                <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    {t("Accounts configured", "Cuentas configuradas")}
+                  </p>
+                  <p className="mt-3 font-heading text-[1.6rem] font-semibold leading-none tracking-[-0.04em]">
+                    {savingsAccounts.length}
+                  </p>
+                </div>
+                <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                    {t("Movements", "Movimientos")}
+                  </p>
+                  <p className="mt-3 font-heading text-[1.6rem] font-semibold leading-none tracking-[-0.04em]">
+                    {savingsTransfers.length}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <SavingsAccountForm onSubmit={addSavingsAccount} />
+              <SavingsTransferForm
+                accounts={savingsAccounts}
+                onSubmit={addSavingsTransfer}
+              />
+            </div>
+          </div>
+
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_420px]">
+            <SavingsTransferTable
+              transfers={savingsTransfers}
+              accounts={savingsAccounts}
+              loading={loading}
+              onUpdate={updateSavingsTransfer}
+              onDelete={deleteSavingsTransfer}
+            />
+
+            <Card className="border-border/80 bg-card/96">
+              <CardHeader className="border-b border-border/70">
+                <CardTitle>
+                  {t("Savings accounts", "Cuentas de ahorro")}
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 pt-4">
+                {savingsAccountSummaries.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    {t(
+                      "Add your first savings account in Colombia or Spain and start tracking transfers.",
+                      "Agrega tu primera cuenta de ahorro en Colombia o España y comienza a rastrear transferencias."
+                    )}
+                  </p>
+                ) : (
+                  savingsAccountSummaries.map((account) => (
+                    <div
+                      key={account.id}
+                      className="rounded-[1.25rem] border border-border/70 bg-secondary/25 p-4"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="font-medium text-foreground">
+                            {buildSavingsAccountLabel({
+                              bankName: account.bank_name,
+                              productName: account.product_name,
+                              accountName: account.account_name,
+                            })}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            {account.country_code} · {account.currency}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <SavingsAccountForm
+                            defaultValues={{
+                              country_code: account.country_code as "CO" | "ES",
+                              bank_code: account.bank_code,
+                              bank_name: account.bank_name,
+                              product_type: account.product_type as
+                                | "savings_account"
+                                | "checking_account"
+                                | "fiduciary_account",
+                              product_name: account.product_name,
+                              account_name: account.account_name,
+                              currency: account.currency,
+                            }}
+                            onSubmit={(values) =>
+                              updateSavingsAccount(account.id, values)
+                            }
+                            trigger={
+                              <Button variant="ghost" size="sm">
+                                {t("Edit", "Editar")}
+                              </Button>
+                            }
+                          />
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                            onClick={() =>
+                              void handleDeleteSavingsAccount(account.id)
+                            }
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </div>
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        {t("Tracked balance", "Saldo rastreado")}:{" "}
+                        {formatCurrency(account.balance, baseCurrency)}
+                      </p>
+                    </div>
+                  ))
+                )}
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="watchlist" className="space-y-5">

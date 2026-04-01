@@ -11,7 +11,7 @@ import { useLocale } from "@/providers/locale-provider";
 
 export function InvestmentDashboardSnapshot() {
   const { baseCurrency } = useCurrency();
-  const { overview, loading, quoteLoading } = useInvestments();
+  const { overview, totalSavingsBalance, loading, quoteLoading } = useInvestments();
   const { t } = useLocale();
 
   return (
@@ -72,6 +72,14 @@ export function InvestmentDashboardSnapshot() {
                   {overview.openPositionsCount}
                 </p>
               </div>
+              <div className="rounded-[1.25rem] border border-border/70 bg-secondary/35 p-4">
+                <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                  {t("Savings accounts", "Cuentas de ahorro")}
+                </p>
+                <p className="mt-3 font-heading text-[1.75rem] font-semibold leading-none tracking-[-0.04em]">
+                  {formatCurrency(totalSavingsBalance, baseCurrency)}
+                </p>
+              </div>
             </div>
 
             <p className="text-sm leading-6 text-muted-foreground">
@@ -81,8 +89,8 @@ export function InvestmentDashboardSnapshot() {
                     "Actualizando en segundo plano los últimos precios diarios."
                   )
                 : t(
-                    "Investments stay separate from the budget pool and expense totals.",
-                    "Las inversiones se mantienen separadas del fondo de presupuesto y del total de gastos."
+                    "Stocks and savings balances stay separate from category spending totals.",
+                    "Los saldos de stocks y ahorros se mantienen separados de los gastos por categoría."
                   )}
             </p>
 

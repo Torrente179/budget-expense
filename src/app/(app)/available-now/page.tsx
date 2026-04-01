@@ -7,7 +7,6 @@ import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import {
   ArrowDownLeft,
   ArrowUpRight,
-  Ellipsis,
   PiggyBank,
   Receipt,
   TrendingUp,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
+import { useInvestmentSavings } from "@/hooks/use-investment-savings";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { cn, formatCurrency, formatDate, getCurrentMonth, getCurrentYear } from "@/lib/utils";
@@ -25,10 +25,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ExpenseForm } from "@/components/expenses/expense-form";
 import { IncomeForm } from "@/components/incomes/income-form";
+import { SavingsTransferForm } from "@/components/investments/savings-transfer-form";
 
 type ActivityItem = {
   id: string;
-  type: "income" | "expense";
+  type: "income" | "expense" | "investment_transfer";
   title: string;
   subtitle: string;
   amount: number;
@@ -43,6 +44,8 @@ export default function AvailableNowPage() {
 
   const { expenses, addExpense } = useExpenses({ month, year });
   const { incomes, addIncome } = useIncomes({ month, year });
+  const { savingsAccounts, savingsTransfers, addSavingsTransfer } =
+    useInvestmentSavings({ month, year });
 
   const totalSpent = useMemo(
     () => expenses.reduce((sum, expense) => sum + convert(expense.amount, expense.currency), 0),
@@ -53,8 +56,17 @@ export default function AvailableNowPage() {
     () => incomes.reduce((sum, income) => sum + convert(income.amount, income.currency), 0),
     [convert, incomes]
   );
+  const totalTransferredToInvestments = useMemo(
+    () =>
+      savingsTransfers.reduce(
+        (sum, transfer) => sum + convert(Number(transfer.amount), transfer.currency),
+        0
+      ),
+    [convert, savingsTransfers]
+  );
+  const totalOutflows = totalSpent + totalTransferredToInvestments;
 
-  const availableTotal = totalIncome - totalSpent;
+  const availableTotal = totalIncome - totalSpent - totalTransferredToInvestments;
 
   const activity = useMemo<ActivityItem[]>(() => {
     const expenseItems: ActivityItem[] = expenses.map((expense) => ({
@@ -64,6 +76,14 @@ export default function AvailableNowPage() {
       subtitle: expense.categories.name,
       amount: -convert(expense.amount, expense.currency),
       date: expense.date,
+    }));
+    const transferItems: ActivityItem[] = savingsTransfers.map((transfer) => ({
+      id: transfer.id,
+      type: "investment_transfer",
+      title: t("Investment transfer", "Transferencia de inversion"),
+      subtitle: `${transfer.investment_savings_accounts.bank_name} - ${transfer.investment_savings_accounts.account_name}`,
+      amount: -convert(Number(transfer.amount), transfer.currency),
+      date: transfer.transfer_date,
     }));
 
     const incomeItems: ActivityItem[] = incomes.map((income) => ({
@@ -75,10 +95,10 @@ export default function AvailableNowPage() {
       date: income.date,
     }));
 
-    return [...incomeItems, ...expenseItems]
+    return [...incomeItems, ...expenseItems, ...transferItems]
       .sort((left, right) => right.date.localeCompare(left.date))
       .slice(0, 8);
-  }, [convert, expenses, incomes, t]);
+  }, [convert, expenses, incomes, savingsTransfers, t]);
 
   const chartData = useMemo(() => {
     const netByDate = new Map<string, number>();
@@ -91,6 +111,13 @@ export default function AvailableNowPage() {
     expenses.forEach((expense) => {
       const converted = convert(expense.amount, expense.currency);
       netByDate.set(expense.date, (netByDate.get(expense.date) ?? 0) - converted);
+    });
+    savingsTransfers.forEach((transfer) => {
+      const converted = convert(Number(transfer.amount), transfer.currency);
+      netByDate.set(
+        transfer.transfer_date,
+        (netByDate.get(transfer.transfer_date) ?? 0) - converted
+      );
     });
 
     const now = new Date();
@@ -119,7 +146,7 @@ export default function AvailableNowPage() {
       },
       []
     );
-  }, [convert, expenses, incomes, month, year]);
+  }, [convert, expenses, incomes, month, savingsTransfers, year]);
 
   const chartSeries = useMemo(() => {
     if (chartData.length === 0) return [];
@@ -164,8 +191,8 @@ export default function AvailableNowPage() {
     },
     {
       id: "expense",
-      label: t("Expenses", "Gastos"),
-      value: formatCurrency(totalSpent, baseCurrency),
+      label: t("Outflows", "Salidas"),
+      value: formatCurrency(totalOutflows, baseCurrency),
       icon: Receipt,
       tone: "text-destructive",
     },
@@ -183,8 +210,8 @@ export default function AvailableNowPage() {
       <PageHeader
         title={t("Total", "Total")}
         description={t(
-          "Income and expenses merged into a single available total.",
-          "Ingresos y gastos combinados en un solo total disponible."
+          "Income minus expenses and investment transfers.",
+          "Ingresos menos gastos y transferencias de inversion."
         )}
       >
         <MonthPicker
@@ -261,14 +288,24 @@ export default function AvailableNowPage() {
                   {t("Budget", "Presupuesto")}
                 </span>
               </Link>
-              <Link href="/dashboard" className="flex flex-col items-center gap-2 rounded-[1rem] border border-border/70 bg-secondary/45 px-2 py-2.5 text-center">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-card ring-1 ring-border/70">
-                  <Ellipsis className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <span className="text-[0.66rem] font-medium tracking-tight text-muted-foreground">
-                  {t("More", "Más")}
-                </span>
-              </Link>
+              <SavingsTransferForm
+                accounts={savingsAccounts}
+                onSubmit={addSavingsTransfer}
+                sourceKind="expense_flow"
+                trigger={
+                  <Button
+                    variant="ghost"
+                    className="h-auto flex-col gap-2 rounded-[1rem] border border-border/70 bg-secondary/45 px-2 py-2.5"
+                  >
+                    <span className="flex h-9 w-9 items-center justify-center rounded-full bg-card ring-1 ring-border/70">
+                      <ArrowDownLeft className="h-4 w-4 text-muted-foreground" />
+                    </span>
+                    <span className="text-[0.66rem] font-medium tracking-tight text-muted-foreground">
+                      {t("Invest", "Invertir")}
+                    </span>
+                  </Button>
+                }
+              />
             </div>
 
             <div className="rounded-[1.1rem] border border-border/65 bg-secondary/25 p-1.5">

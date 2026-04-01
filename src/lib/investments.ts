@@ -14,6 +14,120 @@ export const POPULAR_BROKERS = [
   "Alpaca",
 ] as const;
 export const CUSTOM_BROKER_VALUE = "__custom_broker__";
+export const SAVINGS_COUNTRY_CODES = ["CO", "ES"] as const;
+export const SAVINGS_PRODUCT_TYPES = [
+  "savings_account",
+  "checking_account",
+  "fiduciary_account",
+] as const;
+
+export const SAVINGS_BANK_CATALOG = {
+  CO: [
+    {
+      bankCode: "bancolombia",
+      bankName: "Bancolombia",
+      products: [
+        {
+          productType: "savings_account",
+          productName: "Cuenta de ahorro",
+          defaultCurrency: "COP",
+        },
+        {
+          productType: "checking_account",
+          productName: "Cuenta corriente",
+          defaultCurrency: "COP",
+        },
+        {
+          productType: "fiduciary_account",
+          productName: "Fiducuenta",
+          defaultCurrency: "COP",
+        },
+      ],
+    },
+    {
+      bankCode: "davivienda",
+      bankName: "Davivienda",
+      products: [
+        {
+          productType: "savings_account",
+          productName: "Cuenta de ahorro",
+          defaultCurrency: "COP",
+        },
+        {
+          productType: "checking_account",
+          productName: "Cuenta corriente",
+          defaultCurrency: "COP",
+        },
+      ],
+    },
+    {
+      bankCode: "banco_de_bogota",
+      bankName: "Banco de Bogota",
+      products: [
+        {
+          productType: "savings_account",
+          productName: "Cuenta de ahorro",
+          defaultCurrency: "COP",
+        },
+        {
+          productType: "checking_account",
+          productName: "Cuenta corriente",
+          defaultCurrency: "COP",
+        },
+      ],
+    },
+  ],
+  ES: [
+    {
+      bankCode: "santander",
+      bankName: "Santander",
+      products: [
+        {
+          productType: "savings_account",
+          productName: "Cuenta de ahorro",
+          defaultCurrency: "EUR",
+        },
+        {
+          productType: "checking_account",
+          productName: "Cuenta corriente",
+          defaultCurrency: "EUR",
+        },
+      ],
+    },
+    {
+      bankCode: "bbva",
+      bankName: "BBVA",
+      products: [
+        {
+          productType: "savings_account",
+          productName: "Cuenta de ahorro",
+          defaultCurrency: "EUR",
+        },
+        {
+          productType: "checking_account",
+          productName: "Cuenta corriente",
+          defaultCurrency: "EUR",
+        },
+      ],
+    },
+    {
+      bankCode: "caixabank",
+      bankName: "CaixaBank",
+      products: [
+        {
+          productType: "savings_account",
+          productName: "Cuenta de ahorro",
+          defaultCurrency: "EUR",
+        },
+        {
+          productType: "checking_account",
+          productName: "Cuenta corriente",
+          defaultCurrency: "EUR",
+        },
+      ],
+    },
+  ],
+} as const;
 export const FEE_MODES = [
   "manual",
   "percent",
@@ -32,6 +146,8 @@ export const REFERENCE_STATUSES = [
 ] as const;
 
 export type BrokerKind = string;
+export type SavingsCountryCode = (typeof SAVINGS_COUNTRY_CODES)[number];
+export type SavingsProductType = (typeof SAVINGS_PRODUCT_TYPES)[number];
 export type FeeMode = (typeof FEE_MODES)[number];
 export type AssetType = (typeof ASSET_TYPES)[number];
 export type MarketCode = (typeof MARKET_CODES)[number];
@@ -49,6 +165,10 @@ export type InvestmentCashMovementRow =
   Database["public"]["Tables"]["investment_cash_movements"]["Row"];
 export type InvestmentWatchlistRow =
   Database["public"]["Tables"]["investment_watchlist"]["Row"];
+export type InvestmentSavingsAccountRow =
+  Database["public"]["Tables"]["investment_savings_accounts"]["Row"];
+export type InvestmentSavingsTransferRow =
+  Database["public"]["Tables"]["investment_savings_transfers"]["Row"];
 
 export type InvestmentTradeWithJoins = InvestmentTradeRow & {
   brokerage_accounts: BrokerageAccountRow;
@@ -62,6 +182,16 @@ export type InvestmentCashMovementWithJoins = InvestmentCashMovementRow & {
 export type InvestmentWatchlistWithJoins = InvestmentWatchlistRow & {
   investment_assets: InvestmentAssetRow;
 };
+
+export type InvestmentSavingsTransferWithJoins = InvestmentSavingsTransferRow & {
+  investment_savings_accounts: InvestmentSavingsAccountRow;
+};
+
+export type SavingsBankCatalogEntry =
+  (typeof SAVINGS_BANK_CATALOG)["CO"][number] |
+  (typeof SAVINGS_BANK_CATALOG)["ES"][number];
+
+export type SavingsProductCatalogEntry = SavingsBankCatalogEntry["products"][number];
 
 export interface MarketPriceResponse {
   symbol: string;
@@ -153,6 +283,42 @@ function cleanNullable(value?: string | null) {
 
 export function normalizeBrokerName(value: string) {
   return value.trim().replace(/\s+/g, " ");
+}
+
+export function getSavingsBanks(countryCode: SavingsCountryCode) {
+  return [...SAVINGS_BANK_CATALOG[countryCode]].sort((left, right) =>
+    left.bankName.localeCompare(right.bankName)
+  );
+}
+
+export function findSavingsBank(
+  countryCode: SavingsCountryCode,
+  bankCode: string
+) {
+  return SAVINGS_BANK_CATALOG[countryCode].find((bank) => bank.bankCode === bankCode);
+}
+
+export function getSavingsProducts(
+  countryCode: SavingsCountryCode,
+  bankCode: string
+) {
+  const bank = findSavingsBank(countryCode, bankCode);
+  if (!bank) return [];
+
+  return [...bank.products];
+}
+
+export function buildSavingsAccountLabel(input: {
+  bankName: string;
+  productName: string;
+  accountName: string;
+}) {
+  const accountName = input.accountName.trim();
+  if (accountName.length === 0) {
+    return `${input.bankName} - ${input.productName}`;
+  }
+
+  return `${input.bankName} - ${input.productName} (${accountName})`;
 }
 
 export function buildBrokerChoices(

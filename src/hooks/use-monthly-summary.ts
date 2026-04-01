@@ -11,6 +11,7 @@ import { useCurrency } from "@/providers/currency-provider";
 interface MonthlySummary {
   totalSpent: number;
   totalIncome: number;
+  totalInvestmentTransfers: number;
   availableBalance: number;
   totalBudget: number;
   assignedCategoryBudgetTotal: number;
@@ -38,6 +39,7 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
   const [summary, setSummary] = useState<MonthlySummary>({
     totalSpent: 0,
     totalIncome: 0,
+    totalInvestmentTransfers: 0,
     availableBalance: 0,
     totalBudget: 0,
     assignedCategoryBudgetTotal: 0,
@@ -86,6 +88,8 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
       { data: budgets },
       { data: monthlyPlan },
       { data: prevExpenses },
+      { data: investmentTransfers },
+      { data: prevInvestmentTransfers },
     ] =
       await Promise.all([
         supabase
@@ -116,6 +120,16 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
           .select("amount, currency")
           .gte("date", previousStartDate)
           .lt("date", startDate),
+        supabase
+          .from("investment_savings_transfers")
+          .select("amount, currency, transfer_date")
+          .gte("transfer_date", startDate)
+          .lt("transfer_date", endDate),
+        supabase
+          .from("investment_savings_transfers")
+          .select("amount, currency")
+          .gte("transfer_date", previousStartDate)
+          .lt("transfer_date", startDate),
       ]);
 
     const totalSpent =
@@ -126,6 +140,12 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     const totalIncome =
       incomes?.reduce(
         (sum, income) => sum + convert(Number(income.amount), income.currency),
+        0
+      ) ?? 0;
+    const totalInvestmentTransfers =
+      investmentTransfers?.reduce(
+        (sum, transfer) =>
+          sum + convert(Number(transfer.amount), transfer.currency),
         0
       ) ?? 0;
     const assignedCategoryBudgetTotal =
@@ -139,12 +159,16 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     const totalBudget = monthlyPlan
       ? incomeAmount! * (Number(monthlyPlan.allocation_percent) / 100)
       : assignedCategoryBudgetTotal;
-    const availableBalance = totalIncome - totalSpent;
+    const availableBalance = totalIncome - totalSpent - totalInvestmentTransfers;
     const previousMonthTotal =
-      prevExpenses?.reduce(
+      (prevExpenses?.reduce(
         (sum, expense) => sum + convert(Number(expense.amount), expense.currency),
         0
-      ) ?? 0;
+      ) ?? 0) +
+      (prevInvestmentTransfers?.reduce(
+        (sum, transfer) => sum + convert(Number(transfer.amount), transfer.currency),
+        0
+      ) ?? 0);
 
     const categoryMap = new Map<string, MonthlySummary["categoryBreakdown"][0]>();
     expenses?.forEach((expense) => {
@@ -180,6 +204,13 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
         existing + convert(Number(expense.amount), expense.currency)
       );
     });
+    investmentTransfers?.forEach((transfer) => {
+      const existing = dailyMap.get(transfer.transfer_date) ?? 0;
+      dailyMap.set(
+        transfer.transfer_date,
+        existing + convert(Number(transfer.amount), transfer.currency)
+      );
+    });
     const dailySpending = Array.from(dailyMap.entries())
       .map(([date, amount]) => ({ date, amount }))
       .sort((a, b) => a.date.localeCompare(b.date));
@@ -187,6 +218,7 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     setSummary({
       totalSpent,
       totalIncome,
+      totalInvestmentTransfers,
       availableBalance,
       totalBudget,
       assignedCategoryBudgetTotal,
@@ -194,7 +226,7 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
         ? Number(monthlyPlan.allocation_percent)
         : null,
       incomeAmount,
-      expenseCount: expenses?.length ?? 0,
+      expenseCount: (expenses?.length ?? 0) + (investmentTransfers?.length ?? 0),
       categoryBreakdown: Array.from(categoryMap.values()).sort(
         (a, b) => b.total_amount - a.total_amount
       ),

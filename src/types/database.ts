@@ -593,6 +593,95 @@ export interface Database {
         };
         Relationships: [];
       };
+      investment_savings_accounts: {
+        Row: {
+          id: string;
+          user_id: string;
+          country_code: string;
+          bank_code: string;
+          bank_name: string;
+          product_type: string;
+          product_name: string;
+          account_name: string;
+          currency: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          country_code: string;
+          bank_code: string;
+          bank_name: string;
+          product_type: string;
+          product_name: string;
+          account_name: string;
+          currency: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          country_code?: string;
+          bank_code?: string;
+          bank_name?: string;
+          product_type?: string;
+          product_name?: string;
+          account_name?: string;
+          currency?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      investment_savings_transfers: {
+        Row: {
+          id: string;
+          user_id: string;
+          savings_account_id: string;
+          transfer_date: string;
+          amount: number;
+          currency: string;
+          notes: string | null;
+          source_kind: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          savings_account_id: string;
+          transfer_date?: string;
+          amount: number;
+          currency: string;
+          notes?: string | null;
+          source_kind?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          savings_account_id?: string;
+          transfer_date?: string;
+          amount?: number;
+          currency?: string;
+          notes?: string | null;
+          source_kind?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "investment_savings_transfers_savings_account_id_fkey";
+            columns: ["savings_account_id"];
+            isOneToOne: false;
+            referencedRelation: "investment_savings_accounts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: {
       monthly_expense_summary: {
