@@ -49,3 +49,6 @@ Use this template:
 - `2026-04-01-total-income-expense-ledger.md`
 - `2026-04-01-investment-savings-transfers-and-net-worth.md`
 - `2026-04-01-investments-section-pages-split.md`
+- `2026-04-04-fix-mobile-expense-sheet-scroll.md`
+- `2026-04-04-fix-supabase-missing-feature-tables.md`
+- `2026-04-04-rebuild-santander-csv-import.md`
