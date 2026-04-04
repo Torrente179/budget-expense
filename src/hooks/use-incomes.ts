@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database";
 
 type Income = Database["public"]["Tables"]["income_entries"]["Row"];
@@ -14,6 +15,7 @@ interface UseIncomesOptions {
 export function useIncomes({ month, year, search }: UseIncomesOptions) {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   const fetchIncomes = useCallback(async () => {
     setLoading(true);
@@ -28,8 +30,18 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
         params.set("search", trimmedSearch);
       }
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/incomes?${params.toString()}`, {
         cache: "no-store",
+        credentials: "include",
+        headers: session?.access_token
+          ? {
+              Authorization: `Bearer ${session.access_token}`,
+            }
+          : undefined,
       });
 
       if (!response.ok) {
@@ -44,7 +56,7 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
     } finally {
       setLoading(false);
     }
-  }, [month, search, year]);
+  }, [month, search, supabase, year]);
 
   useEffect(() => {
     fetchIncomes();
@@ -57,10 +69,18 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
     date: string;
     description?: string;
   }) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const response = await fetch("/api/incomes", {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {}),
       },
       body: JSON.stringify(income),
     });
@@ -77,10 +97,18 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
     id: string,
     updates: Database["public"]["Tables"]["income_entries"]["Update"]
   ) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const response = await fetch(`/api/incomes/${id}`, {
       method: "PATCH",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {}),
       },
       body: JSON.stringify(updates),
     });
@@ -94,8 +122,18 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
   }
 
   async function deleteIncome(id: string) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const response = await fetch(`/api/incomes/${id}`, {
       method: "DELETE",
+      credentials: "include",
+      headers: session?.access_token
+        ? {
+            Authorization: `Bearer ${session.access_token}`,
+          }
+        : undefined,
     });
 
     if (response.ok) {

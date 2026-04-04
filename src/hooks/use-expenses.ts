@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database";
 
 type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
@@ -17,6 +18,7 @@ interface UseExpensesOptions {
 export function useExpenses({ month, year, categoryId, search }: UseExpensesOptions) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = createClient();
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
@@ -35,8 +37,18 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
         params.set("search", trimmedSearch);
       }
 
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
       const response = await fetch(`/api/expenses?${params.toString()}`, {
         cache: "no-store",
+        credentials: "include",
+        headers: session?.access_token
+          ? {
+              Authorization: `Bearer ${session.access_token}`,
+            }
+          : undefined,
       });
 
       if (!response.ok) {
@@ -51,7 +63,7 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
     } finally {
       setLoading(false);
     }
-  }, [month, year, categoryId, search]);
+  }, [categoryId, month, search, supabase, year]);
 
   useEffect(() => {
     fetchExpenses();
@@ -64,10 +76,18 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
     date: string;
     description?: string;
   }) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const response = await fetch("/api/expenses", {
       method: "POST",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {}),
       },
       body: JSON.stringify(expense),
     });
@@ -84,10 +104,18 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
     id: string,
     updates: Database["public"]["Tables"]["expenses"]["Update"]
   ) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const response = await fetch(`/api/expenses/${id}`, {
       method: "PATCH",
+      credentials: "include",
       headers: {
         "Content-Type": "application/json",
+        ...(session?.access_token
+          ? { Authorization: `Bearer ${session.access_token}` }
+          : {}),
       },
       body: JSON.stringify(updates),
     });
@@ -101,8 +129,18 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
   }
 
   async function deleteExpense(id: string) {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     const response = await fetch(`/api/expenses/${id}`, {
       method: "DELETE",
+      credentials: "include",
+      headers: session?.access_token
+        ? {
+            Authorization: `Bearer ${session.access_token}`,
+          }
+        : undefined,
     });
 
     if (response.ok) {
