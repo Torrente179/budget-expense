@@ -11,7 +11,7 @@ CREATE TEMP TABLE tmp_import_context (user_id UUID NOT NULL);
 
 DO $$
 DECLARE
-  v_uid UUID := NULL;
+  v_uid UUID := '36534d1b-8f48-4b5c-8693-aae1673a222c';
   v_user_email TEXT := NULL;
   v_user_count INTEGER;
   v_resolved_uid UUID;
@@ -74,11 +74,11 @@ BEGIN
     ) AS categories(name, icon, color, is_default)
   LOOP
     INSERT INTO public.categories (id, user_id, name, icon, color, is_default)
-    SELECT gen_random_uuid(), v_resolved_uid, v_name, v_icon, v_color, false
+    SELECT gen_random_uuid(), NULL, v_name, v_icon, v_color, false
     WHERE NOT EXISTS (
       SELECT 1
       FROM public.categories
-      WHERE name = v_name AND user_id = v_resolved_uid
+      WHERE name = v_name AND user_id IS NULL AND is_default = false
     );
   END LOOP;
 END $$;
@@ -91,8 +91,12 @@ SELECT needed.name,
     FROM public.categories
     CROSS JOIN ctx
     WHERE categories.name = needed.name
-      AND (categories.user_id = ctx.user_id OR (categories.user_id IS NULL AND categories.is_default = true))
-    ORDER BY CASE WHEN categories.user_id = ctx.user_id THEN 0 ELSE 1 END
+      AND (categories.user_id = ctx.user_id OR categories.user_id IS NULL)
+    ORDER BY CASE
+      WHEN categories.user_id = ctx.user_id THEN 0
+      WHEN categories.is_default = true THEN 1
+      ELSE 2
+    END
     LIMIT 1
   ) AS category_id
 FROM (VALUES
@@ -915,4 +919,3 @@ UNION ALL
 SELECT 'resolved_user_id', user_id::TEXT FROM tmp_import_context;
 
 COMMIT;
-

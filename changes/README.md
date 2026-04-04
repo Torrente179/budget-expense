@@ -52,3 +52,4 @@ Use this template:
 - `2026-04-04-fix-mobile-expense-sheet-scroll.md`
 - `2026-04-04-fix-supabase-missing-feature-tables.md`
 - `2026-04-04-rebuild-santander-csv-import.md`
+- `2026-04-04-prefill-santander-import-user-id.md`
