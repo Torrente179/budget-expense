@@ -137,9 +137,9 @@ export function ExpenseForm({
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full overflow-hidden border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] data-[side=bottom]:max-h-[90vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-t sm:max-w-[760px] data-[side=right]:sm:max-w-[760px]"
+        className="w-full overflow-hidden border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] data-[side=bottom]:h-[90vh] data-[side=bottom]:max-h-[90vh] data-[side=bottom]:h-[90dvh] data-[side=bottom]:max-h-[90dvh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-t sm:max-w-[760px] data-[side=right]:sm:max-w-[760px]"
       >
-        <form className="flex h-full flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
+        <form className="flex h-full min-h-0 flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
           <SheetHeader className="border-b border-border/70 bg-background/90 px-5 py-5">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-foreground">
@@ -152,7 +152,7 @@ export function ExpenseForm({
             </div>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto px-5 py-5">
+          <div className="min-h-0 flex-1 overflow-y-auto px-5 py-5">
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
               <section className="space-y-5">
                 <div className="rounded-[1.5rem] border border-border/70 bg-card/90 p-4 sm:p-5">
