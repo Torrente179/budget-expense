@@ -1,8 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
 import type { Database } from "@/types/database";
 
 type Income = Database["public"]["Tables"]["income_entries"]["Row"];
@@ -16,42 +14,37 @@ interface UseIncomesOptions {
 export function useIncomes({ month, year, search }: UseIncomesOptions) {
   const [incomes, setIncomes] = useState<Income[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   const fetchIncomes = useCallback(async () => {
     setLoading(true);
     try {
-      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-      const endMonth = month === 12 ? 1 : month + 1;
-      const endYear = month === 12 ? year + 1 : year;
-      const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
-
-      let query = supabase
-        .from("income_entries")
-        .select("*")
-        .gte("date", startDate)
-        .lt("date", endDate)
-        .order("date", { ascending: false });
-
-      if (search) {
-        query = query.or(`source.ilike.%${search}%,description.ilike.%${search}%`);
-      }
-
-      const result = await query;
-      const data = resolveOptionalTableResult(result, {
-        table: "income_entries",
-        context: "Income entries table is unavailable during fetch",
-        fallback: [],
+      const params = new URLSearchParams({
+        month: String(month),
+        year: String(year),
       });
 
-      setIncomes(data as Income[]);
+      const trimmedSearch = search?.trim();
+      if (trimmedSearch) {
+        params.set("search", trimmedSearch);
+      }
+
+      const response = await fetch(`/api/incomes?${params.toString()}`, {
+        cache: "no-store",
+      });
+
+      if (!response.ok) {
+        throw new Error(`Income fetch failed with status ${response.status}`);
+      }
+
+      const result = await response.json();
+      setIncomes((result.incomes ?? []) as Income[]);
     } catch (error) {
       console.error("Failed to fetch incomes", error);
       setIncomes([]);
     } finally {
       setLoading(false);
     }
-  }, [month, search, supabase, year]);
+  }, [month, search, year]);
 
   useEffect(() => {
     fetchIncomes();
@@ -64,41 +57,53 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
     date: string;
     description?: string;
   }) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-
-    const { error } = await supabase.from("income_entries").insert({
-      ...income,
-      user_id: userData.user.id,
+    const response = await fetch("/api/incomes", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(income),
     });
 
-    if (!error) {
+    if (response.ok) {
       await fetchIncomes();
+      return null;
     }
-    return error;
+
+    return new Error(`Income create failed with status ${response.status}`);
   }
 
   async function updateIncome(
     id: string,
     updates: Database["public"]["Tables"]["income_entries"]["Update"]
   ) {
-    const { error } = await supabase
-      .from("income_entries")
-      .update(updates)
-      .eq("id", id);
+    const response = await fetch(`/api/incomes/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updates),
+    });
 
-    if (!error) {
+    if (response.ok) {
       await fetchIncomes();
+      return null;
     }
-    return error;
+
+    return new Error(`Income update failed with status ${response.status}`);
   }
 
   async function deleteIncome(id: string) {
-    const { error } = await supabase.from("income_entries").delete().eq("id", id);
-    if (!error) {
+    const response = await fetch(`/api/incomes/${id}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
       await fetchIncomes();
+      return null;
     }
-    return error;
+
+    return new Error(`Income delete failed with status ${response.status}`);
   }
 
   return {

@@ -53,3 +53,4 @@ Use this template:
 - `2026-04-04-fix-supabase-missing-feature-tables.md`
 - `2026-04-04-rebuild-santander-csv-import.md`
 - `2026-04-04-prefill-santander-import-user-id.md`
+- `2026-04-05-fix-expense-income-server-read-path.md`

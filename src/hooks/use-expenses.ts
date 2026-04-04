@@ -1,11 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import {
-  getMonthDateRange,
-  syncRecurringExpensesForMonth,
-} from "@/lib/recurring-expenses";
 import type { Database } from "@/types/database";
 
 type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
@@ -22,56 +17,41 @@ interface UseExpensesOptions {
 export function useExpenses({ month, year, categoryId, search }: UseExpensesOptions) {
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
     try {
-      const { startDate, endDate } = getMonthDateRange(month, year);
-
-      const { data: userData } = await supabase.auth.getUser();
-      if (userData.user) {
-        try {
-          await syncRecurringExpensesForMonth({
-            supabase,
-            userId: userData.user.id,
-            month,
-            year,
-          });
-        } catch (error) {
-          console.error("Failed to sync recurring expenses before loading expenses", error);
-        }
-      }
-
-      let query = supabase
-        .from("expenses")
-        .select("*, categories(*)")
-        .gte("date", startDate)
-        .lt("date", endDate)
-        .order("date", { ascending: false });
+      const params = new URLSearchParams({
+        month: String(month),
+        year: String(year),
+      });
 
       if (categoryId) {
-        query = query.eq("category_id", categoryId);
+        params.set("categoryId", categoryId);
       }
 
-      if (search) {
-        query = query.ilike("description", `%${search}%`);
+      const trimmedSearch = search?.trim();
+      if (trimmedSearch) {
+        params.set("search", trimmedSearch);
       }
 
-      const { data, error } = await query;
+      const response = await fetch(`/api/expenses?${params.toString()}`, {
+        cache: "no-store",
+      });
 
-      if (error) {
-        throw error;
+      if (!response.ok) {
+        throw new Error(`Expense fetch failed with status ${response.status}`);
       }
 
-      setExpenses((data ?? []) as Expense[]);
+      const result = await response.json();
+      setExpenses((result.expenses ?? []) as Expense[]);
     } catch (error) {
       console.error("Failed to fetch expenses", error);
       setExpenses([]);
     } finally {
       setLoading(false);
     }
-  }, [supabase, month, year, categoryId, search]);
+  }, [month, year, categoryId, search]);
 
   useEffect(() => {
     fetchExpenses();
@@ -84,35 +64,53 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
     date: string;
     description?: string;
   }) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-
-    const { error } = await supabase.from("expenses").insert({
-      ...expense,
-      user_id: userData.user.id,
+    const response = await fetch("/api/expenses", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(expense),
     });
 
-    if (!error) await fetchExpenses();
-    return error;
+    if (response.ok) {
+      await fetchExpenses();
+      return null;
+    }
+
+    return new Error(`Expense create failed with status ${response.status}`);
   }
 
   async function updateExpense(
     id: string,
     updates: Database["public"]["Tables"]["expenses"]["Update"]
   ) {
-    const { error } = await supabase
-      .from("expenses")
-      .update(updates)
-      .eq("id", id);
+    const response = await fetch(`/api/expenses/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updates),
+    });
 
-    if (!error) await fetchExpenses();
-    return error;
+    if (response.ok) {
+      await fetchExpenses();
+      return null;
+    }
+
+    return new Error(`Expense update failed with status ${response.status}`);
   }
 
   async function deleteExpense(id: string) {
-    const { error } = await supabase.from("expenses").delete().eq("id", id);
-    if (!error) await fetchExpenses();
-    return error;
+    const response = await fetch(`/api/expenses/${id}`, {
+      method: "DELETE",
+    });
+
+    if (response.ok) {
+      await fetchExpenses();
+      return null;
+    }
+
+    return new Error(`Expense delete failed with status ${response.status}`);
   }
 
   return { expenses, loading, addExpense, updateExpense, deleteExpense, refetch: fetchExpenses };
