@@ -6,6 +6,7 @@ import {
   getMonthDateRange,
   syncRecurringExpensesForMonth,
 } from "@/lib/recurring-expenses";
+import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
 import { useCurrency } from "@/providers/currency-provider";
 
 interface MonthlySummary {
@@ -56,42 +57,46 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
 
   const fetchSummary = useCallback(async () => {
     setLoading(true);
-    const { startDate, endDate } = getMonthDateRange(month, year);
-    const previousMonth = month === 1 ? 12 : month - 1;
-    const previousYear = month === 1 ? year - 1 : year;
-    const { startDate: previousStartDate } = getMonthDateRange(
-      previousMonth,
-      previousYear
-    );
+    try {
+      const { startDate, endDate } = getMonthDateRange(month, year);
+      const previousMonth = month === 1 ? 12 : month - 1;
+      const previousYear = month === 1 ? year - 1 : year;
+      const { startDate: previousStartDate } = getMonthDateRange(
+        previousMonth,
+        previousYear
+      );
 
-    const { data: userData } = await supabase.auth.getUser();
-    if (userData.user) {
-      await Promise.all([
-        syncRecurringExpensesForMonth({
-          supabase,
-          userId: userData.user.id,
-          month,
-          year,
-        }),
-        syncRecurringExpensesForMonth({
-          supabase,
-          userId: userData.user.id,
-          month: previousMonth,
-          year: previousYear,
-        }),
-      ]);
-    }
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        try {
+          await Promise.all([
+            syncRecurringExpensesForMonth({
+              supabase,
+              userId: userData.user.id,
+              month,
+              year,
+            }),
+            syncRecurringExpensesForMonth({
+              supabase,
+              userId: userData.user.id,
+              month: previousMonth,
+              year: previousYear,
+            }),
+          ]);
+        } catch (error) {
+          console.error("Failed to sync recurring expenses before loading summary", error);
+        }
+      }
 
-    const [
-      { data: expenses },
-      { data: incomes },
-      { data: budgets },
-      { data: monthlyPlan },
-      { data: prevExpenses },
-      { data: investmentTransfers },
-      { data: prevInvestmentTransfers },
-    ] =
-      await Promise.all([
+      const [
+        expensesResult,
+        incomesResult,
+        budgetsResult,
+        monthlyPlanResult,
+        prevExpensesResult,
+        investmentTransfersResult,
+        prevInvestmentTransfersResult,
+      ] = await Promise.all([
         supabase
           .from("expenses")
           .select("amount, currency, date, category_id, categories(*)")
@@ -132,46 +137,91 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
           .lt("transfer_date", startDate),
       ]);
 
-    const totalSpent =
-      expenses?.reduce(
+      if (expensesResult.error) {
+        throw expensesResult.error;
+      }
+
+      if (budgetsResult.error) {
+        throw budgetsResult.error;
+      }
+
+      if (prevExpensesResult.error) {
+        throw prevExpensesResult.error;
+      }
+
+      const expenses = expensesResult.data ?? [];
+      const budgets = budgetsResult.data ?? [];
+      const prevExpenses = prevExpensesResult.data ?? [];
+      const incomes = resolveOptionalTableResult(incomesResult, {
+        table: "income_entries",
+        context: "Income entries table is unavailable during monthly summary fetch",
+        fallback: [],
+      });
+      const monthlyPlan = resolveOptionalTableResult(monthlyPlanResult, {
+        table: "monthly_budget_plans",
+        context: "Monthly budget plans table is unavailable during monthly summary fetch",
+        fallback: null,
+      });
+      const investmentTransfers = resolveOptionalTableResult(
+        investmentTransfersResult,
+        {
+          table: "investment_savings_transfers",
+          context:
+            "Investment savings transfers table is unavailable during monthly summary fetch",
+          fallback: [],
+        }
+      );
+      const prevInvestmentTransfers = resolveOptionalTableResult(
+        prevInvestmentTransfersResult,
+        {
+          table: "investment_savings_transfers",
+          context:
+            "Investment savings transfers table is unavailable during previous-month summary fetch",
+          fallback: [],
+        }
+      );
+
+      const totalSpent =
+        expenses.reduce(
         (sum, expense) => sum + convert(Number(expense.amount), expense.currency),
         0
-      ) ?? 0;
-    const totalIncome =
-      incomes?.reduce(
+        ) ?? 0;
+      const totalIncome =
+        incomes.reduce(
         (sum, income) => sum + convert(Number(income.amount), income.currency),
         0
-      ) ?? 0;
-    const totalInvestmentTransfers =
-      investmentTransfers?.reduce(
+        ) ?? 0;
+      const totalInvestmentTransfers =
+        investmentTransfers.reduce(
         (sum, transfer) =>
           sum + convert(Number(transfer.amount), transfer.currency),
         0
-      ) ?? 0;
-    const assignedCategoryBudgetTotal =
-      budgets?.reduce(
+        ) ?? 0;
+      const assignedCategoryBudgetTotal =
+        budgets.reduce(
         (sum, budget) => sum + convert(Number(budget.amount), budget.currency),
         0
-      ) ?? 0;
-    const incomeAmount = monthlyPlan
-      ? convert(Number(monthlyPlan.income_amount), monthlyPlan.income_currency)
-      : null;
-    const totalBudget = monthlyPlan
-      ? incomeAmount! * (Number(monthlyPlan.allocation_percent) / 100)
-      : assignedCategoryBudgetTotal;
-    const availableBalance = totalIncome - totalSpent - totalInvestmentTransfers;
-    const previousMonthTotal =
-      (prevExpenses?.reduce(
+        ) ?? 0;
+      const incomeAmount = monthlyPlan
+        ? convert(Number(monthlyPlan.income_amount), monthlyPlan.income_currency)
+        : null;
+      const totalBudget = monthlyPlan
+        ? incomeAmount! * (Number(monthlyPlan.allocation_percent) / 100)
+        : assignedCategoryBudgetTotal;
+      const availableBalance =
+        totalIncome - totalSpent - totalInvestmentTransfers;
+      const previousMonthTotal =
+        (prevExpenses.reduce(
         (sum, expense) => sum + convert(Number(expense.amount), expense.currency),
         0
-      ) ?? 0) +
-      (prevInvestmentTransfers?.reduce(
+        ) ?? 0) +
+        (prevInvestmentTransfers.reduce(
         (sum, transfer) => sum + convert(Number(transfer.amount), transfer.currency),
         0
-      ) ?? 0);
+        ) ?? 0);
 
-    const categoryMap = new Map<string, MonthlySummary["categoryBreakdown"][0]>();
-    expenses?.forEach((expense) => {
+      const categoryMap = new Map<string, MonthlySummary["categoryBreakdown"][0]>();
+      expenses.forEach((expense) => {
       const category = expense.categories as {
         id: string;
         name: string;
@@ -194,46 +244,64 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
           expense_count: 1,
         });
       }
-    });
+      });
 
-    const dailyMap = new Map<string, number>();
-    expenses?.forEach((expense) => {
+      const dailyMap = new Map<string, number>();
+      expenses.forEach((expense) => {
       const existing = dailyMap.get(expense.date) ?? 0;
       dailyMap.set(
         expense.date,
         existing + convert(Number(expense.amount), expense.currency)
       );
-    });
-    investmentTransfers?.forEach((transfer) => {
+      });
+      investmentTransfers.forEach((transfer) => {
       const existing = dailyMap.get(transfer.transfer_date) ?? 0;
       dailyMap.set(
         transfer.transfer_date,
         existing + convert(Number(transfer.amount), transfer.currency)
       );
-    });
-    const dailySpending = Array.from(dailyMap.entries())
-      .map(([date, amount]) => ({ date, amount }))
-      .sort((a, b) => a.date.localeCompare(b.date));
+      });
+      const dailySpending = Array.from(dailyMap.entries())
+        .map(([date, amount]) => ({ date, amount }))
+        .sort((a, b) => a.date.localeCompare(b.date));
 
-    setSummary({
-      totalSpent,
-      totalIncome,
-      totalInvestmentTransfers,
-      availableBalance,
-      totalBudget,
-      assignedCategoryBudgetTotal,
-      allocationPercent: monthlyPlan
-        ? Number(monthlyPlan.allocation_percent)
-        : null,
-      incomeAmount,
-      expenseCount: (expenses?.length ?? 0) + (investmentTransfers?.length ?? 0),
-      categoryBreakdown: Array.from(categoryMap.values()).sort(
-        (a, b) => b.total_amount - a.total_amount
-      ),
-      dailySpending,
-      previousMonthTotal,
-    });
-    setLoading(false);
+      setSummary({
+        totalSpent,
+        totalIncome,
+        totalInvestmentTransfers,
+        availableBalance,
+        totalBudget,
+        assignedCategoryBudgetTotal,
+        allocationPercent: monthlyPlan
+          ? Number(monthlyPlan.allocation_percent)
+          : null,
+        incomeAmount,
+        expenseCount: expenses.length + investmentTransfers.length,
+        categoryBreakdown: Array.from(categoryMap.values()).sort(
+          (a, b) => b.total_amount - a.total_amount
+        ),
+        dailySpending,
+        previousMonthTotal,
+      });
+    } catch (error) {
+      console.error("Failed to fetch monthly summary", error);
+      setSummary({
+        totalSpent: 0,
+        totalIncome: 0,
+        totalInvestmentTransfers: 0,
+        availableBalance: 0,
+        totalBudget: 0,
+        assignedCategoryBudgetTotal: 0,
+        allocationPercent: null,
+        incomeAmount: null,
+        expenseCount: 0,
+        categoryBreakdown: [],
+        dailySpending: [],
+        previousMonthTotal: 0,
+      });
+    } finally {
+      setLoading(false);
+    }
   }, [convert, supabase, month, year]);
 
   useEffect(() => {

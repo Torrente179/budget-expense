@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
 import type { Database } from "@/types/database";
 
 type RecurringExpense = Database["public"]["Tables"]["recurring_expenses"]["Row"] & {
@@ -15,16 +16,25 @@ export function useRecurringExpenses() {
 
   const fetchRecurringExpenses = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("recurring_expenses")
-      .select("*, categories(*)")
-      .order("created_at", { ascending: false });
+    try {
+      const result = await supabase
+        .from("recurring_expenses")
+        .select("*, categories(*)")
+        .order("created_at", { ascending: false });
 
-    if (data) {
+      const data = resolveOptionalTableResult(result, {
+        table: "recurring_expenses",
+        context: "Recurring expenses table is unavailable during fetch",
+        fallback: [],
+      });
+
       setRecurringExpenses(data as RecurringExpense[]);
+    } catch (error) {
+      console.error("Failed to fetch recurring expenses", error);
+      setRecurringExpenses([]);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, [supabase]);
 
   useEffect(() => {

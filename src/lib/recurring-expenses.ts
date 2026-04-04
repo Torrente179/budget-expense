@@ -1,5 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
+import {
+  isMissingTableError,
+  logSuppressedSupabaseError,
+} from "@/lib/supabase/postgrest-errors";
 
 type RecurringExpense = Database["public"]["Tables"]["recurring_expenses"]["Row"];
 
@@ -26,12 +30,24 @@ export async function syncRecurringExpensesForMonth({
   year,
 }: SyncRecurringExpensesOptions) {
   const { startDate, endDate } = getMonthDateRange(month, year);
-  const { data: recurringExpenses } = await supabase
+  const { data: recurringExpenses, error } = await supabase
     .from("recurring_expenses")
     .select("*")
     .eq("user_id", userId)
     .eq("is_active", true)
     .lt("start_date", endDate);
+
+  if (error) {
+    if (isMissingTableError(error, "recurring_expenses")) {
+      logSuppressedSupabaseError(
+        "Recurring expenses table is unavailable during monthly sync",
+        error
+      );
+      return;
+    }
+
+    throw error;
+  }
 
   if (!recurringExpenses || recurringExpenses.length === 0) {
     return;
@@ -64,8 +80,15 @@ export async function syncRecurringExpensesForMonth({
     return;
   }
 
-  await supabase.from("expenses").upsert(recurringInsertRows, {
+  const { error: upsertError } = await supabase.from("expenses").upsert(
+    recurringInsertRows,
+    {
     onConflict: "user_id,recurring_expense_id,recurring_month",
     ignoreDuplicates: true,
-  });
+    }
+  );
+
+  if (upsertError) {
+    throw upsertError;
+  }
 }

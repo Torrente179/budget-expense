@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
 import type { Database } from "@/types/database";
 
 type MonthlyBudgetPlan =
@@ -22,18 +23,27 @@ export function useMonthlyBudgetPlan({
 
   const fetchPlan = useCallback(async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("monthly_budget_plans")
-      .select("*")
-      .eq("month", month)
-      .eq("year", year)
-      .maybeSingle();
+    try {
+      const result = await supabase
+        .from("monthly_budget_plans")
+        .select("*")
+        .eq("month", month)
+        .eq("year", year)
+        .maybeSingle();
 
-    if (!error) {
+      const data = resolveOptionalTableResult(result, {
+        table: "monthly_budget_plans",
+        context: "Monthly budget plans table is unavailable during fetch",
+        fallback: null,
+      });
+
       setPlan(data);
+    } catch (error) {
+      console.error("Failed to fetch monthly budget plan", error);
+      setPlan(null);
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   }, [supabase, month, year]);
 
   useEffect(() => {

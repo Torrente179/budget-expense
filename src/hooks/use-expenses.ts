@@ -26,36 +26,51 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
 
   const fetchExpenses = useCallback(async () => {
     setLoading(true);
-    const { startDate, endDate } = getMonthDateRange(month, year);
+    try {
+      const { startDate, endDate } = getMonthDateRange(month, year);
 
-    const { data: userData } = await supabase.auth.getUser();
-    if (userData.user) {
-      await syncRecurringExpensesForMonth({
-        supabase,
-        userId: userData.user.id,
-        month,
-        year,
-      });
+      const { data: userData } = await supabase.auth.getUser();
+      if (userData.user) {
+        try {
+          await syncRecurringExpensesForMonth({
+            supabase,
+            userId: userData.user.id,
+            month,
+            year,
+          });
+        } catch (error) {
+          console.error("Failed to sync recurring expenses before loading expenses", error);
+        }
+      }
+
+      let query = supabase
+        .from("expenses")
+        .select("*, categories(*)")
+        .gte("date", startDate)
+        .lt("date", endDate)
+        .order("date", { ascending: false });
+
+      if (categoryId) {
+        query = query.eq("category_id", categoryId);
+      }
+
+      if (search) {
+        query = query.ilike("description", `%${search}%`);
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        throw error;
+      }
+
+      setExpenses((data ?? []) as Expense[]);
+    } catch (error) {
+      console.error("Failed to fetch expenses", error);
+      setExpenses([]);
+    } finally {
+      setLoading(false);
     }
-
-    let query = supabase
-      .from("expenses")
-      .select("*, categories(*)")
-      .gte("date", startDate)
-      .lt("date", endDate)
-      .order("date", { ascending: false });
-
-    if (categoryId) {
-      query = query.eq("category_id", categoryId);
-    }
-
-    if (search) {
-      query = query.ilike("description", `%${search}%`);
-    }
-
-    const { data } = await query;
-    if (data) setExpenses(data as Expense[]);
-    setLoading(false);
   }, [supabase, month, year, categoryId, search]);
 
   useEffect(() => {

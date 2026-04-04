@@ -3,8 +3,13 @@ import type { Database } from "@/types/database";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 
 let missingEnvWarned = false;
+let browserClient: ReturnType<typeof createBrowserClient<Database>> | null = null;
 
 export function createClient() {
+  if (browserClient) {
+    return browserClient;
+  }
+
   const env = getSupabaseEnv();
 
   if (!env) {
@@ -16,11 +21,13 @@ export function createClient() {
     }
     // Return a client with placeholder values — it won't connect,
     // but it won't crash the app either. Auth checks will fail gracefully.
-    return createBrowserClient<Database>(
+    browserClient = createBrowserClient<Database>(
       "https://placeholder.supabase.co",
       "placeholder-key"
     );
+    return browserClient;
   }
 
-  return createBrowserClient<Database>(env.url, env.key);
+  browserClient = createBrowserClient<Database>(env.url, env.key);
+  return browserClient;
 }

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
 import { useCurrency } from "@/providers/currency-provider";
 import {
   normalizeBrokerName,
@@ -206,63 +207,104 @@ export function useInvestments() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    try {
+      const [
+        accountsResult,
+        assetsResult,
+        tradesResult,
+        cashMovementsResult,
+        savingsAccountsResult,
+        savingsTransfersResult,
+        watchlistResult,
+      ] = await Promise.all([
+        supabase
+          .from("brokerage_accounts")
+          .select("*")
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("investment_assets")
+          .select("*")
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("investment_trades")
+          .select("*, brokerage_accounts(*), investment_assets(*)")
+          .order("trade_date", { ascending: false })
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("investment_cash_movements")
+          .select("*, brokerage_accounts(*)")
+          .order("movement_date", { ascending: false })
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("investment_savings_accounts")
+          .select("*")
+          .order("created_at", { ascending: true }),
+        supabase
+          .from("investment_savings_transfers")
+          .select("*, investment_savings_accounts(*)")
+          .order("transfer_date", { ascending: false })
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("investment_watchlist")
+          .select("*, investment_assets(*)")
+          .order("created_at", { ascending: false }),
+      ]);
 
-    const [
-      accountsResult,
-      assetsResult,
-      tradesResult,
-      cashMovementsResult,
-      savingsAccountsResult,
-      savingsTransfersResult,
-      watchlistResult,
-    ] = await Promise.all([
-      supabase
-        .from("brokerage_accounts")
-        .select("*")
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("investment_assets")
-        .select("*")
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("investment_trades")
-        .select("*, brokerage_accounts(*), investment_assets(*)")
-        .order("trade_date", { ascending: false })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("investment_cash_movements")
-        .select("*, brokerage_accounts(*)")
-        .order("movement_date", { ascending: false })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("investment_savings_accounts")
-        .select("*")
-        .order("created_at", { ascending: true }),
-      supabase
-        .from("investment_savings_transfers")
-        .select("*, investment_savings_accounts(*)")
-        .order("transfer_date", { ascending: false })
-        .order("created_at", { ascending: false }),
-      supabase
-        .from("investment_watchlist")
-        .select("*, investment_assets(*)")
-        .order("created_at", { ascending: false }),
-    ]);
+      const accounts = resolveOptionalTableResult(accountsResult, {
+        table: "brokerage_accounts",
+        context: "Brokerage accounts table is unavailable during fetch",
+        fallback: [],
+      });
+      const assets = resolveOptionalTableResult(assetsResult, {
+        table: "investment_assets",
+        context: "Investment assets table is unavailable during fetch",
+        fallback: [],
+      });
+      const trades = resolveOptionalTableResult(tradesResult, {
+        table: "investment_trades",
+        context: "Investment trades table is unavailable during fetch",
+        fallback: [],
+      });
+      const cashMovements = resolveOptionalTableResult(cashMovementsResult, {
+        table: "investment_cash_movements",
+        context: "Investment cash movements table is unavailable during fetch",
+        fallback: [],
+      });
+      const savingsAccounts = resolveOptionalTableResult(savingsAccountsResult, {
+        table: "investment_savings_accounts",
+        context: "Investment savings accounts table is unavailable during fetch",
+        fallback: [],
+      });
+      const savingsTransfers = resolveOptionalTableResult(savingsTransfersResult, {
+        table: "investment_savings_transfers",
+        context: "Investment savings transfers table is unavailable during fetch",
+        fallback: [],
+      });
+      const watchlist = resolveOptionalTableResult(watchlistResult, {
+        table: "investment_watchlist",
+        context: "Investment watchlist table is unavailable during fetch",
+        fallback: [],
+      });
 
-    setAccounts((accountsResult.data ?? []) as BrokerageAccount[]);
-    setAssets((assetsResult.data ?? []) as InvestmentAssetRow[]);
-    setTrades((tradesResult.data ?? []) as InvestmentTradeWithJoins[]);
-    setCashMovements(
-      (cashMovementsResult.data ?? []) as InvestmentCashMovementWithJoins[]
-    );
-    setSavingsAccounts(
-      (savingsAccountsResult.data ?? []) as InvestmentSavingsAccountRow[]
-    );
-    setSavingsTransfers(
-      (savingsTransfersResult.data ?? []) as InvestmentSavingsTransferWithJoins[]
-    );
-    setWatchlist((watchlistResult.data ?? []) as InvestmentWatchlistWithJoins[]);
-    setLoading(false);
+      setAccounts(accounts as BrokerageAccount[]);
+      setAssets(assets as InvestmentAssetRow[]);
+      setTrades(trades as InvestmentTradeWithJoins[]);
+      setCashMovements(cashMovements as InvestmentCashMovementWithJoins[]);
+      setSavingsAccounts(savingsAccounts as InvestmentSavingsAccountRow[]);
+      setSavingsTransfers(savingsTransfers as InvestmentSavingsTransferWithJoins[]);
+      setWatchlist(watchlist as InvestmentWatchlistWithJoins[]);
+    } catch (error) {
+      console.error("Failed to fetch investments data", error);
+      setAccounts([]);
+      setAssets([]);
+      setTrades([]);
+      setCashMovements([]);
+      setSavingsAccounts([]);
+      setSavingsTransfers([]);
+      setWatchlist([]);
+    } finally {
+      setLoading(false);
+    }
   }, [supabase]);
 
   useEffect(() => {

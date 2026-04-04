@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
 import type { Database } from "@/types/database";
 
 type Income = Database["public"]["Tables"]["income_entries"]["Row"];
@@ -19,27 +20,37 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
 
   const fetchIncomes = useCallback(async () => {
     setLoading(true);
-    const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-    const endMonth = month === 12 ? 1 : month + 1;
-    const endYear = month === 12 ? year + 1 : year;
-    const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
+    try {
+      const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
+      const endMonth = month === 12 ? 1 : month + 1;
+      const endYear = month === 12 ? year + 1 : year;
+      const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
 
-    let query = supabase
-      .from("income_entries")
-      .select("*")
-      .gte("date", startDate)
-      .lt("date", endDate)
-      .order("date", { ascending: false });
+      let query = supabase
+        .from("income_entries")
+        .select("*")
+        .gte("date", startDate)
+        .lt("date", endDate)
+        .order("date", { ascending: false });
 
-    if (search) {
-      query = query.or(`source.ilike.%${search}%,description.ilike.%${search}%`);
-    }
+      if (search) {
+        query = query.or(`source.ilike.%${search}%,description.ilike.%${search}%`);
+      }
 
-    const { data } = await query;
-    if (data) {
+      const result = await query;
+      const data = resolveOptionalTableResult(result, {
+        table: "income_entries",
+        context: "Income entries table is unavailable during fetch",
+        fallback: [],
+      });
+
       setIncomes(data as Income[]);
+    } catch (error) {
+      console.error("Failed to fetch incomes", error);
+      setIncomes([]);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [month, search, supabase, year]);
 
   useEffect(() => {

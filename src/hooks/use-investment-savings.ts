@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
 import type {
   InvestmentSavingsAccountRow,
   InvestmentSavingsTransferWithJoins,
@@ -37,31 +38,48 @@ export function useInvestmentSavings({
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+    try {
+      let transferQuery = supabase
+        .from("investment_savings_transfers")
+        .select("*, investment_savings_accounts(*)")
+        .order("transfer_date", { ascending: false })
+        .order("created_at", { ascending: false });
 
-    let transferQuery = supabase
-      .from("investment_savings_transfers")
-      .select("*, investment_savings_accounts(*)")
-      .order("transfer_date", { ascending: false })
-      .order("created_at", { ascending: false });
+      if (month !== undefined && year !== undefined) {
+        const { startDate, endDate } = getMonthRange(month, year);
+        transferQuery = transferQuery
+          .gte("transfer_date", startDate)
+          .lt("transfer_date", endDate);
+      }
 
-    if (month !== undefined && year !== undefined) {
-      const { startDate, endDate } = getMonthRange(month, year);
-      transferQuery = transferQuery.gte("transfer_date", startDate).lt("transfer_date", endDate);
+      const [accountsResult, transfersResult] = await Promise.all([
+        supabase
+          .from("investment_savings_accounts")
+          .select("*")
+          .order("created_at", { ascending: true }),
+        transferQuery,
+      ]);
+
+      const accounts = resolveOptionalTableResult(accountsResult, {
+        table: "investment_savings_accounts",
+        context: "Investment savings accounts table is unavailable during fetch",
+        fallback: [],
+      });
+      const transfers = resolveOptionalTableResult(transfersResult, {
+        table: "investment_savings_transfers",
+        context: "Investment savings transfers table is unavailable during fetch",
+        fallback: [],
+      });
+
+      setSavingsAccounts(accounts as InvestmentSavingsAccountRow[]);
+      setSavingsTransfers(transfers as InvestmentSavingsTransferWithJoins[]);
+    } catch (error) {
+      console.error("Failed to fetch investment savings data", error);
+      setSavingsAccounts([]);
+      setSavingsTransfers([]);
+    } finally {
+      setLoading(false);
     }
-
-    const [accountsResult, transfersResult] = await Promise.all([
-      supabase
-        .from("investment_savings_accounts")
-        .select("*")
-        .order("created_at", { ascending: true }),
-      transferQuery,
-    ]);
-
-    setSavingsAccounts((accountsResult.data ?? []) as InvestmentSavingsAccountRow[]);
-    setSavingsTransfers(
-      (transfersResult.data ?? []) as InvestmentSavingsTransferWithJoins[]
-    );
-    setLoading(false);
   }, [month, supabase, year]);
 
   useEffect(() => {
