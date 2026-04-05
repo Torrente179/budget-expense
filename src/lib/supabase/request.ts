@@ -21,7 +21,7 @@ async function createBearerClient(token: string) {
     );
   }
 
-  const supabase = createSupabaseClient<Database>(env.url, env.key, {
+  const verificationClient = createSupabaseClient<Database>(env.url, env.key, {
     global: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -36,11 +36,20 @@ async function createBearerClient(token: string) {
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser(token);
+  } = await verificationClient.auth.getUser(token);
 
   if (error || !user) {
     return null;
   }
+
+  const supabase = createSupabaseClient<Database>(env.url, env.key, {
+    accessToken: async () => token,
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+      detectSessionInUrl: false,
+    },
+  });
 
   return { supabase, user };
 }
