@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createRequestClient } from "@/lib/supabase/request";
+import {
+  createServiceRoleClient,
+  resolveServiceRoleUserByEmail,
+} from "@/lib/supabase/service-role";
 import { expenseSchema } from "@/lib/validations";
 
 const expenseUpdateSchema = expenseSchema.partial();
@@ -33,17 +37,24 @@ export async function PATCH(
     description: normalizeDescription(parsed.data.description),
   };
 
-  const { supabase, user } = await createRequestClient(request);
+  const { supabase: appSupabase, user } = await createRequestClient(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const ledgerSupabase = createServiceRoleClient();
+  const ledgerUser = ledgerSupabase
+    ? await resolveServiceRoleUserByEmail(user.email)
+    : null;
+  const supabase = ledgerSupabase ?? appSupabase;
+  const effectiveUserId = ledgerUser?.id ?? user.id;
+
   const { error } = await supabase
     .from("expenses")
     .update(updates)
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", effectiveUserId);
 
   if (error) {
     console.error("Failed to update expense", error);
@@ -61,17 +72,24 @@ export async function DELETE(
   context: RouteContext<"/api/expenses/[id]">
 ) {
   const { id } = await context.params;
-  const { supabase, user } = await createRequestClient(request);
+  const { supabase: appSupabase, user } = await createRequestClient(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const ledgerSupabase = createServiceRoleClient();
+  const ledgerUser = ledgerSupabase
+    ? await resolveServiceRoleUserByEmail(user.email)
+    : null;
+  const supabase = ledgerSupabase ?? appSupabase;
+  const effectiveUserId = ledgerUser?.id ?? user.id;
+
   const { error } = await supabase
     .from("expenses")
     .delete()
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", effectiveUserId);
 
   if (error) {
     console.error("Failed to delete expense", error);

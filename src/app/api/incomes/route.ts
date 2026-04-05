@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createRequestClient } from "@/lib/supabase/request";
+import {
+  createServiceRoleClient,
+  resolveServiceRoleUserByEmail,
+} from "@/lib/supabase/service-role";
 import { incomeSchema } from "@/lib/validations";
 
 const incomeQuerySchema = z.object({
@@ -37,11 +41,18 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { supabase, user } = await createRequestClient(request);
+  const { supabase: appSupabase, user } = await createRequestClient(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const ledgerSupabase = createServiceRoleClient();
+  const ledgerUser = ledgerSupabase
+    ? await resolveServiceRoleUserByEmail(user.email)
+    : null;
+  const supabase = ledgerSupabase ?? appSupabase;
+  const effectiveUserId = ledgerUser?.id ?? user.id;
 
   const { startDate, endDate } = getMonthDateRange(
     parsed.data.month,
@@ -51,7 +62,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("income_entries")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", effectiveUserId)
     .gte("date", startDate)
     .lt("date", endDate)
     .order("date", { ascending: false });
@@ -85,17 +96,24 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { supabase, user } = await createRequestClient(request);
+  const { supabase: appSupabase, user } = await createRequestClient(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const ledgerSupabase = createServiceRoleClient();
+  const ledgerUser = ledgerSupabase
+    ? await resolveServiceRoleUserByEmail(user.email)
+    : null;
+  const supabase = ledgerSupabase ?? appSupabase;
+  const effectiveUserId = ledgerUser?.id ?? user.id;
+
   const { error } = await supabase.from("income_entries").insert({
     ...parsed.data,
     source: parsed.data.source.trim(),
     description: normalizeDescription(parsed.data.description),
-    user_id: user.id,
+    user_id: effectiveUserId,
   });
 
   if (error) {

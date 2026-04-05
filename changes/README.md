@@ -56,3 +56,4 @@ Use this template:
 - `2026-04-05-fix-expense-income-server-read-path.md`
 - `2026-04-05-add-bearer-fallback-for-internal-api-auth.md`
 - `2026-04-05-rebuild-expenses-page-around-server-ledger-data.md`
+- `2026-04-05-bridge-ledger-project-for-expenses-and-incomes.md`

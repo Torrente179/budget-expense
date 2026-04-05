@@ -5,6 +5,10 @@ import {
   syncRecurringExpensesForMonth,
 } from "@/lib/recurring-expenses";
 import { createRequestClient } from "@/lib/supabase/request";
+import {
+  createServiceRoleClient,
+  resolveServiceRoleUserByEmail,
+} from "@/lib/supabase/service-role";
 import { expenseSchema } from "@/lib/validations";
 
 const expenseQuerySchema = z.object({
@@ -34,16 +38,23 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { supabase, user } = await createRequestClient(request);
+  const { supabase: appSupabase, user } = await createRequestClient(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const ledgerSupabase = createServiceRoleClient();
+  const ledgerUser = ledgerSupabase
+    ? await resolveServiceRoleUserByEmail(user.email)
+    : null;
+  const supabase = ledgerSupabase ?? appSupabase;
+  const effectiveUserId = ledgerUser?.id ?? user.id;
+
   try {
     await syncRecurringExpensesForMonth({
       supabase,
-      userId: user.id,
+      userId: effectiveUserId,
       month: parsed.data.month,
       year: parsed.data.year,
     });
@@ -59,7 +70,7 @@ export async function GET(request: NextRequest) {
   let query = supabase
     .from("expenses")
     .select("*, categories(*)")
-    .eq("user_id", user.id)
+    .eq("user_id", effectiveUserId)
     .gte("date", startDate)
     .lt("date", endDate)
     .order("date", { ascending: false });
@@ -95,16 +106,23 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { supabase, user } = await createRequestClient(request);
+  const { supabase: appSupabase, user } = await createRequestClient(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const ledgerSupabase = createServiceRoleClient();
+  const ledgerUser = ledgerSupabase
+    ? await resolveServiceRoleUserByEmail(user.email)
+    : null;
+  const supabase = ledgerSupabase ?? appSupabase;
+  const effectiveUserId = ledgerUser?.id ?? user.id;
+
   const { error } = await supabase.from("expenses").insert({
     ...parsed.data,
     description: normalizeDescription(parsed.data.description),
-    user_id: user.id,
+    user_id: effectiveUserId,
   });
 
   if (error) {

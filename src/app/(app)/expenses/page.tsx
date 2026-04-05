@@ -2,6 +2,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getMonthDateRange } from "@/lib/recurring-expenses";
 import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
 import { ExpensesLedgerPage } from "@/components/expenses/expenses-ledger-page";
+import {
+  createServiceRoleClient,
+  resolveServiceRoleUserByEmail,
+} from "@/lib/supabase/service-role";
 import type { Database } from "@/types/database";
 
 type Category = Database["public"]["Tables"]["categories"]["Row"];
@@ -37,10 +41,10 @@ function parseInteger(
 
 export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
   const params = await searchParams;
-  const supabase = await createClient();
+  const appSupabase = await createClient();
   const {
     data: { user },
-  } = await supabase.auth.getUser();
+  } = await appSupabase.auth.getUser();
 
   if (!user) {
     return (
@@ -55,10 +59,17 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
     );
   }
 
+  const ledgerSupabase = createServiceRoleClient();
+  const ledgerUser = ledgerSupabase
+    ? await resolveServiceRoleUserByEmail(user.email)
+    : null;
+  const supabase = ledgerSupabase ?? appSupabase;
+  const effectiveUserId = ledgerUser?.id ?? user.id;
+
   const { data: latestExpense } = await supabase
     .from("expenses")
     .select("date")
-    .eq("user_id", user.id)
+    .eq("user_id", effectiveUserId)
     .order("date", { ascending: false })
     .limit(1)
     .maybeSingle();
@@ -83,13 +94,13 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
   const categoriesPromise = supabase
     .from("categories")
     .select("*")
-    .or(`user_id.is.null,user_id.eq.${user.id}`)
+    .or(`user_id.is.null,user_id.eq.${effectiveUserId}`)
     .order("name");
 
   let expensesQuery = supabase
     .from("expenses")
     .select("*, categories(*)")
-    .eq("user_id", user.id)
+    .eq("user_id", effectiveUserId)
     .gte("date", startDate)
     .lt("date", endDate)
     .order("date", { ascending: false });
