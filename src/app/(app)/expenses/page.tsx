@@ -1,128 +1,120 @@
-"use client";
+import { createClient } from "@/lib/supabase/server";
+import { getMonthDateRange } from "@/lib/recurring-expenses";
+import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
+import { ExpensesLedgerPage } from "@/components/expenses/expenses-ledger-page";
+import type { Database } from "@/types/database";
 
-import { useState, useDeferredValue } from "react";
-import { useExpenses } from "@/hooks/use-expenses";
-import { useInvestmentSavings } from "@/hooks/use-investment-savings";
-import { useCurrency } from "@/providers/currency-provider";
-import { PageHeader } from "@/components/layout/page-header";
-import { ExpenseForm } from "@/components/expenses/expense-form";
-import { ExpenseFilters } from "@/components/expenses/expense-filters";
-import { ExpenseTable } from "@/components/expenses/expense-table";
-import { RecurringExpenseSection } from "@/components/expenses/recurring-expense-section";
-import { SavingsTransferForm } from "@/components/investments/savings-transfer-form";
-import { SavingsTransferTable } from "@/components/investments/savings-transfer-table";
-import { getCurrentMonth, getCurrentYear, formatCurrency } from "@/lib/utils";
-import { useLocale } from "@/providers/locale-provider";
+type Category = Database["public"]["Tables"]["categories"]["Row"];
+type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
+  categories: Category | null;
+};
 
-export default function ExpensesPage() {
-  const { t } = useLocale();
-  const [month, setMonth] = useState(getCurrentMonth());
-  const [year, setYear] = useState(getCurrentYear());
-  const [categoryId, setCategoryId] = useState("all");
-  const [search, setSearch] = useState("");
-  const deferredSearch = useDeferredValue(search);
-  const { baseCurrency, convert } = useCurrency();
+interface ExpensesPageProps {
+  searchParams: Promise<{
+    month?: string | string[];
+    year?: string | string[];
+    category?: string | string[];
+    search?: string | string[];
+  }>;
+}
 
+function getSingleValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
+function parseInteger(
+  value: string | undefined,
+  fallback: number,
+  range: { min: number; max: number }
+) {
+  const parsed = Number.parseInt(value ?? "", 10);
+  if (!Number.isFinite(parsed)) {
+    return fallback;
+  }
+
+  return Math.min(range.max, Math.max(range.min, parsed));
+}
+
+export default async function ExpensesPage({ searchParams }: ExpensesPageProps) {
+  const params = await searchParams;
+  const supabase = await createClient();
   const {
-    expenses,
-    loading,
-    addExpense,
-    updateExpense,
-    deleteExpense,
-    refetch,
-  } =
-    useExpenses({
-      month,
-      year,
-      categoryId: categoryId === "all" ? undefined : categoryId,
-      search: deferredSearch || undefined,
-    });
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const totalExpenses = expenses.reduce(
-    (sum, e) => sum + convert(e.amount, e.currency),
-    0
-  );
-  const {
-    savingsAccounts,
-    savingsTransfers,
-    loading: savingsLoading,
-    addSavingsTransfer,
-    updateSavingsTransfer,
-    deleteSavingsTransfer,
-    refetch: refetchSavings,
-  } = useInvestmentSavings({ month, year });
-  const totalSavingsTransfers = savingsTransfers.reduce(
-    (sum, transfer) => sum + convert(Number(transfer.amount), transfer.currency),
-    0
-  );
-  const combinedOutflow = totalExpenses + totalSavingsTransfers;
-  const totalExpenseMovements = expenses.length + savingsTransfers.length;
+  if (!user) {
+    return (
+      <ExpensesLedgerPage
+        initialMonth={getCurrentMonth()}
+        initialYear={getCurrentYear()}
+        initialCategoryId="all"
+        initialSearch=""
+        categories={[]}
+        expenses={[]}
+      />
+    );
+  }
+
+  const { data: latestExpense } = await supabase
+    .from("expenses")
+    .select("date")
+    .eq("user_id", user.id)
+    .order("date", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const fallbackDate = latestExpense?.date
+    ? new Date(`${latestExpense.date}T00:00:00`)
+    : new Date();
+
+  const month = parseInteger(getSingleValue(params.month), fallbackDate.getMonth() + 1, {
+    min: 1,
+    max: 12,
+  });
+  const year = parseInteger(getSingleValue(params.year), fallbackDate.getFullYear(), {
+    min: 2020,
+    max: 2100,
+  });
+  const categoryId = getSingleValue(params.category) ?? "all";
+  const search = (getSingleValue(params.search) ?? "").trim();
+
+  const { startDate, endDate } = getMonthDateRange(month, year);
+
+  const categoriesPromise = supabase
+    .from("categories")
+    .select("*")
+    .or(`user_id.is.null,user_id.eq.${user.id}`)
+    .order("name");
+
+  let expensesQuery = supabase
+    .from("expenses")
+    .select("*, categories(*)")
+    .eq("user_id", user.id)
+    .gte("date", startDate)
+    .lt("date", endDate)
+    .order("date", { ascending: false });
+
+  if (categoryId !== "all") {
+    expensesQuery = expensesQuery.eq("category_id", categoryId);
+  }
+
+  if (search) {
+    expensesQuery = expensesQuery.ilike("description", `%${search}%`);
+  }
+
+  const [{ data: categories }, { data: expenses }] = await Promise.all([
+    categoriesPromise,
+    expensesQuery,
+  ]);
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("Expenses", "Gastos")}
-        description={
-          !loading && totalExpenseMovements > 0
-            ? t(
-                `${totalExpenseMovements} movement${totalExpenseMovements !== 1 ? "s" : ""} — ${formatCurrency(combinedOutflow, baseCurrency)} total outflow`,
-                `${totalExpenseMovements} movimiento${totalExpenseMovements !== 1 ? "s" : ""} — ${formatCurrency(combinedOutflow, baseCurrency)} salida total`
-              )
-            : undefined
-        }
-      >
-        <ExpenseForm onSubmit={addExpense} />
-        <SavingsTransferForm
-          accounts={savingsAccounts}
-          onSubmit={addSavingsTransfer}
-          sourceKind="expense_flow"
-          title={{
-            create: t("Add investment movement", "Agregar movimiento de inversion"),
-            edit: t("Edit investment movement", "Editar movimiento de inversion"),
-          }}
-          helperText={{
-            en: "Register an investment movement from Expenses and send it to one of your savings accounts.",
-            es: "Registra un movimiento de inversion desde Gastos y envialo a una de tus cuentas de ahorro.",
-          }}
-        />
-      </PageHeader>
-
-      <ExpenseFilters
-        month={month}
-        year={year}
-        onMonthChange={(m, y) => {
-          setMonth(m);
-          setYear(y);
-        }}
-        categoryId={categoryId}
-        onCategoryChange={setCategoryId}
-        search={search}
-        onSearchChange={setSearch}
-      />
-
-      <RecurringExpenseSection
-        month={month}
-        year={year}
-        onChanged={() => {
-          void refetch();
-          void refetchSavings();
-        }}
-      />
-
-      <ExpenseTable
-        expenses={expenses}
-        loading={loading}
-        onUpdate={updateExpense}
-        onDelete={deleteExpense}
-      />
-
-      <SavingsTransferTable
-        transfers={savingsTransfers}
-        accounts={savingsAccounts}
-        loading={savingsLoading}
-        onUpdate={updateSavingsTransfer}
-        onDelete={deleteSavingsTransfer}
-      />
-    </div>
+    <ExpensesLedgerPage
+      initialMonth={month}
+      initialYear={year}
+      initialCategoryId={categoryId}
+      initialSearch={search}
+      categories={(categories ?? []) as Category[]}
+      expenses={(expenses ?? []) as Expense[]}
+    />
   );
 }

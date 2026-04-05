@@ -9,9 +9,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { MonthPicker } from "@/components/shared/month-picker";
-import { useCategories } from "@/hooks/use-categories";
 import { Search } from "lucide-react";
 import { useLocale } from "@/providers/locale-provider";
+import type { Database } from "@/types/database";
+
+type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 interface ExpenseFiltersProps {
   month: number;
@@ -21,6 +23,7 @@ interface ExpenseFiltersProps {
   onCategoryChange: (id: string) => void;
   search: string;
   onSearchChange: (value: string) => void;
+  categories: Category[];
 }
 
 export function ExpenseFilters({
@@ -31,8 +34,8 @@ export function ExpenseFilters({
   onCategoryChange,
   search,
   onSearchChange,
+  categories,
 }: ExpenseFiltersProps) {
-  const { categories } = useCategories();
   const { t } = useLocale();
 
   return (

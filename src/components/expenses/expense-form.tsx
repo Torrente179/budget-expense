@@ -31,24 +31,30 @@ import { CategoryBadge, CategoryIcon } from "@/components/shared/category-badge"
 import { Loader2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { useLocale } from "@/providers/locale-provider";
+import type { Database } from "@/types/database";
+
+type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 interface ExpenseFormProps {
   onSubmit: (values: ExpenseFormValues) => Promise<unknown>;
   defaultValues?: Partial<ExpenseFormValues>;
   trigger?: React.ReactNode;
+  categories?: Category[];
 }
 
 export function ExpenseForm({
   onSubmit,
   defaultValues,
   trigger,
+  categories: categoriesProp,
 }: ExpenseFormProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const { baseCurrency, convert } = useCurrency();
-  const { categories } = useCategories();
+  const { categories: fetchedCategories } = useCategories();
+  const categories = categoriesProp ?? fetchedCategories;
 
   const today = format(new Date(), "yyyy-MM-dd");
   const resolvedDefaults = useMemo(

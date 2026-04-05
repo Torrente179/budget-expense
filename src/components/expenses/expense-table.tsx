@@ -21,8 +21,9 @@ import { motion } from "framer-motion";
 import { useLocale } from "@/providers/locale-provider";
 
 type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
-  categories: Database["public"]["Tables"]["categories"]["Row"];
+  categories: Database["public"]["Tables"]["categories"]["Row"] | null;
 };
+type Category = Database["public"]["Tables"]["categories"]["Row"];
 
 interface ExpenseTableProps {
   expenses: Expense[];
@@ -32,6 +33,7 @@ interface ExpenseTableProps {
     data: Database["public"]["Tables"]["expenses"]["Update"]
   ) => Promise<unknown>;
   onDelete: (id: string) => Promise<unknown>;
+  categories: Category[];
 }
 
 export function ExpenseTable({
@@ -39,6 +41,7 @@ export function ExpenseTable({
   loading,
   onUpdate,
   onDelete,
+  categories,
 }: ExpenseTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -92,13 +95,13 @@ export function ExpenseTable({
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="min-w-0">
                 <p className="truncate text-base font-medium text-foreground">
-                  {expense.description || expense.categories.name}
+                  {expense.description || expense.categories?.name || "Uncategorized"}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <CategoryBadge
-                    name={expense.categories.name}
-                    icon={expense.categories.icon}
-                    color={expense.categories.color}
+                    name={expense.categories?.name || "Uncategorized"}
+                    icon={expense.categories?.icon || "receipt"}
+                    color={expense.categories?.color || "#64748b"}
                     size="md"
                     className="rounded-xl px-2.5 py-1"
                   />
@@ -110,9 +113,9 @@ export function ExpenseTable({
                     {expense.currency}
                   </span>
                 </div>
-                {expense.description && expense.description !== expense.categories.name && (
+                {expense.description && expense.description !== expense.categories?.name && (
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {expense.categories.name}
+                    {expense.categories?.name || "Uncategorized"}
                   </p>
                 )}
               </div>
@@ -133,6 +136,7 @@ export function ExpenseTable({
                       description: expense.description ?? "",
                       date: expense.date,
                     }}
+                    categories={categories}
                     onSubmit={async (values) => onUpdate(expense.id, values)}
                     trigger={
                       <Button
