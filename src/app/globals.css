@@ -136,7 +136,6 @@
   .dark body {
     background-image:
       radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.02), transparent 18%),
-      radial-gradient(circle at 68% 24%, rgba(24, 197, 143, 0.055), transparent 26%),
       linear-gradient(180deg, #262624 0%, #212120 48%, #1e1e1d 100%);
   }
   ::selection {
