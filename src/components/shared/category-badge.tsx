@@ -12,6 +12,8 @@ import {
   Repeat,
   ShoppingCart,
   MoreHorizontal,
+  Receipt,
+  TrendingUp,
   type LucideIcon,
 } from "lucide-react";
 
@@ -28,6 +30,8 @@ const iconMap: Record<string, LucideIcon> = {
   repeat: Repeat,
   "shopping-cart": ShoppingCart,
   "more-horizontal": MoreHorizontal,
+  receipt: Receipt,
+  "trending-up": TrendingUp,
 };
 
 interface CategoryBadgeProps {

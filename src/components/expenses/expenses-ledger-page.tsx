@@ -8,7 +8,7 @@ import { ExpenseForm } from "@/components/expenses/expense-form";
 import { ExpenseFilters } from "@/components/expenses/expense-filters";
 import { ExpenseTable } from "@/components/expenses/expense-table";
 import { useCurrency } from "@/providers/currency-provider";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, formatDate } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
 import type { Database } from "@/types/database";
 
@@ -24,6 +24,7 @@ interface ExpensesLedgerPageProps {
   initialSearch: string;
   categories: Category[];
   expenses: Expense[];
+  lastActivityAt: string | null;
 }
 
 export function ExpensesLedgerPage({
@@ -33,6 +34,7 @@ export function ExpensesLedgerPage({
   initialSearch,
   categories,
   expenses,
+  lastActivityAt,
 }: ExpensesLedgerPageProps) {
   const router = useRouter();
   const pathname = usePathname();
@@ -184,18 +186,30 @@ export function ExpensesLedgerPage({
     0
   );
 
+  const lastActivityLabel = lastActivityAt
+    ? t(
+        `Last logged: ${formatDate(lastActivityAt, "MMM d, yyyy 'at' h:mm a", "en")}`,
+        `Última edición: ${formatDate(lastActivityAt, "d MMM yyyy 'a las' h:mm a", "es")}`
+      )
+    : null;
+
+  const summaryLine =
+    expenses.length > 0
+      ? t(
+          `${expenses.length} expense${expenses.length !== 1 ? "s" : ""} — ${formatCurrency(totalExpenses, baseCurrency)} total`,
+          `${expenses.length} gasto${expenses.length !== 1 ? "s" : ""} — ${formatCurrency(totalExpenses, baseCurrency)} en total`
+        )
+      : null;
+
+  const description = [summaryLine, lastActivityLabel]
+    .filter(Boolean)
+    .join("  ·  ");
+
   return (
     <div className="space-y-6">
       <PageHeader
         title={t("Expenses", "Gastos")}
-        description={
-          expenses.length > 0
-            ? t(
-                `${expenses.length} expense${expenses.length !== 1 ? "s" : ""} — ${formatCurrency(totalExpenses, baseCurrency)} total`,
-                `${expenses.length} gasto${expenses.length !== 1 ? "s" : ""} — ${formatCurrency(totalExpenses, baseCurrency)} en total`
-              )
-            : undefined
-        }
+        description={description || undefined}
       >
         <ExpenseForm onSubmit={addExpense} categories={categories} />
       </PageHeader>

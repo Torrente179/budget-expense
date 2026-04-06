@@ -57,3 +57,5 @@ Use this template:
 - `2026-04-05-add-bearer-fallback-for-internal-api-auth.md`
 - `2026-04-05-rebuild-expenses-page-around-server-ledger-data.md`
 - `2026-04-05-bridge-ledger-project-for-expenses-and-incomes.md`
+- `2026-04-05-cut-over-budget-expense-production-to-ledger-bridge.md`
+- `2026-04-05-add-vercel-supabase-handoff-doc.md`

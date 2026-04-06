@@ -398,7 +398,7 @@ export default function AvailableNowPage() {
               <CardTitle className="font-heading text-[1.35rem] font-semibold tracking-tight">
                 {t("Recent activity", "Actividad reciente")}
               </CardTitle>
-              <Link href="/expenses" className="text-sm text-muted-foreground">
+              <Link href="/movimientos" className="text-sm text-muted-foreground">
                 {t("See all", "Ver todo")}
               </Link>
             </div>

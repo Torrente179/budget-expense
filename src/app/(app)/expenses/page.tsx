@@ -55,6 +55,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
         initialSearch=""
         categories={[]}
         expenses={[]}
+        lastActivityAt={null}
       />
     );
   }
@@ -113,10 +114,16 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
     expensesQuery = expensesQuery.ilike("description", `%${search}%`);
   }
 
-  const [{ data: categories }, { data: expenses }] = await Promise.all([
-    categoriesPromise,
-    expensesQuery,
-  ]);
+  const lastActivityPromise = supabase
+    .from("expenses")
+    .select("updated_at")
+    .eq("user_id", effectiveUserId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const [{ data: categories }, { data: expenses }, { data: lastActivity }] =
+    await Promise.all([categoriesPromise, expensesQuery, lastActivityPromise]);
 
   return (
     <ExpensesLedgerPage
@@ -126,6 +133,7 @@ export default async function ExpensesPage({ searchParams }: ExpensesPageProps) 
       initialSearch={search}
       categories={(categories ?? []) as Category[]}
       expenses={(expenses ?? []) as Expense[]}
+      lastActivityAt={lastActivity?.updated_at ?? null}
     />
   );
 }

@@ -3,13 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  ArrowUpDown,
   CandlestickChart,
   LayoutDashboard,
   PiggyBank,
-  Receipt,
   Search,
   Settings,
-  TrendingUp,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,7 +21,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { useLocale } from "@/providers/locale-provider";
-import { TotalNavIcon } from "./total-nav-icon";
 
 export function MobileCommandPalette() {
   const { t } = useLocale();
@@ -37,22 +35,10 @@ export function MobileCommandPalette() {
       icon: LayoutDashboard,
     },
     {
-      href: "/available-now",
-      label: t("Total", "Total"),
-      keywords: "total disponible ahora balance ingresos gastos neto",
-      icon: TotalNavIcon,
-    },
-    {
-      href: "/expenses",
-      label: t("Expenses", "Gastos"),
-      keywords: "expenses gastos gasto egreso",
-      icon: Receipt,
-    },
-    {
-      href: "/incomes",
-      label: t("Incomes", "Ingresos"),
-      keywords: "incomes ingresos ganancias salary freelance",
-      icon: TrendingUp,
+      href: "/movimientos",
+      label: t("Movements", "Movimientos"),
+      keywords: "movements movimientos gastos expenses ingresos incomes total balance",
+      icon: ArrowUpDown,
     },
     {
       href: "/budgets",

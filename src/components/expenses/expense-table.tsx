@@ -112,6 +112,14 @@ export function ExpenseTable({
                   <span className="hidden sm:inline-flex">
                     {expense.currency}
                   </span>
+                  {expense.created_at !== expense.updated_at && (
+                    <>
+                      <span className="hidden h-1 w-1 rounded-full bg-border sm:inline-flex" />
+                      <span className="hidden text-muted-foreground/60 sm:inline-flex">
+                        {t("edited", "editado")} {formatDate(expense.updated_at, "MMM d")}
+                      </span>
+                    </>
+                  )}
                 </div>
                 {expense.description && expense.description !== expense.categories?.name && (
                   <p className="mt-2 text-sm text-muted-foreground">
