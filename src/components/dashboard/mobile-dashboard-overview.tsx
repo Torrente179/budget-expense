@@ -11,10 +11,10 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ArrowDownRight,
+  ArrowUpDown,
   ArrowUpRight,
   CandlestickChart,
   PiggyBank,
-  Receipt,
   Wallet,
 } from "lucide-react";
 
@@ -132,14 +132,9 @@ export function MobileDashboardOverview({
       icon: PiggyBank,
     },
     {
-      href: "/incomes",
-      label: t("Income", "Ingresos"),
-      icon: ArrowUpRight,
-    },
-    {
-      href: "/expenses",
-      label: t("Expense", "Gastos"),
-      icon: Receipt,
+      href: "/movimientos",
+      label: t("Movements", "Movimientos"),
+      icon: ArrowUpDown,
     },
     {
       href: "/investments",
@@ -213,7 +208,7 @@ export function MobileDashboardOverview({
             </div>
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-3 gap-2">
             {quickActions.map((action) => (
               <Link
                 key={action.href}
