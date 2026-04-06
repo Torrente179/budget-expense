@@ -93,7 +93,7 @@ export function MonthlyPlanForm({
       ) : (
         <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
           <CircleDollarSign className="h-4 w-4" />
-          <span className="hidden sm:inline">{t("Set monthly plan", "Definir plan mensual")}</span>
+          <span className="hidden md:inline">{t("Set monthly plan", "Definir plan mensual")}</span>
         </SheetTrigger>
       )}
 

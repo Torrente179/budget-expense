@@ -60,8 +60,10 @@ export function Topbar() {
 
         <div className="flex items-center gap-2">
           <MobileCommandPalette />
-          <LanguageSwitch compact />
-          <CurrencyQuickSwitch />
+          <div className="hidden sm:contents">
+            <LanguageSwitch compact />
+            <CurrencyQuickSwitch />
+          </div>
           <Button
             variant="ghost"
             size="icon"

@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/providers/locale-provider";
+import { LanguageSwitch } from "@/components/shared/language-switch";
+import { CurrencyQuickSwitch } from "@/components/shared/currency-quick-switch";
 
 export function MobileNavContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -79,6 +81,12 @@ export function MobileNavContent({ onNavigate }: { onNavigate?: () => void }) {
           );
         })}
       </nav>
+      <div className="border-t border-border px-3 py-4 sm:hidden">
+        <div className="flex items-center gap-2 px-3.5 pb-3">
+          <LanguageSwitch compact className="flex-1" />
+          <CurrencyQuickSwitch />
+        </div>
+      </div>
       <div className="border-t border-border px-3 py-4">
         <button
           onClick={handleLogout}

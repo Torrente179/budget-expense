@@ -129,7 +129,7 @@ export function SavingsTransferForm({
           render={<Button size="sm" className="gap-1.5" disabled={accounts.length === 0} />}
         >
           <Plus className="h-4 w-4" />
-          {t("Add investment movement", "Agregar movimiento de inversion")}
+          <span className="hidden md:inline">{t("Add investment movement", "Agregar movimiento de inversion")}</span>
         </DialogTrigger>
       )}
 

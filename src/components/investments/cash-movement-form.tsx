@@ -133,7 +133,7 @@ export function CashMovementForm({
       ) : (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          {t("Add cash movement", "Agregar movimiento de caja")}
+          <span className="hidden md:inline">{t("Add cash movement", "Agregar movimiento de caja")}</span>
         </DialogTrigger>
       )}
 

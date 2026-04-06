@@ -187,7 +187,7 @@ export default function BudgetsPage() {
           ) : (
             <Copy className="h-4 w-4" />
           )}
-          <span className="hidden sm:inline">{t("Copy envelopes", "Copiar sobres")}</span>
+          <span className="hidden md:inline">{t("Copy envelopes", "Copiar sobres")}</span>
         </Button>
         <BudgetForm
           month={month}
@@ -196,7 +196,7 @@ export default function BudgetsPage() {
           trigger={
             <Button variant="outline" size="sm" className="gap-1.5">
               <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{t("Add envelope", "Agregar sobre")}</span>
+              <span className="hidden md:inline">{t("Add envelope", "Agregar sobre")}</span>
             </Button>
           }
         />

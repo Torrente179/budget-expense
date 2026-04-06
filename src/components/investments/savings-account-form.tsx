@@ -144,7 +144,7 @@ export function SavingsAccountForm({
       ) : (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          {t("Add savings account", "Agregar cuenta de ahorro")}
+          <span className="hidden md:inline">{t("Add savings account", "Agregar cuenta de ahorro")}</span>
         </DialogTrigger>
       )}
 

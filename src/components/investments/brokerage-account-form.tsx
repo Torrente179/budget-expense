@@ -95,7 +95,7 @@ export function BrokerageAccountForm({
       ) : (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
-          {t("Add broker", "Agregar broker")}
+          <span className="hidden md:inline">{t("Add broker", "Agregar broker")}</span>
         </DialogTrigger>
       )}
 

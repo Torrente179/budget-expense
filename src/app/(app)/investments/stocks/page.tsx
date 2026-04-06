@@ -132,19 +132,14 @@ export default function InvestmentStocksPage() {
 
       {accounts.length === 0 && !loading ? (
         <Card className="border-border/80 bg-card/96">
-          <CardContent className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
-            <div className="space-y-2">
-              <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
-                {t("Add positions directly", "Agrega posiciones directamente")}
-              </p>
-              <p className="max-w-2xl text-sm leading-6 text-muted-foreground">
-                {t(
-                  "Pick a broker like Trii, Interactive Brokers, Hapi, or any custom broker, enter the asset, quantity, and price, and the app will create the saved broker entry automatically if it does not exist yet.",
-                  "Elige un broker como Trii, Interactive Brokers, Hapi u otro personalizado, ingresa el activo, cantidad y precio, y la app creará automáticamente el registro del broker si aún no existe."
-                )}
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+          <CardContent className="flex items-center justify-between gap-4 p-5">
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "Add your first position to get started.",
+                "Agrega tu primera posición para empezar."
+              )}
+            </p>
+            <div className="flex shrink-0 gap-2">
               <TradeForm
                 accounts={accounts}
                 lookupPrice={lookupMarketPrice}
