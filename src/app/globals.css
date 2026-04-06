@@ -85,19 +85,19 @@
 
 .dark {
   color-scheme: dark;
-  --background: #070809;
+  --background: #1e1e1d;
   --foreground: #f5f7fa;
-  --card: #101114;
+  --card: #242423;
   --card-foreground: #f5f7fa;
-  --popover: #101114;
+  --popover: #242423;
   --popover-foreground: #f5f7fa;
   --primary: #f3f4f6;
-  --primary-foreground: #090a0c;
-  --secondary: #17191d;
+  --primary-foreground: #141413;
+  --secondary: #282c34;
   --secondary-foreground: #eff2f6;
-  --muted: #111318;
+  --muted: #262624;
   --muted-foreground: #8a92a2;
-  --accent: #17191d;
+  --accent: #282c34;
   --accent-foreground: #eff2f6;
   --destructive: #ec6b86;
   --border: rgba(255, 255, 255, 0.07);
@@ -108,11 +108,11 @@
   --chart-3: #97a0af;
   --chart-4: #d55f79;
   --chart-5: #c4cad4;
-  --sidebar: #090a0c;
+  --sidebar: #141413;
   --sidebar-foreground: #f5f7fa;
   --sidebar-primary: #f3f4f6;
-  --sidebar-primary-foreground: #090a0c;
-  --sidebar-accent: #17191d;
+  --sidebar-primary-foreground: #141413;
+  --sidebar-accent: #21252b;
   --sidebar-accent-foreground: #eff2f6;
   --sidebar-border: rgba(255, 255, 255, 0.06);
   --sidebar-ring: #dde2ea;
@@ -135,9 +135,9 @@
   }
   .dark body {
     background-image:
-      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.035), transparent 18%),
-      radial-gradient(circle at 68% 24%, rgba(24, 197, 143, 0.085), transparent 26%),
-      linear-gradient(180deg, #0b0c0f 0%, #08090b 48%, #070809 100%);
+      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.02), transparent 18%),
+      radial-gradient(circle at 68% 24%, rgba(24, 197, 143, 0.055), transparent 26%),
+      linear-gradient(180deg, #262624 0%, #212120 48%, #1e1e1d 100%);
   }
   ::selection {
     background: color-mix(in srgb, var(--primary) 18%, transparent);
