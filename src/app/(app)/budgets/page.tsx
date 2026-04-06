@@ -165,7 +165,7 @@ export default function BudgetsPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-8">
       <PageHeader title={t("Budgets", "Presupuestos")} description={sectionDescription}>
         <MonthPicker
           month={month}
@@ -217,7 +217,7 @@ export default function BudgetsPage() {
       </PageHeader>
 
       <section className="grid gap-4 xl:grid-cols-[1.45fr_1fr]">
-        <div className="rounded-[2rem] border border-border/80 bg-card/96 p-6 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.92)]">
+        <div className="rounded-[1.25rem] border border-border/80 bg-card/96 p-4 shadow-sm md:rounded-[2rem] md:p-6 md:shadow-[0_28px_80px_-54px_rgba(0,0,0,0.92)]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="space-y-3">
               <Badge variant="outline" className="bg-secondary/70 text-foreground">
@@ -231,11 +231,11 @@ export default function BudgetsPage() {
                     ? t("Protected pool", "Fondo protegido")
                     : t("Envelope total", "Total de sobres")}
                 </p>
-                <p className="mt-3 font-heading text-[3.6rem] font-semibold leading-none tracking-[-0.05em] text-foreground">
+                <p className="mt-3 font-heading text-[2rem] font-semibold leading-none tracking-[-0.05em] text-foreground md:text-[3.6rem]">
                   {formatCurrency(metrics.poolAmount, baseCurrency)}
                 </p>
               </div>
-              <p className="max-w-xl text-sm leading-6 text-muted-foreground">
+              <p className="hidden max-w-xl text-sm leading-6 text-muted-foreground md:block">
                 {metrics.hasPlan
                   ? t(
                       `You are protecting ${metrics.allocationPercent}% of ${formatCurrency(metrics.incomeAmount ?? 0, baseCurrency)} this month.`,
@@ -261,28 +261,28 @@ export default function BudgetsPage() {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
+          <div className="mt-4 grid gap-2 sm:grid-cols-3 md:mt-6 md:gap-3">
+            <div className="rounded-xl border border-border/70 bg-secondary/50 p-3 md:rounded-[1.35rem] md:p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("Consumed", "Consumido")}
               </p>
-              <p className="mt-3 font-mono text-2xl font-semibold">
+              <p className="mt-2 font-mono text-lg font-semibold md:mt-3 md:text-2xl">
                 {formatCurrency(metrics.consumedAmount, baseCurrency)}
               </p>
             </div>
-            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
+            <div className="rounded-xl border border-border/70 bg-secondary/50 p-3 md:rounded-[1.35rem] md:p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("Left", "Disponible")}
               </p>
-              <p className="mt-3 font-mono text-2xl font-semibold">
+              <p className="mt-2 font-mono text-lg font-semibold md:mt-3 md:text-2xl">
                 {formatCurrency(Math.abs(metrics.remainingAmount), baseCurrency)}
               </p>
             </div>
-            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/50 p-4">
+            <div className="rounded-xl border border-border/70 bg-secondary/50 p-3 md:rounded-[1.35rem] md:p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("Assigned to envelopes", "Asignado a sobres")}
               </p>
-              <p className="mt-3 font-mono text-2xl font-semibold">
+              <p className="mt-2 font-mono text-lg font-semibold md:mt-3 md:text-2xl">
                 {formatCurrency(metrics.assignedCategoryBudgetTotal, baseCurrency)}
               </p>
             </div>
@@ -305,13 +305,13 @@ export default function BudgetsPage() {
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-[2rem] border border-border/80 bg-card/96 p-5 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.9)]">
+          <div className="rounded-[1.25rem] border border-border/80 bg-card/96 p-4 shadow-sm md:rounded-[2rem] md:p-5 md:shadow-[0_28px_80px_-54px_rgba(0,0,0,0.9)]">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-2">
                 <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
                   {t("Envelope balance", "Balance de sobres")}
                 </p>
-                <p className="font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em]">
+                <p className="font-heading text-[1.5rem] font-semibold leading-none tracking-[-0.04em] md:text-[2rem]">
                   {formatCurrency(Math.abs(metrics.unassignedAmount), baseCurrency)}
                 </p>
               </div>
@@ -319,7 +319,7 @@ export default function BudgetsPage() {
                 <PiggyBank className="h-5 w-5" />
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            <p className="mt-4 hidden text-sm leading-6 text-muted-foreground md:block">
               {metrics.hasPlan
                 ? metrics.isOverAssigned
                   ? t(
@@ -353,7 +353,7 @@ export default function BudgetsPage() {
             )}
           </div>
 
-          <div className="rounded-[2rem] border border-border/80 bg-card/96 p-5 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.9)]">
+          <div className="rounded-[1.25rem] border border-border/80 bg-card/96 p-4 shadow-sm md:rounded-[2rem] md:p-5 md:shadow-[0_28px_80px_-54px_rgba(0,0,0,0.9)]">
             <div className="flex items-center gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-full bg-secondary text-muted-foreground">
                 <CircleDollarSign className="h-5 w-5" />
@@ -369,7 +369,7 @@ export default function BudgetsPage() {
                 </p>
               </div>
             </div>
-            <p className="mt-4 text-sm leading-6 text-muted-foreground">
+            <p className="mt-4 hidden text-sm leading-6 text-muted-foreground md:block">
               {metrics.hasPlan
                 ? t(
                     `${metrics.allocationPercent}% of income is protected for this month. Update it when your obligations or generosity goals change.`,
@@ -421,11 +421,11 @@ export default function BudgetsPage() {
               <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
                 {t("Category envelopes", "Sobres por categoría")}
               </p>
-              <h2 className="mt-2 font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em]">
+              <h2 className="mt-2 font-heading text-[1.35rem] font-semibold leading-none tracking-[-0.04em] md:text-[2rem]">
                 {t("Reserved with intention", "Reservado con intención")}
               </h2>
             </div>
-            <p className="max-w-md text-right text-sm leading-6 text-muted-foreground">
+            <p className="hidden max-w-md text-right text-sm leading-6 text-muted-foreground md:block">
               {t(
                 "Review each envelope as a guardrail inside the month, not as a separate budget system.",
                 "Revisa cada sobre como un límite dentro del mes, no como un sistema de presupuesto aparte."

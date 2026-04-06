@@ -65,7 +65,7 @@ export function BudgetCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="group rounded-[1.5rem] border border-border/80 bg-card/96 p-5 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.86)]"
+      className="group rounded-[1.25rem] border border-border/80 bg-card/96 p-4 shadow-sm md:rounded-[1.5rem] md:p-5 md:shadow-[0_28px_80px_-54px_rgba(0,0,0,0.86)]"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
@@ -89,14 +89,14 @@ export function BudgetCard({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+          className="h-8 w-8 text-muted-foreground opacity-30 transition-opacity hover:text-destructive md:opacity-0 md:group-hover:opacity-100"
           onClick={() => onDelete(budget.id)}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </Button>
       </div>
 
-      <div className="mt-5 grid gap-3 sm:grid-cols-3">
+      <div className="mt-3 grid gap-2 sm:grid-cols-3 md:mt-5 md:gap-3">
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
           <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
             {t("Reserved", "Reservado")}

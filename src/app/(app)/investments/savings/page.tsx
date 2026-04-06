@@ -50,7 +50,7 @@ export default function InvestmentSavingsPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <PageHeader
         title={t("Investments · Savings", "Inversiones · Cuentas de ahorro")}
         description={

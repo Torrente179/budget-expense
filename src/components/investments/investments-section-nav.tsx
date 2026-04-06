@@ -27,28 +27,26 @@ export function InvestmentsSectionNav() {
   const { t } = useLocale();
 
   return (
-    <div className="rounded-[1.35rem] border border-border/70 bg-card/80 p-1">
-      <div className="grid gap-1 sm:grid-cols-2">
-        {SECTION_ITEMS.map((item) => {
-          const isActive =
-            pathname === item.href || pathname.startsWith(`${item.href}/`);
+    <div className="flex gap-6 border-b border-border/60">
+      {SECTION_ITEMS.map((item) => {
+        const isActive =
+          pathname === item.href || pathname.startsWith(`${item.href}/`);
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "rounded-[1rem] px-3 py-2.5 text-center text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-secondary text-foreground ring-1 ring-border"
-                  : "text-muted-foreground hover:bg-secondary/45 hover:text-foreground"
-              )}
-            >
-              {t(item.label.en, item.label.es)}
-            </Link>
-          );
-        })}
-      </div>
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            className={cn(
+              "pb-2.5 text-sm font-medium transition-colors",
+              isActive
+                ? "border-b-2 border-foreground text-foreground"
+                : "text-muted-foreground"
+            )}
+          >
+            {t(item.label.en, item.label.es)}
+          </Link>
+        );
+      })}
     </div>
   );
 }
