@@ -15,7 +15,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/providers/locale-provider";
 
-export function MobileNavContent() {
+export function MobileNavContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
   const supabase = createClient();
@@ -65,6 +65,7 @@ export function MobileNavContent() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={onNavigate}
               className={cn(
                 "flex items-center gap-3 rounded-[1.15rem] px-3.5 py-3 text-sm font-medium transition-all duration-150",
                 isActive

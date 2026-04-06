@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { useTheme } from "next-themes";
 import { Moon, Sun, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -18,12 +19,13 @@ import { MobileCommandPalette } from "./mobile-command-palette";
 export function Topbar() {
   const { theme, setTheme } = useTheme();
   const { t } = useLocale();
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-background/80 px-4 py-3 backdrop-blur-2xl sm:px-5 lg:px-8">
       <div className="mx-auto flex w-full max-w-[1480px] items-center justify-between">
         <div className="flex items-center gap-2 md:hidden">
-          <Sheet>
+          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger
               render={
                 <Button
@@ -40,7 +42,7 @@ export function Topbar() {
               <SheetTitle className="sr-only">
                 {t("Navigation menu", "Menú de navegación")}
               </SheetTitle>
-              <MobileNavContent />
+              <MobileNavContent onNavigate={() => setSheetOpen(false)} />
             </SheetContent>
           </Sheet>
           <div className="flex h-8 w-8 items-center justify-center rounded-2xl border border-border bg-secondary">

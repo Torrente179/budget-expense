@@ -187,7 +187,7 @@ export default function BudgetsPage() {
           ) : (
             <Copy className="h-4 w-4" />
           )}
-          {t("Copy envelopes", "Copiar sobres")}
+          <span className="hidden sm:inline">{t("Copy envelopes", "Copiar sobres")}</span>
         </Button>
         <BudgetForm
           month={month}
@@ -196,7 +196,7 @@ export default function BudgetsPage() {
           trigger={
             <Button variant="outline" size="sm" className="gap-1.5">
               <Plus className="h-4 w-4" />
-              {t("Add envelope", "Agregar sobre")}
+              <span className="hidden sm:inline">{t("Add envelope", "Agregar sobre")}</span>
             </Button>
           }
         />
@@ -248,7 +248,7 @@ export default function BudgetsPage() {
               </p>
             </div>
 
-            <div className="rounded-[1.5rem] border border-border/70 bg-secondary/60 px-4 py-3">
+            <div className="hidden rounded-[1.5rem] border border-border/70 bg-secondary/60 px-4 py-3 sm:block">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 {getMonthName(month)} {year}
               </p>
@@ -261,7 +261,7 @@ export default function BudgetsPage() {
             </div>
           </div>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-3 md:mt-6 md:gap-3">
+          <div className="mt-4 grid grid-cols-3 gap-2 md:mt-6 md:gap-3">
             <div className="rounded-xl border border-border/70 bg-secondary/50 p-3 md:rounded-[1.35rem] md:p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("Consumed", "Consumido")}
@@ -304,7 +304,7 @@ export default function BudgetsPage() {
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="hidden space-y-4 xl:block">
           <div className="rounded-[1.25rem] border border-border/80 bg-card/96 p-4 shadow-sm md:rounded-[2rem] md:p-5 md:shadow-[0_28px_80px_-54px_rgba(0,0,0,0.9)]">
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-2">

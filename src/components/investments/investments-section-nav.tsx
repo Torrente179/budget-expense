@@ -27,7 +27,7 @@ export function InvestmentsSectionNav() {
   const { t } = useLocale();
 
   return (
-    <div className="flex gap-6 border-b border-border/60">
+    <div className="flex gap-2 sm:gap-6 sm:border-b sm:border-border/60">
       {SECTION_ITEMS.map((item) => {
         const isActive =
           pathname === item.href || pathname.startsWith(`${item.href}/`);
@@ -37,10 +37,10 @@ export function InvestmentsSectionNav() {
             key={item.href}
             href={item.href}
             className={cn(
-              "pb-2.5 text-sm font-medium transition-colors",
+              "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors sm:rounded-none sm:border-0 sm:border-b-2 sm:px-0 sm:pb-2.5 sm:text-sm",
               isActive
-                ? "border-b-2 border-foreground text-foreground"
-                : "text-muted-foreground"
+                ? "border-foreground bg-foreground/10 text-foreground sm:bg-transparent"
+                : "border-border text-muted-foreground sm:border-transparent"
             )}
           >
             {t(item.label.en, item.label.es)}

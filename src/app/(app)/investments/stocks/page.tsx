@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useState } from "react";
-import { Search, Trash2, Wallet } from "lucide-react";
+import { Search, Trash2 } from "lucide-react";
 import { useCurrency } from "@/providers/currency-provider";
 import { useInvestments } from "@/hooks/use-investments";
 import { formatCurrency } from "@/lib/utils";
@@ -176,10 +176,10 @@ export default function InvestmentStocksPage() {
             openPositionsCount={overview.openPositionsCount}
           />
 
-          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.35fr)_380px]">
+          <div className="xl:grid xl:grid-cols-[minmax(0,1.35fr)_380px] xl:gap-5">
             <HoldingsTable holdings={overview.holdings} />
 
-            <div className="space-y-5">
+            <div className="hidden space-y-5 xl:block">
               <Card className="border-border/80 bg-card/96">
                 <CardHeader className="border-b border-border/70">
                   <CardTitle>{t("Broker summary", "Resumen por broker")}</CardTitle>
@@ -440,7 +440,7 @@ export default function InvestmentStocksPage() {
         <TabsContent value="watchlist" className="space-y-5">
           <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
             <Card className="border-border/80 bg-card/96">
-              <CardContent className="grid gap-3 p-5 sm:grid-cols-3">
+              <CardContent className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
                 <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                     {t("Watchlist assets", "Activos en seguimiento")}
@@ -457,7 +457,7 @@ export default function InvestmentStocksPage() {
                     {overview.trackedAssetsCount}
                   </p>
                 </div>
-                <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+                <div className="hidden rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4 sm:block">
                   <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                     {t("Price refresh", "Actualización de precios")}
                   </p>
@@ -480,21 +480,6 @@ export default function InvestmentStocksPage() {
         </TabsContent>
       </Tabs>
 
-      {accounts.length === 0 && !loading ? (
-        <Card className="border-border/80 bg-card/96">
-          <CardContent className="py-6">
-            <div className="flex items-center gap-3 rounded-[1.25rem] border border-border/70 bg-secondary/35 p-4">
-              <Wallet className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm leading-6 text-muted-foreground">
-                {t(
-                  "Broker entries are lightweight now. Save a position first, then adjust broker defaults later if you want.",
-                  "Los registros de broker son simples al inicio. Guarda primero una posición y luego ajusta los valores por defecto si quieres."
-                )}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { PiggyBank, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { useCurrency } from "@/providers/currency-provider";
 import { useInvestments } from "@/hooks/use-investments";
 import {
@@ -76,7 +76,7 @@ export default function InvestmentSavingsPage() {
 
       <div>
         <Card className="border-border/80 bg-card/96">
-          <CardContent className="grid gap-3 p-5 sm:grid-cols-3">
+          <CardContent className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
             <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("Savings balance", "Saldo de ahorros")}
@@ -93,7 +93,7 @@ export default function InvestmentSavingsPage() {
                 {savingsAccounts.length}
               </p>
             </div>
-            <div className="rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4">
+            <div className="hidden rounded-[1.2rem] border border-border/70 bg-secondary/35 p-4 sm:block">
               <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
                 {t("Movements", "Movimientos")}
               </p>
@@ -105,7 +105,7 @@ export default function InvestmentSavingsPage() {
         </Card>
       </div>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_420px]">
+      <div className="xl:grid xl:grid-cols-[minmax(0,1.2fr)_420px] xl:gap-5">
         <SavingsTransferTable
           transfers={savingsTransfers}
           accounts={savingsAccounts}
@@ -114,7 +114,7 @@ export default function InvestmentSavingsPage() {
           onDelete={deleteSavingsTransfer}
         />
 
-        <Card className="border-border/80 bg-card/96">
+        <Card className="hidden border-border/80 bg-card/96 xl:block">
           <CardHeader className="border-b border-border/70">
             <CardTitle>{t("Savings accounts", "Cuentas de ahorro")}</CardTitle>
           </CardHeader>
@@ -186,21 +186,6 @@ export default function InvestmentSavingsPage() {
         </Card>
       </div>
 
-      {savingsAccounts.length === 0 && !loading ? (
-        <Card className="border-border/80 bg-card/96">
-          <CardContent className="py-6">
-            <div className="flex items-center gap-3 rounded-[1.25rem] border border-border/70 bg-secondary/35 p-4">
-              <PiggyBank className="h-5 w-5 text-muted-foreground" />
-              <p className="text-sm leading-6 text-muted-foreground">
-                {t(
-                  "Register a savings account first, then move funds from expenses or manual entries to keep each account balance updated.",
-                  "Registra primero una cuenta de ahorro y luego mueve fondos desde gastos o registros manuales para mantener actualizado el saldo de cada cuenta."
-                )}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }
