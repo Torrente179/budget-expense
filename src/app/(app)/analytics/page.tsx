@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useBudgets } from "@/hooks/use-budgets";
@@ -43,8 +44,16 @@ import {
 export default function AnalyticsPage() {
   const { locale, t } = useLocale();
   const { baseCurrency, convert } = useCurrency();
+  const router = useRouter();
   const [month, setMonth] = useState(getCurrentMonth());
   const [year, setYear] = useState(getCurrentYear());
+
+  const handleCategoryClick = useCallback(
+    (categoryId: string) => {
+      router.push(`/analytics/category/${categoryId}?month=${month}&year=${year}`);
+    },
+    [router, month, year]
+  );
 
   const { summary, loading } = useMonthlySummary({ month, year });
   const { expenses } = useExpenses({ month, year });
@@ -96,6 +105,7 @@ export default function AnalyticsPage() {
         const percent = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0;
         return {
           id: b.id,
+          categoryId: b.category_id,
           categoryName: b.categories.name,
           categoryIcon: b.categories.icon,
           categoryColor: b.categories.color,
@@ -265,6 +275,7 @@ export default function AnalyticsPage() {
             <div className="lg:col-span-2">
               <CategoryBreakdown
                 categoryBreakdown={summary.categoryBreakdown}
+                onCategoryClick={handleCategoryClick}
               />
             </div>
           </div>
@@ -311,7 +322,11 @@ export default function AnalyticsPage() {
                       initial={{ opacity: 0, y: 4 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: i * 0.03, duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-                      className="rounded-xl border border-border/70 bg-secondary/30 p-3"
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => handleCategoryClick(b.categoryId)}
+                      onKeyDown={(e) => { if (e.key === "Enter") handleCategoryClick(b.categoryId); }}
+                      className="cursor-pointer rounded-xl border border-border/70 bg-secondary/30 p-3 transition-colors hover:bg-secondary/50"
                     >
                       <div className="flex items-center gap-2.5">
                         <CategoryIcon
@@ -362,6 +377,7 @@ export default function AnalyticsPage() {
               expenseCount={summary.expenseCount}
               categoryBreakdown={summary.categoryBreakdown}
               budgets={budgets}
+              onCategoryClick={handleCategoryClick}
             />
             <GivingInsights
               expenses={givingExpenses}

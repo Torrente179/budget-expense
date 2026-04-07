@@ -4,6 +4,7 @@ type BudgetRow = Database["public"]["Tables"]["budgets"]["Row"];
 type ExpenseRow = Database["public"]["Tables"]["expenses"]["Row"];
 type MonthlyBudgetPlanRow =
   Database["public"]["Tables"]["monthly_budget_plans"]["Row"];
+type CustomBudgetRow = Database["public"]["Tables"]["custom_budgets"]["Row"];
 
 interface BudgetPoolMetricsArgs {
   plan: MonthlyBudgetPlanRow | null;
@@ -64,4 +65,30 @@ export function calculateBudgetPoolMetrics({
     isOverAssigned: Boolean(plan) && assignedCategoryBudgetTotal > poolAmount,
     hasPlan: Boolean(plan),
   };
+}
+
+/* ------------------------------------------------------------------ */
+/*  Custom Budgets                                                     */
+/* ------------------------------------------------------------------ */
+
+export function resolveCustomBudgetAmount(
+  budget: Pick<CustomBudgetRow, "amount_type" | "amount_value" | "currency">,
+  incomeAmount: number | null,
+  convert: (amount: number, fromCurrency: string) => number
+): number {
+  if (budget.amount_type === "percentage") {
+    return incomeAmount !== null ? incomeAmount * (budget.amount_value / 100) : 0;
+  }
+  return convert(budget.amount_value, budget.currency);
+}
+
+export function calculateCustomBudgetSpending(
+  categoryIds: string[],
+  expenses: ExpenseRow[],
+  convert: (amount: number, fromCurrency: string) => number
+): number {
+  const categorySet = new Set(categoryIds);
+  return expenses
+    .filter((e) => categorySet.has(e.category_id))
+    .reduce((sum, e) => sum + convert(e.amount, e.currency), 0);
 }

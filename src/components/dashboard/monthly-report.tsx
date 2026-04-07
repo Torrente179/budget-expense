@@ -52,6 +52,7 @@ interface MonthlyReportProps {
   expenseCount: number;
   categoryBreakdown: CategoryBreakdownItem[];
   budgets: BudgetItem[];
+  onCategoryClick?: (categoryId: string) => void;
 }
 
 /* ------------------------------------------------------------------ */
@@ -66,6 +67,7 @@ export function MonthlyReport({
   expenseCount,
   categoryBreakdown,
   budgets,
+  onCategoryClick,
 }: MonthlyReportProps) {
   const { baseCurrency, convert } = useCurrency();
   const { t } = useLocale();
@@ -269,7 +271,11 @@ export function MonthlyReport({
                     duration: 0.24,
                     ease: [0.22, 1, 0.36, 1],
                   }}
-                  className="rounded-xl border border-border/70 bg-secondary/30 p-3"
+                  role={onCategoryClick ? "button" : undefined}
+                  tabIndex={onCategoryClick ? 0 : undefined}
+                  onClick={onCategoryClick ? () => onCategoryClick(cat.category_id) : undefined}
+                  onKeyDown={onCategoryClick ? (e) => { if (e.key === "Enter") onCategoryClick(cat.category_id); } : undefined}
+                  className={`rounded-xl border border-border/70 bg-secondary/30 p-3${onCategoryClick ? " cursor-pointer transition-colors hover:bg-secondary/50" : ""}`}
                 >
                   <div className="flex items-center gap-2.5">
                     <CategoryIcon

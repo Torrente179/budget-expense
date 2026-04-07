@@ -289,6 +289,78 @@ export interface Database {
         };
         Relationships: [];
       };
+      custom_budgets: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          amount_type: string;
+          amount_value: number;
+          currency: string;
+          month: number;
+          year: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          amount_type: string;
+          amount_value: number;
+          currency?: string;
+          month: number;
+          year: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          amount_type?: string;
+          amount_value?: number;
+          currency?: string;
+          month?: number;
+          year?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      custom_budget_categories: {
+        Row: {
+          id: string;
+          custom_budget_id: string;
+          category_id: string;
+        };
+        Insert: {
+          id?: string;
+          custom_budget_id: string;
+          category_id: string;
+        };
+        Update: {
+          id?: string;
+          custom_budget_id?: string;
+          category_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "custom_budget_categories_custom_budget_id_fkey";
+            columns: ["custom_budget_id"];
+            isOneToOne: false;
+            referencedRelation: "custom_budgets";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "custom_budget_categories_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       brokerage_accounts: {
         Row: {
           id: string;

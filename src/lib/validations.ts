@@ -46,6 +46,28 @@ export const budgetSchema = z.object({
 
 export type BudgetFormValues = z.output<typeof budgetSchema>;
 
+export const customBudgetSchema = z
+  .object({
+    name: z.string().min(1, "Budget name is required").max(120),
+    amount_type: z.enum(["fixed", "percentage"]),
+    amount_value: z.coerce.number().positive("Amount must be greater than 0"),
+    currency: z.string().min(3).max(3),
+    category_ids: z
+      .array(z.string().uuid())
+      .min(1, "Select at least one category"),
+    month: z.coerce.number().int().min(1).max(12),
+    year: z.coerce.number().int().min(2020).max(2100),
+  })
+  .refine(
+    (data) => data.amount_type !== "percentage" || data.amount_value <= 100,
+    {
+      message: "Percentage cannot exceed 100%",
+      path: ["amount_value"],
+    }
+  );
+
+export type CustomBudgetFormValues = z.output<typeof customBudgetSchema>;
+
 export const monthlyBudgetPlanSchema = z.object({
   income_amount: z.coerce.number().positive("Income must be greater than 0"),
   income_currency: z.string().min(3).max(3),

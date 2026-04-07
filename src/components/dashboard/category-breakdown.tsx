@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useCurrency } from "@/providers/currency-provider";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useLocale } from "@/providers/locale-provider";
 import {
@@ -22,10 +22,12 @@ interface CategoryBreakdownProps {
     total_amount: number;
     expense_count: number;
   }[];
+  onCategoryClick?: (categoryId: string) => void;
 }
 
 export function CategoryBreakdown({
   categoryBreakdown,
+  onCategoryClick,
 }: CategoryBreakdownProps) {
   const { baseCurrency } = useCurrency();
   const { t } = useLocale();
@@ -36,6 +38,7 @@ export function CategoryBreakdown({
   }, []);
 
   const data = categoryBreakdown.map((cat) => ({
+    id: cat.category_id,
     name: cat.category_name,
     value: cat.total_amount,
     color: cat.category_color,
@@ -120,7 +123,14 @@ export function CategoryBreakdown({
             {data.slice(0, 5).map((cat) => (
               <div
                 key={cat.name}
-                className="py-3 text-sm first:pt-4 last:pb-4"
+                role={onCategoryClick ? "button" : undefined}
+                tabIndex={onCategoryClick ? 0 : undefined}
+                onClick={onCategoryClick ? () => onCategoryClick(cat.id) : undefined}
+                onKeyDown={onCategoryClick ? (e) => { if (e.key === "Enter") onCategoryClick(cat.id); } : undefined}
+                className={cn(
+                  "py-3 text-sm first:pt-4 last:pb-4",
+                  onCategoryClick && "cursor-pointer transition-colors hover:bg-secondary/60"
+                )}
               >
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-2">
