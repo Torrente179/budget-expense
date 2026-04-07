@@ -1,16 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   monthlyBudgetPlanSchema,
   type MonthlyBudgetPlanFormValues,
 } from "@/lib/validations";
+import { getBudgetingMethodById } from "@/lib/budgeting-methods";
 import { useCurrency } from "@/providers/currency-provider";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { formatCurrency } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/constants";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -30,7 +32,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CircleDollarSign, Loader2, Sparkles } from "lucide-react";
+import { CircleDollarSign, Layers, Loader2, Sparkles } from "lucide-react";
 import { useLocale } from "@/providers/locale-provider";
 
 interface MonthlyPlanFormProps {
@@ -39,6 +41,9 @@ interface MonthlyPlanFormProps {
   onSubmit: (values: MonthlyBudgetPlanFormValues) => Promise<unknown>;
   defaultValues?: Partial<MonthlyBudgetPlanFormValues>;
   trigger?: React.ReactNode;
+  /** When a budgeting method is applied, auto-open and show the method info */
+  appliedMethodId?: string | null;
+  onMethodConsumed?: () => void;
 }
 
 export function MonthlyPlanForm({
@@ -47,12 +52,31 @@ export function MonthlyPlanForm({
   onSubmit,
   defaultValues,
   trigger,
+  appliedMethodId,
+  onMethodConsumed,
 }: MonthlyPlanFormProps) {
-  const { t } = useLocale();
+  const { locale, t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
   const { baseCurrency } = useCurrency();
+
+  /* When a budgeting method is applied externally, auto-open the form */
+  const appliedMethod = useMemo(
+    () => (appliedMethodId ? getBudgetingMethodById(locale, appliedMethodId) : null),
+    [appliedMethodId, locale]
+  );
+
+  useEffect(() => {
+    if (appliedMethod) {
+      setOpen(true);
+      /* The total allocation % from the method serves as a suggested allocation */
+      const totalAlloc = appliedMethod.slices.reduce((sum, s) => sum + s.percent, 0);
+      form.setValue("allocation_percent", totalAlloc);
+      onMethodConsumed?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appliedMethod]);
 
   const form = useForm<MonthlyBudgetPlanFormValues>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -233,6 +257,35 @@ export function MonthlyPlanForm({
                 </p>
               )}
             </div>
+
+            {appliedMethod && (
+              <div className="rounded-[1.35rem] border border-amber-500/25 bg-amber-500/8 p-4">
+                <div className="flex items-center gap-2">
+                  <Layers className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <p className="text-sm font-medium text-foreground">
+                    {t("Method applied", "Método aplicado")}: {appliedMethod.name}
+                  </p>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                  {appliedMethod.tagline}
+                </p>
+                <div className="mt-3 flex flex-wrap gap-1.5">
+                  {appliedMethod.slices.map((s) => (
+                    <Badge
+                      key={s.key}
+                      variant="outline"
+                      className="bg-secondary/50 text-xs"
+                    >
+                      <span
+                        className="mr-1.5 inline-block h-2 w-2 rounded-full"
+                        style={{ backgroundColor: s.color }}
+                      />
+                      {s.label} {s.percent}%
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="rounded-[1.35rem] border border-border/70 bg-secondary/60 p-4 text-sm text-muted-foreground">
               {t(

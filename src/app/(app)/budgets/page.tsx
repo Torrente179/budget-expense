@@ -12,11 +12,13 @@ import {
   formatCurrency,
   getMonthName,
 } from "@/lib/utils";
+import type { BudgetingMethod } from "@/lib/budgeting-methods";
 import { PageHeader } from "@/components/layout/page-header";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { BudgetForm } from "@/components/budgets/budget-form";
 import { BudgetCard } from "@/components/budgets/budget-card";
 import { MonthlyPlanForm } from "@/components/budgets/monthly-plan-form";
+import { MethodSelector } from "@/components/budgets/method-selector";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -48,6 +50,7 @@ export default function BudgetsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [copying, setCopying] = useState(false);
+  const [appliedMethod, setAppliedMethod] = useState<string | null>(null);
   const { baseCurrency, convert } = useCurrency();
 
   const { budgets, loading, addBudget, deleteBudget, copyFromPreviousMonth } =
@@ -164,6 +167,20 @@ export default function BudgetsPage() {
     return error;
   }
 
+  function handleApplyMethod(method: BudgetingMethod) {
+    /* Sum the total allocation from the method (should be 100) */
+    const totalAllocation = method.slices.reduce((sum, s) => sum + s.percent, 0);
+    setAppliedMethod(method.id);
+
+    toast.success(
+      t(
+        `${method.name} method applied — ${totalAllocation}% allocation. Open the monthly plan to fine-tune income and percentages.`,
+        `Método ${method.name} aplicado — ${totalAllocation}% de asignación. Abre el plan mensual para ajustar ingreso y porcentajes.`
+      ),
+      { duration: 5000 }
+    );
+  }
+
   return (
     <div className="space-y-5 md:space-y-8">
       <PageHeader title={t("Budgets", "Presupuestos")} description={sectionDescription}>
@@ -189,6 +206,7 @@ export default function BudgetsPage() {
           )}
           <span className="hidden md:inline">{t("Copy envelopes", "Copiar sobres")}</span>
         </Button>
+        <MethodSelector onApply={handleApplyMethod} />
         <BudgetForm
           month={month}
           year={year}
@@ -204,6 +222,8 @@ export default function BudgetsPage() {
           month={month}
           year={year}
           onSubmit={handleSavePlan}
+          appliedMethodId={appliedMethod}
+          onMethodConsumed={() => setAppliedMethod(null)}
           defaultValues={
             plan
               ? {
