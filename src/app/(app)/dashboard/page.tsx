@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useExpenses } from "@/hooks/use-expenses";
+import { useBudgets } from "@/hooks/use-budgets";
 import { getBiblicalWisdomContent } from "@/lib/biblical-wisdom";
 import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
@@ -12,6 +13,8 @@ import { SummaryCards } from "@/components/dashboard/summary-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { CategoryBreakdown } from "@/components/dashboard/category-breakdown";
 import { RecentExpenses } from "@/components/dashboard/recent-expenses";
+import { GivingInsights } from "@/components/dashboard/giving-insights";
+import { MonthlyReport } from "@/components/dashboard/monthly-report";
 import { MobileDashboardOverview } from "@/components/dashboard/mobile-dashboard-overview";
 import { InvestmentDashboardSnapshot } from "@/components/investments/investment-dashboard-snapshot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,6 +34,23 @@ export default function DashboardPage() {
 
   const { summary, loading } = useMonthlySummary({ month, year });
   const { expenses } = useExpenses({ month, year });
+  const { budgets } = useBudgets({ month, year });
+
+  /* Map expenses for the giving component */
+  const givingExpenses = useMemo(
+    () =>
+      expenses.map((exp) => ({
+        id: exp.id,
+        amount: exp.amount,
+        currency: exp.currency,
+        description: exp.description,
+        categoryName: (exp as any).categories?.name ?? "Other",
+        categoryIcon: (exp as any).categories?.icon ?? "more-horizontal",
+        categoryColor: (exp as any).categories?.color ?? "#64748b",
+        category_id: exp.category_id,
+      })),
+    [expenses]
+  );
 
   const topCategory =
     summary.categoryBreakdown.length > 0
@@ -160,6 +180,23 @@ export default function DashboardPage() {
       </div>
 
       <RecentExpenses expenses={expenses} maxItems={4} />
+
+      {/* Giving insights & monthly report */}
+      <div className="hidden gap-4 md:grid lg:grid-cols-2">
+        <GivingInsights
+          expenses={givingExpenses}
+          totalIncome={summary.totalIncome}
+        />
+        <MonthlyReport
+          totalSpent={summary.totalSpent}
+          totalIncome={summary.totalIncome}
+          totalBudget={summary.totalBudget}
+          previousMonthTotal={summary.previousMonthTotal}
+          expenseCount={summary.expenseCount}
+          categoryBreakdown={summary.categoryBreakdown}
+          budgets={budgets}
+        />
+      </div>
 
       <InvestmentDashboardSnapshot />
     </div>

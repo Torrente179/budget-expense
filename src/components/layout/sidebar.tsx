@@ -11,6 +11,7 @@ import {
   LogOut,
   BookOpenText,
   CandlestickChart,
+  CalendarDays,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -25,6 +26,7 @@ export function Sidebar() {
     { href: "/dashboard", label: t("Dashboard", "Panel"), icon: LayoutDashboard },
     { href: "/movimientos", label: t("Movements", "Movimientos"), icon: ArrowUpDown },
     { href: "/budgets", label: t("Budgets", "Presupuestos"), icon: PiggyBank },
+    { href: "/calendar", label: t("Calendar", "Calendario"), icon: CalendarDays },
     {
       href: "/investments",
       label: t("Investments", "Inversiones"),
