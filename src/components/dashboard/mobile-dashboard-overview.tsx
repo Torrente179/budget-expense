@@ -13,6 +13,7 @@ import {
   ArrowDownRight,
   ArrowUpDown,
   ArrowUpRight,
+  CalendarDays,
   CandlestickChart,
   PiggyBank,
   Wallet,
@@ -132,6 +133,11 @@ export function MobileDashboardOverview({
       icon: PiggyBank,
     },
     {
+      href: "/calendar",
+      label: t("Calendar", "Calendario"),
+      icon: CalendarDays,
+    },
+    {
       href: "/movimientos",
       label: t("Movements", "Movimientos"),
       icon: ArrowUpDown,
@@ -208,12 +214,12 @@ export function MobileDashboardOverview({
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid grid-cols-4 gap-2">
             {quickActions.map((action) => (
               <Link
                 key={action.href}
                 href={action.href}
-                className="flex flex-col items-center gap-2 rounded-[1rem] border border-border/70 bg-secondary/45 px-2 py-2.5 text-center"
+                className="flex flex-col items-center gap-2 rounded-[1rem] border border-border/70 bg-secondary/45 px-1.5 py-2.5 text-center"
               >
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-card ring-1 ring-border/70">
                   <action.icon className="h-4 w-4 text-muted-foreground" />

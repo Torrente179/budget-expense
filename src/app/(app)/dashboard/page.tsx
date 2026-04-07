@@ -182,7 +182,7 @@ export default function DashboardPage() {
       <RecentExpenses expenses={expenses} maxItems={4} />
 
       {/* Giving insights & monthly report */}
-      <div className="hidden gap-4 md:grid lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <GivingInsights
           expenses={givingExpenses}
           totalIncome={summary.totalIncome}
