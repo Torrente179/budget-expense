@@ -42,7 +42,6 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
       } = await supabase.auth.getSession();
 
       const response = await fetch(`/api/expenses?${params.toString()}`, {
-        cache: "no-store",
         credentials: "include",
         headers: session?.access_token
           ? {

@@ -24,6 +24,10 @@ export function getServiceRoleEnv() {
   return { url, key };
 }
 
+// Singleton service-role client — reuse across requests in the same process
+let _serviceRoleClient: ReturnType<typeof createClient<Database>> | null = null;
+let _serviceRoleEnvSnapshot: { url: string; key: string } | null = null;
+
 export function createServiceRoleClient() {
   const env = getServiceRoleEnv();
 
@@ -31,14 +35,29 @@ export function createServiceRoleClient() {
     return null;
   }
 
-  return createClient<Database>(env.url, env.key, {
+  // Reuse existing client if env hasn't changed
+  if (
+    _serviceRoleClient &&
+    _serviceRoleEnvSnapshot?.url === env.url &&
+    _serviceRoleEnvSnapshot?.key === env.key
+  ) {
+    return _serviceRoleClient;
+  }
+
+  _serviceRoleClient = createClient<Database>(env.url, env.key, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
       detectSessionInUrl: false,
     },
   });
+  _serviceRoleEnvSnapshot = env;
+  return _serviceRoleClient;
 }
+
+// In-memory cache for resolved ledger users (email → User)
+const USER_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+const _userCache = new Map<string, { user: User; expiresAt: number }>();
 
 export async function resolveServiceRoleUserByEmail(
   email: string | null | undefined
@@ -47,6 +66,12 @@ export async function resolveServiceRoleUserByEmail(
 
   if (!normalizedEmail) {
     return null;
+  }
+
+  // Check cache first
+  const cached = _userCache.get(normalizedEmail);
+  if (cached && Date.now() < cached.expiresAt) {
+    return cached.user;
   }
 
   const supabase = createServiceRoleClient();
@@ -63,9 +88,18 @@ export async function resolveServiceRoleUserByEmail(
     throw error;
   }
 
-  return (
+  const found =
     data.users.find(
       (candidate) => candidate.email?.trim().toLowerCase() === normalizedEmail
-    ) ?? null
-  );
+    ) ?? null;
+
+  // Cache the result (including null → we store only hits)
+  if (found) {
+    _userCache.set(normalizedEmail, {
+      user: found,
+      expiresAt: Date.now() + USER_CACHE_TTL,
+    });
+  }
+
+  return found;
 }

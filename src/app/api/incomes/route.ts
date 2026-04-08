@@ -6,6 +6,7 @@ import {
   resolveServiceRoleUserByEmail,
 } from "@/lib/supabase/service-role";
 import { incomeSchema } from "@/lib/validations";
+import { cachedJson } from "@/lib/api-cache";
 
 const incomeQuerySchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
@@ -83,7 +84,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ incomes: data ?? [] });
+  return cachedJson({ incomes: data ?? [] });
 }
 
 export async function POST(request: NextRequest) {

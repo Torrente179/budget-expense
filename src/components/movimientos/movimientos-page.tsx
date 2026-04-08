@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
+import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import {
@@ -91,6 +92,7 @@ export function MovimientosPage() {
   } = useIncomes({ month, year, search: deferredSearch || undefined });
 
   const loading = loadingExpenses || loadingIncomes;
+  usePrefetchMonths(month, year, loading);
 
   const movements = useMemo<Movement[]>(() => {
     const expenseItems: Movement[] = expenses.map((e) => ({

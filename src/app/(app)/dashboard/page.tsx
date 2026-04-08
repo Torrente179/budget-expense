@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useBudgets } from "@/hooks/use-budgets";
+import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { getBiblicalWisdomContent } from "@/lib/biblical-wisdom";
 import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
@@ -35,6 +36,7 @@ export default function DashboardPage() {
   const { summary, loading } = useMonthlySummary({ month, year });
   const { expenses } = useExpenses({ month, year });
   const { budgets } = useBudgets({ month, year });
+  usePrefetchMonths(month, year, loading);
 
   /* Map expenses for the giving component */
   const givingExpenses = useMemo(

@@ -13,6 +13,7 @@ import {
   isMissingTableError,
   logSuppressedSupabaseError,
 } from "@/lib/supabase/postgrest-errors";
+import { cachedJson } from "@/lib/api-cache";
 
 const summaryQuerySchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
@@ -234,7 +235,7 @@ export async function GET(request: NextRequest) {
   }
 
   // Return raw rows — currency conversion happens on the client
-  return NextResponse.json({
+  return cachedJson({
     expenses,
     incomes,
     prevExpenses,

@@ -23,12 +23,21 @@ export function getMonthDateRange(month: number, year: number) {
   return { startDate, endDate };
 }
 
+// Deduplicate sync calls: once synced for a user+month, skip for SYNC_COOLDOWN
+const SYNC_COOLDOWN = 5 * 60 * 1000; // 5 minutes
+const _syncCache = new Map<string, number>();
+
 export async function syncRecurringExpensesForMonth({
   supabase,
   userId,
   month,
   year,
 }: SyncRecurringExpensesOptions) {
+  const cacheKey = `${userId}:${year}-${month}`;
+  const lastSync = _syncCache.get(cacheKey);
+  if (lastSync && Date.now() - lastSync < SYNC_COOLDOWN) {
+    return;
+  }
   const { startDate, endDate } = getMonthDateRange(month, year);
   const { data: recurringExpenses, error } = await supabase
     .from("recurring_expenses")
@@ -50,6 +59,7 @@ export async function syncRecurringExpensesForMonth({
   }
 
   if (!recurringExpenses || recurringExpenses.length === 0) {
+    _syncCache.set(cacheKey, Date.now());
     return;
   }
 
@@ -77,6 +87,7 @@ export async function syncRecurringExpensesForMonth({
   }
 
   if (recurringInsertRows.length === 0) {
+    _syncCache.set(cacheKey, Date.now());
     return;
   }
 
@@ -91,4 +102,6 @@ export async function syncRecurringExpensesForMonth({
   if (upsertError) {
     throw upsertError;
   }
+
+  _syncCache.set(cacheKey, Date.now());
 }

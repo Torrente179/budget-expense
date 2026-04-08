@@ -35,7 +35,6 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
       } = await supabase.auth.getSession();
 
       const response = await fetch(`/api/incomes?${params.toString()}`, {
-        cache: "no-store",
         credentials: "include",
         headers: session?.access_token
           ? {
