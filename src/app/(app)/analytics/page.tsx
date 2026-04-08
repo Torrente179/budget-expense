@@ -365,87 +365,88 @@ export default function AnalyticsPage() {
           )}
 
           {/* -------------------------------------------------------- */}
-          {/*  Monthly report + Giving & Income sidebar                */}
+          {/*  Monthly report (full width)                             */}
           {/* -------------------------------------------------------- */}
 
-          <div className="grid gap-4 lg:grid-cols-5">
-            <div className="lg:col-span-3">
-              <MonthlyReport
-                totalSpent={summary.totalSpent}
-                totalIncome={summary.totalIncome}
-                totalBudget={summary.totalBudget}
-                previousMonthTotal={summary.previousMonthTotal}
-                expenseCount={summary.expenseCount}
-                categoryBreakdown={summary.categoryBreakdown}
-                budgets={budgets}
-                onCategoryClick={handleCategoryClick}
-              />
-            </div>
-            <div className="space-y-4 lg:col-span-2">
-              <GivingInsights
-                expenses={givingExpenses}
-                totalIncome={summary.totalIncome}
-              />
+          <MonthlyReport
+            totalSpent={summary.totalSpent}
+            totalIncome={summary.totalIncome}
+            totalBudget={summary.totalBudget}
+            previousMonthTotal={summary.previousMonthTotal}
+            expenseCount={summary.expenseCount}
+            categoryBreakdown={summary.categoryBreakdown}
+            budgets={budgets}
+            onCategoryClick={handleCategoryClick}
+          />
 
-              {incomeBySource.length > 0 && (
-                <Card className="border-border/80 bg-card/96">
-                  <CardHeader className="space-y-3 pb-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="space-y-2">
-                        <Badge variant="outline" className="bg-secondary/70 text-foreground">
-                          {t("Income analysis", "Análisis de ingresos")}
-                        </Badge>
-                        <CardTitle className="font-heading text-[1.5rem] font-semibold leading-none tracking-[-0.04em] md:text-[2rem]">
-                          {t("Income sources", "Fuentes de ingreso")}
-                        </CardTitle>
-                      </div>
-                      <div className="flex h-12 w-12 items-center justify-center rounded-[1.4rem] bg-secondary text-emerald-400">
-                        <TrendingUp className="h-5 w-5" />
-                      </div>
+          {/* -------------------------------------------------------- */}
+          {/*  Giving + Income side-by-side                            */}
+          {/* -------------------------------------------------------- */}
+
+          <div className="grid gap-4 lg:grid-cols-2">
+            <GivingInsights
+              expenses={givingExpenses}
+              totalIncome={summary.totalIncome}
+            />
+
+            {incomeBySource.length > 0 && (
+              <Card className="border-border/80 bg-card/96">
+                <CardHeader className="space-y-3 pb-3">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="space-y-2">
+                      <Badge variant="outline" className="bg-secondary/70 text-foreground">
+                        {t("Income analysis", "Análisis de ingresos")}
+                      </Badge>
+                      <CardTitle className="font-heading text-[1.5rem] font-semibold leading-none tracking-[-0.04em] md:text-[2rem]">
+                        {t("Income sources", "Fuentes de ingreso")}
+                      </CardTitle>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
-                    {incomeBySource.map((src, i) => {
-                      const maxAmount = incomeBySource[0]?.total ?? 1;
-                      const barPercent = (src.total / maxAmount) * 100;
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[1.4rem] bg-secondary text-emerald-400">
+                      <TrendingUp className="h-5 w-5" />
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {incomeBySource.map((src, i) => {
+                    const maxAmount = incomeBySource[0]?.total ?? 1;
+                    const barPercent = (src.total / maxAmount) * 100;
 
-                      return (
-                        <motion.div
-                          key={src.source}
-                          initial={{ opacity: 0, x: -6 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          transition={{ delay: i * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-                          className="rounded-xl border border-border/70 bg-secondary/30 p-3"
-                        >
-                          <div className="flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2.5">
-                              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/12">
-                                <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-500" />
-                              </div>
-                              <p className="truncate text-sm font-medium">{src.source}</p>
+                    return (
+                      <motion.div
+                        key={src.source}
+                        initial={{ opacity: 0, x: -6 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+                        className="rounded-xl border border-border/70 bg-secondary/30 p-3"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-500/12">
+                              <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-500" />
                             </div>
-                            <span className="shrink-0 font-mono text-sm font-medium text-emerald-600 dark:text-emerald-400">
-                              {formatCurrency(src.total, baseCurrency)}
-                            </span>
+                            <p className="truncate text-sm font-medium">{src.source}</p>
                           </div>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
-                            <div
-                              className="h-full rounded-full bg-emerald-500 transition-all duration-500"
-                              style={{ width: `${barPercent}%` }}
-                            />
-                          </div>
-                          {summary.totalIncome > 0 && (
-                            <p className="mt-1 text-right text-[0.65rem] text-muted-foreground">
-                              {((src.total / summary.totalIncome) * 100).toFixed(0)}% {t("of total income", "del ingreso total")}
-                            </p>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+                          <span className="shrink-0 font-mono text-sm font-medium text-emerald-600 dark:text-emerald-400">
+                            {formatCurrency(src.total, baseCurrency)}
+                          </span>
+                        </div>
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-secondary">
+                          <div
+                            className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+                            style={{ width: `${barPercent}%` }}
+                          />
+                        </div>
+                        {summary.totalIncome > 0 && (
+                          <p className="mt-1 text-right text-[0.65rem] text-muted-foreground">
+                            {((src.total / summary.totalIncome) * 100).toFixed(0)}% {t("of total income", "del ingreso total")}
+                          </p>
+                        )}
+                      </motion.div>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
           </div>
         </>
       )}

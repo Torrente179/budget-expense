@@ -78,6 +78,11 @@ export function MonthlyReport({
     [categoryBreakdown]
   );
 
+  const MAX_VISIBLE_CATEGORIES = 5;
+  const visibleCategories = sortedCategories.slice(0, MAX_VISIBLE_CATEGORIES);
+  const hiddenCategories = sortedCategories.slice(MAX_VISIBLE_CATEGORIES);
+  const hiddenTotal = hiddenCategories.reduce((sum, c) => sum + c.total_amount, 0);
+
   const topCategory = sortedCategories[0] ?? null;
   const maxCategoryAmount = topCategory?.total_amount ?? 1;
 
@@ -256,7 +261,8 @@ export function MonthlyReport({
             <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
               {t("Spending by category", "Gasto por categoría")}
             </p>
-            {sortedCategories.map((cat, index) => {
+            <div className="grid gap-2 lg:grid-cols-2">
+            {visibleCategories.map((cat, index) => {
               const budget = budgetMap.get(cat.category_id);
               const barPercent = maxCategoryAmount > 0 ? (cat.total_amount / maxCategoryAmount) * 100 : 0;
               const overBudget = budget !== undefined && cat.total_amount > budget;
@@ -333,6 +339,17 @@ export function MonthlyReport({
                 </motion.div>
               );
             })}
+            </div>
+            {hiddenCategories.length > 0 && (
+              <div className="flex items-center justify-between rounded-xl px-3 py-2 text-xs text-muted-foreground">
+                <span>
+                  +{hiddenCategories.length} {t("more categories", "categorías más")}
+                </span>
+                <span className="font-mono">
+                  {formatCurrency(hiddenTotal, baseCurrency)}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Insights */}
