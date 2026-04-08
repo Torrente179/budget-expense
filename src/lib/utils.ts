@@ -71,3 +71,46 @@ export function getCurrentMonth() {
 export function getCurrentYear() {
   return new Date().getFullYear();
 }
+
+export function normalizeDecimalInput(value: string) {
+  const compact = value.trim().replace(/\s+/g, "");
+
+  if (!compact) {
+    return "";
+  }
+
+  const lastComma = compact.lastIndexOf(",");
+  const lastDot = compact.lastIndexOf(".");
+
+  if (lastComma !== -1 && lastDot !== -1) {
+    if (lastComma > lastDot) {
+      return compact.replace(/\./g, "").replace(",", ".");
+    }
+
+    return compact.replace(/,/g, "");
+  }
+
+  if (lastComma !== -1) {
+    return compact.replace(/,/g, ".");
+  }
+
+  return compact;
+}
+
+export function parseDecimalInput(value: unknown) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : Number.NaN;
+  }
+
+  if (typeof value !== "string") {
+    return Number.NaN;
+  }
+
+  const normalized = normalizeDecimalInput(value);
+
+  if (!normalized) {
+    return Number.NaN;
+  }
+
+  return Number(normalized);
+}

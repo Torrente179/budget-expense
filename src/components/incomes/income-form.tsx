@@ -7,7 +7,7 @@ import { format } from "date-fns";
 import { Loader2, Plus, TrendingUp } from "lucide-react";
 import { incomeSchema, type IncomeFormValues } from "@/lib/validations";
 import { useCurrency } from "@/providers/currency-provider";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, parseDecimalInput } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/constants";
 import { useLocale } from "@/providers/locale-provider";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,7 @@ export function IncomeForm({ onSubmit, defaultValues, trigger }: IncomeFormProps
     defaultValues: resolvedDefaults,
   });
 
-  const amount = Number(form.watch("amount")) || 0;
+  const amount = parseDecimalInput(form.watch("amount")) || 0;
   const currency = form.watch("currency");
   const source = form.watch("source")?.trim() ?? "";
   const description = form.watch("description")?.trim() ?? "";
@@ -174,12 +174,14 @@ export function IncomeForm({ onSubmit, defaultValues, trigger }: IncomeFormProps
                       <Label htmlFor="amount">{t("Amount", "Monto")}</Label>
                       <Input
                         id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
                         placeholder="0.00"
                         className="h-11 font-mono text-base"
-                        {...form.register("amount")}
+                        {...form.register("amount", {
+                          setValueAs: (value) => parseDecimalInput(value),
+                        })}
                       />
                       {form.formState.errors.amount && (
                         <p className="text-xs text-destructive">

@@ -33,6 +33,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { parseDecimalInput } from "@/lib/utils";
 
 interface RecurringExpenseFormProps {
   onSubmit: (values: RecurringExpenseFormValues) => Promise<unknown>;
@@ -167,12 +168,14 @@ export function RecurringExpenseForm({
                     <Label htmlFor="recurring-amount">{t("Amount", "Monto")}</Label>
                     <Input
                       id="recurring-amount"
-                      type="number"
-                      step="0.01"
-                      min="0.01"
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
                       placeholder="0.00"
                       className="h-11 font-mono text-base"
-                      {...form.register("amount")}
+                      {...form.register("amount", {
+                        setValueAs: (value) => parseDecimalInput(value),
+                      })}
                     />
                     {form.formState.errors.amount && (
                       <p className="text-xs text-destructive">

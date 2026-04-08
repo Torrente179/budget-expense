@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { expenseSchema, type ExpenseFormValues } from "@/lib/validations";
 import { useCurrency } from "@/providers/currency-provider";
 import { useCategories } from "@/hooks/use-categories";
-import { formatCurrency } from "@/lib/utils";
+import { formatCurrency, parseDecimalInput } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -82,7 +82,7 @@ export function ExpenseForm({
     defaultValues: resolvedDefaults,
   });
 
-  const amount = Number(form.watch("amount")) || 0;
+  const amount = parseDecimalInput(form.watch("amount")) || 0;
   const currency = form.watch("currency");
   const categoryId = form.watch("category_id");
   const description = form.watch("description")?.trim() ?? "";
@@ -187,12 +187,14 @@ export function ExpenseForm({
                       <Label htmlFor="amount">{t("Amount", "Monto")}</Label>
                       <Input
                         id="amount"
-                        type="number"
-                        step="0.01"
-                        min="0.01"
+                        type="text"
+                        inputMode="decimal"
+                        autoComplete="off"
                         placeholder="0.00"
                         className="h-11 font-mono text-base"
-                        {...form.register("amount")}
+                        {...form.register("amount", {
+                          setValueAs: (value) => parseDecimalInput(value),
+                        })}
                       />
                       {form.formState.errors.amount && (
                         <p className="text-xs text-destructive">

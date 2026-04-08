@@ -1,7 +1,13 @@
 import { z } from "zod";
+import { parseDecimalInput } from "@/lib/utils";
+
+const positiveAmountSchema = z.preprocess(
+  (value) => parseDecimalInput(value),
+  z.number({ error: "Enter a valid amount" }).positive("Amount must be greater than 0")
+);
 
 export const expenseSchema = z.object({
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amount: positiveAmountSchema,
   currency: z.string().min(3).max(3),
   category_id: z.string().uuid("Please select a category"),
   description: z.string().max(255).optional(),
@@ -11,7 +17,7 @@ export const expenseSchema = z.object({
 export type ExpenseFormValues = z.output<typeof expenseSchema>;
 
 export const recurringExpenseSchema = z.object({
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amount: positiveAmountSchema,
   currency: z.string().min(3).max(3),
   category_id: z.string().uuid("Please select a category"),
   description: z.string().max(255).optional(),
@@ -27,7 +33,7 @@ export const recurringExpenseSchema = z.object({
 export type RecurringExpenseFormValues = z.output<typeof recurringExpenseSchema>;
 
 export const incomeSchema = z.object({
-  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  amount: positiveAmountSchema,
   currency: z.string().min(3).max(3),
   source: z.string().min(1, "Source is required").max(100),
   description: z.string().max(255).optional(),
