@@ -125,6 +125,18 @@
   html {
     @apply font-sans;
   }
+  @media (min-width: 768px) {
+    @supports (zoom: 90%) {
+      html {
+        zoom: 90%;
+      }
+    }
+    @supports not (zoom: 90%) {
+      html {
+        font-size: 90%;
+      }
+    }
+  }
   body {
     @apply bg-background text-foreground;
     background-image:
