@@ -18,6 +18,54 @@ export type CustomBudget =
     }>;
   };
 
+type CustomBudgetWithOptionalRelations =
+  Database["public"]["Tables"]["custom_budgets"]["Row"] & {
+    custom_budget_categories:
+      | Array<{
+          id: string;
+          category_id: string;
+          categories: CategoryRow | null;
+        }>
+      | null;
+  };
+
+function normalizeCustomBudgets(
+  rows: CustomBudgetWithOptionalRelations[]
+): CustomBudget[] {
+  let droppedCategoryLinks = 0;
+
+  const normalized = rows.map((budget) => {
+    const normalizedCategories = Array.isArray(budget.custom_budget_categories)
+      ? budget.custom_budget_categories
+          .filter((link) => {
+            const isValid = Boolean(link?.categories);
+            if (!isValid) {
+              droppedCategoryLinks += 1;
+            }
+            return isValid;
+          })
+          .map((link) => ({
+            id: link.id,
+            category_id: link.category_id,
+            categories: link.categories as CategoryRow,
+          }))
+      : [];
+
+    return {
+      ...budget,
+      custom_budget_categories: normalizedCategories,
+    };
+  });
+
+  if (droppedCategoryLinks > 0) {
+    console.warn(
+      `[useCustomBudgets] Ignored ${droppedCategoryLinks} category link${droppedCategoryLinks === 1 ? "" : "s"} with missing category rows`
+    );
+  }
+
+  return normalized;
+}
+
 interface UseCustomBudgetsOptions {
   month: number;
   year: number;
@@ -44,7 +92,9 @@ export function useCustomBudgets({ month, year }: UseCustomBudgetsOptions) {
         fallback: [] as CustomBudget[],
       });
 
-      setCustomBudgets(data as CustomBudget[]);
+      setCustomBudgets(
+        normalizeCustomBudgets(data as CustomBudgetWithOptionalRelations[])
+      );
     } catch {
       setCustomBudgets([]);
     }
@@ -171,11 +221,15 @@ export function useCustomBudgets({ month, year }: UseCustomBudgetsOptions) {
 
     if (!prevBudgets || prevBudgets.length === 0) return 0;
 
+    const normalizedPreviousBudgets = normalizeCustomBudgets(
+      prevBudgets as CustomBudgetWithOptionalRelations[]
+    );
+
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return 0;
 
     let copied = 0;
-    for (const budget of prevBudgets as CustomBudget[]) {
+    for (const budget of normalizedPreviousBudgets) {
       const { data: inserted, error } = await supabase
         .from("custom_budgets")
         .upsert(

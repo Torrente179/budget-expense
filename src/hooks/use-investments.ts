@@ -27,6 +27,70 @@ import type {
   InvestmentWatchlistFormValues,
 } from "@/lib/validations";
 
+type TradeWithOptionalJoins = Omit<
+  InvestmentTradeWithJoins,
+  "brokerage_accounts" | "investment_assets"
+> & {
+  brokerage_accounts: InvestmentTradeWithJoins["brokerage_accounts"] | null;
+  investment_assets: InvestmentTradeWithJoins["investment_assets"] | null;
+};
+
+type CashMovementWithOptionalJoins = Omit<
+  InvestmentCashMovementWithJoins,
+  "brokerage_accounts"
+> & {
+  brokerage_accounts: InvestmentCashMovementWithJoins["brokerage_accounts"] | null;
+};
+
+type WatchlistWithOptionalJoins = Omit<
+  InvestmentWatchlistWithJoins,
+  "investment_assets"
+> & {
+  investment_assets: InvestmentWatchlistWithJoins["investment_assets"] | null;
+};
+
+type SavingsTransferWithOptionalJoins = Omit<
+  InvestmentSavingsTransferWithJoins,
+  "investment_savings_accounts"
+> & {
+  investment_savings_accounts:
+    | InvestmentSavingsTransferWithJoins["investment_savings_accounts"]
+    | null;
+};
+
+function hasTradeJoins(trade: TradeWithOptionalJoins): trade is InvestmentTradeWithJoins {
+  return Boolean(trade.brokerage_accounts && trade.investment_assets);
+}
+
+function hasCashMovementJoins(
+  movement: CashMovementWithOptionalJoins
+): movement is InvestmentCashMovementWithJoins {
+  return Boolean(movement.brokerage_accounts);
+}
+
+function hasWatchlistJoins(
+  item: WatchlistWithOptionalJoins
+): item is InvestmentWatchlistWithJoins {
+  return Boolean(item.investment_assets);
+}
+
+function hasSavingsTransferJoins(
+  transfer: SavingsTransferWithOptionalJoins
+): transfer is InvestmentSavingsTransferWithJoins {
+  return Boolean(transfer.investment_savings_accounts);
+}
+
+function logDroppedRows(label: string, before: number, after: number) {
+  if (after >= before) {
+    return;
+  }
+
+  const dropped = before - after;
+  console.warn(
+    `[useInvestments] Ignored ${dropped} ${label} row${dropped === 1 ? "" : "s"} with missing related records`
+  );
+}
+
 type BrokerageAccount = {
   id: string;
   user_id: string;
@@ -286,13 +350,47 @@ export function useInvestments() {
         fallback: [],
       });
 
+      const normalizedTrades = (trades as TradeWithOptionalJoins[]).filter(
+        hasTradeJoins
+      );
+      const normalizedCashMovements = (
+        cashMovements as CashMovementWithOptionalJoins[]
+      ).filter(hasCashMovementJoins);
+      const normalizedSavingsTransfers = (
+        savingsTransfers as SavingsTransferWithOptionalJoins[]
+      ).filter(hasSavingsTransferJoins);
+      const normalizedWatchlist = (
+        watchlist as WatchlistWithOptionalJoins[]
+      ).filter(hasWatchlistJoins);
+
+      logDroppedRows(
+        "trade",
+        (trades as TradeWithOptionalJoins[]).length,
+        normalizedTrades.length
+      );
+      logDroppedRows(
+        "cash movement",
+        (cashMovements as CashMovementWithOptionalJoins[]).length,
+        normalizedCashMovements.length
+      );
+      logDroppedRows(
+        "savings transfer",
+        (savingsTransfers as SavingsTransferWithOptionalJoins[]).length,
+        normalizedSavingsTransfers.length
+      );
+      logDroppedRows(
+        "watchlist",
+        (watchlist as WatchlistWithOptionalJoins[]).length,
+        normalizedWatchlist.length
+      );
+
       setAccounts(accounts as BrokerageAccount[]);
       setAssets(assets as InvestmentAssetRow[]);
-      setTrades(trades as InvestmentTradeWithJoins[]);
-      setCashMovements(cashMovements as InvestmentCashMovementWithJoins[]);
+      setTrades(normalizedTrades);
+      setCashMovements(normalizedCashMovements);
       setSavingsAccounts(savingsAccounts as InvestmentSavingsAccountRow[]);
-      setSavingsTransfers(savingsTransfers as InvestmentSavingsTransferWithJoins[]);
-      setWatchlist(watchlist as InvestmentWatchlistWithJoins[]);
+      setSavingsTransfers(normalizedSavingsTransfers);
+      setWatchlist(normalizedWatchlist);
     } catch (error) {
       console.error("Failed to fetch investments data", error);
       setAccounts([]);
