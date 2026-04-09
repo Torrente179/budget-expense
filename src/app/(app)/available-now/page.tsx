@@ -37,7 +37,7 @@ type ActivityItem = {
 };
 
 export default function AvailableNowPage() {
-  const { t, intlLocale } = useLocale();
+  const { t, tc, intlLocale } = useLocale();
   const { baseCurrency, convert } = useCurrency();
   const [month, setMonth] = useState(getCurrentMonth());
   const [year, setYear] = useState(getCurrentYear());
@@ -72,8 +72,8 @@ export default function AvailableNowPage() {
     const expenseItems: ActivityItem[] = expenses.map((expense) => ({
       id: expense.id,
       type: "expense",
-      title: expense.description || expense.categories.name,
-      subtitle: expense.categories.name,
+      title: expense.description || tc(expense.categories.name),
+      subtitle: tc(expense.categories.name),
       amount: -convert(expense.amount, expense.currency),
       date: expense.date,
     }));
@@ -98,7 +98,7 @@ export default function AvailableNowPage() {
     return [...incomeItems, ...expenseItems, ...transferItems]
       .sort((left, right) => right.date.localeCompare(left.date))
       .slice(0, 8);
-  }, [convert, expenses, incomes, savingsTransfers, t]);
+  }, [convert, expenses, incomes, savingsTransfers, t, tc]);
 
   const chartData = useMemo(() => {
     const netByDate = new Map<string, number>();
@@ -454,10 +454,10 @@ export default function AvailableNowPage() {
                 >
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
-                      {expense.description || expense.categories.name}
+                      {expense.description || tc(expense.categories.name)}
                     </p>
                     <p className="truncate text-xs text-muted-foreground">
-                      {expense.categories.name} • {formatDate(expense.date, "MMM d")}
+                      {tc(expense.categories.name)} • {formatDate(expense.date, "MMM d")}
                     </p>
                   </div>
                   <p className="font-mono text-sm font-semibold text-destructive tabular-nums">
@@ -509,10 +509,10 @@ export default function AvailableNowPage() {
               >
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium text-foreground">
-                    {expense.description || expense.categories.name}
+                    {expense.description || tc(expense.categories.name)}
                   </p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {expense.categories.name} • {formatDate(expense.date, "MMM d")}
+                    {tc(expense.categories.name)} • {formatDate(expense.date, "MMM d")}
                   </p>
                 </div>
                 <p className="font-mono text-sm font-semibold text-destructive tabular-nums">

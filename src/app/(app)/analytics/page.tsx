@@ -12,7 +12,6 @@ import {
   getCurrentMonth,
   getCurrentYear,
   formatCurrency,
-  getMonthName,
 } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header";
 import { MonthPicker } from "@/components/shared/month-picker";
@@ -29,12 +28,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import {
   ArrowDownLeft,
-  ArrowUpRight,
-  BarChart3,
-  HandHeart,
   PiggyBank,
   TrendingUp,
-  Wallet,
 } from "lucide-react";
 
 /* ------------------------------------------------------------------ */
@@ -42,7 +37,7 @@ import {
 /* ------------------------------------------------------------------ */
 
 export default function AnalyticsPage() {
-  const { locale, t } = useLocale();
+  const { t, tc } = useLocale();
   const { baseCurrency, convert } = useCurrency();
   const router = useRouter();
   const [month, setMonth] = useState(getCurrentMonth());
@@ -68,9 +63,9 @@ export default function AnalyticsPage() {
         amount: exp.amount,
         currency: exp.currency,
         description: exp.description,
-        categoryName: (exp as any).categories?.name ?? "Other",
-        categoryIcon: (exp as any).categories?.icon ?? "more-horizontal",
-        categoryColor: (exp as any).categories?.color ?? "#64748b",
+        categoryName: exp.categories?.name ?? "Other",
+        categoryIcon: exp.categories?.icon ?? "more-horizontal",
+        categoryColor: exp.categories?.color ?? "#64748b",
         category_id: exp.category_id,
       })),
     [expenses]
@@ -136,9 +131,6 @@ export default function AnalyticsPage() {
 
     return { savingsRate, expenseToIncomeRatio, budgetUsage };
   }, [summary]);
-
-  const monthLabel = `${getMonthName(month, locale)} ${year}`;
-
   return (
     <div className="space-y-5 md:space-y-8">
       <PageHeader
@@ -336,7 +328,7 @@ export default function AnalyticsPage() {
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
-                            <p className="truncate text-sm font-medium">{b.categoryName}</p>
+                            <p className="truncate text-sm font-medium">{tc(b.categoryName)}</p>
                             <div className="flex items-center gap-2">
                               {b.over && (
                                 <Badge
@@ -371,9 +363,7 @@ export default function AnalyticsPage() {
           <MonthlyReport
             totalSpent={summary.totalSpent}
             totalIncome={summary.totalIncome}
-            totalBudget={summary.totalBudget}
             previousMonthTotal={summary.previousMonthTotal}
-            expenseCount={summary.expenseCount}
             categoryBreakdown={summary.categoryBreakdown}
             budgets={budgets}
             onCategoryClick={handleCategoryClick}

@@ -8,7 +8,6 @@ import { useBudgets } from "@/hooks/use-budgets";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import {
-  cn,
   formatCurrency,
   formatDate,
   getCurrentMonth,
@@ -45,7 +44,7 @@ import {
 /* ------------------------------------------------------------------ */
 
 export default function CategoryDetailPage() {
-  const { locale, t } = useLocale();
+  const { locale, t, tc } = useLocale();
   const { baseCurrency, convert } = useCurrency();
   const params = useParams<{ id: string }>();
   const searchParams = useSearchParams();
@@ -68,7 +67,7 @@ export default function CategoryDetailPage() {
 
   /* Category metadata from first expense */
   const category = useMemo(() => {
-    const first = expenses[0] as any;
+    const first = expenses[0];
     if (!first?.categories) return null;
     return {
       name: first.categories.name as string,
@@ -160,7 +159,7 @@ export default function CategoryDetailPage() {
                   {monthLabel}
                 </p>
                 <h1 className="mt-1 font-heading text-[1.75rem] font-semibold leading-none tracking-[-0.04em] md:text-[2.2rem]">
-                  {catMeta?.name ?? t("Category", "Categoría")}
+                  {catMeta ? tc(catMeta.name) : t("Category", "Categoría")}
                 </h1>
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   <p className="font-mono text-lg font-semibold">
@@ -247,7 +246,7 @@ export default function CategoryDetailPage() {
                           )}
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-foreground">
-                              {expense.description || catMeta?.name || "—"}
+                              {expense.description || (catMeta ? tc(catMeta.name) : "—")}
                             </p>
                             <p className="truncate text-xs text-muted-foreground">
                               {expense.currency !== baseCurrency

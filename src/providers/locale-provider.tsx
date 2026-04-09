@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { type AppLocale, getIntlLocale, resolveAppLocale } from "@/lib/utils";
-import { CATEGORY_TRANSLATIONS } from "@/lib/constants";
+import { translateCategoryName } from "@/lib/constants";
 
 const LOCALE_STORAGE_KEY = "be-locale";
 const LOCALE_COOKIE_KEY = "be_locale";
@@ -20,7 +20,7 @@ interface LocaleContextValue {
   intlLocale: string;
   setLocale: (locale: AppLocale) => void;
   t: (english: string, spanish: string) => string;
-  /** Translate a category name stored in English to the active locale. */
+  /** Translate a category name to the active locale, including legacy aliases. */
   tc: (name: string) => string;
 }
 
@@ -75,8 +75,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   );
 
   const tc = useCallback(
-    (name: string) =>
-      locale === "es" ? (CATEGORY_TRANSLATIONS[name] ?? name) : name,
+    (name: string) => translateCategoryName(name, locale),
     [locale]
   );
 

@@ -6,7 +6,6 @@ import { useLocale } from "@/providers/locale-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
 import { CategoryIcon } from "@/components/shared/category-badge";
 import {
   ArrowDown,
@@ -14,8 +13,6 @@ import {
   BarChart3,
   Equal,
   Lightbulb,
-  TrendingDown,
-  TrendingUp,
 } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -47,9 +44,7 @@ interface BudgetItem {
 interface MonthlyReportProps {
   totalSpent: number;
   totalIncome: number;
-  totalBudget: number;
   previousMonthTotal: number;
-  expenseCount: number;
   categoryBreakdown: CategoryBreakdownItem[];
   budgets: BudgetItem[];
   onCategoryClick?: (categoryId: string) => void;
@@ -62,15 +57,13 @@ interface MonthlyReportProps {
 export function MonthlyReport({
   totalSpent,
   totalIncome,
-  totalBudget,
   previousMonthTotal,
-  expenseCount,
   categoryBreakdown,
   budgets,
   onCategoryClick,
 }: MonthlyReportProps) {
   const { baseCurrency, convert } = useCurrency();
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
 
   /* Sort categories by amount descending */
   const sortedCategories = useMemo(
@@ -139,11 +132,12 @@ export function MonthlyReport({
 
     if (topCategory && totalSpent > 0) {
       const topPercent = (topCategory.total_amount / totalSpent) * 100;
+      const topCategoryName = tc(topCategory.category_name);
       if (topPercent > 40) {
         items.push(
           t(
-            `${topCategory.category_name} represents ${topPercent.toFixed(0)}% of total spending — review if this aligns with your priorities.`,
-            `${topCategory.category_name} representa el ${topPercent.toFixed(0)}% del gasto total — revisa si esto se alinea con tus prioridades.`
+            `${topCategoryName} represents ${topPercent.toFixed(0)}% of total spending — review if this aligns with your priorities.`,
+            `${topCategoryName} representa el ${topPercent.toFixed(0)}% del gasto total — revisa si esto se alinea con tus prioridades.`
           )
         );
       }
@@ -181,7 +175,7 @@ export function MonthlyReport({
     }
 
     return items;
-  }, [totalSpent, totalIncome, topCategory, monthChange, sortedCategories, budgetMap, t]);
+  }, [totalSpent, totalIncome, topCategory, monthChange, sortedCategories, budgetMap, t, tc]);
 
   if (sortedCategories.length === 0) return null;
 
@@ -292,7 +286,7 @@ export function MonthlyReport({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <p className="truncate text-sm font-medium">
-                          {cat.category_name}
+                          {tc(cat.category_name)}
                         </p>
                         <div className="flex items-center gap-2">
                           {overBudget && (

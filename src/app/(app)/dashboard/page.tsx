@@ -46,9 +46,9 @@ export default function DashboardPage() {
         amount: exp.amount,
         currency: exp.currency,
         description: exp.description,
-        categoryName: (exp as any).categories?.name ?? "Other",
-        categoryIcon: (exp as any).categories?.icon ?? "more-horizontal",
-        categoryColor: (exp as any).categories?.color ?? "#64748b",
+        categoryName: exp.categories?.name ?? "Other",
+        categoryIcon: exp.categories?.icon ?? "more-horizontal",
+        categoryColor: exp.categories?.color ?? "#64748b",
         category_id: exp.category_id,
       })),
     [expenses]
@@ -192,9 +192,7 @@ export default function DashboardPage() {
         <MonthlyReport
           totalSpent={summary.totalSpent}
           totalIncome={summary.totalIncome}
-          totalBudget={summary.totalBudget}
           previousMonthTotal={summary.previousMonthTotal}
-          expenseCount={summary.expenseCount}
           categoryBreakdown={summary.categoryBreakdown}
           budgets={budgets}
         />

@@ -40,29 +40,54 @@ export const DEFAULT_CATEGORIES = [
   { name: "Other", icon: "more-horizontal", color: "#64748b" },
 ] as const;
 
-export const CATEGORY_TRANSLATIONS: Record<string, string> = {
-  "Food & Dining": "Alimentación y Restaurantes",
-  Transportation: "Transporte",
-  Housing: "Vivienda",
-  Utilities: "Servicios",
-  Entertainment: "Entretenimiento",
-  Shopping: "Compras",
-  Healthcare: "Salud",
-  Education: "Educación",
-  Travel: "Viajes",
-  Subscriptions: "Suscripciones",
-  Groceries: "Supermercado",
-  Other: "Otros",
-  Taxes: "Impuestos",
-  "Professional Services": "Servicios Profesionales",
-  Donations: "Donaciones",
-  "Personal Care": "Cuidado Personal",
-  "Tithe / Diezmo": "Diezmo",
-};
+const CATEGORY_LOCALIZATIONS = [
+  { en: "Food & Dining", es: "Alimentación y Restaurantes" },
+  { en: "Transportation", es: "Transporte" },
+  { en: "Housing", es: "Vivienda" },
+  { en: "Utilities", es: "Servicios" },
+  { en: "Entertainment", es: "Entretenimiento" },
+  { en: "Shopping", es: "Compras" },
+  { en: "Healthcare", es: "Salud" },
+  { en: "Education", es: "Educación" },
+  { en: "Travel", es: "Viajes" },
+  { en: "Subscriptions", es: "Suscripciones" },
+  { en: "Groceries", es: "Supermercado" },
+  { en: "Other", es: "Otros" },
+  { en: "Taxes", es: "Impuestos" },
+  { en: "Professional Services", es: "Servicios Profesionales" },
+  { en: "Donations", es: "Donaciones" },
+  { en: "Personal Care", es: "Cuidado Personal" },
+  { en: "Tithe", es: "Diezmo", aliases: ["Tithe / Diezmo"] },
+] as const satisfies ReadonlyArray<{
+  en: string;
+  es: string;
+  aliases?: readonly string[];
+}>;
+
+function normalizeCategoryKey(name: string): string {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+const CATEGORY_TRANSLATION_INDEX = CATEGORY_LOCALIZATIONS.reduce<
+  Record<string, { en: string; es: string }>
+>((acc, category) => {
+  const aliases = "aliases" in category ? category.aliases : [];
+  for (const key of [category.en, category.es, ...aliases]) {
+    acc[normalizeCategoryKey(key)] = { en: category.en, es: category.es };
+  }
+  return acc;
+}, {});
+
+export const CATEGORY_TRANSLATIONS: Record<string, string> = Object.fromEntries(
+  CATEGORY_LOCALIZATIONS.map((category) => [category.en, category.es])
+);
 
 export function translateCategoryName(name: string, locale: string): string {
-  if (locale === "es") {
-    return CATEGORY_TRANSLATIONS[name] ?? name;
-  }
-  return name;
+  const translation = CATEGORY_TRANSLATION_INDEX[normalizeCategoryKey(name)];
+  if (!translation) return name;
+  return locale === "es" ? translation.es : translation.en;
 }
