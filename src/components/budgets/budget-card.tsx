@@ -33,7 +33,7 @@ export function BudgetCard({
   onDelete,
 }: BudgetCardProps) {
   const { baseCurrency, convert } = useCurrency();
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const budgetAmount = convert(budget.amount, budget.currency);
   const spentAmount = convert(spent, spentCurrency);
   const remaining = budgetAmount - spentAmount;
@@ -75,7 +75,7 @@ export function BudgetCard({
             className="h-10 w-10 rounded-2xl"
           />
           <div>
-            <p className="text-base font-medium">{budget.categories.name}</p>
+            <p className="text-base font-medium">{tc(budget.categories.name)}</p>
             <p className="mt-1 text-sm text-muted-foreground">
               {shareOfPool > 0
                 ? t(

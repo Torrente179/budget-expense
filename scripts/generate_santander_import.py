@@ -35,6 +35,7 @@ CUSTOM_CATEGORIES = [
     ("Professional Services", "briefcase", "#0369a1", False),
     ("Donations", "heart-handshake", "#d97706", False),
     ("Personal Care", "sparkles", "#c026d3", False),
+    ("Tithe / Diezmo", "church", "#10b981", False),
 ]
 
 CATEGORY_ORDER = [name for name, *_ in DEFAULT_CATEGORIES + CUSTOM_CATEGORIES]
@@ -128,7 +129,6 @@ PATTERN_RULES = [
             "vida nueva",
             "ofrenda",
             "ofrendas",
-            "wise euro",
             "family support",
             "solidaridad",
             "donation",
@@ -150,10 +150,12 @@ PATTERN_RULES = [
     (
         "Subscriptions",
         (
+            "anthropic",
             "claude",
             "openai",
             "chatgpt",
             "google one",
+            "google *cloud",
             "icloud",
             "amazon prime",
             "uber one",
@@ -305,6 +307,13 @@ PATTERN_RULES = [
             "waffles",
             "ananda",
             "todo fresa",
+            "tgtg",
+            "toogoodtogo",
+            "montaditos",
+            "sidreria",
+            "7 canadas",
+            "teleferico",
+            "menester",
         ),
     ),
 ]
@@ -497,6 +506,66 @@ def chunked(rows: Iterable[str], size: int) -> Iterable[list[str]]:
             chunk = []
     if chunk:
         yield chunk
+
+
+def assign_tithe_from_wise_transfers(
+    expenses: list[ExpenseRow],
+    incomes: list[IncomeRow],
+    explicit_monthly_income: Decimal | None = None,
+) -> tuple[list[ExpenseRow], int]:
+    """For each month, find the Wise transfer closest to 10 % of income and
+    reclassify it as 'Tithe / Diezmo'.
+
+    Returns the (possibly updated) expense list and the count of tithe
+    assignments made.
+    """
+    income_by_month: dict[str, Decimal] = {}
+    for inc in incomes:
+        month = inc.date[:7]
+        income_by_month[month] = income_by_month.get(month, Decimal(0)) + inc.amount
+
+    # If an explicit monthly income is given, use it for every month that has
+    # Wise transfers (overrides CSV-derived income when the latter is lower).
+    if explicit_monthly_income:
+        wise_months = {exp.date[:7] for exp in expenses if "wise" in exp.description.lower()}
+        for month in wise_months:
+            income_by_month[month] = max(
+                income_by_month.get(month, Decimal(0)),
+                explicit_monthly_income,
+            )
+
+    # Group expense indices that look like Wise transfers, by month.
+    wise_indices_by_month: dict[str, list[int]] = {}
+    for i, exp in enumerate(expenses):
+        if "wise" in exp.description.lower():
+            month = exp.date[:7]
+            wise_indices_by_month.setdefault(month, []).append(i)
+
+    result = list(expenses)
+    tithe_count = 0
+
+    for month, indices in wise_indices_by_month.items():
+        monthly_income = income_by_month.get(month, Decimal(0))
+        if monthly_income <= 0:
+            continue
+
+        tithe_target = monthly_income * Decimal("0.10")
+        best_idx = min(indices, key=lambda i: abs(result[i].amount - tithe_target))
+        best_diff = abs(result[best_idx].amount - tithe_target)
+
+        # Accept if within 25 % tolerance of the tithe target.
+        if tithe_target > 0 and best_diff / tithe_target <= Decimal("0.25"):
+            old = result[best_idx]
+            result[best_idx] = ExpenseRow(
+                category_name="Tithe / Diezmo",
+                amount=old.amount,
+                currency=old.currency,
+                description=old.description,
+                date=old.date,
+            )
+            tithe_count += 1
+
+    return result, tithe_count
 
 
 def build_import_sql(
@@ -824,12 +893,23 @@ def main() -> None:
         "--user-id",
         help="Optional explicit auth.users UUID to bake into the generated SQL",
     )
+    parser.add_argument(
+        "--monthly-income",
+        type=Decimal,
+        default=None,
+        help="Override monthly income for tithe detection (e.g. 1500.00). "
+        "When provided, the Wise transfer closest to 10%% of this amount "
+        "is classified as 'Tithe / Diezmo'.",
+    )
     args = parser.parse_args()
 
     csv_path = Path(args.csv).expanduser().resolve()
     output_path = Path(args.output).expanduser().resolve()
 
     expenses, incomes, stats = build_rows(csv_path)
+    expenses, tithe_count = assign_tithe_from_wise_transfers(
+        expenses, incomes, args.monthly_income,
+    )
     sql = build_import_sql(expenses, incomes, str(csv_path), args.user_id)
     output_path.write_text(sql + "\n", encoding="utf-8")
 
@@ -837,6 +917,7 @@ def main() -> None:
     print(f"Expenses: {stats['expense_rows']}")
     print(f"Income/refunds: {stats['income_rows']}")
     print(f"Skipped internal transfers: {stats['skipped_no_computable']}")
+    print(f"Tithe transfers detected: {tithe_count}")
 
 
 if __name__ == "__main__":

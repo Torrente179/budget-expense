@@ -43,7 +43,7 @@ export function BudgetForm({
   defaultValues,
   trigger,
 }: BudgetFormProps) {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const { baseCurrency } = useCurrency();
@@ -126,7 +126,7 @@ export function BudgetForm({
                         color={cat.color}
                         className="h-5 w-5"
                       />
-                      <span className="text-sm">{cat.name}</span>
+                      <span className="text-sm">{tc(cat.name)}</span>
                     </div>
                   </SelectItem>
                 ))}

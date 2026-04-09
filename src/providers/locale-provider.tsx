@@ -10,6 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { type AppLocale, getIntlLocale, resolveAppLocale } from "@/lib/utils";
+import { CATEGORY_TRANSLATIONS } from "@/lib/constants";
 
 const LOCALE_STORAGE_KEY = "be-locale";
 const LOCALE_COOKIE_KEY = "be_locale";
@@ -19,6 +20,8 @@ interface LocaleContextValue {
   intlLocale: string;
   setLocale: (locale: AppLocale) => void;
   t: (english: string, spanish: string) => string;
+  /** Translate a category name stored in English to the active locale. */
+  tc: (name: string) => string;
 }
 
 const LocaleContext = createContext<LocaleContextValue | null>(null);
@@ -71,14 +74,21 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     [locale]
   );
 
+  const tc = useCallback(
+    (name: string) =>
+      locale === "es" ? (CATEGORY_TRANSLATIONS[name] ?? name) : name,
+    [locale]
+  );
+
   const value = useMemo(
     () => ({
       locale,
       intlLocale: getIntlLocale(locale),
       setLocale,
       t,
+      tc,
     }),
-    [locale, setLocale, t]
+    [locale, setLocale, t, tc]
   );
 
   return (

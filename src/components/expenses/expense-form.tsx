@@ -48,7 +48,7 @@ export function ExpenseForm({
   trigger,
   categories: categoriesProp,
 }: ExpenseFormProps) {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -258,7 +258,7 @@ export function ExpenseForm({
                                   color={category.color}
                                   className="h-5 w-5 rounded-xl"
                                 />
-                                <span>{category.name}</span>
+                                <span>{tc(category.name)}</span>
                               </div>
                             </SelectItem>
                           ))}
@@ -342,7 +342,7 @@ export function ExpenseForm({
                       <div className="mt-1.5">
                         {selectedCategory ? (
                           <CategoryBadge
-                            name={selectedCategory.name}
+                            name={tc(selectedCategory.name)}
                             icon={selectedCategory.icon}
                             color={selectedCategory.color}
                             className="rounded-lg px-2.5 py-1"

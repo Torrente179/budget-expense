@@ -19,7 +19,7 @@ interface RecentExpensesProps {
 }
 
 export function RecentExpenses({ expenses, maxItems = 5 }: RecentExpensesProps) {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const visibleExpenses = expenses.slice(0, maxItems);
 
   return (
@@ -56,14 +56,14 @@ export function RecentExpenses({ expenses, maxItems = 5 }: RecentExpensesProps) 
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="min-w-0">
                     <p className="truncate text-sm font-medium text-foreground">
-                      {expense.description || expense.categories.name}
+                      {expense.description || tc(expense.categories.name)}
                     </p>
                     <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
                       <span>
                         {formatDate(expense.date, "MMM d")}
                       </span>
                       <CategoryBadge
-                        name={expense.categories.name}
+                        name={tc(expense.categories.name)}
                         icon={expense.categories.icon}
                         color={expense.categories.color}
                       />

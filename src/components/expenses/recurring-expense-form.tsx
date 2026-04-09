@@ -46,7 +46,7 @@ export function RecurringExpenseForm({
   defaultValues,
   trigger,
 }: RecurringExpenseFormProps) {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const { baseCurrency } = useCurrency();
   const { categories } = useCategories();
   const [open, setOpen] = useState(false);
@@ -236,7 +236,7 @@ export function RecurringExpenseForm({
                   <SelectContent>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id} className="text-sm">
-                        {category.name}
+                        {tc(category.name)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -248,7 +248,7 @@ export function RecurringExpenseForm({
                 )}
                 {selectedCategory && (
                   <p className="text-xs text-muted-foreground">
-                    {t("Selected", "Seleccionada")}: {selectedCategory.name}
+                    {t("Selected", "Seleccionada")}: {tc(selectedCategory.name)}
                   </p>
                 )}
               </div>

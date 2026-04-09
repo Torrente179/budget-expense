@@ -36,7 +36,7 @@ export function ExpenseFilters({
   onSearchChange,
   categories,
 }: ExpenseFiltersProps) {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
 
   return (
     <div className="rounded-[1.65rem] border border-border/80 bg-card/96 p-4 shadow-[0_28px_80px_-54px_rgba(0,0,0,0.86)]">
@@ -77,7 +77,7 @@ export function ExpenseFilters({
                 </SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id} className="text-sm">
-                    {cat.name}
+                    {tc(cat.name)}
                   </SelectItem>
                 ))}
               </SelectContent>

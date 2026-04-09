@@ -30,7 +30,7 @@ export function CategoryBreakdown({
   onCategoryClick,
 }: CategoryBreakdownProps) {
   const { baseCurrency } = useCurrency();
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -39,7 +39,7 @@ export function CategoryBreakdown({
 
   const data = categoryBreakdown.map((cat) => ({
     id: cat.category_id,
-    name: cat.category_name,
+    name: tc(cat.category_name),
     value: cat.total_amount,
     color: cat.category_color,
     count: cat.expense_count,
@@ -138,7 +138,7 @@ export function CategoryBreakdown({
                       className="h-2.5 w-2.5 rounded-full"
                       style={{ backgroundColor: cat.color }}
                     />
-                    <span className="font-medium text-foreground">{cat.name}</span>
+                    <span className="font-medium text-foreground">{tc(cat.name)}</span>
                   </div>
                   <span className="font-mono text-xs text-muted-foreground">
                     {total > 0 ? ((cat.value / total) * 100).toFixed(0) : 0}%

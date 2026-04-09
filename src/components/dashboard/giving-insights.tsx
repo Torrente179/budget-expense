@@ -77,7 +77,7 @@ interface GivingInsightsProps {
 
 export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
   const { baseCurrency, convert } = useCurrency();
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
 
   const analysis = useMemo(() => {
     const givingExpenses = expenses.filter(isGivingExpense);
@@ -215,7 +215,7 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
                     className="h-7 w-7 rounded-lg"
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{cat.name}</p>
+                    <p className="truncate text-sm font-medium">{tc(cat.name)}</p>
                     <p className="text-xs text-muted-foreground">
                       {cat.count} {t("transaction", "transacci")}{cat.count !== 1 ? (t("s", "ones")) : (t("", "ón"))}
                     </p>

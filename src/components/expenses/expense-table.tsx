@@ -45,7 +45,7 @@ export function ExpenseTable({
 }: ExpenseTableProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -95,11 +95,11 @@ export function ExpenseTable({
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="min-w-0">
                 <p className="truncate text-base font-medium text-foreground">
-                  {expense.description || expense.categories?.name || "Uncategorized"}
+                  {expense.description || tc(expense.categories?.name || "Uncategorized")}
                 </p>
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <CategoryBadge
-                    name={expense.categories?.name || "Uncategorized"}
+                    name={tc(expense.categories?.name || "Uncategorized")}
                     icon={expense.categories?.icon || "receipt"}
                     color={expense.categories?.color || "#64748b"}
                     size="md"
@@ -123,7 +123,7 @@ export function ExpenseTable({
                 </div>
                 {expense.description && expense.description !== expense.categories?.name && (
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {expense.categories?.name || "Uncategorized"}
+                    {tc(expense.categories?.name || "Uncategorized")}
                   </p>
                 )}
               </div>

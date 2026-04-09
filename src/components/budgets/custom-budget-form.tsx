@@ -72,7 +72,7 @@ export function CustomBudgetForm({
   controlledOpen,
   onOpenChange,
 }: CustomBudgetFormProps) {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const open = isControlled ? controlledOpen : internalOpen;
@@ -379,7 +379,7 @@ export function CustomBudgetForm({
                                 className="h-6 w-6 rounded-lg"
                               />
                               <span className="flex-1 text-sm">
-                                {cat.name}
+                                {tc(cat.name)}
                               </span>
                               {isSelected && (
                                 <Check className="h-4 w-4 text-foreground" />
@@ -402,7 +402,7 @@ export function CustomBudgetForm({
                   {selectedCategories.map((cat) => (
                     <CategoryBadge
                       key={cat.id}
-                      name={cat.name}
+                      name={tc(cat.name)}
                       icon={cat.icon}
                       color={cat.color}
                     />

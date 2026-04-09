@@ -61,7 +61,7 @@ type Movement = {
 type TabFilter = "all" | "expenses" | "incomes";
 
 export function MovimientosPage() {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const { baseCurrency, convert } = useCurrency();
   const [month, setMonth] = useState(getCurrentMonth());
   const [year, setYear] = useState(getCurrentYear());
@@ -98,8 +98,8 @@ export function MovimientosPage() {
     const expenseItems: Movement[] = expenses.map((e) => ({
       id: e.id,
       type: "expense",
-      name: e.description || e.categories?.name || "—",
-      category: e.categories?.name || "—",
+      name: e.description || tc(e.categories?.name || "—"),
+      category: tc(e.categories?.name || "—"),
       categoryIcon: e.categories?.icon || "receipt",
       categoryColor: e.categories?.color || "#64748b",
       amount: e.amount,

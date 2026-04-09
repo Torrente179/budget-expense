@@ -45,7 +45,7 @@ export function MobileDashboardOverview({
   year,
 }: MobileDashboardOverviewProps) {
   const { baseCurrency } = useCurrency();
-  const { t, intlLocale } = useLocale();
+  const { t, tc, intlLocale } = useLocale();
 
   const monthLabel = useMemo(
     () =>
@@ -353,7 +353,7 @@ export function MobileDashboardOverview({
             </p>
             <p className="text-right text-xs font-medium text-foreground">
               {topCategory
-                ? `${topCategory.name} · ${formatCurrency(topCategory.amount, baseCurrency)}`
+                ? `${tc(topCategory.name)} · ${formatCurrency(topCategory.amount, baseCurrency)}`
                 : t("No activity yet", "Sin actividad todavía")}
             </p>
           </div>

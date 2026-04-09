@@ -29,7 +29,7 @@ export function CustomBudgetCard({
   onEdit,
 }: CustomBudgetCardProps) {
   const { baseCurrency } = useCurrency();
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const remaining = resolvedAmount - spent;
   const percentage = resolvedAmount > 0 ? (spent / resolvedAmount) * 100 : 0;
   const cappedPercentage = Math.min(percentage, 100);
@@ -105,7 +105,7 @@ export function CustomBudgetCard({
           {categories.map((cat) => (
             <CategoryBadge
               key={cat.id}
-              name={cat.name}
+              name={tc(cat.name)}
               icon={cat.icon}
               color={cat.color}
             />

@@ -37,7 +37,7 @@ export function RecurringExpenseSection({
   year,
   onChanged,
 }: RecurringExpenseSectionProps) {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const {
     recurringExpenses,
     loading,
@@ -161,11 +161,11 @@ export function RecurringExpenseSection({
                     <div className="min-w-0 space-y-2">
                       <p className="truncate text-sm font-medium">
                         {recurringExpense.description ||
-                          recurringExpense.categories.name}
+                          tc(recurringExpense.categories.name)}
                       </p>
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <CategoryBadge
-                          name={recurringExpense.categories.name}
+                          name={tc(recurringExpense.categories.name)}
                           icon={recurringExpense.categories.icon}
                           color={recurringExpense.categories.color}
                           size="md"
@@ -271,8 +271,8 @@ export function RecurringExpenseSection({
             <DialogDescription>
               {deletingItem
                 ? t(
-                    `Future automatic debits for "${deletingItem.description || deletingItem.categories.name}" will stop.`,
-                    `Los débitos automáticos futuros para "${deletingItem.description || deletingItem.categories.name}" se detendrán.`
+                    `Future automatic debits for "${deletingItem.description || tc(deletingItem.categories.name)}" will stop.`,
+                    `Los débitos automáticos futuros para "${deletingItem.description || tc(deletingItem.categories.name)}" se detendrán.`
                   )
                 : t(
                     "Future automatic debits from this rule will stop.",

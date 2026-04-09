@@ -39,3 +39,30 @@ export const DEFAULT_CATEGORIES = [
   { name: "Groceries", icon: "shopping-cart", color: "#22c55e" },
   { name: "Other", icon: "more-horizontal", color: "#64748b" },
 ] as const;
+
+export const CATEGORY_TRANSLATIONS: Record<string, string> = {
+  "Food & Dining": "Alimentación y Restaurantes",
+  Transportation: "Transporte",
+  Housing: "Vivienda",
+  Utilities: "Servicios",
+  Entertainment: "Entretenimiento",
+  Shopping: "Compras",
+  Healthcare: "Salud",
+  Education: "Educación",
+  Travel: "Viajes",
+  Subscriptions: "Suscripciones",
+  Groceries: "Supermercado",
+  Other: "Otros",
+  Taxes: "Impuestos",
+  "Professional Services": "Servicios Profesionales",
+  Donations: "Donaciones",
+  "Personal Care": "Cuidado Personal",
+  "Tithe / Diezmo": "Diezmo",
+};
+
+export function translateCategoryName(name: string, locale: string): string {
+  if (locale === "es") {
+    return CATEGORY_TRANSLATIONS[name] ?? name;
+  }
+  return name;
+}
