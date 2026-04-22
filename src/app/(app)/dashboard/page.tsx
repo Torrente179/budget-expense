@@ -1,7 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useBudgets } from "@/hooks/use-budgets";
@@ -26,12 +27,22 @@ import { useLocale } from "@/providers/locale-provider";
 
 export default function DashboardPage() {
   const { locale, t } = useLocale();
+  const router = useRouter();
   const [month, setMonth] = useState(getCurrentMonth());
   const [year, setYear] = useState(getCurrentYear());
   const wisdomContent = getBiblicalWisdomContent(locale);
   const wisdomSourcesLabel = wisdomContent.translations
     .map((translation) => translation.code)
     .join(" / ");
+
+  const handleCategoryClick = useCallback(
+    (categoryId: string) => {
+      router.push(
+        `/analytics/category/${categoryId}?month=${month}&year=${year}&from=dashboard`
+      );
+    },
+    [month, router, year]
+  );
 
   const { summary, loading } = useMonthlySummary({ month, year });
   const { expenses } = useExpenses({ month, year });
@@ -131,6 +142,7 @@ export default function DashboardPage() {
         <div className="space-y-4 lg:col-span-2">
           <CategoryBreakdown
             categoryBreakdown={summary.categoryBreakdown}
+            onCategoryClick={handleCategoryClick}
           />
           <Card className="border-border/80 bg-card/96">
             <CardHeader className="pb-3">

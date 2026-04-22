@@ -45,7 +45,9 @@ export default function AnalyticsPage() {
 
   const handleCategoryClick = useCallback(
     (categoryId: string) => {
-      router.push(`/analytics/category/${categoryId}?month=${month}&year=${year}`);
+      router.push(
+        `/analytics/category/${categoryId}?month=${month}&year=${year}&from=analytics`
+      );
     },
     [router, month, year]
   );

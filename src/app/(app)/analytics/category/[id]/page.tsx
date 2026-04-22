@@ -1,8 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import Link from "next/link";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useCurrency } from "@/providers/currency-provider";
@@ -47,11 +46,14 @@ export default function CategoryDetailPage() {
   const { locale, t, tc } = useLocale();
   const { baseCurrency, convert } = useCurrency();
   const params = useParams<{ id: string }>();
+  const router = useRouter();
   const searchParams = useSearchParams();
 
   const month = Number(searchParams.get("month")) || getCurrentMonth();
   const year = Number(searchParams.get("year")) || getCurrentYear();
   const categoryId = params.id;
+  const origin = searchParams.get("from") === "dashboard" ? "dashboard" : "analytics";
+  const hasOrigin = searchParams.has("from");
 
   const {
     expenses,
@@ -126,16 +128,28 @@ export default function CategoryDetailPage() {
     setDeleteTarget(null);
   }
 
+  function handleBack() {
+    if (hasOrigin && window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push(origin === "dashboard" ? "/dashboard" : "/analytics");
+  }
+
   return (
     <div className="space-y-5 md:space-y-8">
       {/* Back link */}
-      <Link
-        href="/analytics"
+      <button
+        type="button"
+        onClick={handleBack}
         className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4" />
-        {t("Back to Analytics", "Volver a Analítica")}
-      </Link>
+        {origin === "dashboard"
+          ? t("Back to Dashboard", "Volver al panel")
+          : t("Back to Analytics", "Volver a Analítica")}
+      </button>
 
       {loading ? (
         <div className="space-y-4">

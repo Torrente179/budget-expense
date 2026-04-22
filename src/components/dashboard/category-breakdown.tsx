@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 import { useCurrency } from "@/providers/currency-provider";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -31,11 +31,11 @@ export function CategoryBreakdown({
 }: CategoryBreakdownProps) {
   const { baseCurrency } = useCurrency();
   const { t, tc } = useLocale();
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
 
   const data = categoryBreakdown.map((cat) => ({
     id: cat.category_id,
@@ -98,7 +98,18 @@ export function CategoryBreakdown({
                     strokeWidth={0}
                   >
                     {data.map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
+                      <Cell
+                        key={i}
+                        fill={entry.color}
+                        onClick={
+                          onCategoryClick
+                            ? () => onCategoryClick(entry.id)
+                            : undefined
+                        }
+                        style={
+                          onCategoryClick ? { cursor: "pointer" } : undefined
+                        }
+                      />
                     ))}
                   </Pie>
                   <Tooltip
@@ -126,7 +137,16 @@ export function CategoryBreakdown({
                 role={onCategoryClick ? "button" : undefined}
                 tabIndex={onCategoryClick ? 0 : undefined}
                 onClick={onCategoryClick ? () => onCategoryClick(cat.id) : undefined}
-                onKeyDown={onCategoryClick ? (e) => { if (e.key === "Enter") onCategoryClick(cat.id); } : undefined}
+                onKeyDown={
+                  onCategoryClick
+                    ? (e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          onCategoryClick(cat.id);
+                        }
+                      }
+                    : undefined
+                }
                 className={cn(
                   "py-3 text-sm first:pt-4 last:pb-4",
                   onCategoryClick && "cursor-pointer transition-colors hover:bg-secondary/60"
