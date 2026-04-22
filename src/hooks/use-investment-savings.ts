@@ -1,8 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
-import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
+import {
+  fetchInvestmentSnapshot,
+  requestInvestmentMutation,
+} from "@/lib/investments-api-client";
 import type {
   InvestmentSavingsAccountRow,
   InvestmentSavingsTransferWithJoins,
@@ -23,6 +25,21 @@ function getMonthRange(month: number, year: number) {
   return { startDate, endDate };
 }
 
+type SavingsTransferWithOptionalJoins = Omit<
+  InvestmentSavingsTransferWithJoins,
+  "investment_savings_accounts"
+> & {
+  investment_savings_accounts:
+    | InvestmentSavingsTransferWithJoins["investment_savings_accounts"]
+    | null;
+};
+
+function hasSavingsTransferJoins(
+  transfer: SavingsTransferWithOptionalJoins
+): transfer is InvestmentSavingsTransferWithJoins {
+  return Boolean(transfer.investment_savings_accounts);
+}
+
 export function useInvestmentSavings({
   month,
   year,
@@ -34,45 +51,26 @@ export function useInvestmentSavings({
     InvestmentSavingsTransferWithJoins[]
   >([]);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      let transferQuery = supabase
-        .from("investment_savings_transfers")
-        .select("*, investment_savings_accounts(*)")
-        .order("transfer_date", { ascending: false })
-        .order("created_at", { ascending: false });
+      const snapshot = await fetchInvestmentSnapshot();
+      const filteredTransfers =
+        month !== undefined && year !== undefined
+          ? (snapshot.savingsTransfers as SavingsTransferWithOptionalJoins[]).filter(
+              (transfer) => {
+                const { startDate, endDate } = getMonthRange(month, year);
+                return (
+                  transfer.transfer_date >= startDate &&
+                  transfer.transfer_date < endDate
+                );
+              }
+            )
+          : (snapshot.savingsTransfers as SavingsTransferWithOptionalJoins[]);
 
-      if (month !== undefined && year !== undefined) {
-        const { startDate, endDate } = getMonthRange(month, year);
-        transferQuery = transferQuery
-          .gte("transfer_date", startDate)
-          .lt("transfer_date", endDate);
-      }
-
-      const [accountsResult, transfersResult] = await Promise.all([
-        supabase
-          .from("investment_savings_accounts")
-          .select("*")
-          .order("created_at", { ascending: true }),
-        transferQuery,
-      ]);
-
-      const accounts = resolveOptionalTableResult(accountsResult, {
-        table: "investment_savings_accounts",
-        context: "Investment savings accounts table is unavailable during fetch",
-        fallback: [],
-      });
-      const transfers = resolveOptionalTableResult(transfersResult, {
-        table: "investment_savings_transfers",
-        context: "Investment savings transfers table is unavailable during fetch",
-        fallback: [],
-      });
-
-      setSavingsAccounts(accounts as InvestmentSavingsAccountRow[]);
-      setSavingsTransfers(transfers as InvestmentSavingsTransferWithJoins[]);
+      setSavingsAccounts(snapshot.savingsAccounts as InvestmentSavingsAccountRow[]);
+      setSavingsTransfers(filteredTransfers.filter(hasSavingsTransferJoins));
     } catch (error) {
       console.error("Failed to fetch investment savings data", error);
       setSavingsAccounts([]);
@@ -80,79 +78,53 @@ export function useInvestmentSavings({
     } finally {
       setLoading(false);
     }
-  }, [month, supabase, year]);
+  }, [month, year]);
 
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
 
-  const getUserId = useCallback(async () => {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    return user?.id ?? null;
-  }, [supabase]);
-
   async function addSavingsTransfer(values: InvestmentSavingsTransferFormValues) {
-    const userId = await getUserId();
-    if (!userId) return;
-
-    const { error } = await supabase.from("investment_savings_transfers").insert({
-      user_id: userId,
-      savings_account_id: values.savings_account_id,
-      transfer_date: values.transfer_date,
-      amount: values.amount,
-      currency: values.currency,
-      notes: values.notes ?? null,
-      source_kind: values.source_kind,
-    });
-
-    if (!error) {
+    try {
+      await requestInvestmentMutation("POST", {
+        resource: "savingsTransfer",
+        values,
+      });
       await fetchData();
+      return null;
+    } catch (error) {
+      return error;
     }
-
-    return error;
   }
 
   async function updateSavingsTransfer(
     id: string,
     values: InvestmentSavingsTransferFormValues
   ) {
-    const userId = await getUserId();
-    if (!userId) return;
-
-    const { error } = await supabase
-      .from("investment_savings_transfers")
-      .update({
-        savings_account_id: values.savings_account_id,
-        transfer_date: values.transfer_date,
-        amount: values.amount,
-        currency: values.currency,
-        notes: values.notes ?? null,
-        source_kind: values.source_kind,
-      })
-      .eq("id", id)
-      .eq("user_id", userId);
-
-    if (!error) {
+    try {
+      await requestInvestmentMutation("PATCH", {
+        resource: "savingsTransfer",
+        id,
+        values,
+      });
       await fetchData();
+      return null;
+    } catch (error) {
+      return error;
     }
-
-    return error;
   }
 
   async function deleteSavingsTransfer(id: string) {
-    const { error } = await supabase
-      .from("investment_savings_transfers")
-      .delete()
-      .eq("id", id);
-
-    if (!error) {
+    try {
+      await requestInvestmentMutation("DELETE", {
+        resource: "savingsTransfer",
+        id,
+      });
       await fetchData();
+      return null;
+    } catch (error) {
+      return error;
     }
-
-    return error;
   }
 
   return {
