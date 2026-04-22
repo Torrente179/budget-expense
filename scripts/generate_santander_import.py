@@ -154,6 +154,7 @@ PATTERN_RULES = [
             "claude",
             "openai",
             "chatgpt",
+            "apple.com/bill",
             "google one",
             "google *cloud",
             "icloud",
