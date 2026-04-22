@@ -18,6 +18,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/providers/locale-provider";
 import { LanguageSwitch } from "@/components/shared/language-switch";
 import { CurrencyQuickSwitch } from "@/components/shared/currency-quick-switch";
+import { SiteBrand } from "./site-brand";
 
 export function MobileNavContent({ onNavigate }: { onNavigate?: () => void }) {
   const pathname = usePathname();
@@ -48,21 +49,7 @@ export function MobileNavContent({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <div className="flex h-full flex-col">
       <div className="border-b border-border px-4 py-5">
-        <div className="flex items-start gap-3">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl border border-border/80 bg-secondary">
-            <span className="text-xs font-semibold tracking-[0.18em] text-foreground">
-              BE
-            </span>
-          </div>
-          <div className="space-y-1">
-            <span className="block text-[0.7rem] uppercase tracking-[0.24em] text-muted-foreground">
-              {t("Stewardship", "Mayordomía")}
-            </span>
-            <span className="block text-lg font-semibold leading-none tracking-tight">
-              Budget & Expense
-            </span>
-          </div>
-        </div>
+        <SiteBrand onClick={onNavigate} />
       </div>
       <nav className="flex-1 space-y-1 px-3 py-5">
         {navItems.map((item) => {

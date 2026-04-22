@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sheet";
 import { MobileNavContent } from "./mobile-nav";
 import { MobileCommandPalette } from "./mobile-command-palette";
+import { SiteBrand } from "./site-brand";
 
 export function Topbar() {
   const { theme, setTheme } = useTheme();
@@ -45,11 +46,7 @@ export function Topbar() {
               <MobileNavContent onNavigate={() => setSheetOpen(false)} />
             </SheetContent>
           </Sheet>
-          <div className="flex h-8 w-8 items-center justify-center rounded-2xl border border-border bg-secondary">
-            <span className="text-xs font-semibold tracking-[0.18em] text-foreground">
-              BE
-            </span>
-          </div>
+          <SiteBrand compact />
         </div>
 
         <div className="hidden md:block">

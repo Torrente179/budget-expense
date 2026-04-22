@@ -17,6 +17,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/providers/locale-provider";
+import { SiteBrand } from "./site-brand";
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -47,21 +48,7 @@ export function Sidebar() {
   return (
     <aside className="hidden border-r border-sidebar-border bg-sidebar md:flex md:w-[268px] md:flex-col">
       <div className="border-b border-sidebar-border px-5 py-5">
-        <Link href="/dashboard" className="flex items-start gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl border border-border/80 bg-secondary">
-            <span className="text-sm font-semibold tracking-[0.16em] text-foreground">
-              BE
-            </span>
-          </div>
-          <div className="space-y-1">
-            <span className="block text-[0.7rem] uppercase tracking-[0.26em] text-muted-foreground">
-              {t("Stewardship", "Mayordomía")}
-            </span>
-            <span className="block text-lg font-semibold leading-none tracking-tight">
-              Budget & Expense
-            </span>
-          </div>
-        </Link>
+        <SiteBrand />
       </div>
       <nav className="flex-1 space-y-1.5 px-3 py-5">
         {navItems.map((item) => {
