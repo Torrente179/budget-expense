@@ -13,6 +13,8 @@ import {
   CandlestickChart,
   CalendarDays,
   BarChart3,
+  FileUp,
+  ClipboardCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/providers/locale-provider";
@@ -36,6 +38,8 @@ export function MobileNavContent({ onNavigate }: { onNavigate?: () => void }) {
       label: t("Investments", "Inversiones"),
       icon: CandlestickChart,
     },
+    { href: "/import", label: t("Import", "Importar"), icon: FileUp },
+    { href: "/review", label: t("Review", "Revisión"), icon: ClipboardCheck },
     { href: "/wisdom", label: t("Wisdom", "Sabiduría"), icon: BookOpenText },
     { href: "/settings", label: t("Settings", "Ajustes"), icon: Settings },
   ];

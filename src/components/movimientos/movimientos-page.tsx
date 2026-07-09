@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useRef, useState } from "react";
 import {
   ArrowUpDown,
   ChevronRight,
@@ -10,9 +10,13 @@ import {
   Trash2,
   TrendingUp,
 } from "lucide-react";
+import { toast } from "sonner";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
+import { useMediaQuery } from "@/hooks/use-media-query";
 import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
+import { PullToRefresh } from "@/components/shared/pull-to-refresh";
+import { SwipeableRow } from "@/components/shared/swipeable-row";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import {
@@ -81,6 +85,7 @@ export function MovimientosPage() {
     addExpense,
     updateExpense,
     deleteExpense,
+    refetch: refetchExpenses,
   } = useExpenses({ month, year, search: deferredSearch || undefined });
 
   const {
@@ -89,10 +94,59 @@ export function MovimientosPage() {
     addIncome,
     updateIncome,
     deleteIncome,
+    refetch: refetchIncomes,
   } = useIncomes({ month, year, search: deferredSearch || undefined });
 
   const loading = loadingExpenses || loadingIncomes;
   usePrefetchMonths(month, year, loading);
+
+  const isMobile = useMediaQuery("(max-width: 767px)");
+
+  // Optimistic swipe-delete: hide instantly, commit after the undo window.
+  const [pendingDeletes, setPendingDeletes] = useState<Set<string>>(new Set());
+  const deleteTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+
+  function swipeDelete(movement: Movement) {
+    setPendingDeletes((previous) => new Set(previous).add(movement.id));
+
+    const commit = async () => {
+      deleteTimers.current.delete(movement.id);
+      const error =
+        movement.type === "expense"
+          ? await deleteExpense(movement.id)
+          : await deleteIncome(movement.id);
+      setPendingDeletes((previous) => {
+        const next = new Set(previous);
+        next.delete(movement.id);
+        return next;
+      });
+      if (error) {
+        toast.error(t("Could not delete", "No se pudo eliminar"));
+      }
+    };
+
+    const timer = setTimeout(commit, 5000);
+    deleteTimers.current.set(movement.id, timer);
+
+    toast(t("Movement deleted", "Movimiento eliminado"), {
+      duration: 5000,
+      action: {
+        label: t("Undo", "Deshacer"),
+        onClick: () => {
+          const pending = deleteTimers.current.get(movement.id);
+          if (pending) {
+            clearTimeout(pending);
+            deleteTimers.current.delete(movement.id);
+          }
+          setPendingDeletes((previous) => {
+            const next = new Set(previous);
+            next.delete(movement.id);
+            return next;
+          });
+        },
+      },
+    });
+  }
 
   const movements = useMemo<Movement[]>(() => {
     const expenseItems: Movement[] = expenses.map((e) => ({
@@ -124,9 +178,10 @@ export function MovimientosPage() {
     let all = [...expenseItems, ...incomeItems];
     if (tab === "expenses") all = all.filter((m) => m.type === "expense");
     else if (tab === "incomes") all = all.filter((m) => m.type === "income");
+    all = all.filter((m) => !pendingDeletes.has(m.id));
 
     return all.sort((a, b) => b.date.localeCompare(a.date));
-  }, [expenses, incomes, tab, t]);
+  }, [expenses, incomes, tab, t, pendingDeletes]);
 
   const totalIncome = useMemo(
     () => incomes.reduce((sum, i) => sum + convert(i.amount, i.currency), 0),
@@ -320,6 +375,9 @@ export function MovimientosPage() {
           )}
         />
       ) : (
+        <PullToRefresh
+          onRefresh={() => Promise.all([refetchExpenses(), refetchIncomes()])}
+        >
         <div className="space-y-6">
           {Array.from(grouped.entries()).map(([date, items]) => (
             <div key={date}>
@@ -378,10 +436,12 @@ export function MovimientosPage() {
                   );
 
                   return (
-                    <div
+                    <SwipeableRow
                       key={`${movement.type}-${movement.id}`}
-                      className="group flex items-center"
+                      enabled={isMobile}
+                      onDelete={() => swipeDelete(movement)}
                     >
+                    <div className="group flex items-center bg-background">
                       <div className="min-w-0 flex-1">
                         {isExpense && movement.expense ? (
                           <ExpenseForm
@@ -427,12 +487,14 @@ export function MovimientosPage() {
                         <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-destructive" />
                       </button>
                     </div>
+                    </SwipeableRow>
                   );
                 })}
               </div>
             </div>
           ))}
         </div>
+        </PullToRefresh>
       )}
 
       {/* Delete confirmation */}

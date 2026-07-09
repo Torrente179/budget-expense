@@ -1,12 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { authorizedFetch } from "@/lib/query/authorized-fetch";
+import { fetchExpenses } from "@/lib/query/fetchers";
+import { queryKeys } from "@/lib/query/keys";
 import type { Database } from "@/types/database";
-
-type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
-  categories: Database["public"]["Tables"]["categories"]["Row"];
-};
 
 interface UseExpensesOptions {
   month: number;
@@ -15,58 +14,25 @@ interface UseExpensesOptions {
   search?: string;
 }
 
-export function useExpenses({ month, year, categoryId, search }: UseExpensesOptions) {
-  const [expenses, setExpenses] = useState<Expense[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+export function useExpenses({
+  month,
+  year,
+  categoryId,
+  search,
+}: UseExpensesOptions) {
+  const queryClient = useQueryClient();
 
-  const fetchExpenses = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        month: String(month),
-        year: String(year),
-      });
+  const { data, isPending, refetch } = useQuery({
+    queryKey: queryKeys.expenses({ month, year, categoryId, search }),
+    queryFn: () => fetchExpenses({ month, year, categoryId, search }),
+  });
 
-      if (categoryId) {
-        params.set("categoryId", categoryId);
-      }
-
-      const trimmedSearch = search?.trim();
-      if (trimmedSearch) {
-        params.set("search", trimmedSearch);
-      }
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const response = await fetch(`/api/expenses?${params.toString()}`, {
-        credentials: "include",
-        headers: session?.access_token
-          ? {
-              Authorization: `Bearer ${session.access_token}`,
-            }
-          : undefined,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Expense fetch failed with status ${response.status}`);
-      }
-
-      const result = await response.json();
-      setExpenses((result.expenses ?? []) as Expense[]);
-    } catch (error) {
-      console.error("Failed to fetch expenses", error);
-      setExpenses([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [categoryId, month, search, supabase, year]);
-
-  useEffect(() => {
-    fetchExpenses();
-  }, [fetchExpenses]);
+  const invalidate = useCallback(async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
+    ]);
+  }, [queryClient]);
 
   async function addExpense(expense: {
     amount: number;
@@ -75,80 +41,56 @@ export function useExpenses({ month, year, categoryId, search }: UseExpensesOpti
     date: string;
     description?: string;
   }) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const response = await fetch("/api/expenses", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(session?.access_token
-          ? { Authorization: `Bearer ${session.access_token}` }
-          : {}),
-      },
-      body: JSON.stringify(expense),
-    });
-
-    if (response.ok) {
-      await fetchExpenses();
+    try {
+      await authorizedFetch("/api/expenses", {
+        method: "POST",
+        body: JSON.stringify(expense),
+      });
+      await invalidate();
       return null;
+    } catch (error) {
+      return error instanceof Error
+        ? error
+        : new Error("Expense create failed");
     }
-
-    return new Error(`Expense create failed with status ${response.status}`);
   }
 
   async function updateExpense(
     id: string,
     updates: Database["public"]["Tables"]["expenses"]["Update"]
   ) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const response = await fetch(`/api/expenses/${id}`, {
-      method: "PATCH",
-      credentials: "include",
-      headers: {
-        "Content-Type": "application/json",
-        ...(session?.access_token
-          ? { Authorization: `Bearer ${session.access_token}` }
-          : {}),
-      },
-      body: JSON.stringify(updates),
-    });
-
-    if (response.ok) {
-      await fetchExpenses();
+    try {
+      await authorizedFetch(`/api/expenses/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      });
+      await invalidate();
       return null;
+    } catch (error) {
+      return error instanceof Error
+        ? error
+        : new Error("Expense update failed");
     }
-
-    return new Error(`Expense update failed with status ${response.status}`);
   }
 
   async function deleteExpense(id: string) {
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-
-    const response = await fetch(`/api/expenses/${id}`, {
-      method: "DELETE",
-      credentials: "include",
-      headers: session?.access_token
-        ? {
-            Authorization: `Bearer ${session.access_token}`,
-          }
-        : undefined,
-    });
-
-    if (response.ok) {
-      await fetchExpenses();
+    try {
+      await authorizedFetch(`/api/expenses/${id}`, { method: "DELETE" });
+      await invalidate();
       return null;
+    } catch (error) {
+      return error instanceof Error
+        ? error
+        : new Error("Expense delete failed");
     }
-
-    return new Error(`Expense delete failed with status ${response.status}`);
   }
 
-  return { expenses, loading, addExpense, updateExpense, deleteExpense, refetch: fetchExpenses };
+  return {
+    expenses: data ?? [],
+    loading: isPending,
+    addExpense,
+    updateExpense,
+    deleteExpense,
+    refetch,
+  };
 }

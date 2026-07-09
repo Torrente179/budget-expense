@@ -574,3 +574,247 @@ CREATE POLICY "Authenticated users can insert market price history"
     ON public.market_price_history FOR INSERT WITH CHECK (auth.uid() IS NOT NULL);
 CREATE POLICY "Authenticated users can update market price history"
     ON public.market_price_history FOR UPDATE USING (auth.uid() IS NOT NULL);
+
+-- ============================================
+-- 2026-07-03 additions (mirrored in supabase/migrations/ as standalone files)
+-- ============================================
+
+-- ============================================
+-- Import foundations: provenance columns, import batches, categorization rules
+-- Apply to BOTH Supabase projects (ledger + app): the API falls back to the
+-- app project when SUPABASE_SERVICE_ROLE_KEY is unset, so both need the shape.
+-- ============================================
+
+-- 1. Provenance columns on expenses
+ALTER TABLE public.expenses
+    ADD COLUMN IF NOT EXISTS source_kind TEXT NOT NULL DEFAULT 'manual',
+    ADD COLUMN IF NOT EXISTS external_ref TEXT,
+    ADD COLUMN IF NOT EXISTS import_batch_id UUID,
+    ADD COLUMN IF NOT EXISTS needs_review BOOLEAN NOT NULL DEFAULT false;
+
+DO $$ BEGIN
+    ALTER TABLE public.expenses
+        ADD CONSTRAINT expenses_source_kind_check
+        CHECK (source_kind IN ('manual', 'import_csv', 'import_script', 'recurring'));
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_expenses_external_ref_unique
+    ON public.expenses(user_id, external_ref)
+    WHERE external_ref IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_expenses_import_batch
+    ON public.expenses(import_batch_id)
+    WHERE import_batch_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_expenses_needs_review
+    ON public.expenses(user_id)
+    WHERE needs_review;
+
+-- 2. Provenance columns on income entries
+ALTER TABLE public.income_entries
+    ADD COLUMN IF NOT EXISTS source_kind TEXT NOT NULL DEFAULT 'manual',
+    ADD COLUMN IF NOT EXISTS external_ref TEXT,
+    ADD COLUMN IF NOT EXISTS import_batch_id UUID,
+    ADD COLUMN IF NOT EXISTS needs_review BOOLEAN NOT NULL DEFAULT false;
+
+DO $$ BEGIN
+    ALTER TABLE public.income_entries
+        ADD CONSTRAINT income_entries_source_kind_check
+        CHECK (source_kind IN ('manual', 'import_csv', 'import_script', 'recurring'));
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_income_entries_external_ref_unique
+    ON public.income_entries(user_id, external_ref)
+    WHERE external_ref IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_income_entries_import_batch
+    ON public.income_entries(import_batch_id)
+    WHERE import_batch_id IS NOT NULL;
+
+-- 3. Import batches (JSONB staging payload lives on the batch row)
+CREATE TABLE IF NOT EXISTS public.import_batches (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    source_format TEXT NOT NULL CHECK (source_format IN ('santander_csv', 'wise_csv')),
+    filename TEXT,
+    status TEXT NOT NULL DEFAULT 'pending'
+        CHECK (status IN ('pending', 'committed', 'rolled_back', 'discarded')),
+    rows JSONB NOT NULL DEFAULT '[]'::jsonb,
+    new_count INTEGER NOT NULL DEFAULT 0,
+    duplicate_count INTEGER NOT NULL DEFAULT 0,
+    uncategorized_count INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    committed_at TIMESTAMPTZ
+);
+
+CREATE INDEX IF NOT EXISTS idx_import_batches_user
+    ON public.import_batches(user_id, created_at DESC);
+
+ALTER TABLE public.import_batches ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+    CREATE POLICY "Users can view own import batches"
+        ON public.import_batches FOR SELECT USING (auth.uid() = user_id);
+    CREATE POLICY "Users can insert own import batches"
+        ON public.import_batches FOR INSERT WITH CHECK (auth.uid() = user_id);
+    CREATE POLICY "Users can update own import batches"
+        ON public.import_batches FOR UPDATE USING (auth.uid() = user_id);
+    CREATE POLICY "Users can delete own import batches"
+        ON public.import_batches FOR DELETE USING (auth.uid() = user_id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+-- 4. Categorization rules (seeded from the Python import script, extended by user)
+CREATE TABLE IF NOT EXISTS public.categorization_rules (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    match_type TEXT NOT NULL CHECK (match_type IN ('merchant_keyword', 'bank_category')),
+    pattern TEXT NOT NULL CHECK (char_length(btrim(pattern)) > 0),
+    category_id UUID NOT NULL REFERENCES public.categories(id) ON DELETE CASCADE,
+    priority INTEGER NOT NULL DEFAULT 100,
+    source TEXT NOT NULL DEFAULT 'user' CHECK (source IN ('seed', 'user')),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    UNIQUE(user_id, match_type, pattern)
+);
+
+CREATE INDEX IF NOT EXISTS idx_categorization_rules_user
+    ON public.categorization_rules(user_id, match_type, priority);
+
+ALTER TABLE public.categorization_rules ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+    CREATE POLICY "Users can view own categorization rules"
+        ON public.categorization_rules FOR SELECT USING (auth.uid() = user_id);
+    CREATE POLICY "Users can insert own categorization rules"
+        ON public.categorization_rules FOR INSERT WITH CHECK (auth.uid() = user_id);
+    CREATE POLICY "Users can update own categorization rules"
+        ON public.categorization_rules FOR UPDATE USING (auth.uid() = user_id);
+    CREATE POLICY "Users can delete own categorization rules"
+        ON public.categorization_rules FOR DELETE USING (auth.uid() = user_id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ============================================
+-- Category classification: essential / discretionary / giving / savings
+-- Apply to BOTH Supabase projects (categories are mirrored with identical
+-- UUIDs across the ledger and app projects).
+-- ============================================
+
+ALTER TABLE public.categories
+    ADD COLUMN IF NOT EXISTS classification TEXT NOT NULL DEFAULT 'discretionary';
+
+DO $$ BEGIN
+    ALTER TABLE public.categories
+        ADD CONSTRAINT categories_classification_check
+        CHECK (classification IN ('essential', 'discretionary', 'giving', 'savings'));
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+-- Seed sensible defaults by name (EN + ES naming schemes both covered).
+-- Users can retag anything from Settings; unmatched names stay discretionary.
+UPDATE public.categories SET classification = 'essential'
+WHERE classification = 'discretionary'
+  AND (
+    name ILIKE '%housing%' OR name ILIKE '%vivienda%' OR name ILIKE '%rent%' OR name ILIKE '%alquiler%'
+    OR name ILIKE '%utilit%' OR name ILIKE '%servicios%' OR name ILIKE '%suministros%'
+    OR name ILIKE '%grocer%' OR name ILIKE '%mercado%' OR name ILIKE '%supermercado%'
+    OR name ILIKE '%health%' OR name ILIKE '%salud%' OR name ILIKE '%medic%'
+    OR name ILIKE '%transport%' OR name ILIKE '%transporte%'
+    OR name ILIKE '%tax%' OR name ILIKE '%impuesto%'
+    OR name ILIKE '%insurance%' OR name ILIKE '%seguro%'
+  );
+
+UPDATE public.categories SET classification = 'giving'
+WHERE classification = 'discretionary'
+  AND (
+    name ILIKE '%tithe%' OR name ILIKE '%diezmo%'
+    OR name ILIKE '%giving%' OR name ILIKE '%generosidad%'
+    OR name ILIKE '%donation%' OR name ILIKE '%donaci%'
+    OR name ILIKE '%offering%' OR name ILIKE '%ofrenda%'
+    OR name ILIKE '%charity%' OR name ILIKE '%caridad%'
+    OR name ILIKE '%church%' OR name ILIKE '%iglesia%'
+  );
+
+-- ============================================
+-- Profile stewardship settings + liabilities tracking
+-- Apply to the APP project only (profiles, liabilities live with app data).
+-- ============================================
+
+-- 1. Stewardship settings on profiles
+ALTER TABLE public.profiles
+    ADD COLUMN IF NOT EXISTS tithe_target_percent DECIMAL(5, 2) NOT NULL DEFAULT 10
+        CHECK (tithe_target_percent >= 0 AND tithe_target_percent <= 100),
+    ADD COLUMN IF NOT EXISTS manual_fx_rates JSONB;
+
+-- 2. Liabilities (loans, mortgages, credit balances)
+CREATE TABLE IF NOT EXISTS public.liabilities (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    name TEXT NOT NULL CHECK (char_length(btrim(name)) > 0 AND char_length(name) <= 120),
+    kind TEXT NOT NULL DEFAULT 'loan'
+        CHECK (kind IN ('loan', 'mortgage', 'credit_card', 'personal', 'other')),
+    original_balance DECIMAL(14, 2) NOT NULL CHECK (original_balance >= 0),
+    currency TEXT NOT NULL DEFAULT 'EUR',
+    interest_rate_percent DECIMAL(6, 3),
+    opened_date DATE,
+    notes TEXT,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_liabilities_user
+    ON public.liabilities(user_id, is_active);
+
+ALTER TABLE public.liabilities ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+    CREATE POLICY "Users can view own liabilities"
+        ON public.liabilities FOR SELECT USING (auth.uid() = user_id);
+    CREATE POLICY "Users can insert own liabilities"
+        ON public.liabilities FOR INSERT WITH CHECK (auth.uid() = user_id);
+    CREATE POLICY "Users can update own liabilities"
+        ON public.liabilities FOR UPDATE USING (auth.uid() = user_id);
+    CREATE POLICY "Users can delete own liabilities"
+        ON public.liabilities FOR DELETE USING (auth.uid() = user_id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;
+
+-- 3. Liability payments (current balance = original_balance − Σ payments;
+--    negative amounts allowed as manual balance adjustments upward)
+CREATE TABLE IF NOT EXISTS public.liability_payments (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    liability_id UUID NOT NULL REFERENCES public.liabilities(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+    payment_date DATE NOT NULL DEFAULT CURRENT_DATE,
+    amount DECIMAL(14, 2) NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'EUR',
+    note TEXT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_liability_payments_liability
+    ON public.liability_payments(liability_id, payment_date);
+
+ALTER TABLE public.liability_payments ENABLE ROW LEVEL SECURITY;
+
+DO $$ BEGIN
+    CREATE POLICY "Users can view own liability payments"
+        ON public.liability_payments FOR SELECT USING (auth.uid() = user_id);
+    CREATE POLICY "Users can insert own liability payments"
+        ON public.liability_payments FOR INSERT WITH CHECK (auth.uid() = user_id);
+    CREATE POLICY "Users can update own liability payments"
+        ON public.liability_payments FOR UPDATE USING (auth.uid() = user_id);
+    CREATE POLICY "Users can delete own liability payments"
+        ON public.liability_payments FOR DELETE USING (auth.uid() = user_id);
+EXCEPTION
+    WHEN duplicate_object THEN NULL;
+END $$;

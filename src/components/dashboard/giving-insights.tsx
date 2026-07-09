@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useCurrency } from "@/providers/currency-provider";
+import { useTitheTarget } from "@/hooks/use-tithe-target";
 import { useLocale } from "@/providers/locale-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -43,6 +44,8 @@ function isGivingCategory(categoryName: string): boolean {
 }
 
 function isGivingExpense(expense: GivingExpense): boolean {
+  // Classification is authoritative when present; keywords are the fallback
+  if (expense.classification === "giving") return true;
   if (isGivingCategory(expense.categoryName)) return true;
   if (expense.description) {
     const lower = expense.description.toLowerCase();
@@ -64,6 +67,7 @@ interface GivingExpense {
   categoryIcon: string;
   categoryColor: string;
   category_id: string;
+  classification?: string | null;
 }
 
 interface GivingInsightsProps {
@@ -78,6 +82,7 @@ interface GivingInsightsProps {
 export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
   const { baseCurrency, convert } = useCurrency();
   const { t, tc } = useLocale();
+  const titheTargetPercent = useTitheTarget();
 
   const analysis = useMemo(() => {
     const givingExpenses = expenses.filter(isGivingExpense);
@@ -86,7 +91,7 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
       0
     );
     const givingPercent = totalIncome > 0 ? (totalGiving / totalIncome) * 100 : 0;
-    const titheGoal = totalIncome * 0.1;
+    const titheGoal = totalIncome * (titheTargetPercent / 100);
     const titheProgress = titheGoal > 0 ? (totalGiving / titheGoal) * 100 : 0;
 
     /* Group by category */
@@ -127,7 +132,7 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
       categories: Array.from(byCategory.values()).sort((a, b) => b.total - a.total),
       count: givingExpenses.length,
     };
-  }, [expenses, totalIncome, convert]);
+  }, [expenses, totalIncome, convert, titheTargetPercent]);
 
   if (analysis.count === 0 && totalIncome === 0) return null;
 
@@ -187,12 +192,12 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
               <p className="mt-2 text-xs text-muted-foreground">
                 {analysis.isAboveTithe
                   ? t(
-                      "You have met or exceeded the 10% tithe benchmark this month. Generosity in action.",
-                      "Has alcanzado o superado la referencia del 10% de diezmo este mes. Generosidad en acción."
+                      `You have met or exceeded the ${titheTargetPercent}% giving target this month. Generosity in action.`,
+                      `Has alcanzado o superado tu meta de dar del ${titheTargetPercent}% este mes. Generosidad en acción.`
                     )
                   : t(
-                      `${formatCurrency(analysis.titheGoal - analysis.totalGiving, baseCurrency)} remaining to reach the 10% benchmark.`,
-                      `Faltan ${formatCurrency(analysis.titheGoal - analysis.totalGiving, baseCurrency)} para alcanzar la referencia del 10%.`
+                      `${formatCurrency(analysis.titheGoal - analysis.totalGiving, baseCurrency)} remaining to reach the ${titheTargetPercent}% target.`,
+                      `Faltan ${formatCurrency(analysis.titheGoal - analysis.totalGiving, baseCurrency)} para alcanzar tu meta del ${titheTargetPercent}%.`
                     )}
               </p>
             </div>

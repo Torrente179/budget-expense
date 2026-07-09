@@ -15,6 +15,8 @@ export interface Database {
           display_name: string | null;
           avatar_url: string | null;
           base_currency: string;
+          tithe_target_percent: number;
+          manual_fx_rates: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -23,6 +25,8 @@ export interface Database {
           display_name?: string | null;
           avatar_url?: string | null;
           base_currency?: string;
+          tithe_target_percent?: number;
+          manual_fx_rates?: Json | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -31,6 +35,8 @@ export interface Database {
           display_name?: string | null;
           avatar_url?: string | null;
           base_currency?: string;
+          tithe_target_percent?: number;
+          manual_fx_rates?: Json | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -44,6 +50,7 @@ export interface Database {
           icon: string;
           color: string;
           is_default: boolean;
+          classification: "essential" | "discretionary" | "giving" | "savings";
           created_at: string;
         };
         Insert: {
@@ -53,6 +60,7 @@ export interface Database {
           icon?: string;
           color?: string;
           is_default?: boolean;
+          classification?: "essential" | "discretionary" | "giving" | "savings";
           created_at?: string;
         };
         Update: {
@@ -62,6 +70,7 @@ export interface Database {
           icon?: string;
           color?: string;
           is_default?: boolean;
+          classification?: "essential" | "discretionary" | "giving" | "savings";
           created_at?: string;
         };
         Relationships: [];
@@ -77,6 +86,10 @@ export interface Database {
           currency: string;
           description: string | null;
           date: string;
+          source_kind: "manual" | "import_csv" | "import_script" | "recurring";
+          external_ref: string | null;
+          import_batch_id: string | null;
+          needs_review: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -90,6 +103,10 @@ export interface Database {
           currency?: string;
           description?: string | null;
           date?: string;
+          source_kind?: "manual" | "import_csv" | "import_script" | "recurring";
+          external_ref?: string | null;
+          import_batch_id?: string | null;
+          needs_review?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -103,6 +120,10 @@ export interface Database {
           currency?: string;
           description?: string | null;
           date?: string;
+          source_kind?: "manual" | "import_csv" | "import_script" | "recurring";
+          external_ref?: string | null;
+          import_batch_id?: string | null;
+          needs_review?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -182,6 +203,10 @@ export interface Database {
           currency: string;
           description: string | null;
           date: string;
+          source_kind: "manual" | "import_csv" | "import_script" | "recurring";
+          external_ref: string | null;
+          import_batch_id: string | null;
+          needs_review: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -193,6 +218,10 @@ export interface Database {
           currency?: string;
           description?: string | null;
           date?: string;
+          source_kind?: "manual" | "import_csv" | "import_script" | "recurring";
+          external_ref?: string | null;
+          import_batch_id?: string | null;
+          needs_review?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -204,10 +233,183 @@ export interface Database {
           currency?: string;
           description?: string | null;
           date?: string;
+          source_kind?: "manual" | "import_csv" | "import_script" | "recurring";
+          external_ref?: string | null;
+          import_batch_id?: string | null;
+          needs_review?: boolean;
           created_at?: string;
           updated_at?: string;
         };
         Relationships: [];
+      };
+      import_batches: {
+        Row: {
+          id: string;
+          user_id: string;
+          source_format: "santander_csv" | "wise_csv";
+          filename: string | null;
+          status: "pending" | "committed" | "rolled_back" | "discarded";
+          rows: Json;
+          new_count: number;
+          duplicate_count: number;
+          uncategorized_count: number;
+          created_at: string;
+          committed_at: string | null;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          source_format: "santander_csv" | "wise_csv";
+          filename?: string | null;
+          status?: "pending" | "committed" | "rolled_back" | "discarded";
+          rows?: Json;
+          new_count?: number;
+          duplicate_count?: number;
+          uncategorized_count?: number;
+          created_at?: string;
+          committed_at?: string | null;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          source_format?: "santander_csv" | "wise_csv";
+          filename?: string | null;
+          status?: "pending" | "committed" | "rolled_back" | "discarded";
+          rows?: Json;
+          new_count?: number;
+          duplicate_count?: number;
+          uncategorized_count?: number;
+          created_at?: string;
+          committed_at?: string | null;
+        };
+        Relationships: [];
+      };
+      categorization_rules: {
+        Row: {
+          id: string;
+          user_id: string;
+          match_type: "merchant_keyword" | "bank_category";
+          pattern: string;
+          category_id: string;
+          priority: number;
+          source: "seed" | "user";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          match_type: "merchant_keyword" | "bank_category";
+          pattern: string;
+          category_id: string;
+          priority?: number;
+          source?: "seed" | "user";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          match_type?: "merchant_keyword" | "bank_category";
+          pattern?: string;
+          category_id?: string;
+          priority?: number;
+          source?: "seed" | "user";
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "categorization_rules_category_id_fkey";
+            columns: ["category_id"];
+            isOneToOne: false;
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      liabilities: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          kind: "loan" | "mortgage" | "credit_card" | "personal" | "other";
+          original_balance: number;
+          currency: string;
+          interest_rate_percent: number | null;
+          opened_date: string | null;
+          notes: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          kind?: "loan" | "mortgage" | "credit_card" | "personal" | "other";
+          original_balance: number;
+          currency?: string;
+          interest_rate_percent?: number | null;
+          opened_date?: string | null;
+          notes?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          kind?: "loan" | "mortgage" | "credit_card" | "personal" | "other";
+          original_balance?: number;
+          currency?: string;
+          interest_rate_percent?: number | null;
+          opened_date?: string | null;
+          notes?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      liability_payments: {
+        Row: {
+          id: string;
+          liability_id: string;
+          user_id: string;
+          payment_date: string;
+          amount: number;
+          currency: string;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          liability_id: string;
+          user_id: string;
+          payment_date?: string;
+          amount: number;
+          currency?: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          liability_id?: string;
+          user_id?: string;
+          payment_date?: string;
+          amount?: number;
+          currency?: string;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "liability_payments_liability_id_fkey";
+            columns: ["liability_id"];
+            isOneToOne: false;
+            referencedRelation: "liabilities";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       budgets: {
         Row: {

@@ -18,6 +18,8 @@ import { RecentExpenses } from "@/components/dashboard/recent-expenses";
 import { GivingInsights } from "@/components/dashboard/giving-insights";
 import { MonthlyReport } from "@/components/dashboard/monthly-report";
 import { MobileDashboardOverview } from "@/components/dashboard/mobile-dashboard-overview";
+import { HouseholdMetrics } from "@/components/dashboard/household/household-metrics";
+import { SafeToSpendHero } from "@/components/dashboard/safe-to-spend-hero";
 import { InvestmentDashboardSnapshot } from "@/components/investments/investment-dashboard-snapshot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -106,6 +108,12 @@ export default function DashboardPage() {
         </div>
       ) : (
         <>
+          <SafeToSpendHero
+            totalIncome={summary.totalIncome}
+            totalSpent={summary.totalSpent}
+            totalInvestmentTransfers={summary.totalInvestmentTransfers}
+            totalBudget={summary.totalBudget}
+          />
           <MobileDashboardOverview
             totalIncome={summary.totalIncome}
             totalSpent={summary.totalSpent}
@@ -130,6 +138,8 @@ export default function DashboardPage() {
           </div>
         </>
       )}
+
+      <HouseholdMetrics />
 
       <div className="hidden gap-4 md:grid lg:grid-cols-5">
         <div className="lg:col-span-3">

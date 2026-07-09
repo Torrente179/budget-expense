@@ -157,3 +157,16 @@
     @apply transition-colors;
   }
 }
+
+/* Mobile native feel: contain scroll chaining on touch devices so
+   pull-to-refresh and the OS bounce don't fight, and give taps a
+   subtle physical response. */
+@media (pointer: coarse) {
+  main {
+    overscroll-behavior-y: contain;
+  }
+  button:active,
+  [role="button"]:active {
+    transform: scale(0.98);
+  }
+}

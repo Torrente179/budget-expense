@@ -6,7 +6,6 @@ import {
   resolveServiceRoleUserByEmail,
 } from "@/lib/supabase/service-role";
 import { incomeSchema } from "@/lib/validations";
-import { cachedJson } from "@/lib/api-cache";
 
 const incomeQuerySchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
@@ -84,7 +83,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return cachedJson({ incomes: data ?? [] });
+  // No HTTP cache: the client-side react-query cache owns freshness.
+  return NextResponse.json({ incomes: data ?? [] });
 }
 
 export async function POST(request: NextRequest) {

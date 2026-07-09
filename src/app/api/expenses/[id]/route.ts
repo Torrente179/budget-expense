@@ -7,7 +7,10 @@ import {
 } from "@/lib/supabase/service-role";
 import { expenseSchema } from "@/lib/validations";
 
-const expenseUpdateSchema = expenseSchema.partial();
+const expenseUpdateSchema = expenseSchema.partial().extend({
+  // The review ritual clears this after a one-tap categorization
+  needs_review: z.boolean().optional(),
+});
 
 function normalizeDescription(description: string | null | undefined) {
   if (description === undefined) {

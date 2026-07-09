@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { buildExpenseDedupeKey } from "@/lib/ledger/dedupe";
 import { createRequestClient } from "@/lib/supabase/request";
 import {
   createServiceRoleClient,
@@ -75,13 +76,7 @@ export async function POST(request: NextRequest) {
   const groups = new Map<string, typeof allExpenses>();
 
   for (const expense of allExpenses) {
-    const key = [
-      expense.amount,
-      expense.date,
-      expense.description ?? "",
-      expense.category_id,
-      expense.currency,
-    ].join("|");
+    const key = buildExpenseDedupeKey(expense);
 
     const group = groups.get(key);
 

@@ -13,10 +13,13 @@ import {
   CandlestickChart,
   CalendarDays,
   BarChart3,
+  FileUp,
+  ClipboardCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
 import { useLocale } from "@/providers/locale-provider";
+import { useReviewCount } from "@/hooks/use-review-queue";
 import { SiteBrand } from "./site-brand";
 
 export function Sidebar() {
@@ -24,6 +27,7 @@ export function Sidebar() {
   const router = useRouter();
   const supabase = createClient();
   const { t } = useLocale();
+  const reviewCount = useReviewCount();
   const navItems = [
     { href: "/dashboard", label: t("Dashboard", "Panel"), icon: LayoutDashboard },
     { href: "/movimientos", label: t("Movements", "Movimientos"), icon: ArrowUpDown },
@@ -34,6 +38,13 @@ export function Sidebar() {
       href: "/investments",
       label: t("Investments", "Inversiones"),
       icon: CandlestickChart,
+    },
+    { href: "/import", label: t("Import", "Importar"), icon: FileUp },
+    {
+      href: "/review",
+      label: t("Review", "Revisión"),
+      icon: ClipboardCheck,
+      badge: reviewCount > 0 ? reviewCount : undefined,
     },
     { href: "/wisdom", label: t("Wisdom", "Sabiduría"), icon: BookOpenText },
     { href: "/settings", label: t("Settings", "Ajustes"), icon: Settings },
@@ -66,6 +77,11 @@ export function Sidebar() {
             >
               <item.icon className="h-4 w-4" />
               {item.label}
+              {"badge" in item && item.badge !== undefined && (
+                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-secondary px-1.5 font-mono text-[0.68rem] tabular-nums ring-1 ring-border">
+                  {item.badge}
+                </span>
+              )}
             </Link>
           );
         })}

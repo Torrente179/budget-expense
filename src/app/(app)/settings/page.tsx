@@ -22,6 +22,9 @@ import { Separator } from "@/components/ui/separator";
 import { Loader2, Sun, Moon, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
+import { StewardshipSettings } from "@/components/settings/stewardship-settings";
+import { CategoryClassification } from "@/components/settings/category-classification";
+import { LiabilitiesEditor } from "@/components/settings/liabilities-editor";
 
 export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
@@ -177,6 +180,11 @@ export default function SettingsPage() {
           </Select>
         </CardContent>
       </Card>
+
+      {/* Stewardship */}
+      <StewardshipSettings />
+      <CategoryClassification />
+      <LiabilitiesEditor />
 
       {/* Theme */}
       <Card className="border-border/50">

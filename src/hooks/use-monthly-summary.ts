@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { fetchMonthlySummaryRaw } from "@/lib/query/fetchers";
+import { queryKeys } from "@/lib/query/keys";
 import { useCurrency } from "@/providers/currency-provider";
 
 interface MonthlySummary {
@@ -31,36 +33,6 @@ interface UseMonthlySummaryOptions {
   year: number;
 }
 
-// Raw API response shape — stored before currency conversion
-interface RawSummaryData {
-  expenses: {
-    amount: unknown;
-    currency: string;
-    date: string;
-    category_id: string;
-    categories: {
-      id: string;
-      name: string;
-      color: string;
-      icon: string;
-    };
-  }[];
-  incomes: { amount: unknown; currency: string }[];
-  prevExpenses: { amount: unknown; currency: string }[];
-  budgets: { amount: unknown; currency: string }[];
-  monthlyPlan: {
-    income_amount: unknown;
-    income_currency: string;
-    allocation_percent: unknown;
-  } | null;
-  investmentTransfers: {
-    amount: unknown;
-    currency: string;
-    transfer_date: string;
-  }[];
-  prevInvestmentTransfers: { amount: unknown; currency: string }[];
-}
-
 const emptySummary: MonthlySummary = {
   totalSpent: 0,
   totalIncome: 0,
@@ -77,62 +49,16 @@ const emptySummary: MonthlySummary = {
 };
 
 export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
-  const [rawData, setRawData] = useState<RawSummaryData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
   const { convert } = useCurrency();
 
-  // Fetch raw data from API — only depends on month/year, NOT convert
-  const fetchSummary = useCallback(async () => {
-    setLoading(true);
-    try {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
-      const params = new URLSearchParams({
-        month: String(month),
-        year: String(year),
-      });
-
-      const response = await fetch(
-        `/api/dashboard/summary?${params.toString()}`,
-        {
-          credentials: "include",
-          headers: session?.access_token
-            ? { Authorization: `Bearer ${session.access_token}` }
-            : undefined,
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(
-          `Dashboard summary fetch failed with status ${response.status}`
-        );
-      }
-
-      const data = await response.json();
-
-      setRawData({
-        expenses: data.expenses ?? [],
-        incomes: data.incomes ?? [],
-        prevExpenses: data.prevExpenses ?? [],
-        budgets: data.budgets ?? [],
-        monthlyPlan: data.monthlyPlan ?? null,
-        investmentTransfers: data.investmentTransfers ?? [],
-        prevInvestmentTransfers: data.prevInvestmentTransfers ?? [],
-      });
-    } catch (error) {
-      console.error("Failed to fetch monthly summary", error);
-      setRawData(null);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase, month, year]);
-
-  useEffect(() => {
-    fetchSummary();
-  }, [fetchSummary]);
+  const {
+    data: rawData,
+    isPending,
+    refetch,
+  } = useQuery({
+    queryKey: queryKeys.monthlySummary(month, year),
+    queryFn: () => fetchMonthlySummaryRaw(month, year),
+  });
 
   // Derive converted summary from raw data + convert — recomputes when rates
   // change without triggering a new API fetch
@@ -249,5 +175,5 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     };
   }, [rawData, convert]);
 
-  return { summary, loading, refetch: fetchSummary };
+  return { summary, loading: isPending, refetch };
 }

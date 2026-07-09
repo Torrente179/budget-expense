@@ -3,7 +3,9 @@
 import { Sidebar } from "@/components/layout/sidebar";
 import { Topbar } from "@/components/layout/topbar";
 import { MobileBottomNav } from "@/components/layout/mobile-nav";
+import { QuickAddFab } from "@/components/expenses/quick-add-fab";
 import { CurrencyProvider } from "@/providers/currency-provider";
+import { QueryProvider } from "@/providers/query-provider";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname } from "next/navigation";
 
@@ -11,7 +13,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
-    <CurrencyProvider>
+    <QueryProvider>
+      <CurrencyProvider>
       <div className="flex min-h-screen overflow-hidden">
         <Sidebar />
         <div className="flex flex-1 flex-col overflow-hidden">
@@ -31,8 +34,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             </AnimatePresence>
           </main>
           <MobileBottomNav />
+          <QuickAddFab />
         </div>
       </div>
-    </CurrencyProvider>
+      </CurrencyProvider>
+    </QueryProvider>
   );
 }

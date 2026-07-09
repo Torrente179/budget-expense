@@ -10,7 +10,6 @@ import {
   resolveServiceRoleUserByEmail,
 } from "@/lib/supabase/service-role";
 import { expenseSchema } from "@/lib/validations";
-import { cachedJson } from "@/lib/api-cache";
 
 const expenseQuerySchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
@@ -94,7 +93,9 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  return cachedJson({ expenses: data ?? [] });
+  // No HTTP cache: the client-side react-query cache owns freshness, and a
+  // browser-cached response here would defeat invalidation after mutations.
+  return NextResponse.json({ expenses: data ?? [] });
 }
 
 export async function POST(request: NextRequest) {
@@ -120,11 +121,15 @@ export async function POST(request: NextRequest) {
   const supabase = ledgerSupabase ?? appSupabase;
   const effectiveUserId = ledgerUser?.id ?? user.id;
 
-  const { error } = await supabase.from("expenses").insert({
-    ...parsed.data,
-    description: normalizeDescription(parsed.data.description),
-    user_id: effectiveUserId,
-  });
+  const { data, error } = await supabase
+    .from("expenses")
+    .insert({
+      ...parsed.data,
+      description: normalizeDescription(parsed.data.description),
+      user_id: effectiveUserId,
+    })
+    .select("*, categories(*)")
+    .single();
 
   if (error) {
     console.error("Failed to create expense", error);
@@ -134,5 +139,5 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+  return NextResponse.json({ ok: true, expense: data }, { status: 201 });
 }

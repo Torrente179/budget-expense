@@ -55,6 +55,7 @@ BANK_CATEGORY_MAP = {
     "parking y peaje": "Transportation",
     "ropa": "Shopping",
     "solidaridad": "Donations",
+    "comunidad": "Donations",
     "seguro salud": "Healthcare",
     "internet": "Utilities",
     "television": "Utilities",
@@ -133,6 +134,7 @@ PATTERN_RULES = [
             "solidaridad",
             "donation",
             "donacion",
+            "comunidad cristiana",
         ),
     ),
     (
@@ -266,6 +268,7 @@ PATTERN_RULES = [
             "restaurante",
             "restaurant",
             "burger",
+            "hamburguesa",
             "starbucks",
             "granier",
             "pasteler",
@@ -424,6 +427,14 @@ def friendly_label(raw_concept: str) -> str:
             ),
         ),
         (
+            re.compile(r"^transferencia a favor de ([^,]+?)(?:,? concepto:? ?(.*))?$", re.IGNORECASE),
+            lambda match: build_transfer_label(
+                "Transfer to",
+                match.group(1),
+                compact_suffix(match.group(2)),
+            ),
+        ),
+        (
             re.compile(r"^transferencia inmediata de ([^,]+?)(?:, concepto:? ?(.*))?$", re.IGNORECASE),
             lambda match: build_transfer_label(
                 "Transfer from",
@@ -509,13 +520,63 @@ def chunked(rows: Iterable[str], size: int) -> Iterable[list[str]]:
         yield chunk
 
 
+TITHE_MATCH_TOLERANCE = Decimal("0.25")
+SIGNIFICANT_INCOME_THRESHOLD = Decimal("500")
+TITHE_LOOKAHEAD_DAYS = 5
+
+
+def find_matching_wise_transfer(
+    expenses: list[ExpenseRow],
+    candidate_indices: list[int],
+    target_amount: Decimal,
+    income_date: str,
+) -> int | None:
+    """Return the unmatched Wise expense index that best matches a tithe target."""
+    income_dt = datetime.fromisoformat(income_date)
+    matches: list[tuple[Decimal, int, str, int]] = []
+
+    for index in candidate_indices:
+        expense = expenses[index]
+        expense_dt = datetime.fromisoformat(expense.date)
+        day_delta = (expense_dt - income_dt).days
+        if day_delta < 0 or day_delta > TITHE_LOOKAHEAD_DAYS:
+            continue
+
+        difference = abs(expense.amount - target_amount)
+        if target_amount <= 0 or difference / target_amount > TITHE_MATCH_TOLERANCE:
+            continue
+
+        matches.append((difference, day_delta, expense.date, index))
+
+    if not matches:
+        return None
+
+    matches.sort()
+    return matches[0][3]
+
+
+def relabel_expense_as_tithe(expenses: list[ExpenseRow], expense_index: int) -> None:
+    expense = expenses[expense_index]
+    expenses[expense_index] = ExpenseRow(
+        category_name="Tithe / Diezmo",
+        amount=expense.amount,
+        currency=expense.currency,
+        description=expense.description,
+        date=expense.date,
+    )
+
+
 def assign_tithe_from_wise_transfers(
     expenses: list[ExpenseRow],
     incomes: list[IncomeRow],
     explicit_monthly_income: Decimal | None = None,
 ) -> tuple[list[ExpenseRow], int]:
-    """For each month, find the Wise transfer closest to 10 % of income and
-    reclassify it as 'Tithe / Diezmo'.
+    """Find Wise transfer(s) that best match 10 % tithe payments.
+
+    The primary heuristic matches paycheck-sized income entries to Wise
+    transfers that land within a few days and are close to 10 % of that
+    inflow. When there is no paycheck-sized match for a month, the function
+    falls back to the best single Wise transfer for that month.
 
     Returns the (possibly updated) expense list and the count of tithe
     assignments made.
@@ -544,26 +605,58 @@ def assign_tithe_from_wise_transfers(
 
     result = list(expenses)
     tithe_count = 0
+    matched_wise_indices: set[int] = set()
+    matched_months: set[str] = set()
+
+    significant_incomes = [
+        income for income in incomes if income.amount >= SIGNIFICANT_INCOME_THRESHOLD
+    ]
+
+    for income in significant_incomes:
+        month = income.date[:7]
+        candidate_indices = [
+            index
+            for index in wise_indices_by_month.get(month, [])
+            if index not in matched_wise_indices
+        ]
+        if not candidate_indices:
+            continue
+
+        matched_index = find_matching_wise_transfer(
+            result,
+            candidate_indices,
+            income.amount * Decimal("0.10"),
+            income.date,
+        )
+        if matched_index is None:
+            continue
+
+        relabel_expense_as_tithe(result, matched_index)
+        matched_wise_indices.add(matched_index)
+        matched_months.add(month)
+        tithe_count += 1
 
     for month, indices in wise_indices_by_month.items():
+        if month in matched_months:
+            continue
+
         monthly_income = income_by_month.get(month, Decimal(0))
         if monthly_income <= 0:
             continue
 
+        available_indices = [
+            index for index in indices if index not in matched_wise_indices
+        ]
+        if not available_indices:
+            continue
+
         tithe_target = monthly_income * Decimal("0.10")
-        best_idx = min(indices, key=lambda i: abs(result[i].amount - tithe_target))
+        best_idx = min(available_indices, key=lambda i: abs(result[i].amount - tithe_target))
         best_diff = abs(result[best_idx].amount - tithe_target)
 
-        # Accept if within 25 % tolerance of the tithe target.
-        if tithe_target > 0 and best_diff / tithe_target <= Decimal("0.25"):
-            old = result[best_idx]
-            result[best_idx] = ExpenseRow(
-                category_name="Tithe / Diezmo",
-                amount=old.amount,
-                currency=old.currency,
-                description=old.description,
-                date=old.date,
-            )
+        if tithe_target > 0 and best_diff / tithe_target <= TITHE_MATCH_TOLERANCE:
+            relabel_expense_as_tithe(result, best_idx)
+            matched_wise_indices.add(best_idx)
             tithe_count += 1
 
     return result, tithe_count
@@ -758,6 +851,82 @@ def build_import_sql(
 
     sql_lines.extend(
         [
+            "-- Ensure income ledger table exists in projects created before the income feature.",
+            "CREATE TABLE IF NOT EXISTS public.income_entries (",
+            "    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),",
+            "    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,",
+            "    source TEXT NOT NULL CHECK (char_length(btrim(source)) > 0 AND char_length(source) <= 100),",
+            "    amount DECIMAL(12, 2) NOT NULL CHECK (amount > 0),",
+            "    currency TEXT NOT NULL DEFAULT 'EUR',",
+            "    description TEXT,",
+            "    date DATE NOT NULL DEFAULT CURRENT_DATE,",
+            "    created_at TIMESTAMPTZ NOT NULL DEFAULT now(),",
+            "    updated_at TIMESTAMPTZ NOT NULL DEFAULT now()",
+            ");",
+            "",
+            "CREATE INDEX IF NOT EXISTS idx_income_entries_user_id",
+            "    ON public.income_entries(user_id);",
+            "CREATE INDEX IF NOT EXISTS idx_income_entries_date",
+            "    ON public.income_entries(user_id, date);",
+            "",
+            "CREATE OR REPLACE FUNCTION public.update_updated_at()",
+            "RETURNS TRIGGER AS $$",
+            "BEGIN",
+            "    NEW.updated_at = now();",
+            "    RETURN NEW;",
+            "END;",
+            "$$ LANGUAGE plpgsql;",
+            "",
+            "DROP TRIGGER IF EXISTS set_updated_at_income_entries ON public.income_entries;",
+            "CREATE TRIGGER set_updated_at_income_entries",
+            "    BEFORE UPDATE ON public.income_entries",
+            "    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at();",
+            "",
+            "ALTER TABLE public.income_entries ENABLE ROW LEVEL SECURITY;",
+            "",
+            "DO $$",
+            "BEGIN",
+            "  IF NOT EXISTS (",
+            "    SELECT 1 FROM pg_policies",
+            "    WHERE schemaname = 'public'",
+            "      AND tablename = 'income_entries'",
+            "      AND policyname = 'Users can view own income entries'",
+            "  ) THEN",
+            "    CREATE POLICY \"Users can view own income entries\"",
+            "      ON public.income_entries FOR SELECT USING (user_id = auth.uid());",
+            "  END IF;",
+            "",
+            "  IF NOT EXISTS (",
+            "    SELECT 1 FROM pg_policies",
+            "    WHERE schemaname = 'public'",
+            "      AND tablename = 'income_entries'",
+            "      AND policyname = 'Users can insert own income entries'",
+            "  ) THEN",
+            "    CREATE POLICY \"Users can insert own income entries\"",
+            "      ON public.income_entries FOR INSERT WITH CHECK (user_id = auth.uid());",
+            "  END IF;",
+            "",
+            "  IF NOT EXISTS (",
+            "    SELECT 1 FROM pg_policies",
+            "    WHERE schemaname = 'public'",
+            "      AND tablename = 'income_entries'",
+            "      AND policyname = 'Users can update own income entries'",
+            "  ) THEN",
+            "    CREATE POLICY \"Users can update own income entries\"",
+            "      ON public.income_entries FOR UPDATE USING (user_id = auth.uid());",
+            "  END IF;",
+            "",
+            "  IF NOT EXISTS (",
+            "    SELECT 1 FROM pg_policies",
+            "    WHERE schemaname = 'public'",
+            "      AND tablename = 'income_entries'",
+            "      AND policyname = 'Users can delete own income entries'",
+            "  ) THEN",
+            "    CREATE POLICY \"Users can delete own income entries\"",
+            "      ON public.income_entries FOR DELETE USING (user_id = auth.uid());",
+            "  END IF;",
+            "END $$;",
+            "",
             "CREATE TEMP TABLE tmp_income_import (",
             "  source TEXT NOT NULL,",
             "  amount DECIMAL(12, 2) NOT NULL,",
@@ -899,8 +1068,8 @@ def main() -> None:
         type=Decimal,
         default=None,
         help="Override monthly income for tithe detection (e.g. 1500.00). "
-        "When provided, the Wise transfer closest to 10%% of this amount "
-        "is classified as 'Tithe / Diezmo'.",
+        "When provided, the best matching Wise transfer(s) for 10%% of this "
+        "amount are classified as 'Tithe / Diezmo'.",
     )
     args = parser.parse_args()
 
