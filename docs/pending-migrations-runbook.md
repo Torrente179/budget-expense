@@ -59,6 +59,24 @@ As of 2026-07-17 (post data reconciliation, see
 **208 income entries**, **200 categorization rules**, history covering
 **2024-08-07 → present**.
 
+## Pending / apply on deploy (post S-tier)
+
+| File (in `supabase/migrations/`) | Purpose | Status |
+|---|---|---|
+| `2026-07-18-onboarding-goals.sql` | Profile columns for skippable onboarding + goals (`onboarding_completed_at`, `onboarding_skipped_at`, `wants_budget_help`, `primary_goals`) | ✅ Applied 2026-07-18 on `awpygbfocmynxpadpsji` |
+| `2026-07-18-household-insights-aggregates-app.sql` | `liability_payment_totals` RPC + index | ✅ Applied 2026-07-18 on `awpygbfocmynxpadpsji` |
+| `2026-07-18-household-insights-aggregates-ledger.sql` | Household expense/income aggregate RPCs (applied on app — single project) | ✅ Applied 2026-07-18 on `awpygbfocmynxpadpsji` |
+
+```bash
+node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-onboarding-goals.sql
+node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND (column_name LIKE 'onboarding%' OR column_name IN ('wants_budget_help','primary_goals'))"
+```
+
+Product behavior is documented in `design.md` §8–§9 and
+`changes/2026-07-18-onboarding-goals-budget-alerts.md`. Until the migration
+runs, the client hook soft-falls back (onboarding fields treated as empty) so
+the app does not hard-crash.
+
 ## If the project won't connect at all
 Before assuming a migration or schema problem, check whether the project is
 simply **paused** (free-tier auto-pause after ~7 days idle — has happened more

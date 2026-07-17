@@ -57,7 +57,7 @@ vercel inspect budget-expense-seven.vercel.app
 - Region: `eu-west-1`
 - Owner login: GitHub SSO as `pablopablo179@gmail.com`
 - Purpose: auth/session **and** all expense/income/investment/liability data — there is no separate ledger project anymore.
-- Two auth users exist: `pablopablo179@gmail.com` (`36d56f02-711b-4eac-80df-803bdb599828`, the primary data owner) and `saldamo_gisela@hotmail.com`. Any SQL touching `auth.users` must resolve the right one.
+- Primary auth user: `pablopablo179@gmail.com` (`36d56f02-711b-4eac-80df-803bdb599828`). Any SQL touching `auth.users` must resolve the right one. (`saldamo_gisela@hotmail.com` was deleted 2026-07-18 so that account can re-signup through onboarding.)
 
 ### Environment variables (single set)
 ```env
@@ -111,10 +111,15 @@ The ledger was reconciled end-to-end against the **official Santander xlsx expor
 - SQL: `supabase/imports/2026-07-17-santander-reconciliation.sql`, `supabase/imports/2026-07-17-santander-historical-backfill.sql`.
 - Change notes: `changes/2026-07-17-santander-reconciliation-import.md`, `changes/2026-07-17-santander-historical-backfill.md`.
 
+## Product / schema docs (keep in sync)
+- **Design system + product IA:** [`design.md`](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/design.md) — includes first-run onboarding (§8), in-app envelope alerts (§9), Screen back-nav, and language-control placement.
+- **Migrations checklist:** [`docs/pending-migrations-runbook.md`](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/docs/pending-migrations-runbook.md) — includes pending `2026-07-18-onboarding-goals.sql` (profile onboarding/goals columns). Apply with `node scripts/apply-sql.mjs --project app --file …` before relying on `/onboarding` persistence in production.
+
 ## Related Change Notes
 - [changes/2026-07-04-consolidate-single-supabase-project.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-04-consolidate-single-supabase-project.md) — the two-project → single-project migration
 - [changes/2026-07-17-santander-reconciliation-import.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-17-santander-reconciliation-import.md)
 - [changes/2026-07-17-santander-historical-backfill.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-17-santander-historical-backfill.md)
+- [changes/2026-07-18-onboarding-goals-budget-alerts.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-18-onboarding-goals-budget-alerts.md) — skippable onboarding, goals personalization, envelope alerts, history back nav
 
 ---
 

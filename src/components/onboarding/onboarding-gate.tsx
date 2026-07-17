@@ -2,13 +2,16 @@
 
 import { useEffect } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { useOnboarding } from "@/hooks/use-onboarding";
+import {
+  isOnboardingDismissedInSession,
+  useOnboarding,
+} from "@/hooks/use-onboarding";
 
 const ALLOWED_WHILE_PENDING = ["/onboarding", "/settings", "/login", "/signup"];
 
 /**
- * Soft client gate: incomplete onboarding users are steered to /onboarding
- * unless they already skipped/completed or are on allowed routes.
+ * Soft client gate: only brand-new accounts that have not completed or skipped
+ * onboarding are steered to /onboarding. Pre-feature accounts are never forced.
  */
 export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -16,7 +19,10 @@ export function OnboardingGate({ children }: { children: React.ReactNode }) {
   const { loading, needsOnboarding } = useOnboarding();
 
   useEffect(() => {
-    if (loading || !needsOnboarding) return;
+    if (loading) return;
+    if (isOnboardingDismissedInSession()) return;
+    if (!needsOnboarding) return;
+
     const allowed = ALLOWED_WHILE_PENDING.some((path) =>
       pathname.startsWith(path)
     );

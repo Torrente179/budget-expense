@@ -125,6 +125,11 @@ export function OnboardingWizard() {
       await skipOnboarding();
       router.replace("/home");
       router.refresh();
+    } catch (error) {
+      console.error(error);
+      toast.error(
+        t("Could not skip setup", "No se pudo saltar la configuración")
+      );
     } finally {
       setSaving(false);
     }
@@ -300,7 +305,12 @@ export function OnboardingWizard() {
                   </SelectContent>
                 </Select>
               </div>
-              <StepNav onBack={goBack} onNext={goNext} />
+              <StepNav
+                onBack={goBack}
+                onNext={goNext}
+                onSkip={handleSkip}
+                skipping={saving}
+              />
             </CardContent>
           </Card>
         )}
@@ -405,7 +415,13 @@ export function OnboardingWizard() {
                 <Plus className="h-4 w-4" />
                 {t("Add fixed expense", "Añadir gasto fijo")}
               </Button>
-              <StepNav onBack={goBack} onNext={goNext} nextLabel={t("Continue", "Continuar")} />
+              <StepNav
+                onBack={goBack}
+                onNext={goNext}
+                onSkip={handleSkip}
+                skipping={saving}
+                nextLabel={t("Continue", "Continuar")}
+              />
             </CardContent>
           </Card>
         )}
@@ -539,7 +555,12 @@ export function OnboardingWizard() {
                 <Plus className="h-4 w-4" />
                 {t("Add debt", "Añadir deuda")}
               </Button>
-              <StepNav onBack={goBack} onNext={goNext} />
+              <StepNav
+                onBack={goBack}
+                onNext={goNext}
+                onSkip={handleSkip}
+                skipping={saving}
+              />
             </CardContent>
           </Card>
         )}
@@ -596,7 +617,12 @@ export function OnboardingWizard() {
                   })}
                 </div>
               </div>
-              <StepNav onBack={goBack} onNext={goNext} />
+              <StepNav
+                onBack={goBack}
+                onNext={goNext}
+                onSkip={handleSkip}
+                skipping={saving}
+              />
             </CardContent>
           </Card>
         )}
@@ -637,23 +663,27 @@ export function OnboardingWizard() {
                   </li>
                 )}
               </ul>
-              <div className="flex flex-col gap-2 sm:flex-row">
-                <Button variant="ghost" onClick={goBack} disabled={saving}>
-                  {t("Back", "Atrás")}
-                </Button>
-                <Button className="flex-1" onClick={handleFinish} disabled={saving}>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Button variant="ghost" onClick={goBack} disabled={saving}>
+                    {t("Back", "Atrás")}
+                  </Button>
+                  <Button className="flex-1" onClick={handleFinish} disabled={saving}>
+                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {t("Finish setup", "Terminar configuración")}
+                  </Button>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-muted-foreground"
+                  disabled={saving}
+                  onClick={handleSkip}
+                >
                   {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  {t("Finish setup", "Terminar configuración")}
+                  {t("Skip for now", "Saltar por ahora")}
                 </Button>
               </div>
-              <button
-                type="button"
-                className="w-full text-center text-caption text-muted-foreground underline-offset-2 hover:underline"
-                disabled={saving}
-                onClick={handleSkip}
-              >
-                {t("Skip and explore the app", "Saltar y explorar la app")}
-              </button>
             </CardContent>
           </Card>
         )}
@@ -665,20 +695,41 @@ export function OnboardingWizard() {
 function StepNav({
   onBack,
   onNext,
+  onSkip,
+  skipping,
   nextLabel,
 }: {
   onBack: () => void;
   onNext: () => void;
+  onSkip: () => void;
+  skipping?: boolean;
   nextLabel?: string;
 }) {
   const { t } = useLocale();
   return (
-    <div className="flex gap-2 pt-2">
-      <Button type="button" variant="ghost" onClick={onBack}>
-        {t("Back", "Atrás")}
-      </Button>
-      <Button type="button" className="flex-1" onClick={onNext}>
-        {nextLabel ?? t("Continue", "Continuar")}
+    <div className="flex flex-col gap-2 pt-2">
+      <div className="flex gap-2">
+        <Button type="button" variant="ghost" onClick={onBack} disabled={skipping}>
+          {t("Back", "Atrás")}
+        </Button>
+        <Button
+          type="button"
+          className="flex-1"
+          onClick={onNext}
+          disabled={skipping}
+        >
+          {nextLabel ?? t("Continue", "Continuar")}
+        </Button>
+      </div>
+      <Button
+        type="button"
+        variant="ghost"
+        className="w-full text-muted-foreground"
+        disabled={skipping}
+        onClick={onSkip}
+      >
+        {skipping && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+        {t("Skip for now", "Saltar por ahora")}
       </Button>
     </div>
   );

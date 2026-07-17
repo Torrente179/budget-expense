@@ -59,13 +59,21 @@ export async function updateSession(request: NextRequest) {
     // Prefer onboarding for brand-new profiles; client gate also enforces this.
     const { data: profile } = await supabase
       .from("profiles")
-      .select("onboarding_completed_at, onboarding_skipped_at")
+      .select("onboarding_completed_at, onboarding_skipped_at, created_at")
       .eq("id", user.id)
       .maybeSingle();
 
+    // Only brand-new accounts (profile created on/after feature launch) get
+    // the onboarding redirect. Pre-existing users go straight to Home.
+    const ONBOARDING_FEATURE_LAUNCH = "2026-07-18T00:00:00.000Z";
+    const isNewAccount =
+      !profile?.created_at ||
+      new Date(profile.created_at).getTime() >=
+        new Date(ONBOARDING_FEATURE_LAUNCH).getTime();
     const onboarded =
       Boolean(profile?.onboarding_completed_at) ||
-      Boolean(profile?.onboarding_skipped_at);
+      Boolean(profile?.onboarding_skipped_at) ||
+      !isNewAccount;
     url.pathname = onboarded ? "/home" : "/onboarding";
     return NextResponse.redirect(url);
   }

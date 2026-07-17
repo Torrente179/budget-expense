@@ -40,6 +40,9 @@ of truth for every nav surface is
 Secondary: `/review`, `/import`, `/wisdom`, `/settings` — reachable from the
 sidebar (desktop), the profile sheet (mobile), and the command menu (⌘K).
 
+**First-run:** `/onboarding` — skippable setup wizard (not in primary nav).
+See [§8 First-run onboarding & goals](#8-first-run-onboarding--goals).
+
 Old routes (`/dashboard`, `/movimientos`, `/budgets`, `/analytics`,
 `/calendar`, `/investments/*`, `/expenses`, `/incomes`) are **permanent
 redirect stubs** — never delete them; installed PWAs may deep-link to them.
@@ -129,7 +132,12 @@ src/components/
               sheet.tsx: side="bottom" gets a drag handle + safe-area padding.
   patterns/   Composed building blocks — reach for these before new markup:
               screen.tsx          app-screen scaffold (sticky header, back or
-                                  avatar leading, actions, subheader row)
+                                  avatar leading, actions, subheader row).
+                                  When `backHref` is set, Back calls
+                                  `router.back()` if history exists; else
+                                  navigates to `backHref` (deep-link/refresh
+                                  fallback). Never hard-code `/home` as the
+                                  only back target.
               section-header.tsx  eyebrow + title + optional action
               stat-card.tsx       label / value / detail tile
               amount-text.tsx     THE way to render money (converts via the
@@ -144,10 +152,15 @@ src/components/
               segmented, create+edit modes, amount-first, as-you-type category
               suggestion) + capture-fab.tsx + hooks/use-capture.ts (optimistic
               expense add with Undo). There is exactly ONE movement form.
+              After a successful expense save, envelope-limit toasts may fire
+              (see §9).
+  onboarding/ First-run wizard + soft client gate (`OnboardingGate` in the
+              app layout). Not primary nav.
   layout/     sidebar (desktop), topbar (desktop-only), tab-bar (mobile,
-              5 tabs), profile-sheet (mobile secondary nav + switches +
+              5 tabs), profile-sheet (mobile secondary nav + language row +
               logout), command-menu (⌘K), site-brand. All consume
-              lib/navigation.ts.
+              lib/navigation.ts. Chrome (Sidebar/Topbar/TabBar/CaptureFab)
+              is hidden on `/onboarding`.
   home/ movements/ budget/ wealth/ insights/   feature modules per section
   review/ import/ settings/ auth/ shared/      kept modules
 ```
@@ -171,6 +184,9 @@ error states. No blank areas while fetching.
   on pushed screens. Bottom `TabBar` with the 5 sections + floating capture
   FAB bottom-right (thumb zone). Main content padding clears the bar +
   `env(safe-area-inset-bottom)`.
+- **Back** on pushed screens = previous page (`router.back()`), with
+  `backHref` as the safe fallback when there is no history (refresh / deep
+  link). Do not replace this with a hardcoded `/home` Link.
 - All create/edit forms are **bottom sheets** with drag handle and sticky
   submit row (keyboard-safe). Desktop uses side sheets/dialogs.
 - Lists are full-bleed edge-to-edge rows (min-h-16, ≥44px targets) with
@@ -187,6 +203,11 @@ error states. No blank areas while fetching.
 
 - Every user-facing string ships EN + ES via `t(en, es)`; category names go
   through `tc()`. Layouts must tolerate ±35% text-length variance.
+- **Language controls never live in `Screen` header chrome** (they crowd month
+  pickers and actions). Placement:
+  - **Mobile:** profile sheet — a Language row that toggles EN ↔ ES.
+  - **Settings:** full Language preference list (radio).
+  - **Desktop / auth:** compact Languages chip where appropriate.
 - Amounts are stored in their original currency and converted for display;
   income renders `positive` tone with a `+` sign, expenses render negative.
 - Tone: warm, plain-spoken stewardship language. Domain vocabulary:
@@ -200,6 +221,7 @@ error states. No blank areas while fetching.
 | Need | Use |
 |---|---|
 | Page scaffold | `<Screen title … actions … subheader …>` |
+| Pushed-screen back | `<Screen backHref="/safe-fallback">` (history first) |
 | Surface / panel | `<Card>` (unmodified) |
 | Section/metric label | `label-caps` |
 | Big number | `font-mono text-display tabular-nums` |
@@ -208,6 +230,9 @@ error states. No blank areas while fetching.
 | Stat tile | `<StatCard label value detail href?>` |
 | Budget/tithe progress | `<ProgressMeter ratio>` |
 | Add/edit a movement | `<CaptureSheet>` (never a bespoke form) |
+| First-run setup | `/onboarding` + `useOnboarding` / `OnboardingGate` |
+| Goal → UI mapping | `lib/onboarding/personalize.ts` |
+| Envelope limit check | `lib/budgeting/envelope-alerts.ts` + notify helper |
 | Positive / negative amount | `text-positive` / `text-negative` |
 | Status chip | `bg-success-subtle text-success` (or warning/danger/info) |
 | Chart wrapper | `<ChartCard>` + presets from `charts/chart-theme` |
@@ -227,9 +252,90 @@ error states. No blank areas while fetching.
    `tracking-[…]`, `shadow-[0_…]`, `bg-card/96`.
 3. No stale route strings outside their redirect stubs.
 4. Nav items come only from `lib/navigation.ts`.
+5. No language switcher in `Screen` headers — Settings / profile sheet only.
+
+---
+
+## 8. First-run onboarding & goals
+
+Skippable wizard so new users can set income, fixed costs, debt, and goals
+without blocking the app. Detail: `changes/2026-07-18-onboarding-goals-budget-alerts.md`.
+
+### Entry & gate
+
+| Path | Behavior |
+|---|---|
+| Signup success | Redirect to `/onboarding` |
+| Login / signup while already authed | Middleware: only profiles created on/after `2026-07-18` with both flags null → `/onboarding`; older accounts → `/home` |
+| Soft client gate | `OnboardingGate` force-redirects **only new accounts** that have not completed/skipped (shared React Query cache + session dismiss so Skip cannot bounce back) |
+| Skip | Available on **every** wizard step; sets `onboarding_skipped_at` (+ session flag), goes `/home` — app fully usable |
+| Resume | Home “Finish setup” banner + Settings “Setup guide” when a new user skipped / never finished |
+| Finish | Sets `onboarding_completed_at`, writes plan / recurring / liabilities / optional envelopes, goes `/home` |
+| Pre-feature users | Never force-gated (grandfathered by `profiles.created_at` before launch) |
+
+### Wizard steps
+
+1. Welcome — purpose + Skip / Start  
+2. Monthly income → current-month `monthly_budget_plans`  
+3. Recurring / fixed expenses (0–N)  
+4. Debt / liabilities (0–N)  
+5. Goals — “want budgeting help?” + multi-select  
+6. Suggestions — method + starter envelopes (when help requested)  
+7. Done  
+
+Allowed `primary_goals` values: `save_more`, `increase_wealth`,
+`budget_tracking`, `decrease_expenses`, `pay_debt`, `give_generously`,
+`build_emergency_fund`.
+
+### Profile columns
+
+Migration: `supabase/migrations/2026-07-18-onboarding-goals.sql` (apply on
+the app Supabase project before relying on these fields):
+
+- `onboarding_completed_at timestamptz null`
+- `onboarding_skipped_at timestamptz null`
+- `wants_budget_help boolean null`
+- `primary_goals text[] not null default '{}'`
+
+### Personalization (deterministic)
+
+`src/lib/onboarding/personalize.ts` maps answers → method id, allocation %,
+seed envelopes, Home CTAs, Attention hints. Applied at finish via
+`lib/onboarding/apply.ts`. Home quick actions and Budget empty copy read
+`profile.primary_goals` / `wants_budget_help`. No separate goals table in v1;
+Settings can edit goals later.
+
+| Signal | App adjustment |
+|---|---|
+| `wants_budget_help` | Method % on monthly plan; seed 2–4 starter envelopes |
+| `budget_tracking` | Emphasize Budget + Movements in Home quick actions |
+| `decrease_expenses` | Attention → Insights; Budget messaging |
+| `save_more` / `build_emergency_fund` | Savings-oriented method; optional Savings envelope |
+| `pay_debt` | Attention → Wealth/Liabilities; Wealth CTA |
+| `increase_wealth` | Wealth CTA on Home |
+| `give_generously` | Giving envelope / keep Giving card prominent |
+
+---
+
+## 9. In-app budget limit alerts
+
+**In-app only** — no push, email, or notification service.
+
+Thresholds match custom-budget cards: **75% warn**, **90% danger**, **100%
+over**.
+
+| Surface | Behavior |
+|---|---|
+| Capture success (`use-capture`) | Recompute affected envelopes for the expense month; `toast.warning` / `toast.error` with name, % used, action → `/budget` |
+| Home Attention feed | Rows for envelopes ≥75% this month |
+| Dedup | `sessionStorage` key `be-envelope-alert-toasts` — one toast per envelope+threshold per browser session |
+
+Helpers: `src/lib/budgeting/envelope-alerts.ts`,
+`src/lib/budgeting/notify-envelope-limits.ts`.
 
 ---
 
 *Maintained alongside the codebase. Update this file in the same change as any
 modification to tokens (`globals.css`), patterns (`components/patterns`),
-primitives (`components/ui`), or layout chrome (`components/layout`).*
+primitives (`components/ui`), layout chrome (`components/layout`), first-run
+onboarding, or envelope-alert behavior.*
