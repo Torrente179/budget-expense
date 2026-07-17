@@ -109,12 +109,13 @@ export function InsightsScreen() {
   /* Cumulative daily spend for the selected month */
   const cumulativeData = useMemo(() => {
     const daysInMonth = getDaysInMonth(new Date(year, month - 1));
+    const spentByDate = new Map(
+      summary.dailySpending.map((day) => [day.date, day.amount])
+    );
     let cumulative = 0;
     return Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      const spent =
-        summary.dailySpending.find((d) => d.date === dateStr)?.amount ?? 0;
-      cumulative += spent;
+      cumulative += spentByDate.get(dateStr) ?? 0;
       return {
         label: new Intl.DateTimeFormat(intlLocale, {
           day: "numeric",

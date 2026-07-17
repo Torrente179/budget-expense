@@ -40,17 +40,30 @@ export function formatDate(
   return format(d, pattern, { locale: getDateFnsLocale(locale) });
 }
 
+const currencyFormatters = new Map<string, Intl.NumberFormat>();
+
+function getCurrencyFormatter(currencyCode: string, locale?: string | null) {
+  const intlLocale = getIntlLocale(locale);
+  const key = `${intlLocale}:${currencyCode}`;
+  let formatter = currencyFormatters.get(key);
+  if (!formatter) {
+    formatter = new Intl.NumberFormat(intlLocale, {
+      style: "currency",
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    currencyFormatters.set(key, formatter);
+  }
+  return formatter;
+}
+
 export function formatCurrency(
   amount: number,
   currencyCode: string = "EUR",
   locale?: string | null
 ) {
-  return new Intl.NumberFormat(getIntlLocale(locale), {
-    style: "currency",
-    currency: currencyCode,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  return getCurrencyFormatter(currencyCode, locale).format(amount);
 }
 
 export function getCurrencySymbol(code: string) {

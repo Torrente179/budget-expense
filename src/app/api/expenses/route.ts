@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  getMonthDateRange,
-  syncRecurringExpensesForMonth,
-} from "@/lib/recurring-expenses";
+import { getMonthDateRange } from "@/lib/recurring-expenses";
 import { createRequestClient } from "@/lib/supabase/request";
 import {
   createServiceRoleClient,
@@ -50,17 +47,6 @@ export async function GET(request: NextRequest) {
     : null;
   const supabase = ledgerSupabase ?? appSupabase;
   const effectiveUserId = ledgerUser?.id ?? user.id;
-
-  try {
-    await syncRecurringExpensesForMonth({
-      supabase,
-      userId: effectiveUserId,
-      month: parsed.data.month,
-      year: parsed.data.year,
-    });
-  } catch (error) {
-    console.error("Failed to sync recurring expenses before expense fetch", error);
-  }
 
   const { startDate, endDate } = getMonthDateRange(
     parsed.data.month,

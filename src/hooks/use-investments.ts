@@ -156,47 +156,35 @@ export function useInvestments() {
       }
 
       setQuoteLoading(true);
-      const quotes = await Promise.all(
-        targetAssets.map(async (asset) => {
-          const params = new URLSearchParams({
-            symbol: asset.symbol,
-            assetType: asset.asset_type,
-            marketCode: asset.market_code,
-          });
-
-          if (asset.exchange_code) {
-            params.set("exchangeCode", asset.exchange_code);
-          }
-          if (asset.provider_symbol_twelve) {
-            params.set("providerSymbolTwelve", asset.provider_symbol_twelve);
-          }
-          if (asset.provider_symbol_eodhd) {
-            params.set("providerSymbolEodhd", asset.provider_symbol_eodhd);
-          }
-
-          try {
-            const response = await fetch(`/api/market-prices?${params.toString()}`);
-            if (!response.ok) {
-              return null;
-            }
-
-            const data = (await response.json()) as Omit<LatestQuote, "assetKey">;
-            return {
-              ...data,
+      try {
+        const response = await fetch("/api/market-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            assets: targetAssets.map((asset) => ({
               assetKey: asset.asset_key,
-            } as LatestQuote;
-          } catch {
-            return null;
-          }
-        })
-      );
+              symbol: asset.symbol,
+              assetType: asset.asset_type,
+              marketCode: asset.market_code,
+              exchangeCode: asset.exchange_code ?? undefined,
+              providerSymbolTwelve: asset.provider_symbol_twelve ?? undefined,
+              providerSymbolEodhd: asset.provider_symbol_eodhd ?? undefined,
+            })),
+          }),
+        });
 
-      setLatestQuotes(
-        buildLatestQuoteMap(
-          quotes.filter((quote): quote is LatestQuote => quote !== null)
-        )
-      );
-      setQuoteLoading(false);
+        if (!response.ok) {
+          setLatestQuotes({});
+          return;
+        }
+
+        const data = (await response.json()) as { quotes?: LatestQuote[] };
+        setLatestQuotes(buildLatestQuoteMap(data.quotes ?? []));
+      } catch {
+        setLatestQuotes({});
+      } finally {
+        setQuoteLoading(false);
+      }
     },
     []
   );

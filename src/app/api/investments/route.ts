@@ -162,18 +162,22 @@ async function fetchInvestmentSnapshot(supabase: SupabaseClient, userId: string)
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: true }),
+    // Cap ledger history so PostgREST never silently truncates at 1000 with an
+    // unbounded select. Positions are derived from this window.
     supabase
       .from("investment_trades")
       .select("*, brokerage_accounts(*), investment_assets(*)")
       .eq("user_id", userId)
       .order("trade_date", { ascending: false })
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(1500),
     supabase
       .from("investment_cash_movements")
       .select("*, brokerage_accounts(*)")
       .eq("user_id", userId)
       .order("movement_date", { ascending: false })
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(1500),
     supabase
       .from("investment_savings_accounts")
       .select("*")
@@ -184,7 +188,8 @@ async function fetchInvestmentSnapshot(supabase: SupabaseClient, userId: string)
       .select("*, investment_savings_accounts(*)")
       .eq("user_id", userId)
       .order("transfer_date", { ascending: false })
-      .order("created_at", { ascending: false }),
+      .order("created_at", { ascending: false })
+      .limit(1500),
     supabase
       .from("investment_watchlist")
       .select("*, investment_assets(*)")

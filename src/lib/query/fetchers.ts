@@ -22,20 +22,35 @@ export interface IncomeFilters {
 }
 
 /** Raw dashboard-summary API payload — currency conversion happens client-side. */
+export interface RawSummaryExpense {
+  id: string;
+  amount: unknown;
+  currency: string;
+  date: string;
+  description: string | null;
+  needs_review: boolean;
+  category_id: string;
+  categories: {
+    id: string;
+    name: string;
+    color: string;
+    icon: string;
+    classification?: string | null;
+  } | null;
+}
+
+export interface RawSummaryIncome {
+  id: string;
+  amount: unknown;
+  currency: string;
+  date: string;
+  source: string;
+  description: string | null;
+}
+
 export interface RawSummaryData {
-  expenses: {
-    amount: unknown;
-    currency: string;
-    date: string;
-    category_id: string;
-    categories: {
-      id: string;
-      name: string;
-      color: string;
-      icon: string;
-    };
-  }[];
-  incomes: { amount: unknown; currency: string }[];
+  expenses: RawSummaryExpense[];
+  incomes: RawSummaryIncome[];
   prevExpenses: { amount: unknown; currency: string }[];
   budgets: { amount: unknown; currency: string }[];
   monthlyPlan: {
@@ -49,6 +64,18 @@ export interface RawSummaryData {
     transfer_date: string;
   }[];
   prevInvestmentTransfers: { amount: unknown; currency: string }[];
+}
+
+export interface RecentMovement {
+  id: string;
+  kind: "expense" | "income";
+  title: string;
+  subtitle: string;
+  amount: number;
+  currency: string;
+  date: string;
+  category: { icon: string; color: string } | null;
+  needsReview: boolean;
 }
 
 function monthParams(filters: { month: number; year: number }) {

@@ -6,6 +6,7 @@ import type { ExpenseWithCategory } from "@/lib/query/fetchers";
 import { queryKeys } from "@/lib/query/keys";
 
 const reviewKey = ["review-queue"] as const;
+const reviewCountKey = ["review-count"] as const;
 
 export function useReviewQueue() {
   const queryClient = useQueryClient();
@@ -49,6 +50,7 @@ export function useReviewQueue() {
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: reviewKey }),
+        queryClient.invalidateQueries({ queryKey: reviewCountKey }),
         queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
         queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
         queryClient.invalidateQueries({ queryKey: ["household-insights"] }),
@@ -64,8 +66,16 @@ export function useReviewQueue() {
   };
 }
 
-/** Lightweight count for the nav badge — same cache entry as the queue. */
+/** Lightweight count for nav badges — does not load the full review queue. */
 export function useReviewCount() {
-  const { count, loading } = useReviewQueue();
-  return loading ? 0 : count;
+  const { data, isPending } = useQuery({
+    queryKey: reviewCountKey,
+    staleTime: 60 * 1000,
+    queryFn: () =>
+      authorizedFetch<{ count: number; available: boolean }>(
+        "/api/insights/review/count"
+      ),
+  });
+
+  return isPending ? 0 : (data?.count ?? 0);
 }

@@ -2,8 +2,12 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { fetchMonthlySummaryRaw } from "@/lib/query/fetchers";
+import {
+  fetchMonthlySummaryRaw,
+  type RecentMovement,
+} from "@/lib/query/fetchers";
 import { queryKeys } from "@/lib/query/keys";
+import { isGivingExpense } from "@/lib/giving";
 import { useCurrency } from "@/providers/currency-provider";
 
 interface MonthlySummary {
@@ -16,6 +20,8 @@ interface MonthlySummary {
   allocationPercent: number | null;
   incomeAmount: number | null;
   expenseCount: number;
+  givingSpent: number;
+  recentMovements: RecentMovement[];
   categoryBreakdown: {
     category_id: string;
     category_name: string;
@@ -43,6 +49,8 @@ const emptySummary: MonthlySummary = {
   allocationPercent: null,
   incomeAmount: null,
   expenseCount: 0,
+  givingSpent: 0,
+  recentMovements: [],
   categoryBreakdown: [],
   dailySpending: [],
   previousMonthTotal: 0,
@@ -112,12 +120,18 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
         0
       );
 
+    const givingSpent = expenses.reduce((sum, expense) => {
+      if (!isGivingExpense(expense)) return sum;
+      return sum + convert(Number(expense.amount), expense.currency);
+    }, 0);
+
     const categoryMap = new Map<
       string,
       MonthlySummary["categoryBreakdown"][0]
     >();
     for (const expense of expenses) {
       const category = expense.categories;
+      if (!category) continue;
       const convertedAmount = convert(Number(expense.amount), expense.currency);
       const existing = categoryMap.get(category.id);
 
@@ -155,6 +169,34 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
       .map(([date, amount]) => ({ date, amount }))
       .sort((a, b) => a.date.localeCompare(b.date));
 
+    const expenseItems: RecentMovement[] = expenses.map((expense) => ({
+      id: expense.id,
+      kind: "expense" as const,
+      title: expense.description || expense.categories?.name || "—",
+      subtitle: expense.categories?.name || "—",
+      amount: Number(expense.amount),
+      currency: expense.currency,
+      date: expense.date,
+      category: expense.categories
+        ? { icon: expense.categories.icon, color: expense.categories.color }
+        : null,
+      needsReview: expense.needs_review,
+    }));
+    const incomeItems: RecentMovement[] = incomes.map((income) => ({
+      id: income.id,
+      kind: "income" as const,
+      title: income.source,
+      subtitle: income.description || "Income",
+      amount: Number(income.amount),
+      currency: income.currency,
+      date: income.date,
+      category: null,
+      needsReview: false,
+    }));
+    const recentMovements = [...expenseItems, ...incomeItems]
+      .sort((a, b) => b.date.localeCompare(a.date))
+      .slice(0, 5);
+
     return {
       totalSpent,
       totalIncome,
@@ -167,6 +209,8 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
         : null,
       incomeAmount,
       expenseCount: expenses.length + investmentTransfers.length,
+      givingSpent,
+      recentMovements,
       categoryBreakdown: Array.from(categoryMap.values()).sort(
         (a, b) => b.total_amount - a.total_amount
       ),

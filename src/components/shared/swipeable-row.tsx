@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { motion, useAnimationControls, type PanInfo } from "framer-motion";
+import { useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -15,13 +14,10 @@ interface SwipeableRowProps {
 
 const ACTION_WIDTH = 88;
 const TRIGGER_DISTANCE = 56;
-const SNAP_TRANSITION = { duration: 0.2, ease: [0.22, 1, 0.36, 1] as const };
 
 /**
- * Touch swipe actions on list rows: swipe left reveals delete, swipe right
- * reveals edit. Built on framer-motion drag="x" (no new dependency) with a
- * directional lock so vertical scrolling is never hijacked — `touch-action:
- * pan-y` keeps the browser scrolling vertically while we own the x axis.
+ * Touch swipe actions on list rows without framer-motion per row.
+ * Uses pointer events + CSS transform so virtualized lists stay cheap.
  */
 export function SwipeableRow({
   children,
@@ -30,42 +26,83 @@ export function SwipeableRow({
   enabled = true,
 }: SwipeableRowProps) {
   const { t } = useLocale();
-  const controls = useAnimationControls();
-  const [revealed, setRevealed] = useState<"left" | "right" | null>(null);
-  const openRef = useRef(false);
+  const [offset, setOffset] = useState(0);
+  const [dragging, setDragging] = useState(false);
+  const startXRef = useRef(0);
+  const startYRef = useRef(0);
+  const axisLockRef = useRef<"x" | "y" | null>(null);
+  const offsetRef = useRef(0);
 
   if (!enabled || (!onDelete && !onEdit)) {
     return <>{children}</>;
   }
 
+  const minX = onDelete ? -ACTION_WIDTH : 0;
+  const maxX = onEdit ? ACTION_WIDTH : 0;
+
   function close() {
-    openRef.current = false;
-    setRevealed(null);
-    void controls.start({ x: 0, transition: SNAP_TRANSITION });
+    offsetRef.current = 0;
+    setOffset(0);
   }
 
-  function handleDragEnd(_: unknown, info: PanInfo) {
-    const { offset, velocity } = info;
-    const fastFling = Math.abs(velocity.x) > 500;
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    startXRef.current = event.clientX;
+    startYRef.current = event.clientY;
+    axisLockRef.current = null;
+    setDragging(true);
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
 
-    if (onDelete && (offset.x < -TRIGGER_DISTANCE || (fastFling && offset.x < 0))) {
-      openRef.current = true;
-      setRevealed("left");
-      void controls.start({ x: -ACTION_WIDTH, transition: SNAP_TRANSITION });
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
+    if (!dragging) return;
+    const dx = event.clientX - startXRef.current;
+    const dy = event.clientY - startYRef.current;
+
+    if (!axisLockRef.current) {
+      if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
+      axisLockRef.current = Math.abs(dx) > Math.abs(dy) ? "x" : "y";
+      if (axisLockRef.current === "y") {
+        setDragging(false);
+        return;
+      }
+    }
+    if (axisLockRef.current !== "x") return;
+
+    const next = Math.min(maxX, Math.max(minX, dx));
+    offsetRef.current = next;
+    setOffset(next);
+  }
+
+  function handlePointerUp() {
+    if (!dragging && axisLockRef.current !== "x") {
+      setDragging(false);
       return;
     }
-    if (onEdit && (offset.x > TRIGGER_DISTANCE || (fastFling && offset.x > 0))) {
-      openRef.current = true;
-      setRevealed("right");
-      void controls.start({ x: ACTION_WIDTH, transition: SNAP_TRANSITION });
+    setDragging(false);
+    const current = offsetRef.current;
+    if (onDelete && current < -TRIGGER_DISTANCE) {
+      offsetRef.current = -ACTION_WIDTH;
+      setOffset(-ACTION_WIDTH);
+      return;
+    }
+    if (onEdit && current > TRIGGER_DISTANCE) {
+      offsetRef.current = ACTION_WIDTH;
+      setOffset(ACTION_WIDTH);
       return;
     }
     close();
   }
 
+  const revealed =
+    offset <= -TRIGGER_DISTANCE / 2
+      ? "left"
+      : offset >= TRIGGER_DISTANCE / 2
+        ? "right"
+        : null;
+
   return (
     <div className="relative overflow-hidden rounded-lg">
-      {/* Action layers behind the row */}
       {onEdit && (
         <button
           type="button"
@@ -97,24 +134,23 @@ export function SwipeableRow({
         </button>
       )}
 
-      <motion.div
-        drag="x"
-        dragDirectionLock
-        dragConstraints={{
-          left: onDelete ? -ACTION_WIDTH : 0,
-          right: onEdit ? ACTION_WIDTH : 0,
+      <div
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        onClick={() => {
+          if (offsetRef.current !== 0) close();
         }}
-        dragElastic={0.08}
-        animate={controls}
-        onDragEnd={handleDragEnd}
-        onTap={() => {
-          if (openRef.current) close();
+        style={{
+          touchAction: "pan-y",
+          transform: `translate3d(${offset}px, 0, 0)`,
+          transition: dragging ? "none" : "transform 0.2s ease-out",
         }}
-        style={{ touchAction: "pan-y" }}
-        className="relative"
+        className="relative will-change-transform"
       >
         {children}
-      </motion.div>
+      </div>
     </div>
   );
 }

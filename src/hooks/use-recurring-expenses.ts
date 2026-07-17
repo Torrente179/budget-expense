@@ -1,18 +1,37 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
+import { syncRecurringMonth } from "@/lib/query/sync-recurring";
+import { queryKeys } from "@/lib/query/keys";
+import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
 import type { Database } from "@/types/database";
 
 type RecurringExpense = Database["public"]["Tables"]["recurring_expenses"]["Row"] & {
   categories: Database["public"]["Tables"]["categories"]["Row"];
 };
 
+async function refreshRecurringMaterialization(
+  queryClient: ReturnType<typeof useQueryClient>
+) {
+  try {
+    await syncRecurringMonth(getCurrentMonth(), getCurrentYear());
+    void queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll });
+    void queryClient.invalidateQueries({
+      queryKey: queryKeys.monthlySummaryAll,
+    });
+  } catch (error) {
+    console.error("Failed to sync recurring after rule write", error);
+  }
+}
+
 export function useRecurringExpenses() {
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
+  const queryClient = useQueryClient();
 
   const fetchRecurringExpenses = useCallback(async () => {
     setLoading(true);
@@ -60,6 +79,7 @@ export function useRecurringExpenses() {
 
     if (!error) {
       await fetchRecurringExpenses();
+      await refreshRecurringMaterialization(queryClient);
     }
 
     return error;
@@ -76,6 +96,7 @@ export function useRecurringExpenses() {
 
     if (!error) {
       await fetchRecurringExpenses();
+      await refreshRecurringMaterialization(queryClient);
     }
 
     return error;
@@ -89,6 +110,7 @@ export function useRecurringExpenses() {
 
     if (!error) {
       await fetchRecurringExpenses();
+      await refreshRecurringMaterialization(queryClient);
     }
 
     return error;

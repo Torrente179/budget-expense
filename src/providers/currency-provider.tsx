@@ -5,6 +5,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useMemo,
   useState,
   type ReactNode,
 } from "react";
@@ -85,12 +86,18 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     fetchRates();
   }, []);
 
-  // User-entered rates override any provider (labeled "manual")
-  const effectiveRates = { ...rates, ...manualRates };
-  const effectiveSources: Record<string, RateSource> = { ...rateSources };
-  for (const code of Object.keys(manualRates)) {
-    effectiveSources[code] = "manual";
-  }
+  const effectiveRates = useMemo(
+    () => ({ ...rates, ...manualRates }),
+    [rates, manualRates]
+  );
+
+  const effectiveSources = useMemo(() => {
+    const sources: Record<string, RateSource> = { ...rateSources };
+    for (const code of Object.keys(manualRates)) {
+      sources[code] = "manual";
+    }
+    return sources;
+  }, [rateSources, manualRates]);
 
   const convert = useCallback(
     (amount: number, fromCurrency: string): number => {
@@ -100,8 +107,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       if (!fromRate || !toRate) return amount;
       return (amount / fromRate) * toRate;
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [baseCurrency, rates, manualRates]
+    [baseCurrency, effectiveRates]
   );
 
   const setBaseCurrency = useCallback(
@@ -120,19 +126,27 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     [supabase]
   );
 
+  const value = useMemo(
+    () => ({
+      baseCurrency,
+      rates: effectiveRates,
+      rateSources: effectiveSources,
+      isLoading,
+      convert,
+      setBaseCurrency,
+    }),
+    [
+      baseCurrency,
+      effectiveRates,
+      effectiveSources,
+      isLoading,
+      convert,
+      setBaseCurrency,
+    ]
+  );
+
   return (
-    <CurrencyContext.Provider
-      value={{
-        baseCurrency,
-        rates: effectiveRates,
-        rateSources: effectiveSources,
-        isLoading,
-        convert,
-        setBaseCurrency,
-      }}
-    >
-      {children}
-    </CurrencyContext.Provider>
+    <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>
   );
 }
 

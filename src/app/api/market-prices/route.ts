@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getMarketPrice } from "@/lib/market-data";
+import { buildAssetKey } from "@/lib/investments";
 import {
   assetTypeSchema,
   marketCodeSchema,
@@ -18,6 +19,14 @@ const querySchema = z.object({
   exchangeCode: z.string().optional(),
   providerSymbolTwelve: z.string().optional(),
   providerSymbolEodhd: z.string().optional(),
+});
+
+const batchItemSchema = querySchema.extend({
+  assetKey: z.string().min(1).optional(),
+});
+
+const batchBodySchema = z.object({
+  assets: z.array(batchItemSchema).min(1).max(80),
 });
 
 export async function GET(request: NextRequest) {
@@ -57,6 +66,55 @@ export async function GET(request: NextRequest) {
   } catch {
     return NextResponse.json(
       { error: "Unable to resolve market price" },
+      { status: 500 }
+    );
+  }
+}
+
+/** Batch quotes in one request — kills the per-asset N+1 from the client. */
+export async function POST(request: NextRequest) {
+  const parsed = batchBodySchema.safeParse(await request.json().catch(() => null));
+
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid market price batch" },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const supabase = await createClient();
+    const quotes = await Promise.all(
+      parsed.data.assets.map(async (asset) => {
+        try {
+          const quote = await getMarketPrice({
+            supabase,
+            symbol: asset.symbol,
+            assetType: asset.assetType,
+            marketCode: asset.marketCode,
+            date: asset.date,
+            exchangeCode: asset.exchangeCode,
+            providerSymbolTwelve: asset.providerSymbolTwelve,
+            providerSymbolEodhd: asset.providerSymbolEodhd,
+          });
+          return {
+            ...quote,
+            assetKey:
+              asset.assetKey ??
+              buildAssetKey(asset.marketCode, asset.symbol, asset.exchangeCode),
+          };
+        } catch {
+          return null;
+        }
+      })
+    );
+
+    return NextResponse.json({
+      quotes: quotes.filter((quote) => quote !== null),
+    });
+  } catch {
+    return NextResponse.json(
+      { error: "Unable to resolve market prices" },
       { status: 500 }
     );
   }

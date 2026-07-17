@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import {
-  getMonthDateRange,
-  syncRecurringExpensesForMonth,
-} from "@/lib/recurring-expenses";
+import { getMonthDateRange } from "@/lib/recurring-expenses";
 import { createRequestClient } from "@/lib/supabase/request";
 import {
   createServiceRoleClient,
@@ -57,30 +54,8 @@ export async function GET(request: NextRequest) {
     previousYear
   );
 
-  // Sync recurring expenses (best-effort)
-  try {
-    await Promise.all([
-      syncRecurringExpensesForMonth({
-        supabase: ledger,
-        userId: ledgerUserId,
-        month,
-        year,
-      }),
-      syncRecurringExpensesForMonth({
-        supabase: ledger,
-        userId: ledgerUserId,
-        month: previousMonth,
-        year: previousYear,
-      }),
-    ]);
-  } catch (error) {
-    console.error(
-      "Failed to sync recurring expenses before dashboard summary",
-      error
-    );
-  }
-
-  // Parallel queries — ledger for expenses/incomes, app for budgets/plans/transfers
+  // Parallel queries — ledger for expenses/incomes, app for budgets/plans/transfers.
+  // Recurring sync is intentionally off the read path (see POST /api/recurring/sync).
   const [
     expensesResult,
     incomesResult,
@@ -92,18 +67,20 @@ export async function GET(request: NextRequest) {
   ] = await Promise.all([
     ledger
       .from("expenses")
-      .select("amount, currency, date, category_id, categories(*)")
+      .select(
+        "id, amount, currency, date, description, needs_review, category_id, categories(id, name, color, icon, classification)"
+      )
       .eq("user_id", ledgerUserId)
       .gte("date", startDate)
       .lt("date", endDate)
-      .order("date"),
+      .order("date", { ascending: false }),
     ledger
       .from("income_entries")
-      .select("amount, currency, date")
+      .select("id, amount, currency, date, source, description")
       .eq("user_id", ledgerUserId)
       .gte("date", startDate)
       .lt("date", endDate)
-      .order("date"),
+      .order("date", { ascending: false }),
     ledger
       .from("expenses")
       .select("amount, currency")
@@ -162,7 +139,10 @@ export async function GET(request: NextRequest) {
 
   // Resolve optional tables gracefully
   function resolveOptional<T>(
-    result: { data: T | null; error: { code?: string | null; message?: string | null } | null },
+    result: {
+      data: T | null;
+      error: { code?: string | null; message?: string | null } | null;
+    },
     table: string,
     context: string,
     fallback: T
@@ -181,7 +161,14 @@ export async function GET(request: NextRequest) {
   const prevExpenses = prevExpensesResult.data ?? [];
   const budgets = budgetsResult.data ?? [];
 
-  let incomes: { amount: unknown; currency: string; date: string }[];
+  let incomes: {
+    id: string;
+    amount: unknown;
+    currency: string;
+    date: string;
+    source: string;
+    description: string | null;
+  }[];
   try {
     incomes = resolveOptional(
       incomesResult,
@@ -209,7 +196,11 @@ export async function GET(request: NextRequest) {
     monthlyPlan = null;
   }
 
-  let investmentTransfers: { amount: unknown; currency: string; transfer_date: string }[];
+  let investmentTransfers: {
+    amount: unknown;
+    currency: string;
+    transfer_date: string;
+  }[];
   try {
     investmentTransfers = resolveOptional(
       investmentTransfersResult,

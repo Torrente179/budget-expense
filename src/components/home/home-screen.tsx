@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
@@ -9,17 +10,15 @@ import {
   Plus,
   TrendingDown,
   TrendingUp,
+  ArrowUpDown,
 } from "lucide-react";
-import { Area, AreaChart, ResponsiveContainer } from "recharts";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
-import { useExpenses } from "@/hooks/use-expenses";
-import { useIncomes } from "@/hooks/use-incomes";
 import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
-import { cn, formatCurrency, getMonthName } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { StatCard } from "@/components/patterns/stat-card";
@@ -32,41 +31,22 @@ import { CaptureSheet, type CaptureKind } from "@/components/capture/capture-she
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChartMounted } from "@/components/charts/chart-theme";
-import { ArrowUpDown } from "lucide-react";
 
-const GIVING_KEYWORDS = [
-  "tithe",
-  "diezmo",
-  "giving",
-  "donation",
-  "donación",
-  "donacion",
-  "charity",
-  "caridad",
-  "offering",
-  "ofrenda",
-  "church",
-  "iglesia",
-  "generosity",
-  "generosidad",
-];
-
-function isGivingName(name: string) {
-  const lower = name.toLowerCase();
-  return GIVING_KEYWORDS.some((keyword) => lower.includes(keyword));
-}
+const HomeSparkline = dynamic(
+  () =>
+    import("@/components/home/home-sparkline").then((mod) => mod.HomeSparkline),
+  { ssr: false }
+);
 
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
-  const { baseCurrency, convert } = useCurrency();
+  const { baseCurrency } = useCurrency();
   const { month, year, setMonthYear } = useMonth();
   const mounted = useChartMounted();
 
   const { summary, loading } = useMonthlySummary({ month, year });
-  const { expenses } = useExpenses({ month, year });
-  const { incomes } = useIncomes({ month, year });
   const titheTarget = useTitheTarget();
-  usePrefetchMonths(month, year, loading);
+  usePrefetchMonths(month, year, loading, "summary");
 
   const [captureKind, setCaptureKind] = useState<CaptureKind | null>(null);
 
@@ -100,18 +80,7 @@ export function HomeScreen() {
     });
   }, [summary.dailySpending]);
 
-  const givingSpent = useMemo(
-    () =>
-      expenses.reduce((sum, expense) => {
-        const category = expense.categories;
-        const giving =
-          category?.classification === "giving" ||
-          isGivingName(category?.name ?? "") ||
-          (expense.description ? isGivingName(expense.description) : false);
-        return giving ? sum + convert(expense.amount, expense.currency) : sum;
-      }, 0),
-    [expenses, convert]
-  );
+  const givingSpent = summary.givingSpent;
   const givingTarget =
     titheTarget > 0 ? (summary.totalIncome * titheTarget) / 100 : 0;
 
@@ -124,35 +93,25 @@ export function HomeScreen() {
   const budgetRatio =
     summary.totalBudget > 0 ? summary.totalSpent / summary.totalBudget : null;
 
-  const recentMovements = useMemo(() => {
-    const expenseItems = expenses.map((expense) => ({
-      id: expense.id,
-      kind: "expense" as const,
-      title: expense.description || tc(expense.categories?.name ?? "—"),
-      subtitle: tc(expense.categories?.name ?? "—"),
-      amount: expense.amount,
-      currency: expense.currency,
-      date: expense.date,
-      category: expense.categories
-        ? { icon: expense.categories.icon, color: expense.categories.color }
-        : null,
-      needsReview: expense.needs_review,
-    }));
-    const incomeItems = incomes.map((income) => ({
-      id: income.id,
-      kind: "income" as const,
-      title: income.source,
-      subtitle: income.description || t("Income", "Ingreso"),
-      amount: income.amount,
-      currency: income.currency,
-      date: income.date,
-      category: null,
-      needsReview: false,
-    }));
-    return [...expenseItems, ...incomeItems]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 5);
-  }, [expenses, incomes, t, tc]);
+  const recentMovements = useMemo(
+    () =>
+      summary.recentMovements.map((movement) => ({
+        ...movement,
+        title:
+          movement.kind === "expense"
+            ? movement.title === "—"
+              ? "—"
+              : tc(movement.title)
+            : movement.title,
+        subtitle:
+          movement.kind === "income"
+            ? movement.subtitle === "Income"
+              ? t("Income", "Ingreso")
+              : movement.subtitle
+            : tc(movement.subtitle),
+      })),
+    [summary.recentMovements, t, tc]
+  );
 
   const monthLabel = new Intl.DateTimeFormat(intlLocale, {
     month: "long",
@@ -232,35 +191,7 @@ export function HomeScreen() {
             </CardContent>
             {mounted && sparkData.length > 1 && (
               <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 opacity-60">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart
-                    data={sparkData}
-                    margin={{ top: 0, right: 0, bottom: 0, left: 0 }}
-                  >
-                    <defs>
-                      <linearGradient id="homeSpark" x1="0" y1="0" x2="0" y2="1">
-                        <stop
-                          offset="0%"
-                          stopColor="var(--chart-1)"
-                          stopOpacity={0.25}
-                        />
-                        <stop
-                          offset="100%"
-                          stopColor="var(--chart-1)"
-                          stopOpacity={0}
-                        />
-                      </linearGradient>
-                    </defs>
-                    <Area
-                      type="monotone"
-                      dataKey="total"
-                      stroke="var(--chart-1)"
-                      strokeWidth={1.5}
-                      fill="url(#homeSpark)"
-                      isAnimationActive={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <HomeSparkline data={sparkData} />
               </div>
             )}
           </Card>
@@ -443,13 +374,15 @@ export function HomeScreen() {
         </>
       )}
 
-      <CaptureSheet
-        open={captureKind !== null}
-        onOpenChange={(open) => {
-          if (!open) setCaptureKind(null);
-        }}
-        kind={captureKind ?? "expense"}
-      />
+      {captureKind !== null && (
+        <CaptureSheet
+          open
+          onOpenChange={(open) => {
+            if (!open) setCaptureKind(null);
+          }}
+          kind={captureKind}
+        />
+      )}
     </Screen>
   );
 }

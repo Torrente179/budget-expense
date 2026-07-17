@@ -8,7 +8,6 @@ import {
   Plus,
   Repeat,
   Search,
-  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -19,17 +18,16 @@ import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { useMonth } from "@/providers/month-provider";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
-import { cn, formatDate } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
-import { TransactionRow } from "@/components/patterns/transaction-row";
 import { AmountText } from "@/components/patterns/amount-text";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { PullToRefresh } from "@/components/shared/pull-to-refresh";
-import { SwipeableRow } from "@/components/shared/swipeable-row";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { VirtualizedLedger } from "@/components/movements/virtualized-ledger";
 import {
   CaptureSheet,
   type CaptureInitialValues,
@@ -105,7 +103,7 @@ export function MovementsScreen() {
   } = useIncomes({ month, year, search: deferredSearch || undefined });
 
   const loading = loadingExpenses || loadingIncomes;
-  usePrefetchMonths(month, year, loading);
+  usePrefetchMonths(month, year, loading, "ledger");
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   function setTab(next: TabFilter) {
@@ -407,62 +405,33 @@ export function MovementsScreen() {
         <PullToRefresh
           onRefresh={() => Promise.all([refetchExpenses(), refetchIncomes()])}
         >
-          <div className="space-y-6">
-            {Array.from(grouped.entries()).map(([date, items]) => (
-              <section key={date}>
-                <p className="label-caps mb-1.5 px-4 md:px-0">
-                  {formatDate(date, "EEEE d MMMM yyyy")}
-                </p>
-                <div className="-mx-4 divide-y divide-border/40 md:mx-0 md:overflow-hidden md:rounded-xl md:bg-card md:ring-1 md:ring-border md:shadow-1">
-                  {items.map((movement) => (
-                    <SwipeableRow
-                      key={`${movement.kind}-${movement.id}`}
-                      enabled={isMobile}
-                      onDelete={() => swipeDelete(movement)}
-                    >
-                      <div className="group flex items-center bg-background md:bg-transparent">
-                        <div className="min-w-0 flex-1">
-                          <TransactionRow
-                            title={movement.title}
-                            subtitle={movement.subtitle}
-                            amount={movement.amount}
-                            currency={movement.currency}
-                            kind={movement.kind}
-                            category={movement.categoryIcon}
-                            needsReview={movement.needsReview}
-                            onClick={() => openEdit(movement)}
-                          />
-                        </div>
-                        <button
-                          aria-label={t("Delete", "Eliminar")}
-                          className="mr-2 hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg opacity-0 transition-opacity hover:bg-danger-subtle group-hover:opacity-100 md:flex"
-                          onClick={() => setDeleteTarget(movement)}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-danger" />
-                        </button>
-                      </div>
-                    </SwipeableRow>
-                  ))}
-                </div>
-              </section>
-            ))}
+          <div className="md:overflow-hidden md:rounded-xl md:bg-card md:ring-1 md:ring-border md:shadow-1">
+            <VirtualizedLedger
+              grouped={grouped}
+              isMobile={isMobile}
+              onEdit={openEdit}
+              onSwipeDelete={swipeDelete}
+              onDesktopDelete={setDeleteTarget}
+            />
           </div>
         </PullToRefresh>
       )}
 
-      {/* Create (desktop button; mobile uses the FAB) */}
-      <CaptureSheet open={captureOpen} onOpenChange={setCaptureOpen} />
-
-      {/* Edit */}
-      <CaptureSheet
-        open={editTarget !== null}
-        onOpenChange={(open) => {
-          if (!open) setEditTarget(null);
-        }}
-        mode="edit"
-        kind={editTarget?.kind}
-        initialValues={editTarget?.values}
-      />
+      {/* Single capture sheet for create + edit (mobile FAB uses its own lazy sheet) */}
+      {(captureOpen || editTarget !== null) && (
+        <CaptureSheet
+          open
+          onOpenChange={(open) => {
+            if (!open) {
+              setCaptureOpen(false);
+              setEditTarget(null);
+            }
+          }}
+          mode={editTarget ? "edit" : "create"}
+          kind={editTarget?.kind}
+          initialValues={editTarget?.values}
+        />
+      )}
 
       {/* Delete confirmation (desktop) */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>

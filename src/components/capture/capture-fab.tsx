@@ -1,13 +1,20 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { Plus } from "lucide-react";
-import { CaptureSheet } from "@/components/capture/capture-sheet";
 import { useLocale } from "@/providers/locale-provider";
+
+const CaptureSheet = dynamic(
+  () =>
+    import("@/components/capture/capture-sheet").then((mod) => mod.CaptureSheet),
+  { ssr: false }
+);
 
 /**
  * Global floating capture button. Sits above the mobile tab bar at z-40,
  * bottom-right (thumb zone); sheets/dialogs render above it.
+ * CaptureSheet mounts only when opened to keep the idle shell light.
  */
 export function CaptureFab() {
   const { t } = useLocale();
@@ -25,7 +32,7 @@ export function CaptureFab() {
           {t("Add movement", "Añadir movimiento")}
         </span>
       </button>
-      <CaptureSheet open={open} onOpenChange={setOpen} />
+      {open && <CaptureSheet open onOpenChange={setOpen} />}
     </>
   );
 }

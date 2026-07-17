@@ -17,14 +17,21 @@ function adjacentMonths(month: number, year: number) {
   return [prev, next];
 }
 
+export type PrefetchMode = "summary" | "ledger" | "all";
+
 /**
  * After the current month finishes loading, prefetch adjacent months into the
  * react-query cache so prev/next navigation feels instant.
+ *
+ * - summary: Home — only monthly summary (covers aggregates + recent list)
+ * - ledger: Movements — expenses + incomes
+ * - all: both (legacy / heavy screens)
  */
 export function usePrefetchMonths(
   month: number,
   year: number,
-  loading: boolean
+  loading: boolean,
+  mode: PrefetchMode = "all"
 ) {
   const queryClient = useQueryClient();
 
@@ -35,21 +42,25 @@ export function usePrefetchMonths(
     const timer = setTimeout(() => {
       for (const adjacent of adjacentMonths(month, year)) {
         const { month: m, year: y } = adjacent;
-        void queryClient.prefetchQuery({
-          queryKey: queryKeys.expenses({ month: m, year: y }),
-          queryFn: () => fetchExpenses({ month: m, year: y }),
-        });
-        void queryClient.prefetchQuery({
-          queryKey: queryKeys.incomes({ month: m, year: y }),
-          queryFn: () => fetchIncomes({ month: m, year: y }),
-        });
-        void queryClient.prefetchQuery({
-          queryKey: queryKeys.monthlySummary(m, y),
-          queryFn: () => fetchMonthlySummaryRaw(m, y),
-        });
+        if (mode === "summary" || mode === "all") {
+          void queryClient.prefetchQuery({
+            queryKey: queryKeys.monthlySummary(m, y),
+            queryFn: () => fetchMonthlySummaryRaw(m, y),
+          });
+        }
+        if (mode === "ledger" || mode === "all") {
+          void queryClient.prefetchQuery({
+            queryKey: queryKeys.expenses({ month: m, year: y }),
+            queryFn: () => fetchExpenses({ month: m, year: y }),
+          });
+          void queryClient.prefetchQuery({
+            queryKey: queryKeys.incomes({ month: m, year: y }),
+            queryFn: () => fetchIncomes({ month: m, year: y }),
+          });
+        }
       }
     }, 600);
 
     return () => clearTimeout(timer);
-  }, [month, year, loading, queryClient]);
+  }, [month, year, loading, mode, queryClient]);
 }

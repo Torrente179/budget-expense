@@ -974,7 +974,35 @@ export interface Database {
         Relationships: [];
       };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      household_expense_category_aggregates: {
+        Args: { p_user_id: string; p_start_date: string };
+        Returns: {
+          month: string;
+          category_id: string;
+          category_name: string;
+          classification: string | null;
+          currency: string;
+          total: number;
+          expense_count: number;
+        }[];
+      };
+      household_income_aggregates: {
+        Args: { p_user_id: string; p_start_date: string };
+        Returns: {
+          month: string;
+          currency: string;
+          total: number;
+        }[];
+      };
+      liability_payment_totals: {
+        Args: { p_user_id: string };
+        Returns: {
+          liability_id: string;
+          paid_total: number;
+        }[];
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
