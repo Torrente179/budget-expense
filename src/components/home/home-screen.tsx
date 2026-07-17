@@ -201,6 +201,7 @@ export function HomeScreen() {
             <div className="min-w-[11rem] snap-start sm:min-w-0">
               <StatCard
                 label={t("Spent", "Gastado")}
+                href="/movements?tab=expenses"
                 value={
                   <span className="font-mono text-heading font-semibold tabular-nums">
                     {formatCurrency(summary.totalSpent, baseCurrency)}
@@ -230,6 +231,7 @@ export function HomeScreen() {
             <div className="min-w-[11rem] snap-start sm:min-w-0">
               <StatCard
                 label={t("Income", "Ingresos")}
+                href="/movements?tab=income"
                 value={
                   <span className="font-mono text-heading font-semibold tabular-nums text-positive">
                     {formatCurrency(summary.totalIncome, baseCurrency)}

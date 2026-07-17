@@ -5,6 +5,8 @@ import { useLocale } from "@/providers/locale-provider";
 
 interface LanguageSwitchProps {
   compact?: boolean;
+  /** Stretch both options across the available width (account sheet / settings). */
+  fullWidth?: boolean;
   className?: string;
 }
 
@@ -14,6 +16,7 @@ interface LanguageSwitchProps {
  */
 export function LanguageSwitch({
   compact = false,
+  fullWidth = false,
   className,
 }: LanguageSwitchProps) {
   const { locale, setLocale, t } = useLocale();
@@ -37,6 +40,7 @@ export function LanguageSwitch({
       aria-label={t("Language", "Idioma")}
       className={cn(
         "inline-flex items-center rounded-full border border-border bg-secondary/80 p-0.5",
+        fullWidth && "flex w-full",
         className
       )}
     >
@@ -50,7 +54,8 @@ export function LanguageSwitch({
             onClick={() => setLocale(option.value)}
             className={cn(
               "rounded-full px-2.5 font-medium uppercase tracking-widest transition-colors",
-              compact ? "h-7 text-[0.65rem]" : "h-8 px-3 text-xs",
+              compact ? "h-7 text-[0.65rem]" : "h-9 px-3 text-xs",
+              fullWidth && "min-h-11 flex-1",
               active
                 ? "bg-background text-foreground shadow-1"
                 : "text-muted-foreground hover:text-foreground"

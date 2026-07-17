@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileSheet } from "@/components/layout/profile-sheet";
+import { LanguageSwitch } from "@/components/shared/language-switch";
 import type { ReactNode } from "react";
 
 interface ScreenProps {
@@ -51,7 +52,11 @@ export function Screen({
               <ChevronLeft className="h-5 w-5" />
             </Link>
           ) : (
-            (leading ?? <ProfileSheet className="-ml-2 md:hidden" />)
+            (leading ?? (
+              <div className="flex shrink-0 items-center gap-1 md:hidden">
+                <ProfileSheet className="-ml-2" />
+              </div>
+            ))
           )}
           <div className="min-w-0 flex-1">
             {eyebrow && <p className="label-caps">{eyebrow}</p>}
@@ -59,9 +64,12 @@ export function Screen({
               {title}
             </h1>
           </div>
-          {actions && (
-            <div className="flex shrink-0 items-center gap-1.5">{actions}</div>
-          )}
+          <div className="flex shrink-0 items-center gap-1.5">
+            {!backHref && (
+              <LanguageSwitch compact className="md:hidden" />
+            )}
+            {actions}
+          </div>
         </div>
         {subheader && <div className="pb-3">{subheader}</div>}
       </header>
