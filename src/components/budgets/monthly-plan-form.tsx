@@ -123,7 +123,7 @@ export function MonthlyPlanForm({
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full border-l border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-x data-[side=bottom]:border-t"
+        className="w-full border-l border-border/80 bg-popover/96 p-0 shadow-3 sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-3xl data-[side=bottom]:border-x data-[side=bottom]:border-t"
       >
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
@@ -151,13 +151,13 @@ export function MonthlyPlanForm({
           </SheetHeader>
 
           <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
-            <div className="rounded-[1.4rem] border border-border/70 bg-card/90 p-4">
-              <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+            <div className="rounded-xl border border-border/70 bg-card/90 p-4">
+              <p className="text-label font-medium uppercase tracking-widest text-muted-foreground">
                 {t("Monthly pool preview", "Vista previa del fondo mensual")}
               </p>
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
-                  <p className="font-heading text-[2.65rem] font-semibold leading-none tracking-[-0.05em] text-foreground">
+                  <p className="font-heading text-display font-semibold leading-none tracking-tight text-foreground">
                     {poolPreview > 0
                       ? formatCurrency(poolPreview, incomeCurrency)
                       : "--"}
@@ -170,7 +170,7 @@ export function MonthlyPlanForm({
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2 text-right">
-                  <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                  <p className="label-caps">
                     {t("Period", "Periodo")}
                   </p>
                   <p className="mt-1 text-sm font-medium">
@@ -259,9 +259,9 @@ export function MonthlyPlanForm({
             </div>
 
             {appliedMethod && (
-              <div className="rounded-[1.35rem] border border-amber-500/25 bg-amber-500/8 p-4">
+              <div className="rounded-xl border border-warning/25 bg-warning-subtle p-4">
                 <div className="flex items-center gap-2">
-                  <Layers className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <Layers className="h-4 w-4 text-warning" />
                   <p className="text-sm font-medium text-foreground">
                     {t("Method applied", "Método aplicado")}: {appliedMethod.name}
                   </p>
@@ -287,7 +287,7 @@ export function MonthlyPlanForm({
               </div>
             )}
 
-            <div className="rounded-[1.35rem] border border-border/70 bg-secondary/60 p-4 text-sm text-muted-foreground">
+            <div className="rounded-xl border border-border/70 bg-secondary/60 p-4 text-sm text-muted-foreground">
               {t(
                 "Category budgets remain optional. When you set them, they work as envelopes inside this monthly pool instead of replacing it.",
                 "Los presupuestos por categoría son opcionales. Cuando los defines, funcionan como sobres dentro de este fondo mensual en lugar de reemplazarlo."

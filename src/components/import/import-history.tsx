@@ -68,7 +68,7 @@ export function ImportHistory({
             {batches.map((batch) => (
               <li
                 key={batch.id}
-                className="flex flex-wrap items-center gap-3 rounded-[1.15rem] bg-card/96 px-3 py-2.5 ring-1 ring-border"
+                className="flex flex-wrap items-center gap-3 rounded-lg bg-card px-3 py-2.5 ring-1 ring-border"
               >
                 <button
                   type="button"

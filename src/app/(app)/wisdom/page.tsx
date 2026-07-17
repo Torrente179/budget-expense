@@ -8,7 +8,7 @@ import {
   getBudgetingMethods,
   type BudgetingMethod,
 } from "@/lib/budgeting-methods";
-import { PageHeader } from "@/components/layout/page-header";
+import { Screen } from "@/components/patterns/screen";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,14 +71,14 @@ function MethodMiniCard({
         duration: 0.24,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="rounded-[1.35rem] border border-border/70 bg-card/96 p-4"
+      className="rounded-xl border bg-card p-4"
     >
       <div className="flex items-center gap-2">
         <p className="text-base font-semibold text-foreground">{method.name}</p>
         {method.isFaithBased && (
           <Badge
             variant="outline"
-            className="bg-amber-500/10 text-[0.6rem] text-amber-600 dark:text-amber-400"
+            className="bg-warning-subtle text-label text-warning"
           >
             {t("Faith-based", "Basado en fe")}
           </Badge>
@@ -100,7 +100,7 @@ function MethodMiniCard({
       </div>
       <div className="mt-2 flex flex-wrap gap-1.5">
         {method.slices.map((s) => (
-          <span key={s.key} className="text-[0.65rem] text-muted-foreground">
+          <span key={s.key} className="text-label text-muted-foreground">
             <span
               className="mr-1 inline-block h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: s.color }}
@@ -122,7 +122,7 @@ function MethodMiniCard({
               key={i}
               className="flex items-start gap-2 text-xs leading-5 text-foreground/80"
             >
-              <Check className="mt-0.5 h-3 w-3 shrink-0 text-emerald-500" />
+              <Check className="mt-0.5 h-3 w-3 shrink-0 text-success" />
               <span>
                 {p.text}
                 {p.reference && (
@@ -136,7 +136,7 @@ function MethodMiniCard({
         </ul>
       )}
 
-      <p className="mt-3 text-[0.68rem] italic text-muted-foreground">
+      <p className="mt-3 text-label italic text-muted-foreground">
         {method.origin}
       </p>
     </motion.div>
@@ -185,28 +185,27 @@ export default function WisdomPage() {
     .join(" / ");
 
   return (
-    <div className="space-y-8">
-      <PageHeader
-        title={t("Wisdom & guidance", "Sabiduría y guía")}
-        description={t(
-          "Biblical stewardship, Jewish financial ethics, modern budgeting frameworks and practical tools — all in one place.",
-          "Mayordomía bíblica, ética financiera judía, marcos modernos de presupuesto y herramientas prácticas — todo en un solo lugar."
-        )}
-      >
-        {biblicalContent.translations.map((translation) => (
-          <Link
-            key={translation.code}
-            href={translation.link}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Button variant="outline" size="sm" className="gap-1.5">
-              {translation.code}
-              <ArrowUpRight className="h-4 w-4" />
-            </Button>
-          </Link>
-        ))}
-      </PageHeader>
+    <Screen
+      title={t("Wisdom & guidance", "Sabiduría y guía")}
+      backHref="/insights"
+      actions={
+        <div className="hidden items-center gap-1.5 sm:flex">
+          {biblicalContent.translations.map((translation) => (
+            <Link
+              key={translation.code}
+              href={translation.link}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Button variant="outline" size="sm" className="gap-1.5">
+                {translation.code}
+                <ArrowUpRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          ))}
+        </div>
+      }
+    >
 
       {/* ------------------------------------------------------------ */}
       {/*  Tab navigation                                               */}
@@ -220,28 +219,28 @@ export default function WisdomPage() {
         <TabsList className="flex w-full flex-wrap gap-1 bg-transparent p-0">
           <TabsTrigger
             value="stewardship"
-            className="gap-1.5 rounded-[1.15rem] border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
+            className="gap-1.5 rounded-lg border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
           >
             <BookOpenText className="h-3.5 w-3.5" />
             {t("Biblical stewardship", "Mayordomía bíblica")}
           </TabsTrigger>
           <TabsTrigger
             value="methods"
-            className="gap-1.5 rounded-[1.15rem] border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
+            className="gap-1.5 rounded-lg border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
           >
             <Layers className="h-3.5 w-3.5" />
             {t("Budgeting methods", "Métodos de presupuesto")}
           </TabsTrigger>
           <TabsTrigger
             value="principles"
-            className="gap-1.5 rounded-[1.15rem] border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
+            className="gap-1.5 rounded-lg border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
           >
             <Star className="h-3.5 w-3.5" />
             {t("Financial principles", "Principios financieros")}
           </TabsTrigger>
           <TabsTrigger
             value="tools"
-            className="gap-1.5 rounded-[1.15rem] border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
+            className="gap-1.5 rounded-lg border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
           >
             <Wrench className="h-3.5 w-3.5" />
             {t("Tools & apps", "Herramientas y apps")}
@@ -254,7 +253,7 @@ export default function WisdomPage() {
 
         <TabsContent value="stewardship" className="space-y-4">
           <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
-            <Card className="border-border/80 bg-card/96 xl:sticky xl:top-24 xl:h-fit">
+            <Card className="bg-card xl:sticky xl:top-24 xl:h-fit">
               <CardHeader className="space-y-3">
                 <Badge
                   variant="outline"
@@ -262,7 +261,7 @@ export default function WisdomPage() {
                 >
                   {t("Theme guide", "Guía temática")}
                 </Badge>
-                <CardTitle className="font-heading text-[1.9rem] font-semibold leading-none tracking-[-0.04em]">
+                <CardTitle className="font-heading text-title font-semibold leading-none tracking-tight">
                   {t(
                     "Themes to review calmly",
                     "Temas para revisar con calma"
@@ -285,7 +284,7 @@ export default function WisdomPage() {
                       key={theme.slug}
                       type="button"
                       onClick={() => setActiveThemeSlug(theme.slug)}
-                      className={`w-full rounded-[1.35rem] border px-4 py-4 text-left transition-all duration-200 ${
+                      className={`w-full rounded-xl border px-4 py-4 text-left transition-all duration-200 ${
                         active
                           ? "border-border bg-secondary text-foreground ring-1 ring-border"
                           : "border-border/70 bg-card/92 text-foreground hover:border-foreground/12 hover:bg-secondary/70"
@@ -302,7 +301,7 @@ export default function WisdomPage() {
                           <Icon className="h-4 w-4" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+                          <p className="label-caps">
                             {theme.eyebrow}
                           </p>
                           <p className="text-sm font-medium leading-5">
@@ -317,7 +316,7 @@ export default function WisdomPage() {
             </Card>
 
             <div className="space-y-4">
-              <Card className="border-border/80 bg-card/96">
+              <Card className="bg-card">
                 <CardHeader className="space-y-4">
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                     <div className="space-y-3">
@@ -328,7 +327,7 @@ export default function WisdomPage() {
                         {activeTheme.eyebrow}
                       </Badge>
                       <div>
-                        <CardTitle className="font-heading text-[2.6rem] font-semibold leading-none tracking-[-0.05em]">
+                        <CardTitle className="font-heading text-display font-semibold leading-none tracking-tight">
                           {activeTheme.title}
                         </CardTitle>
                         <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
@@ -336,15 +335,15 @@ export default function WisdomPage() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex h-14 w-14 items-center justify-center rounded-[1.6rem] bg-secondary text-emerald-300">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary text-success">
                       <ThemeIcon className="h-6 w-6" />
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent className="grid gap-4 lg:grid-cols-[1.15fr_.85fr]">
                   <div className="space-y-4">
-                    <div className="rounded-[1.6rem] border border-border/70 bg-secondary/45 p-5">
-                      <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+                    <div className="rounded-xl border border-border/70 bg-secondary/45 p-5">
+                      <p className="label-caps">
                         {t(
                           `Passages to review in ${translationCodes}`,
                           `Pasajes para consultar en ${translationCodes}`
@@ -354,7 +353,7 @@ export default function WisdomPage() {
                         {activeTheme.passages.map((passage) => (
                           <article
                             key={passage.reference}
-                            className="rounded-[1.35rem] border border-border/70 bg-card/96 p-4"
+                            className="rounded-xl border bg-card p-4"
                           >
                             <div className="flex items-center justify-between gap-3">
                               <p className="font-mono text-sm font-semibold text-foreground">
@@ -366,7 +365,7 @@ export default function WisdomPage() {
                                     <Badge
                                       key={translation.code}
                                       variant="outline"
-                                      className="bg-secondary/55 text-[0.65rem] tracking-[0.16em]"
+                                      className="bg-secondary/55 text-label tracking-widest"
                                     >
                                       {translation.code}
                                     </Badge>
@@ -390,15 +389,15 @@ export default function WisdomPage() {
                   </div>
 
                   <div className="space-y-4">
-                    <div className="rounded-[1.6rem] border border-border/70 bg-secondary/45 p-5">
-                      <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+                    <div className="rounded-xl border border-border/70 bg-secondary/45 p-5">
+                      <p className="label-caps">
                         {t("Concrete action", "Acción concreta")}
                       </p>
                       <ul className="mt-4 space-y-3">
                         {activeTheme.actions.map((action, index) => (
                           <li
                             key={action}
-                            className="flex items-start gap-3 rounded-[1.2rem] border border-border/70 bg-card/96 px-4 py-3"
+                            className="flex items-start gap-3 rounded-lg border bg-card px-4 py-3"
                           >
                             <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-secondary text-xs font-semibold text-foreground">
                               {index + 1}
@@ -411,8 +410,8 @@ export default function WisdomPage() {
                       </ul>
                     </div>
 
-                    <div className="rounded-[1.6rem] border border-border/70 bg-card/96 p-5">
-                      <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+                    <div className="rounded-xl border bg-card p-5">
+                      <p className="label-caps">
                         {t("Usage note", "Nota de uso")}
                       </p>
                       <p className="mt-4 text-sm leading-6 text-muted-foreground">
@@ -426,10 +425,10 @@ export default function WisdomPage() {
                 </CardContent>
               </Card>
 
-              <Card className="border-border/80 bg-card/96">
+              <Card className="bg-card">
                 <CardContent className="flex flex-col gap-3 px-5 py-5 md:flex-row md:items-center md:justify-between">
                   <div className="space-y-2">
-                    <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+                    <p className="label-caps">
                       {t("Bible sources", "Fuentes bíblicas")}
                     </p>
                     <p className="max-w-3xl text-sm leading-6 text-muted-foreground">
@@ -446,12 +445,12 @@ export default function WisdomPage() {
                 {biblicalContent.translations.map((translation) => (
                   <Card
                     key={translation.code}
-                    className="border-border/80 bg-card/96"
+                    className="bg-card"
                   >
                     <CardContent className="space-y-4 p-5">
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="text-[0.72rem] uppercase tracking-[0.28em] text-muted-foreground">
+                          <p className="label-caps">
                             {translation.code}
                           </p>
                           <p className="mt-2 text-base font-semibold text-foreground">
@@ -489,7 +488,7 @@ export default function WisdomPage() {
         {/* ---------------------------------------------------------- */}
 
         <TabsContent value="methods" className="space-y-6">
-          <Card className="border-border/80 bg-card/96">
+          <Card className="bg-card">
             <CardHeader className="space-y-3">
               <Badge
                 variant="outline"
@@ -497,7 +496,7 @@ export default function WisdomPage() {
               >
                 {t("Framework guide", "Guía de marcos")}
               </Badge>
-              <CardTitle className="font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em] md:text-[2.6rem]">
+              <CardTitle className="font-heading text-display font-semibold leading-none tracking-tight md:text-display">
                 {t("Budgeting methods", "Métodos de presupuesto")}
               </CardTitle>
               <p className="max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
@@ -520,7 +519,7 @@ export default function WisdomPage() {
           </div>
 
           {/* Additional systems */}
-          <Card className="border-border/80 bg-card/96">
+          <Card className="bg-card">
             <CardHeader className="space-y-3">
               <Badge
                 variant="outline"
@@ -528,7 +527,7 @@ export default function WisdomPage() {
               >
                 {t("Additional systems", "Sistemas adicionales")}
               </Badge>
-              <CardTitle className="font-heading text-[1.5rem] font-semibold leading-none tracking-[-0.04em] md:text-[2rem]">
+              <CardTitle className="font-heading text-title font-semibold leading-none tracking-tight md:text-display">
                 {financialContent.additionalSystems.title}
               </CardTitle>
             </CardHeader>
@@ -536,7 +535,7 @@ export default function WisdomPage() {
               {financialContent.additionalSystems.entries.map((entry) => (
                 <div
                   key={entry.title}
-                  className="rounded-[1.35rem] border border-border/70 bg-secondary/40 p-4"
+                  className="rounded-xl border border-border/70 bg-secondary/40 p-4"
                 >
                   <p className="text-sm font-semibold text-foreground">
                     {entry.title}
@@ -560,7 +559,7 @@ export default function WisdomPage() {
             return (
               <Card
                 key={section.id}
-                className="border-border/80 bg-card/96"
+                className="bg-card"
               >
                 <CardHeader className="space-y-4">
                   <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
@@ -571,14 +570,14 @@ export default function WisdomPage() {
                       >
                         {section.eyebrow}
                       </Badge>
-                      <CardTitle className="font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em] md:text-[2.6rem]">
+                      <CardTitle className="font-heading text-display font-semibold leading-none tracking-tight md:text-display">
                         {section.title}
                       </CardTitle>
                       <p className="max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
                         {section.intro}
                       </p>
                     </div>
-                    <div className="flex h-14 w-14 items-center justify-center rounded-[1.6rem] bg-secondary text-emerald-300">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-secondary text-success">
                       <SIcon className="h-6 w-6" />
                     </div>
                   </div>
@@ -595,7 +594,7 @@ export default function WisdomPage() {
                           duration: 0.24,
                           ease: [0.22, 1, 0.36, 1],
                         }}
-                        className="rounded-[1.35rem] border border-border/70 bg-secondary/40 p-4"
+                        className="rounded-xl border border-border/70 bg-secondary/40 p-4"
                       >
                         <p className="text-sm font-semibold text-foreground">
                           {entry.title}
@@ -604,7 +603,7 @@ export default function WisdomPage() {
                           {entry.text}
                         </p>
                         {entry.reference && (
-                          <p className="mt-2 font-mono text-xs text-emerald-600 dark:text-emerald-400">
+                          <p className="mt-2 font-mono text-xs text-success">
                             {entry.reference}
                           </p>
                         )}
@@ -622,7 +621,7 @@ export default function WisdomPage() {
         {/* ---------------------------------------------------------- */}
 
         <TabsContent value="tools" className="space-y-6">
-          <Card className="border-border/80 bg-card/96">
+          <Card className="bg-card">
             <CardHeader className="space-y-3">
               <Badge
                 variant="outline"
@@ -630,7 +629,7 @@ export default function WisdomPage() {
               >
                 {t("Apps & tools", "Apps y herramientas")}
               </Badge>
-              <CardTitle className="font-heading text-[2rem] font-semibold leading-none tracking-[-0.04em] md:text-[2.6rem]">
+              <CardTitle className="font-heading text-display font-semibold leading-none tracking-tight md:text-display">
                 {financialContent.toolsSection.title}
               </CardTitle>
               <p className="max-w-3xl text-sm leading-7 text-muted-foreground sm:text-base">
@@ -641,7 +640,7 @@ export default function WisdomPage() {
               {financialContent.toolsSection.tools.map((tool) => (
                 <div
                   key={tool.name}
-                  className="rounded-[1.35rem] border border-border/70 bg-secondary/40 p-4"
+                  className="rounded-xl border border-border/70 bg-secondary/40 p-4"
                 >
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-semibold text-foreground">
@@ -649,7 +648,7 @@ export default function WisdomPage() {
                     </p>
                     <Badge
                       variant="outline"
-                      className="bg-secondary/60 text-[0.6rem]"
+                      className="bg-secondary/60 text-label"
                     >
                       {tool.tagline}
                     </Badge>
@@ -660,7 +659,7 @@ export default function WisdomPage() {
                 </div>
               ))}
 
-              <div className="rounded-[1.35rem] border border-border/70 bg-card/96 p-4">
+              <div className="rounded-xl border bg-card p-4">
                 <p className="text-sm leading-6 text-muted-foreground">
                   {financialContent.toolsSection.closingNote}
                 </p>
@@ -669,6 +668,6 @@ export default function WisdomPage() {
           </Card>
         </TabsContent>
       </Tabs>
-    </div>
+    </Screen>
   );
 }

@@ -56,7 +56,7 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname.startsWith("/signup"))
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
+    url.pathname = "/home";
     return NextResponse.redirect(url);
   }
 

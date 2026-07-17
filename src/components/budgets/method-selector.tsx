@@ -106,8 +106,8 @@ function MethodDetail({
   return (
     <div className="space-y-5">
       {/* Allocation bar */}
-      <div className="rounded-[1.4rem] border border-border/70 bg-card/90 p-4">
-        <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+      <div className="rounded-xl border border-border/70 bg-card/90 p-4">
+        <p className="text-label font-medium uppercase tracking-widest text-muted-foreground">
           {t("Income allocation", "Distribución del ingreso")}
         </p>
         <div className="mt-3">
@@ -150,15 +150,15 @@ function MethodDetail({
       </div>
 
       {/* Principles */}
-      <div className="rounded-[1.4rem] border border-border/70 bg-secondary/45 p-4">
-        <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+      <div className="rounded-xl border border-border/70 bg-secondary/45 p-4">
+        <p className="text-label font-medium uppercase tracking-widest text-muted-foreground">
           {t("Key principles", "Principios clave")}
         </p>
         <ul className="mt-3 space-y-2">
           {method.principles.map((p, i) => (
             <li
               key={i}
-              className="rounded-xl border border-border/70 bg-card/96 px-3 py-2.5"
+              className="rounded-xl border bg-card px-3 py-2.5"
             >
               <p className="text-sm leading-6 text-foreground/90">{p.text}</p>
               {p.reference && (
@@ -172,14 +172,14 @@ function MethodDetail({
       </div>
 
       {/* Best for */}
-      <div className="rounded-[1.4rem] border border-border/70 bg-secondary/45 p-4">
-        <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+      <div className="rounded-xl border border-border/70 bg-secondary/45 p-4">
+        <p className="text-label font-medium uppercase tracking-widest text-muted-foreground">
           {t("Best for", "Ideal para")}
         </p>
         <ul className="mt-3 space-y-2">
           {method.bestFor.map((item, i) => (
             <li key={i} className="flex items-start gap-2.5 text-sm leading-6 text-foreground/90">
-              <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-emerald-500" />
+              <Check className="mt-1 h-3.5 w-3.5 shrink-0 text-success" />
               {item}
             </li>
           ))}
@@ -241,7 +241,7 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full border-l border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] sm:max-w-[520px] data-[side=bottom]:max-h-[92vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-x data-[side=bottom]:border-t"
+        className="w-full border-l border-border/80 bg-popover/96 p-0 shadow-3 sm:max-w-[520px] data-[side=bottom]:max-h-[92vh] data-[side=bottom]:rounded-t-3xl data-[side=bottom]:border-x data-[side=bottom]:border-t"
       >
         <SheetHeader className="border-b border-border/70 px-5 py-5">
           <div className="flex items-center gap-3">
@@ -308,7 +308,7 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
                       ease: [0.22, 1, 0.36, 1],
                     }}
                     onClick={() => setSelectedMethodId(method.id)}
-                    className="w-full rounded-[1.35rem] border border-border/70 bg-card/92 p-4 text-left transition-all duration-200 hover:border-foreground/12 hover:bg-secondary/70"
+                    className="w-full rounded-xl border border-border/70 bg-card/92 p-4 text-left transition-all duration-200 hover:border-foreground/12 hover:bg-secondary/70"
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="space-y-2">
@@ -319,7 +319,7 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
                           {method.isFaithBased && (
                             <Badge
                               variant="outline"
-                              className="bg-amber-500/10 text-[0.6rem] text-amber-600 dark:text-amber-400"
+                              className="bg-warning-subtle text-label text-warning"
                             >
                               {t("Faith-based", "Basado en fe")}
                             </Badge>
@@ -338,7 +338,7 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
                       {method.slices.map((s) => (
                         <span
                           key={s.key}
-                          className="text-[0.65rem] text-muted-foreground"
+                          className="text-label text-muted-foreground"
                         >
                           <span
                             className="mr-1 inline-block h-1.5 w-1.5 rounded-full"
@@ -351,7 +351,7 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
                   </motion.button>
                 ))}
 
-                <div className="rounded-[1.35rem] border border-border/70 bg-secondary/40 p-4">
+                <div className="rounded-xl border border-border/70 bg-secondary/40 p-4">
                   <p className="text-sm leading-6 text-muted-foreground">
                     {t(
                       "These are starting frameworks. Adjust percentages in your monthly plan to fit your cost of living, obligations, and generosity goals.",

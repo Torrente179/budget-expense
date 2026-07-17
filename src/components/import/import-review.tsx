@@ -195,8 +195,8 @@ function ReviewRow({
 
   return (
     <li
-      className={`flex flex-wrap items-center gap-3 rounded-[1.15rem] px-3 py-2.5 ring-1 ring-border ${
-        row.include ? "bg-card/96" : "bg-muted/40 opacity-70"
+      className={`flex flex-wrap items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border ${
+        row.include ? "bg-card" : "bg-muted/40 opacity-70"
       }`}
     >
       {!isIncome && category ? (
@@ -208,11 +208,11 @@ function ReviewRow({
       ) : (
         <span
           className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
-            isIncome ? "bg-emerald-500/10" : "bg-secondary"
+            isIncome ? "bg-success-subtle" : "bg-secondary"
           }`}
         >
           {isIncome ? (
-            <ArrowDownRight className="h-4 w-4 text-emerald-300" />
+            <ArrowDownRight className="h-4 w-4 text-success" />
           ) : (
             <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
           )}
@@ -234,7 +234,7 @@ function ReviewRow({
           {row.categorySource === "tithe" && (
             <>
               {" · "}
-              <span className="text-emerald-300">
+              <span className="text-success">
                 {t("tithe detected", "diezmo detectado")}
               </span>
             </>

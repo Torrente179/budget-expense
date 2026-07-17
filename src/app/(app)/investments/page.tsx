@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 
-export default function InvestmentsPage() {
-  redirect("/investments/stocks");
+// Permanent stub: this route moved in the 2026-07 IA rework.
+export default function RedirectStub() {
+  redirect("/wealth");
 }

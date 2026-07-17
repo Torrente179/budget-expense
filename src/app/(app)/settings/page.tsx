@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrency } from "@/providers/currency-provider";
 import { CURRENCIES, type CurrencyCode } from "@/lib/constants";
-import { PageHeader } from "@/components/layout/page-header";
+import { Screen } from "@/components/patterns/screen";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,12 +20,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, Sun, Moon, Monitor } from "lucide-react";
+import { ArrowRight, Loader2, Sun, Moon, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
 import { StewardshipSettings } from "@/components/settings/stewardship-settings";
 import { CategoryClassification } from "@/components/settings/category-classification";
-import { LiabilitiesEditor } from "@/components/settings/liabilities-editor";
 
 export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
@@ -111,11 +111,8 @@ export default function SettingsPage() {
   ];
 
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
-      <PageHeader
-        title={t("Settings", "Ajustes")}
-        description={t("Manage your account and preferences", "Administra tu cuenta y preferencias")}
-      />
+    <Screen title={t("Settings", "Ajustes")} backHref="/home">
+      <div className="mx-auto w-full max-w-2xl space-y-6">
 
       {/* Profile */}
       <Card className="border-border/50">
@@ -184,7 +181,25 @@ export default function SettingsPage() {
       {/* Stewardship */}
       <StewardshipSettings />
       <CategoryClassification />
-      <LiabilitiesEditor />
+
+      {/* Liabilities moved to Wealth */}
+      <Link
+        href="/wealth/liabilities"
+        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3.5 transition-colors hover:bg-secondary"
+      >
+        <span className="min-w-0">
+          <span className="block text-body font-medium">
+            {t("Debts & liabilities", "Deudas y pasivos")}
+          </span>
+          <span className="block text-caption text-muted-foreground">
+            {t(
+              "Manage loans, mortgages, and credit in Wealth",
+              "Gestiona préstamos, hipotecas y crédito en Patrimonio"
+            )}
+          </span>
+        </span>
+        <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+      </Link>
 
       {/* Theme */}
       <Card className="border-border/50">
@@ -236,5 +251,6 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
     </div>
+    </Screen>
   );
 }

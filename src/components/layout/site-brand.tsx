@@ -15,7 +15,7 @@ type SiteBrandProps = {
 export function SiteBrand({
   className,
   compact = false,
-  href = "/dashboard",
+  href = "/home",
   onClick,
 }: SiteBrandProps) {
   const { t } = useLocale();
@@ -25,8 +25,8 @@ export function SiteBrand({
     <>
       <div
         className={cn(
-          "shrink-0 overflow-hidden border border-border/80 bg-secondary shadow-[0_10px_30px_rgba(0,0,0,0.16)]",
-          compact ? "rounded-[1rem]" : "rounded-[1.15rem]"
+          "shrink-0 overflow-hidden border border-border/80 bg-secondary shadow-1",
+          compact ? "rounded-lg" : "rounded-lg"
         )}
       >
         <Image
@@ -41,7 +41,7 @@ export function SiteBrand({
       </div>
       {!compact ? (
         <div className="space-y-1">
-          <span className="block text-[0.7rem] uppercase tracking-[0.26em] text-muted-foreground">
+          <span className="block label-caps">
             {t("Stewardship", "Mayordomía")}
           </span>
           <span className="block text-lg font-semibold leading-none tracking-tight">

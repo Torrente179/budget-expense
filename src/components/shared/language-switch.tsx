@@ -29,7 +29,7 @@ export function LanguageSwitch({
       <SelectTrigger
         className={cn(
           compact
-            ? "h-8 w-[92px] text-xs font-medium uppercase tracking-[0.2em]"
+            ? "h-8 w-[92px] text-xs font-medium uppercase tracking-widest"
             : "h-9 w-[132px] text-xs",
           className
         )}

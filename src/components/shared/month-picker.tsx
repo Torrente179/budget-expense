@@ -28,7 +28,7 @@ export function MonthPicker({ month, year, onChange }: MonthPickerProps) {
   }
 
   return (
-    <div className="flex items-center gap-1 rounded-[1.25rem] border border-border bg-secondary/70 p-1">
+    <div className="flex items-center gap-1 rounded-lg border border-border bg-secondary/70 p-1">
       <Button
         variant="ghost"
         size="icon"

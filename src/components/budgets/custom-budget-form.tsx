@@ -147,7 +147,7 @@ export function CustomBudgetForm({
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full border-l border-border/80 bg-popover/96 p-0 shadow-[0_34px_100px_-56px_rgba(0,0,0,0.95)] sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-[2rem] data-[side=bottom]:border-x data-[side=bottom]:border-t"
+        className="w-full border-l border-border/80 bg-popover/96 p-0 shadow-3 sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-3xl data-[side=bottom]:border-x data-[side=bottom]:border-t"
       >
         <form
           onSubmit={form.handleSubmit(handleSubmit)}
@@ -291,12 +291,12 @@ export function CustomBudgetForm({
 
             {/* Percentage preview */}
             {amountType === "percentage" && amountValue > 0 && (
-              <div className="rounded-[1.35rem] border border-border/70 bg-card/90 p-4">
-                <p className="text-[0.68rem] font-medium uppercase tracking-[0.24em] text-muted-foreground">
+              <div className="rounded-xl border border-border/70 bg-card/90 p-4">
+                <p className="text-label font-medium uppercase tracking-widest text-muted-foreground">
                   {t("Budget preview", "Vista previa")}
                 </p>
                 {incomeAmount !== null && incomeAmount > 0 ? (
-                  <p className="mt-2 font-heading text-[1.8rem] font-semibold leading-none tracking-[-0.04em]">
+                  <p className="mt-2 font-heading text-title font-semibold leading-none tracking-tight">
                     {formatCurrency(
                       incomeAmount * (amountValue / 100),
                       incomeCurrency
@@ -308,7 +308,7 @@ export function CustomBudgetForm({
                     </span>
                   </p>
                 ) : (
-                  <p className="mt-2 text-sm text-amber-600 dark:text-amber-400">
+                  <p className="mt-2 text-sm text-warning">
                     {t(
                       "Set a monthly plan first to see the resolved amount.",
                       "Define un plan mensual primero para ver el monto resultante."

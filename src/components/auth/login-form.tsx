@@ -40,7 +40,7 @@ export function LoginForm() {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/dashboard");
+      router.push("/home");
       router.refresh();
     }
   }

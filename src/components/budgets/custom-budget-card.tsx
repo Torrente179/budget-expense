@@ -42,15 +42,15 @@ export function CustomBudgetCard({
         : "good";
 
   const statusColor = {
-    good: "text-emerald-500",
-    warning: "text-amber-500",
-    danger: "text-red-500",
+    good: "text-success",
+    warning: "text-warning",
+    danger: "text-danger",
   }[status];
 
   const progressColor = {
-    good: "[&_[data-slot=progress-indicator]]:bg-emerald-500",
-    warning: "[&_[data-slot=progress-indicator]]:bg-amber-500",
-    danger: "[&_[data-slot=progress-indicator]]:bg-red-500",
+    good: "[&_[data-slot=progress-indicator]]:bg-success",
+    warning: "[&_[data-slot=progress-indicator]]:bg-warning",
+    danger: "[&_[data-slot=progress-indicator]]:bg-danger",
   }[status];
 
   const categories = budget.custom_budget_categories.map((c) => c.categories);
@@ -64,7 +64,7 @@ export function CustomBudgetCard({
         duration: 0.24,
         ease: [0.22, 1, 0.36, 1],
       }}
-      className="group rounded-[1.25rem] border border-border/80 bg-card/96 p-4 shadow-sm md:rounded-[1.5rem] md:p-5 md:shadow-[0_28px_80px_-54px_rgba(0,0,0,0.86)]"
+      className="group rounded-lg border bg-card p-4 shadow-sm md:rounded-xl md:p-5 md:shadow-1"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
@@ -116,7 +116,7 @@ export function CustomBudgetCard({
       {/* Metrics */}
       <div className="mt-3 grid gap-2 sm:grid-cols-3 md:mt-5 md:gap-3">
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
-          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+          <p className="label-caps">
             {t("Target", "Objetivo")}
           </p>
           <p className="mt-2 font-mono text-base font-semibold">
@@ -126,7 +126,7 @@ export function CustomBudgetCard({
           </p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
-          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+          <p className="label-caps">
             {t("Spent", "Gastado")}
           </p>
           <p className="mt-2 font-mono text-base font-semibold">
@@ -134,7 +134,7 @@ export function CustomBudgetCard({
           </p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
-          <p className="text-[0.68rem] uppercase tracking-[0.24em] text-muted-foreground">
+          <p className="label-caps">
             {t("Remaining", "Restante")}
           </p>
           <p className={`mt-2 font-mono text-base font-semibold ${statusColor}`}>

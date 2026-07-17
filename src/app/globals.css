@@ -39,6 +39,20 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-info-subtle: var(--info-subtle);
+  --color-positive: var(--positive);
+  --color-negative: var(--negative);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -46,6 +60,24 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+  --shadow-1: var(--elevation-1);
+  --shadow-2: var(--elevation-2);
+  --shadow-3: var(--elevation-3);
+  --text-display: 2.25rem;
+  --text-display--line-height: 1.05;
+  --text-display--letter-spacing: -0.03em;
+  --text-title: 1.375rem;
+  --text-title--line-height: 1.2;
+  --text-title--letter-spacing: -0.02em;
+  --text-heading: 1.0625rem;
+  --text-heading--line-height: 1.3;
+  --text-heading--letter-spacing: -0.01em;
+  --text-body: 0.875rem;
+  --text-body--line-height: 1.5;
+  --text-caption: 0.75rem;
+  --text-caption--line-height: 1.35;
+  --text-label: 0.6875rem;
+  --text-label--line-height: 1.2;
 }
 
 :root {
@@ -72,6 +104,25 @@
   --chart-3: #9ba5b4;
   --chart-4: #cf5b76;
   --chart-5: #c5ccd6;
+  --chart-grid: rgba(17, 19, 24, 0.06);
+  --chart-axis: #8a93a3;
+  --success: #0e8a63;
+  --success-foreground: #ffffff;
+  --success-subtle: rgba(24, 185, 134, 0.12);
+  --warning: #9a6210;
+  --warning-foreground: #ffffff;
+  --warning-subtle: rgba(217, 152, 33, 0.14);
+  --danger: #b13a58;
+  --danger-foreground: #ffffff;
+  --danger-subtle: rgba(203, 96, 120, 0.12);
+  --info: #33619e;
+  --info-foreground: #ffffff;
+  --info-subtle: rgba(76, 128, 197, 0.12);
+  --positive: var(--success);
+  --negative: var(--danger);
+  --elevation-1: 0 1px 2px rgba(16, 20, 26, 0.04), 0 12px 32px -20px rgba(16, 20, 26, 0.16);
+  --elevation-2: 0 2px 6px rgba(16, 20, 26, 0.05), 0 16px 44px -20px rgba(16, 20, 26, 0.2);
+  --elevation-3: 0 8px 16px -8px rgba(16, 20, 26, 0.14), 0 32px 80px -32px rgba(16, 20, 26, 0.28);
   --radius: 1rem;
   --sidebar: rgba(250, 251, 252, 0.92);
   --sidebar-foreground: #15181f;
@@ -108,6 +159,25 @@
   --chart-3: #97a0af;
   --chart-4: #d55f79;
   --chart-5: #c4cad4;
+  --chart-grid: rgba(255, 255, 255, 0.05);
+  --chart-axis: #737c8c;
+  --success: #3bd39f;
+  --success-foreground: #04241a;
+  --success-subtle: rgba(24, 197, 143, 0.13);
+  --warning: #e8b04b;
+  --warning-foreground: #241a04;
+  --warning-subtle: rgba(232, 176, 75, 0.13);
+  --danger: #f2809a;
+  --danger-foreground: #260910;
+  --danger-subtle: rgba(236, 107, 134, 0.13);
+  --info: #82aae4;
+  --info-foreground: #081426;
+  --info-subtle: rgba(122, 165, 232, 0.13);
+  --positive: var(--success);
+  --negative: var(--danger);
+  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px -28px rgba(0, 0, 0, 0.7);
+  --elevation-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 20px 52px -28px rgba(0, 0, 0, 0.75);
+  --elevation-3: 0 8px 20px -10px rgba(0, 0, 0, 0.6), 0 36px 90px -36px rgba(0, 0, 0, 0.85);
   --sidebar: #090a0c;
   --sidebar-foreground: #f5f7fa;
   --sidebar-primary: #f3f4f6;
@@ -118,24 +188,22 @@
   --sidebar-ring: #dde2ea;
 }
 
+/* Micro-label used for eyebrow/section labels across the app. */
+@utility label-caps {
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   html {
     @apply font-sans;
-  }
-  @media (min-width: 768px) {
-    @supports (zoom: 90%) {
-      html {
-        zoom: 90%;
-      }
-    }
-    @supports not (zoom: 90%) {
-      html {
-        font-size: 90%;
-      }
-    }
   }
   body {
     @apply bg-background text-foreground;
@@ -168,5 +236,15 @@
   button:active,
   [role="button"]:active {
     transform: scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

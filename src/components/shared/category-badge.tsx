@@ -55,7 +55,7 @@ export function CategoryBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-[0_12px_30px_-24px_rgba(0,0,0,0.5)]",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-1",
         className
       )}
       style={{
@@ -83,7 +83,7 @@ export function CategoryIcon({
   return (
     <div
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-xl border shadow-[0_16px_36px_-24px_rgba(0,0,0,0.52)]",
+        "flex h-8 w-8 items-center justify-center rounded-xl border shadow-1",
         className
       )}
       style={{ backgroundColor: `${color}15`, borderColor: `${color}24` }}

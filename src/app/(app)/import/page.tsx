@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { PageHeader } from "@/components/layout/page-header";
+import { Screen } from "@/components/patterns/screen";
 import { ImportDropzone } from "@/components/import/import-dropzone";
 import { ImportHistory } from "@/components/import/import-history";
 import { ImportReview } from "@/components/import/import-review";
@@ -109,14 +109,11 @@ export default function ImportPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <PageHeader
-        title={t("Import", "Importar")}
-        description={t(
-          "Upload a bank CSV, review the proposal, confirm what enters the ledger.",
-          "Sube un CSV bancario, revisa la propuesta y confirma qué entra al libro."
-        )}
-      />
+    <Screen
+      title={t("Import", "Importar")}
+      eyebrow={t("Bank CSV", "CSV bancario")}
+      backHref="/home"
+    >
 
       <ImportDropzone
         onUpload={handleUpload}
@@ -140,6 +137,6 @@ export default function ImportPage() {
         onRollback={handleRollback}
         rollingBackId={rollingBackId}
       />
-    </div>
+    </Screen>
   );
 }

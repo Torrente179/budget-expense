@@ -50,7 +50,7 @@ export function ImportDropzone({ onUpload, uploading }: ImportDropzoneProps) {
     <Card>
       <CardContent className="space-y-4">
         <div className="flex flex-wrap items-center gap-3">
-          <p className="text-[0.72rem] font-medium uppercase tracking-[0.28em] text-muted-foreground">
+          <p className="label-caps">
             {t("Bank format", "Formato del banco")}
           </p>
           <Select

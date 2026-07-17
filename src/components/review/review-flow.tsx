@@ -125,7 +125,7 @@ export function ReviewFlow() {
                   : "text-muted-foreground/60"
             }`}
           >
-            {index < stepIndex && <Check className="h-3 w-3 text-emerald-300" />}
+            {index < stepIndex && <Check className="h-3 w-3 text-success" />}
             {stepMeta[item].label}
             {stepMeta[item].count !== undefined && stepMeta[item].count! > 0 && (
               <Badge variant="secondary">{stepMeta[item].count}</Badge>
@@ -162,11 +162,11 @@ export function ReviewFlow() {
                 {expenses.map((expense) => (
                   <li
                     key={expense.id}
-                    className="flex flex-wrap items-center gap-3 rounded-[1.15rem] px-3 py-2.5 ring-1 ring-border"
+                    className="flex flex-wrap items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border"
                   >
                     <CategoryIcon
                       icon={expense.categories?.icon ?? "circle"}
-                      color={expense.categories?.color ?? "#64748b"}
+                      color={expense.categories?.color ?? "var(--muted-foreground)"}
                       className="shrink-0"
                     />
                     <div className="min-w-0 flex-1">
@@ -247,7 +247,7 @@ export function ReviewFlow() {
                 {anomalies.map((anomaly) => (
                   <li
                     key={anomaly.categoryId}
-                    className="flex items-center gap-3 rounded-[1.15rem] px-3 py-2.5 ring-1 ring-border"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive/10">
                       <AlertTriangle className="h-4 w-4 text-destructive" />
@@ -300,7 +300,7 @@ export function ReviewFlow() {
                 {upcoming.map(({ expense, daysAway }) => (
                   <li
                     key={expense.id}
-                    className="flex items-center gap-3 rounded-[1.15rem] px-3 py-2.5 ring-1 ring-border"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-secondary">
                       <CalendarClock className="h-4 w-4 text-muted-foreground" />
@@ -373,7 +373,7 @@ export function ReviewFlow() {
             />
             <div className="pt-2">
               <Link
-                href="/dashboard"
+                href="/home"
                 className="inline-flex h-9 items-center justify-center rounded-xl border border-input bg-secondary/60 px-4 text-sm font-medium transition-colors hover:bg-accent"
               >
                 {t("Back to dashboard", "Volver al panel")}
@@ -411,7 +411,7 @@ function SummaryLine({
       <p className="flex-1 text-sm text-muted-foreground">{label}</p>
       <p
         className={`font-heading text-xl tracking-tight ${
-          good ? "text-emerald-300" : ""
+          good ? "text-success" : ""
         }`}
       >
         {value}

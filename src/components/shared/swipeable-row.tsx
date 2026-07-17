@@ -64,7 +64,7 @@ export function SwipeableRow({
   }
 
   return (
-    <div className="relative overflow-hidden rounded-[1.15rem]">
+    <div className="relative overflow-hidden rounded-lg">
       {/* Action layers behind the row */}
       {onEdit && (
         <button
