@@ -192,7 +192,7 @@ function CategoryDetail() {
               {Array.from(grouped.entries()).map(([date, items]) => (
                 <section key={date}>
                   <p className="label-caps mb-1.5 px-4 md:px-0">
-                    {formatDate(date, "EEEE d MMMM yyyy")}
+                    {formatDate(date, "EEEE d MMMM yyyy", locale)}
                   </p>
                   <div className="-mx-4 divide-y divide-border/40 md:mx-0 md:overflow-hidden md:rounded-xl md:bg-card md:ring-1 md:ring-border md:shadow-1">
                     {items.map((expense) => (

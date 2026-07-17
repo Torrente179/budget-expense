@@ -43,27 +43,40 @@ function readCookieLocale() {
   return cookiePair.split("=")[1] ?? null;
 }
 
-export function LocaleProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<AppLocale>("en");
+function readInitialLocale(): AppLocale {
+  if (typeof window === "undefined") {
+    return "en";
+  }
 
-  useEffect(() => {
+  try {
     const stored = window.localStorage.getItem(LOCALE_STORAGE_KEY);
     const cookieLocale = readCookieLocale();
-    const browserLocale = window.navigator.language;
-    const nextLocale = resolveAppLocale(stored ?? cookieLocale ?? browserLocale);
+    const browserLocale =
+      window.navigator.languages?.[0] ?? window.navigator.language;
+    return resolveAppLocale(stored ?? cookieLocale ?? browserLocale);
+  } catch {
+    return "en";
+  }
+}
+
+export function LocaleProvider({ children }: { children: ReactNode }) {
+  const [locale, setLocaleState] = useState<AppLocale>(readInitialLocale);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    // Re-resolve after mount in case SSR defaulted to English.
+    const nextLocale = readInitialLocale();
     setLocaleState(nextLocale);
+    setHydrated(true);
   }, []);
 
   useEffect(() => {
-    if (typeof document !== "undefined") {
-      document.documentElement.lang = locale;
-      document.cookie = `${LOCALE_COOKIE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
-    }
+    if (!hydrated) return;
 
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
-    }
-  }, [locale]);
+    document.documentElement.lang = locale;
+    document.cookie = `${LOCALE_COOKIE_KEY}=${locale}; path=/; max-age=31536000; samesite=lax`;
+    window.localStorage.setItem(LOCALE_STORAGE_KEY, locale);
+  }, [locale, hydrated]);
 
   const setLocale = useCallback((nextLocale: AppLocale) => {
     setLocaleState(resolveAppLocale(nextLocale));

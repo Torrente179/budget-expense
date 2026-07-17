@@ -43,7 +43,7 @@ export function VirtualizedLedger({
   onSwipeDelete,
   onDesktopDelete,
 }: VirtualizedLedgerProps) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const listRef = useRef<HTMLDivElement>(null);
 
   const flatItems = useMemo(() => {
@@ -92,7 +92,7 @@ export function VirtualizedLedger({
             >
               {item.type === "header" ? (
                 <p className="label-caps mb-1.5 px-4 pt-4 md:px-0">
-                  {formatDate(item.date, "EEEE d MMMM yyyy")}
+                  {formatDate(item.date, "EEEE d MMMM yyyy", locale)}
                 </p>
               ) : (
                 <div className="-mx-4 divide-y divide-border/40 md:mx-0 md:overflow-hidden md:rounded-none md:bg-card md:ring-0">

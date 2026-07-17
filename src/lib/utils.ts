@@ -37,7 +37,11 @@ export function formatDate(
   locale?: string | null
 ) {
   const d = typeof date === "string" ? parseISO(date) : date;
-  return format(d, pattern, { locale: getDateFnsLocale(locale) });
+  // Fall back to <html lang> so callers that omit locale still follow the
+  // active app language (critical on mobile Movements / Insights).
+  return format(d, pattern, {
+    locale: getDateFnsLocale(locale ?? getDocumentLocale()),
+  });
 }
 
 const currencyFormatters = new Map<string, Intl.NumberFormat>();

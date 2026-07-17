@@ -97,26 +97,33 @@ export function ProfileSheet({ className }: { className?: string }) {
             </Link>
           ))}
         </nav>
-        <div className="flex items-center gap-2 border-t border-border px-4 py-3">
-          <LanguageSwitch compact />
-          <CurrencyQuickSwitch />
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-9 w-9 rounded-full border border-border bg-secondary/80"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-          >
-            <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
-            <span className="sr-only">{t("Toggle theme", "Cambiar tema")}</span>
-          </Button>
-          <button
-            onClick={handleLogout}
-            className="ml-auto flex items-center gap-2 rounded-lg px-3 py-2 text-body font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-          >
-            <LogOut className="h-4 w-4" />
-            {t("Log out", "Cerrar sesión")}
-          </button>
+        <div className="space-y-3 border-t border-border px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-caption font-medium text-muted-foreground">
+              {t("Language", "Idioma")}
+            </p>
+            <LanguageSwitch />
+          </div>
+          <div className="flex items-center gap-2">
+            <CurrencyQuickSwitch />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full border border-border bg-secondary/80"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">{t("Toggle theme", "Cambiar tema")}</span>
+            </Button>
+            <button
+              onClick={handleLogout}
+              className="ml-auto flex items-center gap-2 rounded-lg px-3 py-2 text-body font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              {t("Log out", "Cerrar sesión")}
+            </button>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
