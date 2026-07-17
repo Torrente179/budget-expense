@@ -20,12 +20,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, Loader2, Sun, Moon, Monitor } from "lucide-react";
+import { ArrowRight, Compass, Loader2, Sun, Moon, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
 import { LanguagePreferenceList } from "@/components/shared/language-switch";
 import { StewardshipSettings } from "@/components/settings/stewardship-settings";
 import { CategoryClassification } from "@/components/settings/category-classification";
+import { useOnboarding } from "@/hooks/use-onboarding";
 
 export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
@@ -36,6 +37,7 @@ export default function SettingsPage() {
   const supabase = createClient();
   const router = useRouter();
   const { t } = useLocale();
+  const { incomplete } = useOnboarding();
 
   useEffect(() => {
     async function loadProfile() {
@@ -114,6 +116,29 @@ export default function SettingsPage() {
   return (
     <Screen title={t("Settings", "Ajustes")} backHref="/home">
       <div className="mx-auto w-full max-w-2xl space-y-6">
+
+      {incomplete && (
+        <Link
+          href="/onboarding"
+          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3.5 transition-colors hover:bg-secondary"
+        >
+          <span className="flex min-w-0 items-start gap-3">
+            <Compass className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="min-w-0">
+              <span className="block text-body font-medium">
+                {t("Setup guide", "Guía de configuración")}
+              </span>
+              <span className="block text-caption text-muted-foreground">
+                {t(
+                  "Resume income, bills, debts, and goals",
+                  "Retoma ingresos, gastos fijos, deudas y metas"
+                )}
+              </span>
+            </span>
+          </span>
+          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </Link>
+      )}
 
       {/* Language — lives in Settings, not in screen chrome */}
       <Card className="border-border/50">

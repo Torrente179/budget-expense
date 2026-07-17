@@ -8,6 +8,7 @@ import {
 import { useExpenses } from "@/hooks/use-expenses";
 import { useMonthlyBudgetPlan } from "@/hooks/use-monthly-budget-plan";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
 import { useMonth } from "@/providers/month-provider";
 import { useCurrency } from "@/providers/currency-provider";
@@ -91,6 +92,7 @@ export function BudgetScreen() {
     upsertPlan,
   } = useMonthlyBudgetPlan({ month, year });
   const titheTarget = useTitheTarget();
+  const { profile } = useOnboarding();
 
   const incomeAmount = plan
     ? convert(plan.income_amount, plan.income_currency)
@@ -446,10 +448,17 @@ export function BudgetScreen() {
               <EmptyState
                 icon={Wallet}
                 title={t("No budgets yet", "Aún no hay presupuestos")}
-                description={t(
-                  "Create your first budget to set spending targets and track how much goes to each area of your life.",
-                  "Crea tu primer presupuesto para definir objetivos de gasto y rastrear cuánto va a cada área de tu vida."
-                )}
+                description={
+                  profile?.wants_budget_help
+                    ? t(
+                        "Based on your goals, add envelopes for essentials, lifestyle, and savings — or start with one target.",
+                        "Según tus metas, crea sobres para esenciales, estilo de vida y ahorro — o empieza con un objetivo."
+                      )
+                    : t(
+                        "Create your first budget to set spending targets and track how much goes to each area of your life.",
+                        "Crea tu primer presupuesto para definir objetivos de gasto y rastrear cuánto va a cada área de tu vida."
+                      )
+                }
               >
                 <CustomBudgetForm
                   month={month}

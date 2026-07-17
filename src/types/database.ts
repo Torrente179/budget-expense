@@ -17,6 +17,10 @@ export interface Database {
           base_currency: string;
           tithe_target_percent: number;
           manual_fx_rates: Json | null;
+          onboarding_completed_at: string | null;
+          onboarding_skipped_at: string | null;
+          wants_budget_help: boolean | null;
+          primary_goals: string[];
           created_at: string;
           updated_at: string;
         };
@@ -27,6 +31,10 @@ export interface Database {
           base_currency?: string;
           tithe_target_percent?: number;
           manual_fx_rates?: Json | null;
+          onboarding_completed_at?: string | null;
+          onboarding_skipped_at?: string | null;
+          wants_budget_help?: boolean | null;
+          primary_goals?: string[];
           created_at?: string;
           updated_at?: string;
         };
@@ -37,6 +45,10 @@ export interface Database {
           base_currency?: string;
           tithe_target_percent?: number;
           manual_fx_rates?: Json | null;
+          onboarding_completed_at?: string | null;
+          onboarding_skipped_at?: string | null;
+          wants_budget_help?: boolean | null;
+          primary_goals?: string[];
           created_at?: string;
           updated_at?: string;
         };

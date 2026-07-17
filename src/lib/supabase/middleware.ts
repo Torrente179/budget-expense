@@ -56,7 +56,17 @@ export async function updateSession(request: NextRequest) {
       request.nextUrl.pathname.startsWith("/signup"))
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/home";
+    // Prefer onboarding for brand-new profiles; client gate also enforces this.
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("onboarding_completed_at, onboarding_skipped_at")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    const onboarded =
+      Boolean(profile?.onboarding_completed_at) ||
+      Boolean(profile?.onboarding_skipped_at);
+    url.pathname = onboarded ? "/home" : "/onboarding";
     return NextResponse.redirect(url);
   }
 

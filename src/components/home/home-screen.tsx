@@ -5,16 +5,21 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import {
   ClipboardCheck,
+  Compass,
   FileUp,
   HandHeart,
+  LineChart,
   Plus,
   TrendingDown,
   TrendingUp,
   ArrowUpDown,
+  Wallet,
 } from "lucide-react";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
+import { useOnboarding } from "@/hooks/use-onboarding";
 import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
+import { buildPersonalization } from "@/lib/onboarding/personalize";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
@@ -46,9 +51,19 @@ export function HomeScreen() {
 
   const { summary, loading } = useMonthlySummary({ month, year });
   const titheTarget = useTitheTarget();
+  const { incomplete, profile } = useOnboarding();
   usePrefetchMonths(month, year, loading, "summary");
 
   const [captureKind, setCaptureKind] = useState<CaptureKind | null>(null);
+
+  const personalizedCtas = useMemo(() => {
+    if (!profile) return [] as ReturnType<typeof buildPersonalization>["homeCtas"];
+    return buildPersonalization({
+      wantsBudgetHelp: profile.wants_budget_help === true,
+      goals: profile.primary_goals,
+      hasDebts: profile.primary_goals.includes("pay_debt"),
+    }).homeCtas;
+  }, [profile]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -118,13 +133,48 @@ export function HomeScreen() {
     year: "numeric",
   }).format(new Date(year, month - 1));
 
-  const quickActions = [
-    {
-      key: "expense",
-      label: t("Add expense", "Añadir gasto"),
-      icon: Plus,
-      onClick: () => setCaptureKind("expense"),
-    },
+  const goalQuickActions = personalizedCtas
+    .map((cta) => {
+      switch (cta) {
+        case "budget":
+          return {
+            key: "budget",
+            label: t("Budget", "Presupuesto"),
+            icon: Wallet,
+            href: "/budget",
+          };
+        case "movements":
+          return {
+            key: "movements",
+            label: t("Movements", "Movimientos"),
+            icon: ArrowUpDown,
+            href: "/movements",
+          };
+        case "wealth":
+        case "liabilities":
+          return {
+            key: cta,
+            label:
+              cta === "liabilities"
+                ? t("Debts", "Deudas")
+                : t("Wealth", "Patrimonio"),
+            icon: TrendingUp,
+            href: cta === "liabilities" ? "/wealth/liabilities" : "/wealth",
+          };
+        case "insights":
+          return {
+            key: "insights",
+            label: t("Insights", "Insights"),
+            icon: LineChart,
+            href: "/insights",
+          };
+        default:
+          return null;
+      }
+    })
+    .filter((action): action is NonNullable<typeof action> => action !== null);
+
+  const fallbackQuickActions = [
     {
       key: "income",
       label: t("Add income", "Añadir ingreso"),
@@ -145,6 +195,22 @@ export function HomeScreen() {
     },
   ];
 
+  const quickActions = [
+    {
+      key: "expense",
+      label: t("Add expense", "Añadir gasto"),
+      icon: Plus,
+      onClick: () => setCaptureKind("expense"),
+    },
+    ...goalQuickActions,
+    ...fallbackQuickActions,
+  ]
+    .filter(
+      (action, index, list) =>
+        list.findIndex((item) => item.key === action.key) === index
+    )
+    .slice(0, 4);
+
   return (
     <Screen
       eyebrow={monthLabel}
@@ -163,6 +229,35 @@ export function HomeScreen() {
         </div>
       ) : (
         <>
+          {incomplete && (
+            <Card className="border-border/60 bg-secondary/40">
+              <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-info-subtle text-info">
+                    <Compass className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-body font-medium">
+                      {t("Finish your setup", "Termina tu configuración")}
+                    </p>
+                    <p className="text-caption text-muted-foreground">
+                      {t(
+                        "Income, recurring costs, debts, and goals — skip anytime.",
+                        "Ingresos, gastos fijos, deudas y metas — puedes saltarlo."
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <Link
+                  href="/onboarding"
+                  className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-primary px-3 text-caption font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                >
+                  {t("Continue setup", "Continuar")}
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Safe-to-spend hero — the one number, plus the month's pace. */}
           <Card className="relative overflow-hidden">
             <CardContent className="relative z-10 space-y-1.5 py-6">
@@ -350,28 +445,34 @@ export function HomeScreen() {
 
           {/* Quick actions */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {quickActions.map((action) =>
-              "href" in action && action.href ? (
-                <Link
-                  key={action.key}
-                  href={action.href}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 text-body font-medium transition-colors hover:bg-secondary"
-                >
-                  <action.icon className="h-4 w-4 text-muted-foreground" />
-                  {action.label}
-                </Link>
-              ) : (
-                <button
-                  key={action.key}
-                  type="button"
-                  onClick={action.onClick}
-                  className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 text-body font-medium transition-colors hover:bg-secondary"
-                >
-                  <action.icon className="h-4 w-4 text-muted-foreground" />
-                  {action.label}
-                </button>
-              )
-            )}
+            {quickActions.map((action) => {
+              if ("href" in action && action.href) {
+                return (
+                  <Link
+                    key={action.key}
+                    href={action.href}
+                    className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 text-body font-medium transition-colors hover:bg-secondary"
+                  >
+                    <action.icon className="h-4 w-4 text-muted-foreground" />
+                    {action.label}
+                  </Link>
+                );
+              }
+              if ("onClick" in action && action.onClick) {
+                return (
+                  <button
+                    key={action.key}
+                    type="button"
+                    onClick={action.onClick}
+                    className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 text-body font-medium transition-colors hover:bg-secondary"
+                  >
+                    <action.icon className="h-4 w-4 text-muted-foreground" />
+                    {action.label}
+                  </button>
+                );
+              }
+              return null;
+            })}
           </div>
         </>
       )}

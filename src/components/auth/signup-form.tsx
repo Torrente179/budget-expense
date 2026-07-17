@@ -49,7 +49,7 @@ export function SignupForm() {
       setError(error.message);
       setLoading(false);
     } else {
-      router.push("/home");
+      router.push("/onboarding");
       router.refresh();
     }
   }

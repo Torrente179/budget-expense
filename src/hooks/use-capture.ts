@@ -3,9 +3,11 @@
 import { useCallback } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { notifyEnvelopeLimitsAfterExpense } from "@/lib/budgeting/notify-envelope-limits";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import type { ExpenseWithCategory } from "@/lib/query/fetchers";
 import { queryKeys } from "@/lib/query/keys";
+import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import type { Database } from "@/types/database";
 
@@ -35,6 +37,7 @@ export interface IncomeCaptureValues {
 export function useCapture() {
   const queryClient = useQueryClient();
   const { t } = useLocale();
+  const { convert } = useCurrency();
 
   const invalidateExpenses = useCallback(
     () =>
@@ -110,7 +113,7 @@ export function useCapture() {
       );
     },
 
-    onSuccess: async (result) => {
+    onSuccess: async (result, variables) => {
       await invalidateExpenses();
       const created = result.expense;
       toast.success(t("Expense added", "Gasto añadido"), {
@@ -127,6 +130,12 @@ export function useCapture() {
               );
           },
         },
+      });
+      void notifyEnvelopeLimitsAfterExpense({
+        categoryId: variables.values.category_id,
+        date: variables.values.date,
+        convert,
+        t,
       });
     },
   });

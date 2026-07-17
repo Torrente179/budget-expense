@@ -8,14 +8,24 @@ import {
   CheckCircle2,
   ChevronRight,
   ClipboardCheck,
+  Compass,
+  PiggyBank,
+  Wallet,
 } from "lucide-react";
 import { addDays, differenceInCalendarDays, format } from "date-fns";
 import { useReviewCount } from "@/hooks/use-review-queue";
 import { useHouseholdInsights } from "@/hooks/use-household-insights";
 import { useRecurringExpenses } from "@/hooks/use-recurring-expenses";
+import { useCustomBudgets } from "@/hooks/use-custom-budgets";
+import { useExpenses } from "@/hooks/use-expenses";
+import { useMonthlyBudgetPlan } from "@/hooks/use-monthly-budget-plan";
+import { useOnboarding } from "@/hooks/use-onboarding";
+import { computeEnvelopeAlerts } from "@/lib/budgeting/envelope-alerts";
+import { buildPersonalization } from "@/lib/onboarding/personalize";
 import { detectAnomalies } from "@/lib/insights/anomalies";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
+import { useMonth } from "@/providers/month-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SectionHeader } from "@/components/patterns/section-header";
@@ -42,19 +52,74 @@ function nextChargeDate(chargeDay: number, from: Date): Date {
 }
 
 /**
- * "What needs me": review queue, spending anomalies, and bills due in
- * the next 7 days. Every row is a link; empty state says all clear.
+ * "What needs me": review queue, spending anomalies, budget envelopes,
+ * onboarding hints, and bills due in the next 7 days.
  */
 export function AttentionFeed() {
   const { t, tc } = useLocale();
   const { baseCurrency, convert } = useCurrency();
+  const { month, year } = useMonth();
   const reviewCount = useReviewCount();
   const { insights } = useHouseholdInsights();
   const { recurringExpenses } = useRecurringExpenses();
+  const { customBudgets } = useCustomBudgets({ month, year });
+  const { expenses } = useExpenses({ month, year });
+  const { plan } = useMonthlyBudgetPlan({ month, year });
+  const { incomplete, profile } = useOnboarding();
 
   const items = useMemo<FeedItem[]>(() => {
     const result: FeedItem[] = [];
     const today = new Date();
+
+    if (incomplete) {
+      result.push({
+        key: "finish-setup",
+        href: "/onboarding",
+        icon: <Compass className="h-4 w-4" />,
+        title: t("Finish setup", "Terminar configuración"),
+        caption: t(
+          "Add income, bills, and goals so Home fits you",
+          "Añade ingresos, gastos fijos y metas para personalizar Inicio"
+        ),
+        tone: "info",
+      });
+    }
+
+    if (profile) {
+      const personalization = buildPersonalization({
+        wantsBudgetHelp: profile.wants_budget_help === true,
+        goals: profile.primary_goals,
+        hasDebts: profile.primary_goals.includes("pay_debt"),
+      });
+      for (const hint of personalization.attentionHints) {
+        if (hint === "pay_debt") {
+          result.push({
+            key: "hint-pay-debt",
+            href: "/wealth/liabilities",
+            icon: <Wallet className="h-4 w-4" />,
+            title: t("Review your debts", "Revisa tus deudas"),
+            caption: t(
+              "Track balances and payments in Wealth",
+              "Sigue saldos y pagos en Patrimonio"
+            ),
+            tone: "info",
+          });
+        }
+        if (hint === "decrease_expenses") {
+          result.push({
+            key: "hint-decrease",
+            href: "/insights",
+            icon: <PiggyBank className="h-4 w-4" />,
+            title: t("Find spending to cut", "Encuentra gastos a recortar"),
+            caption: t(
+              "Insights shows where money is going",
+              "Insights muestra a dónde va el dinero"
+            ),
+            tone: "info",
+          });
+        }
+      }
+    }
 
     if (reviewCount > 0) {
       result.push({
@@ -65,6 +130,37 @@ export function AttentionFeed() {
         caption: t(
           `${reviewCount} imported ${reviewCount === 1 ? "movement needs" : "movements need"} a category`,
           `${reviewCount} ${reviewCount === 1 ? "movimiento importado necesita" : "movimientos importados necesitan"} categoría`
+        ),
+        tone: "warning",
+      });
+    }
+
+    const incomeAmount = plan
+      ? convert(Number(plan.income_amount), plan.income_currency)
+      : null;
+    const envelopeAlerts = computeEnvelopeAlerts({
+      budgets: customBudgets,
+      expenses,
+      incomeAmount,
+      convert,
+    }).slice(0, 3);
+
+    for (const alert of envelopeAlerts) {
+      const percent = Math.round(alert.percentUsed);
+      result.push({
+        key: `envelope-${alert.budgetId}-${alert.threshold}`,
+        href: "/budget",
+        icon: <AlertTriangle className="h-4 w-4" />,
+        title:
+          alert.threshold >= 100
+            ? t(`${alert.name} is over budget`, `${alert.name} supera el presupuesto`)
+            : t(
+                `${alert.name} is at ${percent}%`,
+                `${alert.name} va al ${percent}%`
+              ),
+        caption: t(
+          "Open Budget to adjust or pause spending",
+          "Abre Presupuesto para ajustar o pausar el gasto"
         ),
         tone: "warning",
       });
@@ -128,7 +224,20 @@ export function AttentionFeed() {
     }
 
     return result;
-  }, [reviewCount, insights, recurringExpenses, t, tc, baseCurrency, convert]);
+  }, [
+    incomplete,
+    profile,
+    reviewCount,
+    insights,
+    recurringExpenses,
+    customBudgets,
+    expenses,
+    plan,
+    t,
+    tc,
+    baseCurrency,
+    convert,
+  ]);
 
   return (
     <Card>

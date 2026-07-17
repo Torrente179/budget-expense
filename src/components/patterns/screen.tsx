@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileSheet } from "@/components/layout/profile-sheet";
@@ -11,7 +11,10 @@ interface ScreenProps {
   title: ReactNode;
   /** Small eyebrow line above the title (label-caps). */
   eyebrow?: ReactNode;
-  /** When set, renders a back chevron instead of the leading slot (pushed screens). */
+  /**
+   * When set, shows a back chevron. Uses previous history when available;
+   * otherwise navigates to this safe fallback (deep links / refresh).
+   */
   backHref?: string;
   /** Leading slot on mobile (e.g. profile avatar). Ignored when backHref is set. */
   leading?: ReactNode;
@@ -21,6 +24,27 @@ interface ScreenProps {
   subheader?: ReactNode;
   children: ReactNode;
   className?: string;
+}
+
+function ScreenBackButton({ fallbackHref }: { fallbackHref: string }) {
+  const router = useRouter();
+
+  return (
+    <button
+      type="button"
+      aria-label="Back"
+      onClick={() => {
+        if (typeof window !== "undefined" && window.history.length > 1) {
+          router.back();
+          return;
+        }
+        router.push(fallbackHref);
+      }}
+      className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+    >
+      <ChevronLeft className="h-5 w-5" />
+    </button>
+  );
 }
 
 /**
@@ -46,13 +70,7 @@ export function Screen({
       <header className="sticky top-0 z-30 -mx-4 mb-4 border-b border-border/60 bg-background/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8">
         <div className="flex min-h-14 items-center gap-3 py-2">
           {backHref ? (
-            <Link
-              href={backHref}
-              aria-label="Back"
-              className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </Link>
+            <ScreenBackButton fallbackHref={backHref || "/home"} />
           ) : (
             (leading ?? <ProfileSheet className="-ml-2 md:hidden" />)
           )}
