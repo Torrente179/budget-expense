@@ -20,7 +20,7 @@ export function Topbar() {
     <header className="sticky top-0 z-30 hidden border-b border-border bg-background/80 px-4 py-3 backdrop-blur-2xl sm:px-5 md:block lg:px-8">
       <div className="mx-auto flex w-full max-w-[1480px] items-center justify-end gap-2">
         <CommandMenu />
-        <LanguageSwitch compact />
+        <LanguageSwitch />
         <CurrencyQuickSwitch />
         <Button
           variant="ghost"

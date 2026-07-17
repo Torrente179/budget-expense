@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ProfileSheet } from "@/components/layout/profile-sheet";
-import { LanguageSwitch } from "@/components/shared/language-switch";
 import type { ReactNode } from "react";
 
 interface ScreenProps {
@@ -28,6 +27,9 @@ interface ScreenProps {
  * App-screen scaffold: sticky translucent header with title/back/actions,
  * consistent gutters, and room for a subheader row. Every routed screen
  * renders inside this so mobile feels like pushed native screens.
+ *
+ * Language lives in Account / Settings — never in this chrome — so month
+ * pickers and actions keep the full header width.
  */
 export function Screen({
   title,
@@ -52,11 +54,7 @@ export function Screen({
               <ChevronLeft className="h-5 w-5" />
             </Link>
           ) : (
-            (leading ?? (
-              <div className="flex shrink-0 items-center gap-1 md:hidden">
-                <ProfileSheet className="-ml-2" />
-              </div>
-            ))
+            (leading ?? <ProfileSheet className="-ml-2 md:hidden" />)
           )}
           <div className="min-w-0 flex-1">
             {eyebrow && <p className="label-caps">{eyebrow}</p>}
@@ -64,12 +62,9 @@ export function Screen({
               {title}
             </h1>
           </div>
-          <div className="flex shrink-0 items-center gap-1.5">
-            {!backHref && (
-              <LanguageSwitch compact className="md:hidden" />
-            )}
-            {actions}
-          </div>
+          {actions && (
+            <div className="flex shrink-0 items-center gap-1.5">{actions}</div>
+          )}
         </div>
         {subheader && <div className="pb-3">{subheader}</div>}
       </header>

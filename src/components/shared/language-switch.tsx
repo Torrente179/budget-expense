@@ -1,67 +1,114 @@
 "use client";
 
+import { Check, Languages } from "lucide-react";
 import { cn, type AppLocale } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
+import { Button } from "@/components/ui/button";
 
-interface LanguageSwitchProps {
-  compact?: boolean;
-  /** Stretch both options across the available width (account sheet / settings). */
-  fullWidth?: boolean;
-  className?: string;
+const LOCALE_LABELS: Record<
+  AppLocale,
+  { short: string; en: string; es: string }
+> = {
+  en: { short: "EN", en: "English", es: "Inglés" },
+  es: { short: "ES", en: "Spanish", es: "Español" },
+};
+
+function localeDisplayName(code: AppLocale, active: AppLocale) {
+  const labels = LOCALE_LABELS[code];
+  return active === "es" ? labels.es : labels.en;
 }
 
 /**
- * Segmented ENG/ESP control. Avoids Select-inside-Sheet portal issues that
- * made Spanish unreachable on mobile.
+ * Tiny chrome control: one tappable chip showing the active language.
+ * Two locales → tap toggles. Stays out of the way of headers/actions.
  */
-export function LanguageSwitch({
-  compact = false,
-  fullWidth = false,
-  className,
-}: LanguageSwitchProps) {
+export function LanguageSwitch({ className }: { className?: string }) {
   const { locale, setLocale, t } = useLocale();
-
-  const options: { value: AppLocale; compactLabel: string; label: string }[] = [
-    {
-      value: "en",
-      compactLabel: "ENG",
-      label: t("English", "Inglés"),
-    },
-    {
-      value: "es",
-      compactLabel: "ESP",
-      label: t("Spanish", "Español"),
-    },
-  ];
+  const next: AppLocale = locale === "en" ? "es" : "en";
 
   return (
-    <div
-      role="group"
-      aria-label={t("Language", "Idioma")}
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
       className={cn(
-        "inline-flex items-center rounded-full border border-border bg-secondary/80 p-0.5",
-        fullWidth && "flex w-full",
+        "h-9 gap-1.5 rounded-full border border-border bg-secondary/80 px-2.5 font-mono text-xs font-medium tracking-wide",
+        className
+      )}
+      aria-label={t(
+        `Language: ${localeDisplayName(locale, "en")}. Tap to switch to ${localeDisplayName(next, "en")}`,
+        `Idioma: ${localeDisplayName(locale, "es")}. Toca para cambiar a ${localeDisplayName(next, "es")}`
+      )}
+      onClick={() => setLocale(next)}
+    >
+      <Languages className="h-3.5 w-3.5 text-muted-foreground" />
+      <span>{LOCALE_LABELS[locale].short}</span>
+    </Button>
+  );
+}
+
+/**
+ * Account-sheet preference row — looks like native settings, no header chrome.
+ * Tap toggles EN ↔ ES.
+ */
+export function LanguagePreferenceRow({ className }: { className?: string }) {
+  const { locale, setLocale, t } = useLocale();
+  const next: AppLocale = locale === "en" ? "es" : "en";
+
+  return (
+    <button
+      type="button"
+      onClick={() => setLocale(next)}
+      className={cn(
+        "flex min-h-12 w-full items-center gap-3 rounded-lg px-3 text-left transition-colors hover:bg-accent",
         className
       )}
     >
-      {options.map((option) => {
-        const active = locale === option.value;
+      <Languages className="h-4.5 w-4.5 shrink-0 text-muted-foreground" />
+      <span className="min-w-0 flex-1 text-body font-medium">
+        {t("Language", "Idioma")}
+      </span>
+      <span className="text-body text-muted-foreground">
+        {localeDisplayName(locale, locale)}
+      </span>
+    </button>
+  );
+}
+
+/**
+ * Settings-style radio list — the canonical place to choose language.
+ */
+export function LanguagePreferenceList({ className }: { className?: string }) {
+  const { locale, setLocale, t } = useLocale();
+  const options: AppLocale[] = ["en", "es"];
+
+  return (
+    <div
+      role="radiogroup"
+      aria-label={t("Language", "Idioma")}
+      className={cn("overflow-hidden rounded-xl border border-border", className)}
+    >
+      {options.map((code, index) => {
+        const selected = locale === code;
         return (
           <button
-            key={option.value}
+            key={code}
             type="button"
-            aria-pressed={active}
-            onClick={() => setLocale(option.value)}
+            role="radio"
+            aria-checked={selected}
+            onClick={() => setLocale(code)}
             className={cn(
-              "rounded-full px-2.5 font-medium uppercase tracking-widest transition-colors",
-              compact ? "h-7 text-[0.65rem]" : "h-9 px-3 text-xs",
-              fullWidth && "min-h-11 flex-1",
-              active
-                ? "bg-background text-foreground shadow-1"
-                : "text-muted-foreground hover:text-foreground"
+              "flex min-h-12 w-full items-center gap-3 px-4 text-left transition-colors hover:bg-accent",
+              index > 0 && "border-t border-border",
+              selected && "bg-secondary/40"
             )}
           >
-            {compact ? option.compactLabel : option.label}
+            <span className="min-w-0 flex-1 text-body font-medium">
+              {localeDisplayName(code, locale)}
+            </span>
+            {selected && (
+              <Check className="h-4 w-4 shrink-0 text-foreground" aria-hidden />
+            )}
           </button>
         );
       })}

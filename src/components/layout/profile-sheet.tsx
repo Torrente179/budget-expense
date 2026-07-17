@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/providers/locale-provider";
 import { useReviewCount } from "@/hooks/use-review-queue";
 import { SECONDARY_NAV } from "@/lib/navigation";
-import { LanguageSwitch } from "@/components/shared/language-switch";
+import { LanguagePreferenceRow } from "@/components/shared/language-switch";
 import { CurrencyQuickSwitch } from "@/components/shared/currency-quick-switch";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,7 +23,7 @@ import {
 /**
  * Mobile account/secondary-nav surface: avatar button in screen headers
  * opens a bottom sheet with secondary destinations, preference switches,
- * and logout. Replaces the old hamburger drawer.
+ * and logout.
  */
 export function ProfileSheet({ className }: { className?: string }) {
   const [open, setOpen] = useState(false);
@@ -77,7 +77,7 @@ export function ProfileSheet({ className }: { className?: string }) {
               </p>
             )}
           </SheetHeader>
-          <nav className="flex flex-col px-2 pb-2">
+          <nav className="flex flex-col px-2 pb-1">
             {SECONDARY_NAV.map((item) => (
               <Link
                 key={item.key}
@@ -94,37 +94,30 @@ export function ProfileSheet({ className }: { className?: string }) {
                 )}
               </Link>
             ))}
+            <LanguagePreferenceRow />
           </nav>
-          <div className="space-y-4 border-t border-border px-4 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <div className="space-y-2">
-              <p className="text-caption font-medium text-muted-foreground">
-                {t("Language", "Idioma")}
-              </p>
-              <LanguageSwitch fullWidth />
-            </div>
-            <div className="flex items-center gap-2">
-              <CurrencyQuickSwitch />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 rounded-full border border-border bg-secondary/80"
-                onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              >
-                <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
-                <span className="sr-only">
-                  {t("Toggle theme", "Cambiar tema")}
-                </span>
-              </Button>
-              <button
-                type="button"
-                onClick={handleLogout}
-                className="ml-auto flex items-center gap-2 rounded-lg px-3 py-2 text-body font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
-              >
-                <LogOut className="h-4 w-4" />
-                {t("Log out", "Cerrar sesión")}
-              </button>
-            </div>
+          <div className="flex items-center gap-2 border-t border-border px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+            <CurrencyQuickSwitch />
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-9 w-9 rounded-full border border-border bg-secondary/80"
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            >
+              <Sun className="h-4 w-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+              <span className="sr-only">
+                {t("Toggle theme", "Cambiar tema")}
+              </span>
+            </Button>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="ml-auto flex items-center gap-2 rounded-lg px-3 py-2 text-body font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            >
+              <LogOut className="h-4 w-4" />
+              {t("Log out", "Cerrar sesión")}
+            </button>
           </div>
         </SheetContent>
       </Sheet>

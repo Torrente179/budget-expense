@@ -23,7 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { ArrowRight, Loader2, Sun, Moon, Monitor } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
-import { LanguageSwitch } from "@/components/shared/language-switch";
+import { LanguagePreferenceList } from "@/components/shared/language-switch";
 import { StewardshipSettings } from "@/components/settings/stewardship-settings";
 import { CategoryClassification } from "@/components/settings/category-classification";
 
@@ -115,7 +115,7 @@ export default function SettingsPage() {
     <Screen title={t("Settings", "Ajustes")} backHref="/home">
       <div className="mx-auto w-full max-w-2xl space-y-6">
 
-      {/* Language — first so mobile users can find it without hunting */}
+      {/* Language — lives in Settings, not in screen chrome */}
       <Card className="border-border/50">
         <CardHeader>
           <CardTitle className="text-sm font-medium">
@@ -129,7 +129,7 @@ export default function SettingsPage() {
               "Elige el idioma de la aplicación."
             )}
           </p>
-          <LanguageSwitch fullWidth />
+          <LanguagePreferenceList />
         </CardContent>
       </Card>
 
