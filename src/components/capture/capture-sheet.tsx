@@ -141,6 +141,22 @@ export function CaptureSheet({
     [categories, categoryId]
   );
 
+  // Base UI Select renders the raw value unless items (or a Value children
+  // formatter) supplies labels — without this the trigger shows a UUID.
+  const categoryItems = useMemo(
+    () =>
+      categories.map((category) => ({
+        value: category.id,
+        label: tc(category.name),
+      })),
+    [categories, tc]
+  );
+
+  const currencyItems = useMemo(
+    () => CURRENCIES.map((item) => ({ value: item.code, label: item.code })),
+    []
+  );
+
   const parsedAmount = parseDecimalInput(amount);
   const amountValid =
     typeof parsedAmount === "number" &&
@@ -215,9 +231,9 @@ export function CaptureSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full gap-0 overflow-y-auto p-0 sm:max-w-[420px]"
+        className="w-full gap-0 overflow-hidden p-0 sm:max-w-[420px]"
       >
-        <SheetHeader className="px-5 pb-3 pt-4">
+        <SheetHeader className="shrink-0 px-5 pb-3 pt-1">
           <SheetTitle className="text-heading">{title}</SheetTitle>
         </SheetHeader>
 
@@ -225,7 +241,7 @@ export function CaptureSheet({
           <div
             role="tablist"
             aria-label={t("Movement type", "Tipo de movimiento")}
-            className="mx-5 mb-4 grid grid-cols-2 gap-1 rounded-lg bg-secondary p-1"
+            className="mx-5 mb-4 grid shrink-0 grid-cols-2 gap-1 rounded-lg bg-secondary p-1"
           >
             {(
               [
@@ -254,110 +270,119 @@ export function CaptureSheet({
 
         <form
           onSubmit={handleSubmit}
-          className="flex flex-1 flex-col gap-4 px-5 pb-5"
+          className="flex min-h-0 flex-1 flex-col"
         >
-          <div className="space-y-1.5">
-            <Label htmlFor="capture-amount">{t("Amount", "Importe")}</Label>
-            <div className="flex gap-2">
-              <Input
-                id="capture-amount"
-                ref={amountRef}
-                inputMode="decimal"
-                autoComplete="off"
-                placeholder="0,00"
-                value={amount}
-                onChange={(event) =>
-                  setAmount(normalizeDecimalInput(event.target.value))
-                }
-                className="h-12 flex-1 font-mono text-xl tabular-nums"
-              />
-              <Select
-                value={currency}
-                onValueChange={(value) => setCurrency(value ?? baseCurrency)}
-              >
-                <SelectTrigger
-                  aria-label={t("Currency", "Moneda")}
-                  className="h-12 w-24 font-mono text-sm"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {CURRENCIES.map((item) => (
-                    <SelectItem
-                      key={item.code}
-                      value={item.code}
-                      className="text-sm"
-                    >
-                      {item.code}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {kind === "income" && (
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
             <div className="space-y-1.5">
-              <Label htmlFor="capture-source">{t("Source", "Fuente")}</Label>
+              <Label htmlFor="capture-amount">{t("Amount", "Importe")}</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="capture-amount"
+                  ref={amountRef}
+                  inputMode="decimal"
+                  autoComplete="off"
+                  placeholder="0,00"
+                  value={amount}
+                  onChange={(event) =>
+                    setAmount(normalizeDecimalInput(event.target.value))
+                  }
+                  className="h-12 min-w-0 flex-1 font-mono text-xl tabular-nums"
+                />
+                <Select
+                  value={currency}
+                  onValueChange={(value) => setCurrency(value ?? baseCurrency)}
+                  items={currencyItems}
+                >
+                  <SelectTrigger
+                    aria-label={t("Currency", "Moneda")}
+                    className="h-12 w-24 shrink-0 font-mono text-sm"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CURRENCIES.map((item) => (
+                      <SelectItem
+                        key={item.code}
+                        value={item.code}
+                        className="text-sm"
+                      >
+                        {item.code}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {kind === "income" && (
+              <div className="space-y-1.5">
+                <Label htmlFor="capture-source">{t("Source", "Fuente")}</Label>
+                <Input
+                  id="capture-source"
+                  autoComplete="off"
+                  placeholder={t("e.g. Salary", "p. ej. Nómina")}
+                  value={source}
+                  onChange={(event) => setSource(event.target.value)}
+                  className="h-11"
+                />
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <Label htmlFor="capture-description">
+                {t("Description", "Descripción")}{" "}
+                <span className="text-muted-foreground">
+                  {t("(optional)", "(opcional)")}
+                </span>
+              </Label>
               <Input
-                id="capture-source"
+                id="capture-description"
                 autoComplete="off"
-                placeholder={t("e.g. Salary", "p. ej. Nómina")}
-                value={source}
-                onChange={(event) => setSource(event.target.value)}
+                placeholder={
+                  kind === "expense"
+                    ? t("e.g. Mercadona", "p. ej. Mercadona")
+                    : t("e.g. July invoice", "p. ej. Factura de julio")
+                }
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
                 className="h-11"
               />
+              {kind === "expense" &&
+                suggestion &&
+                suggestion.categoryId === categoryId && (
+                  <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
+                    {t("Suggested:", "Sugerido:")}
+                    <CategoryBadge
+                      name={tc(suggestion.name)}
+                      icon={suggestion.icon}
+                      color={suggestion.color}
+                    />
+                  </p>
+                )}
             </div>
-          )}
 
-          <div className="space-y-1.5">
-            <Label htmlFor="capture-description">
-              {t("Description", "Descripción")}{" "}
-              <span className="text-muted-foreground">
-                {t("(optional)", "(opcional)")}
-              </span>
-            </Label>
-            <Input
-              id="capture-description"
-              autoComplete="off"
-              placeholder={
-                kind === "expense"
-                  ? t("e.g. Mercadona", "p. ej. Mercadona")
-                  : t("e.g. July invoice", "p. ej. Factura de julio")
-              }
-              value={description}
-              onChange={(event) => setDescription(event.target.value)}
-              className="h-11"
-            />
-            {kind === "expense" &&
-              suggestion &&
-              suggestion.categoryId === categoryId && (
-                <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
-                  {t("Suggested:", "Sugerido:")}
-                  <CategoryBadge
-                    name={tc(suggestion.name)}
-                    icon={suggestion.icon}
-                    color={suggestion.color}
-                  />
-                </p>
-              )}
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
             {kind === "expense" && (
               <div className="space-y-1.5">
                 <Label htmlFor="capture-category">
                   {t("Category", "Categoría")}
                 </Label>
                 <Select
-                  value={categoryId}
+                  value={categoryId || null}
                   onValueChange={(value) => {
                     setCategoryId(value ?? "");
                     setCategoryTouched(true);
                   }}
+                  items={categoryItems}
                 >
-                  <SelectTrigger id="capture-category" className="h-11">
-                    <SelectValue placeholder={t("Select", "Selecciona")} />
+                  <SelectTrigger
+                    id="capture-category"
+                    className="h-11 w-full min-w-0"
+                  >
+                    <SelectValue placeholder={t("Select", "Selecciona")}>
+                      {selectedCategory
+                        ? tc(selectedCategory.name)
+                        : undefined}
+                    </SelectValue>
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
@@ -373,21 +398,20 @@ export function CaptureSheet({
                 </Select>
               </div>
             )}
-            <div
-              className={cn("space-y-1.5", kind === "income" && "col-span-2")}
-            >
+
+            <div className="space-y-1.5">
               <Label htmlFor="capture-date">{t("Date", "Fecha")}</Label>
               <Input
                 id="capture-date"
                 type="date"
                 value={date}
                 onChange={(event) => setDate(event.target.value)}
-                className="h-11"
+                className="h-11 w-full"
               />
             </div>
           </div>
 
-          <div className="sticky bottom-0 mt-auto bg-popover/96 pb-1 pt-2">
+          <div className="shrink-0 border-t border-border bg-popover/96 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Button
               type="submit"
               disabled={!canSubmit}
