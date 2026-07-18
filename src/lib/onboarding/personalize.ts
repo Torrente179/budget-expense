@@ -80,6 +80,7 @@ export function buildPersonalization(input: {
       });
     }
     if (goals.has("give_generously")) {
+      // Only a share of income — never sized from expenses / fixed bills.
       seedEnvelopes.push({
         name: "Giving",
         nameEs: "Generosidad",

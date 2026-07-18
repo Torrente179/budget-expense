@@ -14,6 +14,7 @@ export const GIVING_KEYWORDS = [
   "iglesia",
   "generosity",
   "generosidad",
+  "tzedakah",
 ] as const;
 
 export function isGivingName(name: string) {
@@ -34,4 +35,24 @@ export function isGivingExpense(expense: {
     isGivingName(category?.name ?? "") ||
     (expense.description ? isGivingName(expense.description) : false)
   );
+}
+
+/**
+ * Giving target is always a share of income — never of expenses.
+ * Prefer the monthly plan income (set in onboarding) over recorded movements.
+ */
+export function resolveGivingTarget(input: {
+  tithePercent: number;
+  planIncome: number | null | undefined;
+  recordedIncome: number | null | undefined;
+}): number {
+  if (!(input.tithePercent > 0)) return 0;
+  const incomeBase =
+    input.planIncome != null && input.planIncome > 0
+      ? input.planIncome
+      : input.recordedIncome != null && input.recordedIncome > 0
+        ? input.recordedIncome
+        : 0;
+  if (!(incomeBase > 0)) return 0;
+  return incomeBase * (input.tithePercent / 100);
 }

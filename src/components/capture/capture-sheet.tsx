@@ -85,6 +85,7 @@ export function CaptureSheet({
   const isEdit = mode === "edit";
 
   const amountRef = useRef<HTMLInputElement>(null);
+  const wasOpenRef = useRef(false);
   const [kind, setKind] = useState<CaptureKind>(initialKind);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
@@ -95,9 +96,7 @@ export function CaptureSheet({
   const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
 
-  // Reset on open: edit seeds from initialValues, create from smart defaults.
-  useEffect(() => {
-    if (!open) return;
+  function seedForm() {
     const defaults = readCaptureDefaults();
     setKind(initialKind);
     setSuggestion(null);
@@ -110,9 +109,22 @@ export function CaptureSheet({
     setCategoryId(initialValues?.categoryId ?? defaults.categoryId ?? "");
     setCurrency(initialValues?.currency ?? defaults.currency ?? baseCurrency);
     setDate(initialValues?.date ?? format(new Date(), "yyyy-MM-dd"));
-    const timer = setTimeout(() => amountRef.current?.focus(), 250);
-    return () => clearTimeout(timer);
-  }, [open, baseCurrency, initialKind, isEdit, initialValues]);
+  }
+
+  // Seed only when the sheet opens (false → true). Do NOT re-seed when
+  // baseCurrency loads later — that was wiping COP mid-entry back to EUR.
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      seedForm();
+      const timer = setTimeout(() => amountRef.current?.focus(), 250);
+      wasOpenRef.current = true;
+      return () => clearTimeout(timer);
+    }
+    if (!open) {
+      wasOpenRef.current = false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- open-edge only
+  }, [open]);
 
   // Debounced merchant → category suggestion (expenses only).
   useEffect(() => {
@@ -169,19 +181,21 @@ export function CaptureSheet({
       ? Boolean(selectedCategory)
       : source.trim().length > 0);
 
-  async function handleSubmit(event: React.FormEvent) {
-    event.preventDefault();
-    if (!canSubmit) return;
+  async function persistMovement() {
     const numericAmount = parsedAmount as number;
     const trimmedDescription = description.trim();
+    // Snapshot currency before any await — never trust state after close.
+    const movementCurrency = currency;
 
     if (kind === "expense" && selectedCategory) {
-      writeCaptureDefaults({ categoryId: selectedCategory.id, currency });
-      onOpenChange(false);
+      writeCaptureDefaults({
+        categoryId: selectedCategory.id,
+        currency: movementCurrency,
+      });
       if (isEdit && initialValues?.id) {
         await updateExpense(initialValues.id, {
           amount: numericAmount,
-          currency,
+          currency: movementCurrency,
           category_id: selectedCategory.id,
           date,
           description: trimmedDescription || null,
@@ -190,7 +204,7 @@ export function CaptureSheet({
         await addExpense(
           {
             amount: numericAmount,
-            currency,
+            currency: movementCurrency,
             category_id: selectedCategory.id,
             date,
             description: trimmedDescription || undefined,
@@ -198,12 +212,15 @@ export function CaptureSheet({
           selectedCategory
         );
       }
-    } else if (kind === "income") {
-      onOpenChange(false);
+      return;
+    }
+
+    if (kind === "income") {
+      writeCaptureDefaults({ currency: movementCurrency });
       if (isEdit && initialValues?.id) {
         await updateIncome(initialValues.id, {
           amount: numericAmount,
-          currency,
+          currency: movementCurrency,
           source: source.trim(),
           date,
           description: trimmedDescription || null,
@@ -211,14 +228,47 @@ export function CaptureSheet({
       } else {
         await addIncome({
           amount: numericAmount,
-          currency,
+          currency: movementCurrency,
           source: source.trim(),
           date,
           description: trimmedDescription || undefined,
         });
       }
     }
-    onSaved?.();
+  }
+
+  async function handleSubmit(event: React.FormEvent) {
+    event.preventDefault();
+    if (!canSubmit) return;
+
+    try {
+      await persistMovement();
+      onSaved?.();
+      onOpenChange(false);
+    } catch {
+      // Toast is owned by useCapture — keep the sheet open so nothing is lost.
+    }
+  }
+
+  async function handleSaveAndAddAnother() {
+    if (!canSubmit || isEdit) return;
+
+    try {
+      await persistMovement();
+      onSaved?.();
+      // Keep kind + currency; clear amount/description for the next entry.
+      setAmount("");
+      setDescription("");
+      setSuggestion(null);
+      if (kind === "income") {
+        // Keep source — same paycheck often repeats.
+      } else {
+        // Keep category from last expense (already in defaults).
+      }
+      setTimeout(() => amountRef.current?.focus(), 50);
+    } catch {
+      // Keep sheet open with current values.
+    }
   }
 
   const title = isEdit
@@ -290,7 +340,9 @@ export function CaptureSheet({
                 />
                 <Select
                   value={currency}
-                  onValueChange={(value) => setCurrency(value ?? baseCurrency)}
+                  onValueChange={(value) => {
+                    if (value) setCurrency(value);
+                  }}
                   items={currencyItems}
                 >
                   <SelectTrigger
@@ -411,7 +463,7 @@ export function CaptureSheet({
             </div>
           </div>
 
-          <div className="shrink-0 border-t border-border bg-popover/96 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="shrink-0 space-y-2 border-t border-border bg-popover/96 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Button
               type="submit"
               disabled={!canSubmit}
@@ -427,6 +479,17 @@ export function CaptureSheet({
                 t("Add income", "Añadir ingreso")
               )}
             </Button>
+            {!isEdit && (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={!canSubmit}
+                className="h-11 w-full"
+                onClick={() => void handleSaveAndAddAnother()}
+              >
+                {t("Save & add another", "Guardar y añadir otro")}
+              </Button>
+            )}
           </div>
         </form>
       </SheetContent>

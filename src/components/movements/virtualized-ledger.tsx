@@ -91,7 +91,7 @@ export function VirtualizedLedger({
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
               {item.type === "header" ? (
-                <p className="label-caps mb-1.5 px-4 pt-4 md:px-0">
+                <p className="label-caps mb-1.5 px-4 pt-4 md:px-5">
                   {formatDate(item.date, "EEEE d MMMM yyyy", locale)}
                 </p>
               ) : (
@@ -116,10 +116,10 @@ export function VirtualizedLedger({
                       <button
                         type="button"
                         aria-label={t("Delete", "Eliminar")}
-                        className="mr-2 hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg opacity-0 transition-opacity hover:bg-danger-subtle group-hover:opacity-100 md:flex"
+                        className="mr-2 hidden h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground opacity-0 transition-[background-color,color,opacity] hover:bg-danger-subtle hover:text-danger focus-visible:opacity-100 group-hover:opacity-100 group-focus-within:opacity-100 md:flex"
                         onClick={() => onDesktopDelete(item.movement)}
                       >
-                        <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-danger" />
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </SwipeableRow>

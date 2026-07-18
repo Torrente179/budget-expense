@@ -267,6 +267,7 @@ export function MovementsScreen() {
   return (
     <Screen
       title={t("Movements", "Movimientos")}
+      className="mx-auto w-full max-w-6xl md:[&>header]:mx-0 md:[&>header]:px-0"
       actions={
         <>
           <Button
@@ -404,20 +405,18 @@ export function MovementsScreen() {
       )}
 
       {/* Single capture sheet for create + edit (mobile FAB uses its own lazy sheet) */}
-      {(captureOpen || editTarget !== null) && (
-        <CaptureSheet
-          open
-          onOpenChange={(open) => {
-            if (!open) {
-              setCaptureOpen(false);
-              setEditTarget(null);
-            }
-          }}
-          mode={editTarget ? "edit" : "create"}
-          kind={editTarget?.kind}
-          initialValues={editTarget?.values}
-        />
-      )}
+      <CaptureSheet
+        open={captureOpen || editTarget !== null}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setCaptureOpen(false);
+            setEditTarget(null);
+          }
+        }}
+        mode={editTarget ? "edit" : "create"}
+        kind={editTarget?.kind}
+        initialValues={editTarget?.values}
+      />
 
       {/* Delete confirmation (desktop) */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>

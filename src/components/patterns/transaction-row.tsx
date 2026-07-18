@@ -76,6 +76,7 @@ export function TransactionRow({
           currency={currency}
           signed={kind === "income"}
           tone={kind === "income" ? "positive" : "default"}
+          showOriginal
         />
       </div>
       {trailing}

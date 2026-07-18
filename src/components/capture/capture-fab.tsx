@@ -14,7 +14,7 @@ const CaptureSheet = dynamic(
 /**
  * Global floating capture button. Sits above the mobile tab bar at z-40,
  * bottom-right (thumb zone); sheets/dialogs render above it.
- * CaptureSheet mounts only when opened to keep the idle shell light.
+ * Keep the sheet mounted while open so an in-flight save is not killed.
  */
 export function CaptureFab() {
   const { t } = useLocale();
@@ -32,7 +32,7 @@ export function CaptureFab() {
           {t("Add movement", "Añadir movimiento")}
         </span>
       </button>
-      {open && <CaptureSheet open onOpenChange={setOpen} />}
+      <CaptureSheet open={open} onOpenChange={setOpen} />
     </>
   );
 }

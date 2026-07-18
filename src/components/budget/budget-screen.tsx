@@ -48,28 +48,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-
-const GIVING_KEYWORDS = [
-  "tithe",
-  "diezmo",
-  "giving",
-  "donation",
-  "donación",
-  "donacion",
-  "charity",
-  "caridad",
-  "offering",
-  "ofrenda",
-  "church",
-  "iglesia",
-  "generosity",
-  "generosidad",
-];
-
-function isGivingName(name: string) {
-  const lower = name.toLowerCase();
-  return GIVING_KEYWORDS.some((keyword) => lower.includes(keyword));
-}
+import { isGivingExpense, resolveGivingTarget } from "@/lib/giving";
 
 export function BudgetScreen() {
   const { t } = useLocale();
@@ -149,21 +128,21 @@ export function BudgetScreen() {
         ? "bg-warning"
         : "bg-success";
 
-  /* Giving pillar. */
+  /* Giving pillar — target is % of income (plan first), given is tithe spend. */
   const givingSpent = useMemo(
     () =>
       expenses.reduce((sum, expense) => {
-        const category = expense.categories;
-        const giving =
-          category?.classification === "giving" ||
-          isGivingName(category?.name ?? "") ||
-          (expense.description ? isGivingName(expense.description) : false);
-        return giving ? sum + convert(expense.amount, expense.currency) : sum;
+        return isGivingExpense(expense)
+          ? sum + convert(expense.amount, expense.currency)
+          : sum;
       }, 0),
     [expenses, convert]
   );
-  const givingTarget =
-    titheTarget > 0 ? (summary.totalIncome * titheTarget) / 100 : 0;
+  const givingTarget = resolveGivingTarget({
+    tithePercent: titheTarget,
+    planIncome: incomeAmount,
+    recordedIncome: summary.totalIncome,
+  });
   const givingRatio = givingTarget > 0 ? givingSpent / givingTarget : null;
 
   async function handleDelete() {
@@ -649,16 +628,16 @@ export function BudgetScreen() {
             <CardContent className="space-y-3">
               <div className="flex items-baseline justify-between gap-3">
                 <p className="font-mono text-title font-semibold tabular-nums">
-                  {formatCurrency(givingSpent, baseCurrency)}
+                  {givingTarget > 0
+                    ? formatCurrency(givingTarget, baseCurrency)
+                    : "—"}
                 </p>
-                {givingTarget > 0 && (
-                  <p className="text-caption text-muted-foreground">
-                    {t(
-                      `of ${formatCurrency(givingTarget, baseCurrency)} target (${titheTarget}%)`,
-                      `de la meta de ${formatCurrency(givingTarget, baseCurrency)} (${titheTarget}%)`
-                    )}
-                  </p>
-                )}
+                <p className="text-caption text-muted-foreground">
+                  {t(
+                    `${titheTarget}% of income`,
+                    `${titheTarget}% del ingreso`
+                  )}
+                </p>
               </div>
               {givingRatio !== null ? (
                 <>
@@ -669,20 +648,20 @@ export function BudgetScreen() {
                   <p className="text-caption text-muted-foreground">
                     {givingRatio >= 1
                       ? t(
-                          "Target reached — well done.",
-                          "Meta alcanzada — bien hecho."
+                          `Target reached — ${formatCurrency(givingSpent, baseCurrency)} given.`,
+                          `Meta alcanzada — ${formatCurrency(givingSpent, baseCurrency)} dado.`
                         )
                       : t(
-                          `${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)} to reach this month's target`,
-                          `${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)} para alcanzar la meta del mes`
+                          `${formatCurrency(givingSpent, baseCurrency)} given · ${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)} left`,
+                          `${formatCurrency(givingSpent, baseCurrency)} dado · faltan ${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)}`
                         )}
                   </p>
                 </>
               ) : (
                 <p className="text-caption text-muted-foreground">
                   {t(
-                    "Set your giving target in Settings → Stewardship.",
-                    "Define tu meta de generosidad en Ajustes → Mayordomía."
+                    "Set monthly income in your plan — Generosidad is a share of income, not of expenses.",
+                    "Define el ingreso en tu plan — Generosidad es un porcentaje del ingreso, no de los gastos."
                   )}
                 </p>
               )}

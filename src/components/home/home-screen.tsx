@@ -24,6 +24,7 @@ import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
 import { buildPersonalization } from "@/lib/onboarding/personalize";
 import { resolveCustomBudgetAmount } from "@/lib/budgeting";
+import { resolveGivingTarget } from "@/lib/giving";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
@@ -153,8 +154,12 @@ export function HomeScreen() {
   }
 
   const givingSpent = summary.givingSpent;
-  const givingTarget =
-    titheTarget > 0 ? (summary.totalIncome * titheTarget) / 100 : 0;
+  // Generosidad is a share of income (plan first), not of expenses.
+  const givingTarget = resolveGivingTarget({
+    tithePercent: titheTarget,
+    planIncome: incomeAmount,
+    recordedIncome: summary.totalIncome,
+  });
 
   const spentDelta =
     summary.previousMonthTotal > 0
@@ -366,7 +371,9 @@ export function HomeScreen() {
                 icon={<HandHeart className="h-4 w-4" />}
                 value={
                   <span className="font-mono text-heading font-semibold tabular-nums">
-                    {formatCurrency(givingSpent, baseCurrency)}
+                    {givingTarget > 0
+                      ? formatCurrency(givingTarget, baseCurrency)
+                      : "—"}
                   </span>
                 }
                 detail={
@@ -379,13 +386,16 @@ export function HomeScreen() {
                       />
                       <span>
                         {t(
-                          `${Math.round((givingSpent / givingTarget) * 100)}% of ${titheTarget}% target`,
-                          `${Math.round((givingSpent / givingTarget) * 100)}% de la meta del ${titheTarget}%`
+                          `${formatCurrency(givingSpent, baseCurrency)} given · ${titheTarget}% of income`,
+                          `${formatCurrency(givingSpent, baseCurrency)} dado · ${titheTarget}% del ingreso`
                         )}
                       </span>
                     </div>
                   ) : (
-                    t("No target set", "Sin meta definida")
+                    t(
+                      "Based on your monthly income",
+                      "Basado en tu ingreso mensual"
+                    )
                   )
                 }
                 href="/budget"

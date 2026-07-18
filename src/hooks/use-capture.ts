@@ -5,7 +5,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { notifyEnvelopeLimitsAfterExpense } from "@/lib/budgeting/notify-envelope-limits";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
-import type { ExpenseWithCategory } from "@/lib/query/fetchers";
+import type { ExpenseWithCategory, IncomeEntry } from "@/lib/query/fetchers";
 import { queryKeys } from "@/lib/query/keys";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -142,11 +142,49 @@ export function useCapture() {
 
   const addIncomeMutation = useMutation({
     mutationFn: async (values: IncomeCaptureValues) =>
-      authorizedFetch("/api/incomes", {
+      authorizedFetch<{ ok: true }>("/api/incomes", {
         method: "POST",
         body: JSON.stringify(values),
       }),
-    onError: () => {
+
+    onMutate: async (values) => {
+      const [yearString, monthString] = values.date.split("-");
+      const monthKey = [
+        "incomes",
+        Number(yearString),
+        Number(monthString),
+      ] as const;
+
+      await queryClient.cancelQueries({ queryKey: monthKey });
+
+      const optimistic: IncomeEntry = {
+        id: `optimistic-${Date.now()}`,
+        user_id: "",
+        source: values.source.trim(),
+        amount: values.amount,
+        currency: values.currency,
+        description: values.description?.trim() || null,
+        date: values.date,
+        source_kind: "manual",
+        external_ref: null,
+        import_batch_id: null,
+        needs_review: false,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+
+      queryClient.setQueriesData<IncomeEntry[]>(
+        { queryKey: monthKey },
+        (old) => (old ? [optimistic, ...old] : old)
+      );
+
+      return { monthKey };
+    },
+
+    onError: (_error, _input, context) => {
+      if (context) {
+        void queryClient.invalidateQueries({ queryKey: context.monthKey });
+      }
       toast.error(
         t("Could not save the income", "No se pudo guardar el ingreso")
       );
