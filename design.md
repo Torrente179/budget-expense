@@ -31,9 +31,9 @@ of truth for every nav surface is
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — safe-to-spend hero with spending-pace bar, month stat row, category donut ("Where it went"), attention feed, recent movements, desktop-only shortcuts. Current month only, everything actionable. |
+| **Home** | `/home` | "How am I doing right now" — stat row (Income · Spent · Current · Giving), monthly-budgets area with calendar-pace bar, category donut ("Where it went"), attention feed, recent movements, desktop-only shortcuts. Current month only, everything actionable. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
-| **Budget** | `/budget` | Giving pillar (always first), income-pool plan, custom budgets, method selector. |
+| **Budget** | `/budget` | Guided 3-step setup on first run (income plan → method → objectives); then "Your plan" overview with paced remaining, an objectives list (tap to edit), and the standing Giving card. |
 | **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts. If it's a balance, it lives here. |
 | **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, 12-month trend, pillars, category breakdown, envelope utilization, anomalies, monthly report, calendar. No data-entry CTAs. |
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { getDaysInMonth } from "date-fns";
 import {
   useCustomBudgets,
   type CustomBudget,
@@ -18,15 +19,13 @@ import {
   calculateCustomBudgetSpending,
   sumConvertedAmounts,
 } from "@/lib/budgeting";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { BudgetingMethod } from "@/lib/budgeting-methods";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { MonthPicker } from "@/components/shared/month-picker";
-import { EmptyState } from "@/components/shared/empty-state";
 import { CustomBudgetForm } from "@/components/budgets/custom-budget-form";
-import { CustomBudgetCard } from "@/components/budgets/custom-budget-card";
 import { MonthlyPlanForm } from "@/components/budgets/monthly-plan-form";
 import { MethodSelector } from "@/components/budgets/method-selector";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -40,7 +39,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Copy, HandHeart, Loader2, Plus, Wallet } from "lucide-react";
+import {
+  Check,
+  Copy,
+  HandHeart,
+  Loader2,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { toast } from "sonner";
 
 const GIVING_KEYWORDS = [
@@ -67,7 +73,7 @@ function isGivingName(name: string) {
 
 export function BudgetScreen() {
   const { t } = useLocale();
-  const { month, year, setMonthYear } = useMonth();
+  const { month, year, isCurrentMonth, setMonthYear } = useMonth();
   const { baseCurrency, convert } = useCurrency();
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -114,7 +120,12 @@ export function BudgetScreen() {
           expenses,
           convert
         );
-        return { id: budget.id, resolved, spent };
+        return {
+          id: budget.id,
+          resolved,
+          spent,
+          ratio: resolved > 0 ? spent / resolved : 0,
+        };
       }),
     [customBudgets, incomeAmount, expenses, convert]
   );
@@ -123,8 +134,22 @@ export function BudgetScreen() {
   const totalConsumed = sumConvertedAmounts(expenses, convert);
   const totalRemaining = totalBudgeted - totalConsumed;
   const hasPlan = Boolean(plan);
+  const hasBudgets = customBudgets.length > 0;
+  const needsSetup = !hasPlan && !hasBudgets;
 
-  // Giving pillar
+  /* Month pace for the overview bar. */
+  const daysInMonth = getDaysInMonth(new Date(year, month - 1));
+  const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
+  const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
+  const consumedRatio = totalBudgeted > 0 ? totalConsumed / totalBudgeted : 0;
+  const overviewTone =
+    consumedRatio > 1
+      ? "bg-danger"
+      : consumedRatio > monthProgress
+        ? "bg-warning"
+        : "bg-success";
+
+  /* Giving pillar. */
   const givingSpent = useMemo(
     () =>
       expenses.reduce((sum, expense) => {
@@ -251,6 +276,72 @@ export function BudgetScreen() {
 
   const isLoading = loading || planLoading;
 
+  /* Setup steps for the guided first run. */
+  const setupSteps = [
+    {
+      key: "plan",
+      done: hasPlan,
+      title: t("Set your monthly income", "Define tu ingreso mensual"),
+      caption: t(
+        "How much comes in, and what share goes to budgets.",
+        "Cuánto entra y qué parte va a presupuestos."
+      ),
+      action: (
+        <MonthlyPlanForm
+          month={month}
+          year={year}
+          onSubmit={handleSavePlan}
+          appliedMethodId={appliedMethod}
+          onMethodConsumed={() => setAppliedMethod(null)}
+          defaultValues={
+            plan
+              ? {
+                  income_amount: plan.income_amount,
+                  income_currency: plan.income_currency,
+                  allocation_percent: plan.allocation_percent,
+                }
+              : undefined
+          }
+        />
+      ),
+    },
+    {
+      key: "method",
+      done: false,
+      optional: true,
+      title: t("Pick a method", "Elige un método"),
+      caption: t(
+        "50/30/20 and others fill in the plan for you.",
+        "50/30/20 y otros rellenan el plan por ti."
+      ),
+      action: <MethodSelector onApply={handleApplyMethod} />,
+    },
+    {
+      key: "objectives",
+      done: hasBudgets,
+      title: t("Create your objectives", "Crea tus objetivos"),
+      caption: t(
+        'e.g. "Essentials" with housing and groceries — we warn you before it runs out.',
+        'p. ej. "Esenciales" con vivienda y mercado — te avisamos antes de que se agote.'
+      ),
+      action: (
+        <CustomBudgetForm
+          month={month}
+          year={year}
+          incomeAmount={incomeAmount}
+          incomeCurrency={plan?.income_currency ?? baseCurrency}
+          onSubmit={handleAddBudget}
+          trigger={
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <Plus className="h-4 w-4" />
+              {t("Create", "Crear")}
+            </Button>
+          }
+        />
+      ),
+    },
+  ];
+
   return (
     <Screen
       title={t("Budget", "Presupuesto")}
@@ -258,16 +349,291 @@ export function BudgetScreen() {
     >
       {isLoading ? (
         <div className="space-y-4">
-          <Skeleton className="h-32 rounded-xl" />
           <Skeleton className="h-40 rounded-xl" />
-          <div className="grid gap-4 lg:grid-cols-2">
-            <Skeleton className="h-56 rounded-xl" />
-            <Skeleton className="h-56 rounded-xl" />
-          </div>
+          <Skeleton className="h-64 rounded-xl" />
+          <Skeleton className="h-32 rounded-xl" />
         </div>
       ) : (
         <>
-          {/* Giving pillar — first, on purpose. */}
+          {needsSetup ? (
+            /* First run: teach the model in three steps. */
+            <Card>
+              <CardHeader>
+                <SectionHeader
+                  eyebrow={t("Getting started", "Primeros pasos")}
+                  title={t("Plan your month in 3 steps", "Planifica tu mes en 3 pasos")}
+                  description={
+                    profile?.wants_budget_help
+                      ? t(
+                          "A budget is a spending target for a group of categories. Set it once — the month is measured against it.",
+                          "Un presupuesto es un objetivo de gasto para un grupo de categorías. Defínelo una vez — el mes se mide contra él."
+                        )
+                      : t(
+                          "A budget is a spending target for a group of categories.",
+                          "Un presupuesto es un objetivo de gasto para un grupo de categorías."
+                        )
+                  }
+                />
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {setupSteps.map((step, index) => (
+                  <div
+                    key={step.key}
+                    className="flex items-center gap-3.5 rounded-lg px-2 py-3"
+                  >
+                    <div
+                      className={cn(
+                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-caption font-semibold",
+                        step.done
+                          ? "bg-success-subtle text-success"
+                          : "bg-secondary text-muted-foreground"
+                      )}
+                    >
+                      {step.done ? <Check className="h-4 w-4" /> : index + 1}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-body font-medium">
+                        {step.title}
+                        {step.optional && (
+                          <span className="ml-2 text-caption font-normal text-muted-foreground">
+                            {t("optional", "opcional")}
+                          </span>
+                        )}
+                      </p>
+                      <p className="text-caption text-muted-foreground">
+                        {step.caption}
+                      </p>
+                    </div>
+                    <div className="shrink-0">{step.action}</div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          ) : (
+            /* The month at a glance: what's left, paced against the calendar. */
+            <Card>
+              <CardHeader>
+                <SectionHeader
+                  eyebrow={t("This month", "Este mes")}
+                  title={t("Your plan", "Tu plan")}
+                  action={
+                    <div className="flex items-center gap-1.5">
+                      <MethodSelector onApply={handleApplyMethod} />
+                      <MonthlyPlanForm
+                        month={month}
+                        year={year}
+                        onSubmit={handleSavePlan}
+                        appliedMethodId={appliedMethod}
+                        onMethodConsumed={() => setAppliedMethod(null)}
+                        defaultValues={
+                          plan
+                            ? {
+                                income_amount: plan.income_amount,
+                                income_currency: plan.income_currency,
+                                allocation_percent: plan.allocation_percent,
+                              }
+                            : undefined
+                        }
+                      />
+                    </div>
+                  }
+                />
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {hasBudgets ? (
+                  <div className="space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span
+                        className={cn(
+                          "font-mono text-display tabular-nums",
+                          totalRemaining >= 0
+                            ? "text-foreground"
+                            : "text-negative"
+                        )}
+                      >
+                        {formatCurrency(totalRemaining, baseCurrency)}
+                      </span>
+                      <span className="text-caption text-muted-foreground">
+                        {totalRemaining >= 0
+                          ? t("left to spend", "restante para gastar")
+                          : t("over budget", "sobre el presupuesto")}
+                      </span>
+                    </div>
+                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className={cn("h-full rounded-full", overviewTone)}
+                        style={{
+                          width: `${Math.min(consumedRatio, 1) * 100}%`,
+                        }}
+                      />
+                      {isCurrentMonth && (
+                        <div
+                          aria-hidden
+                          className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/60"
+                          style={{ left: `${monthProgress * 100}%` }}
+                        />
+                      )}
+                    </div>
+                    <p className="text-caption text-muted-foreground">
+                      {t(
+                        `${formatCurrency(totalConsumed, baseCurrency)} spent of ${formatCurrency(totalBudgeted, baseCurrency)} budgeted`,
+                        `${formatCurrency(totalConsumed, baseCurrency)} gastado de ${formatCurrency(totalBudgeted, baseCurrency)} presupuestado`
+                      )}
+                      {isCurrentMonth &&
+                        ` · ${t(`day ${dayOfMonth} of ${daysInMonth}`, `día ${dayOfMonth} de ${daysInMonth}`)}`}
+                    </p>
+                  </div>
+                ) : (
+                  <p className="text-body text-muted-foreground">
+                    {t(
+                      "Your plan is set — now create your first objective below.",
+                      "Tu plan está listo — ahora crea tu primer objetivo abajo."
+                    )}
+                  </p>
+                )}
+
+                {hasPlan && (
+                  <p className="text-caption text-muted-foreground">
+                    {t(
+                      `Plan: ${formatCurrency(incomeAmount ?? 0, baseCurrency)} income · ${plan?.allocation_percent}% allocated to budgets`,
+                      `Plan: ${formatCurrency(incomeAmount ?? 0, baseCurrency)} de ingreso · ${plan?.allocation_percent}% asignado a presupuestos`
+                    )}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Objectives */}
+          {!needsSetup && (
+            <Card>
+              <CardHeader>
+                <SectionHeader
+                  eyebrow={t("Objectives", "Objetivos")}
+                  title={t("Your budgets", "Tus presupuestos")}
+                  description={t(
+                    "Each one groups categories and warns you before it runs out.",
+                    "Cada uno agrupa categorías y te avisa antes de agotarse."
+                  )}
+                  action={
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={handleCopy}
+                        disabled={copying}
+                        aria-label={t("Copy budgets from last month", "Copiar presupuestos del mes anterior")}
+                      >
+                        {copying ? (
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                        <span className="hidden md:inline">
+                          {t("Copy last month", "Copiar mes anterior")}
+                        </span>
+                      </Button>
+                      <CustomBudgetForm
+                        month={month}
+                        year={year}
+                        incomeAmount={incomeAmount}
+                        incomeCurrency={plan?.income_currency ?? baseCurrency}
+                        onSubmit={handleAddBudget}
+                        trigger={
+                          <Button variant="outline" size="sm" className="gap-1.5">
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden md:inline">
+                              {t("New", "Nuevo")}
+                            </span>
+                          </Button>
+                        }
+                      />
+                    </div>
+                  }
+                />
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {customBudgets.length === 0 ? (
+                  <div className="py-2">
+                    <p className="text-body text-muted-foreground">
+                      {t(
+                        'Nothing yet. Try "Essentials" for housing and groceries, or copy last month to start.',
+                        'Aún nada. Prueba "Esenciales" con vivienda y mercado, o copia el mes anterior para empezar.'
+                      )}
+                    </p>
+                  </div>
+                ) : (
+                  customBudgets.map((budget) => {
+                    const metrics = budgetMetrics.find(
+                      (m) => m.id === budget.id
+                    );
+                    const spent = metrics?.spent ?? 0;
+                    const limit = metrics?.resolved ?? 0;
+                    const ratio = metrics?.ratio ?? 0;
+                    const remaining = limit - spent;
+                    return (
+                      <div
+                        key={budget.id}
+                        className="group flex items-center gap-2"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => setEditBudget(budget)}
+                          className="min-w-0 flex-1 space-y-1.5 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-accent/50"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <span className="min-w-0 truncate text-body font-medium">
+                              {budget.name}
+                              <span className="ml-2 text-caption font-normal text-muted-foreground">
+                                {t(
+                                  `${budget.custom_budget_categories.length} ${budget.custom_budget_categories.length === 1 ? "category" : "categories"}`,
+                                  `${budget.custom_budget_categories.length} ${budget.custom_budget_categories.length === 1 ? "categoría" : "categorías"}`
+                                )}
+                              </span>
+                            </span>
+                            <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
+                              {formatCurrency(spent, baseCurrency)} /{" "}
+                              {formatCurrency(limit, baseCurrency)}
+                            </span>
+                          </div>
+                          <ProgressMeter ratio={ratio} className="h-1.5" />
+                          <p
+                            className={cn(
+                              "text-caption",
+                              remaining >= 0
+                                ? "text-muted-foreground"
+                                : "text-danger"
+                            )}
+                          >
+                            {remaining >= 0
+                              ? t(
+                                  `${formatCurrency(remaining, baseCurrency)} left`,
+                                  `${formatCurrency(remaining, baseCurrency)} restante`
+                                )
+                              : t(
+                                  `${formatCurrency(Math.abs(remaining), baseCurrency)} over`,
+                                  `${formatCurrency(Math.abs(remaining), baseCurrency)} excedido`
+                                )}
+                          </p>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={t("Delete budget", "Eliminar presupuesto")}
+                          onClick={() => setDeleteId(budget.id)}
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg opacity-40 transition-opacity hover:bg-danger-subtle hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-danger" />
+                        </button>
+                      </div>
+                    );
+                  })
+                )}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Giving — the standing first-fruits objective */}
           <Card>
             <CardHeader>
               <SectionHeader
@@ -322,177 +688,6 @@ export function BudgetScreen() {
               )}
             </CardContent>
           </Card>
-
-          {/* Income pool plan */}
-          <Card>
-            <CardHeader>
-              <SectionHeader
-                eyebrow={t("Monthly plan", "Plan mensual")}
-                title={
-                  hasPlan
-                    ? t("Income pool", "Fondo de ingresos")
-                    : t("No plan yet", "Aún sin plan")
-                }
-                action={
-                  <div className="flex items-center gap-1.5">
-                    <MethodSelector onApply={handleApplyMethod} />
-                    <MonthlyPlanForm
-                      month={month}
-                      year={year}
-                      onSubmit={handleSavePlan}
-                      appliedMethodId={appliedMethod}
-                      onMethodConsumed={() => setAppliedMethod(null)}
-                      defaultValues={
-                        plan
-                          ? {
-                              income_amount: plan.income_amount,
-                              income_currency: plan.income_currency,
-                              allocation_percent: plan.allocation_percent,
-                            }
-                          : undefined
-                      }
-                    />
-                  </div>
-                }
-              />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {hasPlan ? (
-                <div className="grid grid-cols-3 gap-3">
-                  <div>
-                    <p className="label-caps">{t("Income", "Ingreso")}</p>
-                    <p className="mt-1 font-mono text-body font-semibold tabular-nums">
-                      {formatCurrency(incomeAmount ?? 0, baseCurrency)}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="label-caps">{t("Allocated", "Asignado")}</p>
-                    <p className="mt-1 font-mono text-body font-semibold tabular-nums">
-                      {plan?.allocation_percent}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="label-caps">{t("Pool", "Fondo")}</p>
-                    <p className="mt-1 font-mono text-body font-semibold tabular-nums">
-                      {formatCurrency(
-                        ((incomeAmount ?? 0) * (plan?.allocation_percent ?? 0)) /
-                          100,
-                        baseCurrency
-                      )}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-body text-muted-foreground">
-                  {t(
-                    "Create a monthly plan to unlock percentage-based budgets that adjust automatically to your income.",
-                    "Crea un plan mensual para desbloquear presupuestos por porcentaje que se ajustan automáticamente a tu ingreso."
-                  )}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Budgets */}
-          <div className="space-y-4">
-            <SectionHeader
-              eyebrow={t("Envelopes", "Sobres")}
-              title={t("Your budgets", "Tus presupuestos")}
-              description={
-                totalBudgeted > 0
-                  ? t(
-                      `${formatCurrency(totalConsumed, baseCurrency)} spent of ${formatCurrency(totalBudgeted, baseCurrency)} · ${formatCurrency(Math.abs(totalRemaining), baseCurrency)} ${totalRemaining >= 0 ? "left" : "over"}`,
-                      `${formatCurrency(totalConsumed, baseCurrency)} gastado de ${formatCurrency(totalBudgeted, baseCurrency)} · ${formatCurrency(Math.abs(totalRemaining), baseCurrency)} ${totalRemaining >= 0 ? "restante" : "excedido"}`
-                    )
-                  : undefined
-              }
-              action={
-                <div className="flex items-center gap-1.5">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-1.5"
-                    onClick={handleCopy}
-                    disabled={copying}
-                    aria-label={t("Copy budgets", "Copiar presupuestos")}
-                  >
-                    {copying ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                    <span className="hidden md:inline">
-                      {t("Copy", "Copiar")}
-                    </span>
-                  </Button>
-                  <CustomBudgetForm
-                    month={month}
-                    year={year}
-                    incomeAmount={incomeAmount}
-                    incomeCurrency={plan?.income_currency ?? baseCurrency}
-                    onSubmit={handleAddBudget}
-                    trigger={
-                      <Button variant="outline" size="sm" className="gap-1.5">
-                        <Plus className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {t("Add", "Añadir")}
-                        </span>
-                      </Button>
-                    }
-                  />
-                </div>
-              }
-            />
-
-            {customBudgets.length === 0 ? (
-              <EmptyState
-                icon={Wallet}
-                title={t("No budgets yet", "Aún no hay presupuestos")}
-                description={
-                  profile?.wants_budget_help
-                    ? t(
-                        "Based on your goals, add envelopes for essentials, lifestyle, and savings — or start with one target.",
-                        "Según tus metas, crea sobres para esenciales, estilo de vida y ahorro — o empieza con un objetivo."
-                      )
-                    : t(
-                        "Create your first budget to set spending targets and track how much goes to each area of your life.",
-                        "Crea tu primer presupuesto para definir objetivos de gasto y rastrear cuánto va a cada área de tu vida."
-                      )
-                }
-              >
-                <CustomBudgetForm
-                  month={month}
-                  year={year}
-                  incomeAmount={incomeAmount}
-                  incomeCurrency={plan?.income_currency ?? baseCurrency}
-                  onSubmit={handleAddBudget}
-                  trigger={
-                    <Button variant="outline" className="gap-1.5">
-                      <Plus className="h-4 w-4" />
-                      {t("Add your first budget", "Agrega tu primer presupuesto")}
-                    </Button>
-                  }
-                />
-              </EmptyState>
-            ) : (
-              <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
-                {customBudgets.map((budget, index) => {
-                  const metrics = budgetMetrics.find((m) => m.id === budget.id);
-                  return (
-                    <CustomBudgetCard
-                      key={budget.id}
-                      budget={budget}
-                      spent={metrics?.spent ?? 0}
-                      resolvedAmount={metrics?.resolved ?? 0}
-                      index={index}
-                      onDelete={setDeleteId}
-                      onEdit={setEditBudget}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </div>
         </>
       )}
 

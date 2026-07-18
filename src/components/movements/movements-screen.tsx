@@ -21,6 +21,7 @@ import { useLocale } from "@/providers/locale-provider";
 import { cn } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
 import { AmountText } from "@/components/patterns/amount-text";
+import { UnderlineTabs } from "@/components/patterns/underline-tabs";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -326,29 +327,14 @@ export function MovementsScreen() {
               />
             </div>
           )}
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div
-              role="tablist"
-              aria-label={t("Filter movements", "Filtrar movimientos")}
-              className="grid grid-cols-3 gap-1 rounded-lg bg-secondary p-1"
-            >
-              {tabs.map((tabItem) => (
-                <button
-                  key={tabItem.key}
-                  role="tab"
-                  aria-selected={tab === tabItem.key}
-                  onClick={() => setTab(tabItem.key)}
-                  className={cn(
-                    "rounded-md px-3 py-1.5 text-caption font-medium transition-colors",
-                    tab === tabItem.key
-                      ? "bg-background text-foreground shadow-1"
-                      : "text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {tabItem.label}
-                </button>
-              ))}
-            </div>
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <UnderlineTabs
+              tabs={tabs}
+              value={tab}
+              onChange={setTab}
+              ariaLabel={t("Filter movements", "Filtrar movimientos")}
+              className="border-b-0"
+            />
             <MonthPicker month={month} year={year} onChange={setMonthYear} />
           </div>
         </div>

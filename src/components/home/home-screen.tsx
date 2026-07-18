@@ -11,16 +11,20 @@ import {
   FileUp,
   HandHeart,
   LineChart,
+  Target,
   TrendingDown,
   TrendingUp,
   ArrowUpDown,
   Wallet,
 } from "lucide-react";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
+import { useCustomBudgets } from "@/hooks/use-custom-budgets";
+import { useMonthlyBudgetPlan } from "@/hooks/use-monthly-budget-plan";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
 import { buildPersonalization } from "@/lib/onboarding/personalize";
+import { resolveCustomBudgetAmount } from "@/lib/budgeting";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
@@ -39,12 +43,14 @@ import { useChartMounted } from "@/components/charts/chart-theme";
 
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
-  const { baseCurrency } = useCurrency();
+  const { baseCurrency, convert } = useCurrency();
   const { month, year, isCurrentMonth, setMonthYear } = useMonth();
   const mounted = useChartMounted();
   const router = useRouter();
 
   const { summary, loading } = useMonthlySummary({ month, year });
+  const { customBudgets } = useCustomBudgets({ month, year });
+  const { plan } = useMonthlyBudgetPlan({ month, year });
   const titheTarget = useTitheTarget();
   const { incomplete, profile } = useOnboarding();
   usePrefetchMonths(month, year, loading, "summary");
@@ -65,32 +71,52 @@ export function HomeScreen() {
     return t("Good evening", "Buenas noches");
   }, [t]);
 
-  // Safe-to-spend: stricter of cash available and remaining budget.
-  const cashAvailable =
+  /* Current = what's actually left this month. */
+  const currentBalance =
     summary.totalIncome - summary.totalSpent - summary.totalInvestmentTransfers;
-  const budgetRemaining =
-    summary.totalBudget > 0 ? summary.totalBudget - summary.totalSpent : null;
-  const safeToSpend =
-    budgetRemaining !== null
-      ? Math.min(cashAvailable, budgetRemaining)
-      : cashAvailable;
-  const boundByBudget =
-    budgetRemaining !== null && budgetRemaining < cashAvailable;
 
-  /* Spending pace: % of income spent vs % of the month elapsed. */
+  /* Month progress, for the budget pace tick. */
   const daysInMonth = getDaysInMonth(new Date(year, month - 1));
   const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
   const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
-  const spentRatio =
-    summary.totalIncome > 0 ? summary.totalSpent / summary.totalIncome : null;
-  const paceTone =
-    spentRatio === null
-      ? "bg-secondary"
-      : spentRatio > 1
-        ? "bg-danger"
-        : spentRatio > monthProgress
-          ? "bg-warning"
-          : "bg-success";
+
+  /* Budget objectives: spend per budget from the category breakdown. */
+  const incomeAmount = plan
+    ? convert(plan.income_amount, plan.income_currency)
+    : null;
+
+  const budgetsView = useMemo(() => {
+    if (customBudgets.length === 0) return [];
+    const spentByCategory = new Map(
+      summary.categoryBreakdown.map((row) => [row.category_id, row.total_amount])
+    );
+    return customBudgets
+      .map((budget) => {
+        const limit = resolveCustomBudgetAmount(budget, incomeAmount, convert);
+        const spent = budget.custom_budget_categories.reduce(
+          (sum, link) => sum + (spentByCategory.get(link.category_id) ?? 0),
+          0
+        );
+        return {
+          id: budget.id,
+          name: budget.name,
+          limit,
+          spent,
+          ratio: limit > 0 ? spent / limit : 0,
+        };
+      })
+      .sort((a, b) => b.ratio - a.ratio);
+  }, [customBudgets, summary.categoryBreakdown, incomeAmount, convert]);
+
+  const totalBudgeted = budgetsView.reduce((sum, b) => sum + b.limit, 0);
+  const budgetConsumedRatio =
+    totalBudgeted > 0 ? summary.totalSpent / totalBudgeted : 0;
+  const budgetTone =
+    budgetConsumedRatio > 1
+      ? "bg-danger"
+      : budgetConsumedRatio > monthProgress
+        ? "bg-warning"
+        : "bg-success";
 
   /* Category donut: top slices + Other, colored by DB category color. */
   const donut = useMemo(() => {
@@ -137,9 +163,6 @@ export function HomeScreen() {
       ? (summary.totalSpent - summary.previousMonthTotal) /
         summary.previousMonthTotal
       : null;
-
-  const budgetRatio =
-    summary.totalBudget > 0 ? summary.totalSpent / summary.totalBudget : null;
 
   const recentMovements = useMemo(
     () =>
@@ -239,13 +262,13 @@ export function HomeScreen() {
     >
       {loading ? (
         <div className="space-y-4">
-          <Skeleton className="h-44 rounded-xl" />
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             {Array.from({ length: 4 }).map((_, index) => (
               <Skeleton key={index} className="h-28 rounded-xl" />
             ))}
           </div>
-          <Skeleton className="h-40 rounded-xl" />
+          <Skeleton className="h-44 rounded-xl" />
+          <Skeleton className="h-64 rounded-xl" />
         </div>
       ) : (
         <>
@@ -278,65 +301,20 @@ export function HomeScreen() {
             </Card>
           )}
 
-          {/* Safe-to-spend hero — the one number, plus the month's pace. */}
-          <Card>
-            <CardContent className="space-y-4 py-5">
-              <div className="space-y-1">
-                <p className="label-caps">
-                  {t("Safe to spend", "Disponible para gastar")}
-                </p>
-                <p
-                  className={cn(
-                    "font-mono text-display tabular-nums",
-                    safeToSpend >= 0 ? "text-foreground" : "text-negative"
-                  )}
-                >
-                  {formatCurrency(safeToSpend, baseCurrency)}
-                </p>
-                <p className="text-caption text-muted-foreground">
-                  {boundByBudget
-                    ? t(
-                        `Budget cap: ${formatCurrency(budgetRemaining ?? 0, baseCurrency)} left of ${formatCurrency(summary.totalBudget, baseCurrency)} plan`,
-                        `Límite del plan: quedan ${formatCurrency(budgetRemaining ?? 0, baseCurrency)} de ${formatCurrency(summary.totalBudget, baseCurrency)}`
-                      )
-                    : t(
-                        "Income − spent − transfers this month",
-                        "Ingresos − gastos − transferencias del mes"
-                      )}
-                </p>
-              </div>
-
-              {/* Pace: how much of income is spent vs how far into the month we are */}
-              {spentRatio !== null && (
-                <div className="space-y-1.5">
-                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                    <div
-                      className={cn("h-full rounded-full", paceTone)}
-                      style={{ width: `${Math.min(spentRatio, 1) * 100}%` }}
-                    />
-                    {isCurrentMonth && (
-                      <div
-                        aria-hidden
-                        className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/60"
-                        style={{ left: `${monthProgress * 100}%` }}
-                      />
-                    )}
-                  </div>
-                  <p className="text-caption text-muted-foreground">
-                    {t(
-                      `${Math.round(spentRatio * 100)}% of income spent`,
-                      `${Math.round(spentRatio * 100)}% de los ingresos gastado`
-                    )}
-                    {isCurrentMonth &&
-                      ` · ${t(`day ${dayOfMonth} of ${daysInMonth}`, `día ${dayOfMonth} de ${daysInMonth}`)}`}
-                  </p>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Month status row */}
+          {/* Month status row: Income · Spent · Current · Giving */}
           <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+            <div className="min-w-[11rem] snap-start sm:min-w-0">
+              <StatCard
+                label={t("Income", "Ingresos")}
+                href="/movements?tab=income"
+                value={
+                  <span className="font-mono text-heading font-semibold tabular-nums text-positive">
+                    {formatCurrency(summary.totalIncome, baseCurrency)}
+                  </span>
+                }
+                detail={t("this month", "este mes")}
+              />
+            </div>
             <div className="min-w-[11rem] snap-start sm:min-w-0">
               <StatCard
                 label={t("Spent", "Gastado")}
@@ -348,12 +326,7 @@ export function HomeScreen() {
                 }
                 detail={
                   spentDelta !== null ? (
-                    <span
-                      className={cn(
-                        "inline-flex items-center gap-1",
-                        spentDelta > 0 ? "text-negative" : "text-positive"
-                      )}
-                    >
+                    <span className="inline-flex items-center gap-1">
                       {spentDelta > 0 ? (
                         <TrendingUp className="h-3 w-3" />
                       ) : (
@@ -372,14 +345,21 @@ export function HomeScreen() {
             </div>
             <div className="min-w-[11rem] snap-start sm:min-w-0">
               <StatCard
-                label={t("Income", "Ingresos")}
-                href="/movements?tab=income"
+                label={t("Current", "Disponible")}
                 value={
-                  <span className="font-mono text-heading font-semibold tabular-nums text-positive">
-                    {formatCurrency(summary.totalIncome, baseCurrency)}
+                  <span
+                    className={cn(
+                      "font-mono text-heading font-semibold tabular-nums",
+                      currentBalance >= 0 ? "text-foreground" : "text-negative"
+                    )}
+                  >
+                    {formatCurrency(currentBalance, baseCurrency)}
                   </span>
                 }
-                detail={t("this month", "este mes")}
+                detail={t(
+                  "Income − spent − transfers",
+                  "Ingresos − gastos − transferencias"
+                )}
               />
             </div>
             <div className="min-w-[11rem] snap-start sm:min-w-0">
@@ -413,42 +393,138 @@ export function HomeScreen() {
                 href="/budget"
               />
             </div>
-            <div className="min-w-[11rem] snap-start sm:min-w-0">
-              {budgetRatio !== null ? (
-                <StatCard
-                  label={t("Budget used", "Plan usado")}
-                  value={
-                    <span className="font-mono text-heading font-semibold tabular-nums">
-                      {`${Math.round(budgetRatio * 100)}%`}
-                    </span>
-                  }
-                  detail={<ProgressMeter ratio={budgetRatio} className="h-1" />}
-                  href="/budget"
-                />
-              ) : (
-                <StatCard
-                  label={t("Kept", "Guardado")}
-                  value={
-                    <span
-                      className={cn(
-                        "font-mono text-heading font-semibold tabular-nums",
-                        summary.totalIncome - summary.totalSpent >= 0
-                          ? "text-foreground"
-                          : "text-negative"
-                      )}
-                    >
-                      {formatCurrency(
-                        summary.totalIncome - summary.totalSpent,
-                        baseCurrency
-                      )}
-                    </span>
-                  }
-                  detail={t("Income − spent", "Ingresos − gastos")}
-                  href="/budget"
-                />
-              )}
-            </div>
           </div>
+
+          {/* Budget objectives — the month's plan at a glance */}
+          <Card>
+            <CardHeader>
+              <SectionHeader
+                eyebrow={t("Objectives", "Objetivos")}
+                title={t("Monthly budgets", "Presupuestos del mes")}
+                action={
+                  budgetsView.length > 0 ? (
+                    <Link
+                      href="/budget"
+                      className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      {t("Manage", "Gestionar")}
+                    </Link>
+                  ) : undefined
+                }
+              />
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {budgetsView.length === 0 ? (
+                <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
+                      <Target className="h-5 w-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-body font-medium">
+                        {t("No objectives yet", "Aún sin objetivos")}
+                      </p>
+                      <p className="text-caption text-muted-foreground">
+                        {t(
+                          "Group categories into budgets and we'll track every euro against them.",
+                          "Agrupa categorías en presupuestos y seguiremos cada euro contra ellos."
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                  <Link
+                    href="/budget"
+                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-primary px-3.5 text-caption font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                  >
+                    {t("Set up budgets", "Configurar presupuestos")}
+                  </Link>
+                </div>
+              ) : (
+                <>
+                  {/* Overall: what's left of the plan, paced against the calendar */}
+                  <div className="space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span
+                        className={cn(
+                          "font-mono text-title tabular-nums",
+                          totalBudgeted - summary.totalSpent >= 0
+                            ? "text-foreground"
+                            : "text-negative"
+                        )}
+                      >
+                        {formatCurrency(
+                          totalBudgeted - summary.totalSpent,
+                          baseCurrency
+                        )}
+                      </span>
+                      <span className="text-caption text-muted-foreground">
+                        {t(
+                          `left of ${formatCurrency(totalBudgeted, baseCurrency)}`,
+                          `restante de ${formatCurrency(totalBudgeted, baseCurrency)}`
+                        )}
+                      </span>
+                    </div>
+                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                      <div
+                        className={cn("h-full rounded-full", budgetTone)}
+                        style={{
+                          width: `${Math.min(budgetConsumedRatio, 1) * 100}%`,
+                        }}
+                      />
+                      {isCurrentMonth && (
+                        <div
+                          aria-hidden
+                          className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/60"
+                          style={{ left: `${monthProgress * 100}%` }}
+                        />
+                      )}
+                    </div>
+                    {isCurrentMonth && (
+                      <p className="text-caption text-muted-foreground">
+                        {t(
+                          `day ${dayOfMonth} of ${daysInMonth} — the mark shows where the month is`,
+                          `día ${dayOfMonth} de ${daysInMonth} — la marca muestra dónde va el mes`
+                        )}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Top objectives */}
+                  <div className="space-y-1">
+                    {budgetsView.slice(0, 3).map((budget) => (
+                      <Link
+                        key={budget.id}
+                        href="/budget"
+                        className="block space-y-1.5 rounded-lg px-2 py-2 transition-colors hover:bg-accent/50"
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="min-w-0 truncate text-body font-medium">
+                            {budget.name}
+                          </span>
+                          <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
+                            {formatCurrency(budget.spent, baseCurrency)} /{" "}
+                            {formatCurrency(budget.limit, baseCurrency)}
+                          </span>
+                        </div>
+                        <ProgressMeter ratio={budget.ratio} className="h-1.5" />
+                      </Link>
+                    ))}
+                    {budgetsView.length > 3 && (
+                      <Link
+                        href="/budget"
+                        className="block px-2 pt-1 text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {t(
+                          `+${budgetsView.length - 3} more`,
+                          `+${budgetsView.length - 3} más`
+                        )}
+                      </Link>
+                    )}
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
           {/* Desktop: attention + recents left, donut right. Mobile: donut first. */}
           <div className="grid gap-4 lg:grid-cols-5">
@@ -547,55 +623,55 @@ export function HomeScreen() {
             <div className="min-w-0 space-y-4 lg:order-1 lg:col-span-3">
               <AttentionFeed />
 
-          {/* Recent movements */}
-          <Card>
-            <CardHeader>
-              <SectionHeader
-                eyebrow={t("Latest", "Recientes")}
-                title={t("Recent movements", "Movimientos recientes")}
-                action={
-                  <Link
-                    href="/movements"
-                    className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
-                  >
-                    {t("View all", "Ver todos")}
-                  </Link>
-                }
-              />
-            </CardHeader>
-            <CardContent className="px-0 pb-0">
-              {recentMovements.length === 0 ? (
-                <div className="px-4 pb-4">
-                  <EmptyState
-                    icon={ArrowUpDown}
-                    title={t("No movements yet", "Aún sin movimientos")}
-                    description={t(
-                      "Add your first expense with the + button.",
-                      "Agrega tu primer gasto con el botón +."
-                    )}
+              {/* Recent movements */}
+              <Card>
+                <CardHeader>
+                  <SectionHeader
+                    eyebrow={t("Latest", "Recientes")}
+                    title={t("Recent movements", "Movimientos recientes")}
+                    action={
+                      <Link
+                        href="/movements"
+                        className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {t("View all", "Ver todos")}
+                      </Link>
+                    }
                   />
-                </div>
-              ) : (
-                <div className="divide-y divide-border/40">
-                  {recentMovements.map((movement) => (
-                    <TransactionRow
-                      key={`${movement.kind}-${movement.id}`}
-                      title={movement.title}
-                      subtitle={`${movement.subtitle} · ${new Intl.DateTimeFormat(
-                        intlLocale,
-                        { day: "numeric", month: "short" }
-                      ).format(new Date(`${movement.date}T00:00:00`))}`}
-                      amount={movement.amount}
-                      currency={movement.currency}
-                      kind={movement.kind}
-                      category={movement.category}
-                      needsReview={movement.needsReview}
-                    />
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  {recentMovements.length === 0 ? (
+                    <div className="px-4 pb-4">
+                      <EmptyState
+                        icon={ArrowUpDown}
+                        title={t("No movements yet", "Aún sin movimientos")}
+                        description={t(
+                          "Add your first expense with the + button.",
+                          "Agrega tu primer gasto con el botón +."
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/40">
+                      {recentMovements.map((movement) => (
+                        <TransactionRow
+                          key={`${movement.kind}-${movement.id}`}
+                          title={movement.title}
+                          subtitle={`${movement.subtitle} · ${new Intl.DateTimeFormat(
+                            intlLocale,
+                            { day: "numeric", month: "short" }
+                          ).format(new Date(`${movement.date}T00:00:00`))}`}
+                          amount={movement.amount}
+                          currency={movement.currency}
+                          kind={movement.kind}
+                          category={movement.category}
+                          needsReview={movement.needsReview}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Quick shortcuts — desktop only; mobile has the tab bar + FAB */}
               {quickActions.length > 0 && (

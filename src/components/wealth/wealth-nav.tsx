@@ -2,8 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
+import {
+  UnderlineIndicator,
+  underlineTabItemClass,
+  underlineTabListClass,
+} from "@/components/patterns/underline-tabs";
 
 const SECTION_ITEMS = [
   { href: "/wealth", label: { en: "Overview", es: "Resumen" }, exact: true },
@@ -15,13 +19,13 @@ const SECTION_ITEMS = [
   { href: "/wealth/liabilities", label: { en: "Debts", es: "Deudas" } },
 ] as const;
 
-/** Chip sub-navigation shared by every Wealth screen. */
+/** Underline sub-navigation shared by every Wealth screen. */
 export function WealthNav() {
   const pathname = usePathname();
   const { t } = useLocale();
 
   return (
-    <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0">
+    <nav aria-label="Wealth" className={underlineTabListClass}>
       {SECTION_ITEMS.map((item) => {
         const isActive =
           "exact" in item && item.exact
@@ -33,17 +37,13 @@ export function WealthNav() {
             key={item.href}
             href={item.href}
             aria-current={isActive ? "page" : undefined}
-            className={cn(
-              "shrink-0 rounded-full border px-3.5 py-1.5 text-caption font-medium transition-colors",
-              isActive
-                ? "border-foreground bg-foreground text-background"
-                : "border-border text-muted-foreground hover:text-foreground"
-            )}
+            className={underlineTabItemClass(isActive)}
           >
             {t(item.label.en, item.label.es)}
+            <UnderlineIndicator active={isActive} />
           </Link>
         );
       })}
-    </div>
+    </nav>
   );
 }
