@@ -282,6 +282,7 @@ function ReviewRow({
       <CurrencyDisplay
         amount={isIncome ? row.amount : -row.amount}
         currency={row.currency}
+        tone={isIncome ? "positive" : "negative"}
       />
 
       {editable && (

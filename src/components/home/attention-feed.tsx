@@ -36,7 +36,7 @@ interface FeedItem {
   href: string;
   icon: ReactNode;
   title: string;
-  caption: string;
+  caption: ReactNode;
   tone: "warning" | "info";
 }
 
@@ -181,9 +181,16 @@ export function AttentionFeed() {
             `${tc(anomaly.categoryName)} is running high`,
             `${tc(anomaly.categoryName)} va alto`
           ),
-          caption: t(
-            `${formatCurrency(anomaly.currentTotal, baseCurrency)} vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} typical`,
-            `${formatCurrency(anomaly.currentTotal, baseCurrency)} vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} habitual`
+          caption: (
+            <>
+              <span className="font-mono tabular-nums text-negative">
+                {formatCurrency(anomaly.currentTotal, baseCurrency)}
+              </span>
+              {t(
+                ` vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} typical`,
+                ` vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} habitual`
+              )}
+            </>
           ),
           tone: "warning",
         });
@@ -215,9 +222,16 @@ export function AttentionFeed() {
         icon: <CalendarClock className="h-4 w-4" />,
         title:
           recurring.description || tc(recurring.categories?.name ?? "—"),
-        caption: t(
-          `${formatCurrency(convert(recurring.amount, recurring.currency), baseCurrency)} due ${dueLabel}`,
-          `${formatCurrency(convert(recurring.amount, recurring.currency), baseCurrency)} vence ${dueLabel}`
+        caption: (
+          <>
+            <span className="font-mono tabular-nums text-negative">
+              {formatCurrency(
+                convert(recurring.amount, recurring.currency),
+                baseCurrency
+              )}
+            </span>
+            {t(` due ${dueLabel}`, ` vence ${dueLabel}`)}
+          </>
         ),
         tone: "info",
       });

@@ -380,6 +380,7 @@ export function OnboardingWizard() {
                         inputMode="decimal"
                         placeholder={t("Amount", "Importe")}
                         value={row.amount}
+                        className="font-mono text-negative tabular-nums"
                         onChange={(e) =>
                           setRecurringRows((rows) =>
                             rows.map((item) =>

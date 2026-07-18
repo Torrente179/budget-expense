@@ -206,7 +206,7 @@ export function CalendarScreen() {
                     {day}
                   </span>
                   {expenseTotal > 0 && (
-                    <span className="hidden font-mono text-label tabular-nums text-muted-foreground sm:block">
+                    <span className="hidden font-mono text-label tabular-nums text-negative sm:block">
                       {new Intl.NumberFormat(intlLocale, {
                         style: "currency",
                         currency: baseCurrency,
@@ -267,8 +267,18 @@ export function CalendarScreen() {
                   `${selectedEntries.length} ${selectedEntries.length === 1 ? "movement" : "movements"}`,
                   `${selectedEntries.length} ${selectedEntries.length === 1 ? "movimiento" : "movimientos"}`
                 )}
-                {dayExpenseTotal(selectedEntries) > 0 &&
-                  ` · ${formatCurrency(dayExpenseTotal(selectedEntries), baseCurrency)} ${t("out", "salida")}`}
+                {dayExpenseTotal(selectedEntries) > 0 && (
+                  <>
+                    {" · "}
+                    <span className="font-mono tabular-nums text-negative">
+                      {formatCurrency(
+                        dayExpenseTotal(selectedEntries),
+                        baseCurrency
+                      )}
+                    </span>{" "}
+                    {t("out", "salida")}
+                  </>
+                )}
               </p>
             )}
           </SheetHeader>
@@ -299,7 +309,7 @@ export function CalendarScreen() {
                           {entry.subtitle}
                         </p>
                       </div>
-                      <span className="font-mono text-body tabular-nums text-muted-foreground">
+                      <span className="font-mono text-body tabular-nums text-negative">
                         {formatCurrency(
                           convert(entry.amount, entry.currency),
                           baseCurrency

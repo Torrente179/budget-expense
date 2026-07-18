@@ -129,7 +129,7 @@ export function CustomBudgetCard({
           <p className="label-caps">
             {t("Spent", "Gastado")}
           </p>
-          <p className="mt-2 font-mono text-base font-semibold">
+          <p className="mt-2 font-mono text-base font-semibold text-negative">
             {formatCurrency(spent, baseCurrency)}
           </p>
         </div>

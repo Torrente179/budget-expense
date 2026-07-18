@@ -149,7 +149,7 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
               <Badge variant="outline" className="bg-secondary/70 text-foreground">
                 {t("Giving", "Dar")}
               </Badge>
-              <CardTitle className="font-heading text-title font-semibold leading-none tracking-tight md:text-display">
+              <CardTitle className="font-heading text-title font-semibold leading-none tracking-tight text-negative md:text-display">
                 {formatCurrency(analysis.totalGiving, baseCurrency)}
               </CardTitle>
             </div>
@@ -181,8 +181,12 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
                 <span className="text-muted-foreground">
                   {t("Tithe benchmark (10%)", "Referencia del diezmo (10%)")}
                 </span>
-                <span className="font-mono text-foreground">
-                  {formatCurrency(analysis.totalGiving, baseCurrency)} / {formatCurrency(analysis.titheGoal, baseCurrency)}
+                <span className="font-mono text-muted-foreground">
+                  <span className="text-negative">
+                    {formatCurrency(analysis.totalGiving, baseCurrency)}
+                  </span>
+                  {" / "}
+                  {formatCurrency(analysis.titheGoal, baseCurrency)}
                 </span>
               </div>
               <Progress
@@ -225,7 +229,7 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
                       {cat.count} {t("transaction", "transacci")}{cat.count !== 1 ? (t("s", "ones")) : (t("", "ón"))}
                     </p>
                   </div>
-                  <span className="shrink-0 font-mono text-sm font-medium text-warning">
+                  <span className="shrink-0 font-mono text-sm font-medium text-negative">
                     {formatCurrency(cat.total, baseCurrency)}
                   </span>
                 </div>

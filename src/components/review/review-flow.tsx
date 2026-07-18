@@ -180,6 +180,7 @@ export function ReviewFlow() {
                     <CurrencyDisplay
                       amount={-expense.amount}
                       currency={expense.currency}
+                      tone="negative"
                     />
                     <div className="w-44">
                       <Select
@@ -263,7 +264,7 @@ export function ReviewFlow() {
                         )}
                       </p>
                     </div>
-                    <span className="font-mono text-sm font-semibold tabular-nums text-destructive">
+                    <span className="font-mono text-sm font-semibold tabular-nums text-negative">
                       {formatCurrency(anomaly.currentTotal, baseCurrency)}
                     </span>
                   </li>
@@ -319,6 +320,7 @@ export function ReviewFlow() {
                     <CurrencyDisplay
                       amount={-expense.amount}
                       currency={expense.currency}
+                      tone="negative"
                     />
                   </li>
                 ))}

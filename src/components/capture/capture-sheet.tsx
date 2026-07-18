@@ -336,7 +336,10 @@ export function CaptureSheet({
                   onChange={(event) =>
                     setAmount(normalizeDecimalInput(event.target.value))
                   }
-                  className="h-12 min-w-0 flex-1 font-mono text-xl tabular-nums"
+                  className={cn(
+                    "h-12 min-w-0 flex-1 font-mono text-xl tabular-nums",
+                    kind === "expense" ? "text-negative" : "text-positive"
+                  )}
                 />
                 <Select
                   value={currency}

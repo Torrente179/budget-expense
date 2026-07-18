@@ -23,6 +23,8 @@ interface BreakdownDonutProps {
   centerLabel: ReactNode;
   /** When set, shows this instead of the summed total in the center. */
   centerValue?: number;
+  /** Semantic color for center total and legend amounts. */
+  amountTone?: "default" | "negative";
   /** Called when a slice/row is clicked (skips slices whose onSelect isn't wanted). */
   onSelect?: (id: string) => void;
   /** Ids that should not be clickable (e.g. an aggregated "Other"). */
@@ -40,11 +42,14 @@ export function BreakdownDonut({
   slices,
   centerLabel,
   centerValue,
+  amountTone = "default",
   onSelect,
   nonInteractiveIds = [],
   size = 160,
   className,
 }: BreakdownDonutProps) {
+  const amountClass =
+    amountTone === "negative" ? "text-negative" : "text-foreground";
   const { baseCurrency } = useCurrency();
   const mounted = useChartMounted();
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
@@ -96,7 +101,12 @@ export function BreakdownDonut({
         )}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5 text-center">
           <span className="label-caps">{centerLabel}</span>
-          <span className="max-w-[72%] font-mono text-[0.6875rem] font-semibold leading-none tracking-[-0.025em] tabular-nums">
+          <span
+            className={cn(
+              "max-w-[72%] font-mono text-[0.6875rem] font-semibold leading-none tracking-[-0.025em] tabular-nums",
+              amountClass
+            )}
+          >
             {centerTotal.value}
           </span>
           <span className="font-mono text-[0.5625rem] leading-none tabular-nums text-muted-foreground">
@@ -121,7 +131,12 @@ export function BreakdownDonut({
               <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
                 {total > 0 ? Math.round((slice.value / total) * 100) : 0}%
               </span>
-              <span className="max-w-28 shrink text-right font-mono text-[0.6875rem] leading-tight tabular-nums">
+              <span
+                className={cn(
+                  "max-w-28 shrink text-right font-mono text-[0.6875rem] leading-tight tabular-nums",
+                  amountClass
+                )}
+              >
                 {formatCurrencyWithBreaks(slice.value, baseCurrency)}
               </span>
             </>

@@ -209,7 +209,7 @@ export function MonthlyReport({
               <p className="label-caps">
                 {t("This month", "Este mes")}
               </p>
-              <p className="mt-2 font-mono text-base font-semibold md:text-lg">
+              <p className="mt-2 font-mono text-base font-semibold text-negative md:text-lg">
                 {formatCurrency(totalSpent, baseCurrency)}
               </p>
             </div>
@@ -217,7 +217,7 @@ export function MonthlyReport({
               <p className="label-caps">
                 {t("Last month", "Mes pasado")}
               </p>
-              <p className="mt-2 font-mono text-base font-semibold md:text-lg">
+              <p className="mt-2 font-mono text-base font-semibold text-negative md:text-lg">
                 {formatCurrency(previousMonthTotal, baseCurrency)}
               </p>
             </div>
@@ -297,7 +297,7 @@ export function MonthlyReport({
                               {t("Over", "Excedido")}
                             </Badge>
                           )}
-                          <span className="shrink-0 font-mono text-sm font-medium">
+                          <span className="shrink-0 font-mono text-sm font-medium text-negative">
                             {formatCurrency(cat.total_amount, baseCurrency)}
                           </span>
                         </div>

@@ -479,18 +479,26 @@ export function BudgetScreen() {
                       )}
                     </div>
                     <p className="text-caption text-muted-foreground">
-                      {t(
-                        `${formatCurrency(totalConsumed, baseCurrency)} spent of ${formatCurrency(totalBudgeted, baseCurrency)} budgeted`,
-                        `${formatCurrency(totalConsumed, baseCurrency)} gastado de ${formatCurrency(totalBudgeted, baseCurrency)} presupuestado`
-                      )}
+                      <span className="font-mono tabular-nums text-negative">
+                        {formatCurrency(totalConsumed, baseCurrency)}
+                      </span>{" "}
+                      {t("spent of", "gastado de")}{" "}
+                      <span className="font-mono tabular-nums">
+                        {formatCurrency(totalBudgeted, baseCurrency)}
+                      </span>{" "}
+                      {t("budgeted", "presupuestado")}
                       {isCurrentMonth &&
                         ` · ${t(`day ${dayOfMonth} of ${daysInMonth}`, `día ${dayOfMonth} de ${daysInMonth}`)}`}
                     </p>
                     {outsideObjectivesSpent > 0 && (
                       <p className="text-caption text-muted-foreground">
+                        +{" "}
+                        <span className="font-mono tabular-nums text-negative">
+                          {formatCurrency(outsideObjectivesSpent, baseCurrency)}
+                        </span>{" "}
                         {t(
-                          `+ ${formatCurrency(outsideObjectivesSpent, baseCurrency)} spent this month isn't in any objective yet — like Giving below`,
-                          `+ ${formatCurrency(outsideObjectivesSpent, baseCurrency)} gastado este mes aún no está en ningún objetivo — como Generosidad abajo`
+                          "spent this month isn't in any objective yet — like Giving below",
+                          "gastado este mes aún no está en ningún objetivo — como Generosidad abajo"
                         )}
                       </p>
                     )}
@@ -605,7 +613,10 @@ export function BudgetScreen() {
                               </span>
                             </span>
                             <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                              {formatCurrency(spent, baseCurrency)} /{" "}
+                              <span className="text-negative">
+                                {formatCurrency(spent, baseCurrency)}
+                              </span>
+                              {" / "}
                               {formatCurrency(limit, baseCurrency)}
                             </span>
                           </div>
@@ -679,15 +690,26 @@ export function BudgetScreen() {
                     tone={givingRatio >= 1 ? "success" : "neutral"}
                   />
                   <p className="text-caption text-muted-foreground">
-                    {givingRatio >= 1
-                      ? t(
-                          `Target reached — ${formatCurrency(givingSpent, baseCurrency)} given.`,
-                          `Meta alcanzada — ${formatCurrency(givingSpent, baseCurrency)} dado.`
-                        )
-                      : t(
-                          `${formatCurrency(givingSpent, baseCurrency)} given · ${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)} left`,
-                          `${formatCurrency(givingSpent, baseCurrency)} dado · faltan ${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)}`
+                    {givingRatio >= 1 ? (
+                      <>
+                        {t("Target reached —", "Meta alcanzada —")}{" "}
+                        <span className="font-mono tabular-nums text-negative">
+                          {formatCurrency(givingSpent, baseCurrency)}
+                        </span>{" "}
+                        {t("given.", "dado.")}
+                      </>
+                    ) : (
+                      <>
+                        <span className="font-mono tabular-nums text-negative">
+                          {formatCurrency(givingSpent, baseCurrency)}
+                        </span>{" "}
+                        {t("given ·", "dado ·")}{" "}
+                        {t(
+                          `${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)} left`,
+                          `faltan ${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)}`
                         )}
+                      </>
+                    )}
                   </p>
                 </>
               ) : (

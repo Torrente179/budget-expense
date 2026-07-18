@@ -359,6 +359,7 @@ export function MovementsScreen() {
             <AmountText
               amount={totalExpenses}
               currency={baseCurrency}
+              tone="negative"
               size="caption"
               className="font-medium"
             />

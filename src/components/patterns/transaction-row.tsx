@@ -75,7 +75,7 @@ export function TransactionRow({
           amount={kind === "expense" ? -Math.abs(amount) : amount}
           currency={currency}
           signed={kind === "income"}
-          tone={kind === "income" ? "positive" : "default"}
+          tone={kind === "income" ? "positive" : "negative"}
           showOriginal
         />
       </div>

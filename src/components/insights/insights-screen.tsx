@@ -444,7 +444,7 @@ export function InsightsScreen() {
                         <p className="truncate text-body font-medium">
                           {tc(row.category_name)}
                         </p>
-                        <span className="shrink-0 font-mono text-body tabular-nums">
+                        <span className="shrink-0 font-mono text-body tabular-nums text-negative">
                           {formatCurrency(row.total_amount, baseCurrency)}
                         </span>
                       </div>
@@ -503,7 +503,10 @@ export function InsightsScreen() {
                           )}
                         </span>
                         <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                          {formatCurrency(envelope.spent, baseCurrency)} /{" "}
+                          <span className="text-negative">
+                            {formatCurrency(envelope.spent, baseCurrency)}
+                          </span>
+                          {" / "}
                           {formatCurrency(envelope.budgetAmount, baseCurrency)}
                         </span>
                       </div>
@@ -540,9 +543,12 @@ export function InsightsScreen() {
                         {tc(anomaly.categoryName)}
                       </p>
                       <p className="text-caption text-muted-foreground">
+                        <span className="font-mono tabular-nums text-negative">
+                          {formatCurrency(anomaly.currentTotal, baseCurrency)}
+                        </span>{" "}
                         {t(
-                          `${formatCurrency(anomaly.currentTotal, baseCurrency)} this month vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} typical`,
-                          `${formatCurrency(anomaly.currentTotal, baseCurrency)} este mes vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} habitual`
+                          `this month vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} typical`,
+                          `este mes vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} habitual`
                         )}
                       </p>
                     </div>

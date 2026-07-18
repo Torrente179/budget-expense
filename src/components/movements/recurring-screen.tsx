@@ -208,7 +208,7 @@ export function RecurringScreen() {
               <AmountText
                 amount={-Math.abs(recurring.amount)}
                 currency={recurring.currency}
-                tone={recurring.is_active ? "default" : "muted"}
+                tone={recurring.is_active ? "negative" : "muted"}
               />
             </button>
           ))}
@@ -254,7 +254,7 @@ export function RecurringScreen() {
                         amount: normalizeDecimalInput(event.target.value),
                       })
                     }
-                    className="h-12 flex-1 font-mono text-xl tabular-nums"
+                    className="h-12 flex-1 font-mono text-xl tabular-nums text-negative"
                   />
                   <Select
                     value={form.currency}

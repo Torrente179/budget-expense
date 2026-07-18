@@ -333,7 +333,7 @@ export function HomeScreen() {
                 label={t("Spent", "Gastado")}
                 href="/movements?tab=expenses"
                 value={
-                  <span className={SUMMARY_AMOUNT_CLASS}>
+                  <span className={cn(SUMMARY_AMOUNT_CLASS, "text-negative")}>
                     {formatCurrencyWithBreaks(
                       summary.totalSpent,
                       baseCurrency
@@ -398,9 +398,12 @@ export function HomeScreen() {
                         className="h-1"
                       />
                       <span>
+                        <span className="font-mono tabular-nums text-negative">
+                          {formatCurrency(givingSpent, baseCurrency)}
+                        </span>{" "}
                         {t(
-                          `${formatCurrency(givingSpent, baseCurrency)} given · ${titheTarget}% of income`,
-                          `${formatCurrency(givingSpent, baseCurrency)} dado · ${titheTarget}% del ingreso`
+                          `given · ${titheTarget}% of income`,
+                          `dado · ${titheTarget}% del ingreso`
                         )}
                       </span>
                     </div>
@@ -523,10 +526,13 @@ export function HomeScreen() {
                             {budget.name}
                           </span>
                           <span className="max-w-full font-mono text-[0.6875rem] leading-tight tabular-nums text-muted-foreground sm:shrink-0 sm:text-right">
-                            {formatCurrencyWithBreaks(
-                              budget.spent,
-                              baseCurrency
-                            )} {" / "}
+                            <span className="text-negative">
+                              {formatCurrencyWithBreaks(
+                                budget.spent,
+                                baseCurrency
+                              )}
+                            </span>
+                            {" / "}
                             {formatCurrencyWithBreaks(
                               budget.limit,
                               baseCurrency
@@ -577,6 +583,7 @@ export function HomeScreen() {
                       slices={donut.slices}
                       centerLabel={t("Spent", "Gastado")}
                       centerValue={donut.total}
+                      amountTone="negative"
                       onSelect={openCategory}
                       nonInteractiveIds={["other"]}
                     />
