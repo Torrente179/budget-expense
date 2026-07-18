@@ -142,8 +142,13 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
   `/home`). Never a hard-coded `/home`-only Link for pushed screens.
 - **Language:** never in `Screen` headers. Mobile → profile sheet toggle;
   Settings → full list; desktop/auth → compact chip.
-- **Underline tabs:** Wealth sub-nav and Movements filters use
-  `patterns/underline-tabs.tsx` (not filled pill chips).
+- **Underline tabs everywhere:** `patterns/underline-tabs.tsx` is the only
+  in-screen view switcher app-wide (Wealth sub-nav, Movements filters,
+  Wisdom sections, Import review filter). `@/components/ui/tabs` (filled
+  pill chips) is retired — zero consumers.
+- **Status indicators:** `patterns/status-tag.tsx` (tone dot + label in ink)
+  is the only way to show state (Buy/Sell, Deposit/Withdrawal, Over-budget,
+  etc.) — never an uppercase tinted pill.
 - **Capture:** one form — `CaptureSheet` + FAB; optimistic expense add with Undo.
 
 ---
@@ -171,7 +176,47 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 ---
 
-## 7. Performance (expense path)
+## 7. Wealth (current composition)
+
+- **Overview** (`/wealth`): net worth + allocation together in one hero card
+  — big net-worth number, then a `BreakdownDonut` split across
+  investments / savings / broker cash (center total, legend with share %
+  and amount). A 3-up stat row (liquidity runway, kept in 12mo, debts).
+  Premium jump-in cards to Investments / Savings / Debts, each showing its
+  current balance. FX exposure in its own titled card.
+- **Investments** (`/wealth/investments`): `UnderlineTabs` for
+  Overview / Orders / Cash / Watchlist (no more boxed Base-UI `Tabs`).
+  Overview/cash mini-stats are plain label+number pairs, not bordered
+  blocks. Buy/Sell and Deposit/Withdrawal use `StatusTag`.
+- **Savings** / **Liabilities**: unchanged data model, same `WealthNav`
+  underline sub-nav.
+- Shared sub-nav: `src/components/wealth/wealth-nav.tsx` (underline tabs,
+  not chips).
+
+Change note: `changes/2026-07-18-premium-sweep-wealth-insights.md`.
+
+---
+
+## 8. Insights (current composition)
+
+Past + patterns only — no data-entry CTAs (see the editorial rule in
+`design.md` §1).
+
+- Ratio stat row (savings rate, expense ratio, budget usage, transactions).
+- Trailing-12-month pillars (Giving · Spending · Saving) when income data
+  exists.
+- 12-month spending trend + this-month cumulative-spend charts
+  (`ChartCard`).
+- Category breakdown, envelope utilization (rows, not boxes; over-budget
+  uses `StatusTag`), anomalies, monthly report, giving insights, income
+  sources — all de-boxed into clean rows.
+- Footer link to `/wisdom`.
+
+Change note: `changes/2026-07-18-premium-sweep-wealth-insights.md`.
+
+---
+
+## 9. Performance (expense path)
 
 Documented in `changes/2026-07-18-expense-path-performance.md`:
 
@@ -182,7 +227,7 @@ Documented in `changes/2026-07-18-expense-path-performance.md`:
 
 ---
 
-## 8. Supabase schema status (live)
+## 10. Supabase schema status (live)
 
 Project `awpygbfocmynxpadpsji`. As of 2026-07-18 **all of these are applied**:
 
@@ -208,26 +253,30 @@ production, not localhost). Built-in SMTP is rate-limited.
 
 ---
 
-## 9. Key code map
+## 11. Key code map
 
 | Area | Location |
 |---|---|
 | Nav lists | `src/lib/navigation.ts` |
 | Screen / back | `src/components/patterns/screen.tsx` |
 | Underline tabs | `src/components/patterns/underline-tabs.tsx` |
+| Status indicator | `src/components/patterns/status-tag.tsx` |
+| Shared donut | `src/components/patterns/breakdown-donut.tsx` |
 | Onboarding UI + gate | `src/components/onboarding/` |
 | Onboarding logic | `src/hooks/use-onboarding.ts`, `src/lib/onboarding/` |
 | Capture writes | `src/hooks/use-capture.ts` |
 | Envelope alerts | `src/lib/budgeting/envelope-alerts.ts` |
 | Home | `src/components/home/home-screen.tsx`, `attention-feed.tsx` |
 | Budget | `src/components/budget/budget-screen.tsx` |
+| Wealth | `src/components/wealth/wealth-overview.tsx`, `wealth-nav.tsx` |
+| Insights | `src/components/insights/insights-screen.tsx` |
 | Query keys | `src/lib/query/keys.ts` |
 | Auth middleware | `src/lib/supabase/middleware.ts` |
 | Apply SQL | `node scripts/apply-sql.mjs --project app --file …` |
 
 ---
 
-## 10. Related change notes (2026-07-18 cluster)
+## 12. Related change notes (2026-07-18 cluster)
 
 - `2026-07-18-onboarding-goals-budget-alerts.md`
 - `2026-07-18-fix-onboarding-skip-and-new-user-gate.md`
@@ -239,6 +288,10 @@ production, not localhost). Built-in SMTP is rate-limited.
 - `2026-07-18-home-stat-links-and-mobile-language.md`
 - `2026-07-18-home-clarity-refinement.md`
 - `2026-07-18-budget-objectives-and-home-stats.md`
+- `2026-07-18-fix-signup-confirmation-email.md`
+- `2026-07-18-app-handbook-documentation.md`
+- `2026-07-18-premium-sweep-wealth-insights.md`
+- `2026-07-18-new-budget-expense-favicon.md`
 
 ---
 
