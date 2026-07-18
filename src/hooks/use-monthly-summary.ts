@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { format } from "date-fns";
 import {
   fetchMonthlySummaryRaw,
   type RecentMovement,
@@ -9,12 +10,27 @@ import {
 import { queryKeys } from "@/lib/query/keys";
 import { isGivingExpense } from "@/lib/giving";
 import { useCurrency } from "@/providers/currency-provider";
+import {
+  calculateTrackedBalance,
+  type BalanceCheckpointRecord,
+  type BalanceMovementTotals,
+} from "@/lib/balance-checkpoint";
 
-interface MonthlySummary {
+export interface MonthlySummary {
   totalSpent: number;
   totalIncome: number;
   totalInvestmentTransfers: number;
-  availableBalance: number;
+  monthlyNetFlow: number;
+  monthToDateNetFlow: number | null;
+  trackedBalance: number | null;
+  balanceTrackingStatus:
+    | "tracked"
+    | "untracked"
+    | "future"
+    | "unavailable";
+  balanceCheckpointDate: string | null;
+  balanceCheckpoint: BalanceCheckpointRecord | null;
+  balanceAsOfDate: string | null;
   totalBudget: number;
   assignedCategoryBudgetTotal: number;
   allocationPercent: number | null;
@@ -43,7 +59,13 @@ const emptySummary: MonthlySummary = {
   totalSpent: 0,
   totalIncome: 0,
   totalInvestmentTransfers: 0,
-  availableBalance: 0,
+  monthlyNetFlow: 0,
+  monthToDateNetFlow: null,
+  trackedBalance: null,
+  balanceTrackingStatus: "unavailable",
+  balanceCheckpointDate: null,
+  balanceCheckpoint: null,
+  balanceAsOfDate: null,
   totalBudget: 0,
   assignedCategoryBudgetTotal: 0,
   allocationPercent: null,
@@ -57,15 +79,16 @@ const emptySummary: MonthlySummary = {
 };
 
 export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
-  const { convert } = useCurrency();
+  const { baseCurrency, convert, rates } = useCurrency();
+  const asOfDate = format(new Date(), "yyyy-MM-dd");
 
   const {
     data: rawData,
     isPending,
     refetch,
   } = useQuery({
-    queryKey: queryKeys.monthlySummary(month, year),
-    queryFn: () => fetchMonthlySummaryRaw(month, year),
+    queryKey: queryKeys.monthlySummary(month, year, asOfDate),
+    queryFn: () => fetchMonthlySummaryRaw(month, year, asOfDate),
   });
 
   // Derive converted summary from raw data + convert — recomputes when rates
@@ -81,6 +104,11 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
       monthlyPlan,
       investmentTransfers,
       prevInvestmentTransfers,
+      balanceTrackingStatus,
+      balanceCheckpoint,
+      balanceAsOfDate,
+      balanceMovementTotals,
+      monthToDateMovementTotals,
     } = rawData;
 
     const totalSpent = expenses.reduce(
@@ -108,8 +136,60 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
     const totalBudget = monthlyPlan
       ? incomeAmount! * (Number(monthlyPlan.allocation_percent) / 100)
       : assignedCategoryBudgetTotal;
-    const availableBalance =
+    const monthlyNetFlow =
       totalIncome - totalSpent - totalInvestmentTransfers;
+    const canConvertCurrency = (currency: string) =>
+      currency === baseCurrency ||
+      (Boolean(rates[currency]) && Boolean(rates[baseCurrency]));
+    const sumConverted = (
+      rows: BalanceMovementTotals["incomes"]
+    ) =>
+      rows.reduce(
+        (sum, row) => sum + convert(Number(row.amount), row.currency),
+        0
+      );
+    const monthToDateCurrencies = monthToDateMovementTotals
+      ? [
+          ...monthToDateMovementTotals.incomes.map((row) => row.currency),
+          ...monthToDateMovementTotals.expenses.map((row) => row.currency),
+          ...monthToDateMovementTotals.investmentTransfers.map(
+            (row) => row.currency
+          ),
+        ]
+      : [];
+    const canConvertMonthToDate = monthToDateCurrencies.every(
+      canConvertCurrency
+    );
+    const monthToDateNetFlow =
+      monthToDateMovementTotals && canConvertMonthToDate
+        ? sumConverted(monthToDateMovementTotals.incomes) -
+          sumConverted(monthToDateMovementTotals.expenses) -
+          sumConverted(monthToDateMovementTotals.investmentTransfers)
+        : null;
+    const balanceCurrencies = balanceCheckpoint
+      ? [
+          balanceCheckpoint.currency,
+          ...balanceMovementTotals.incomes.map((row) => row.currency),
+          ...balanceMovementTotals.expenses.map((row) => row.currency),
+          ...balanceMovementTotals.investmentTransfers.map(
+            (row) => row.currency
+          ),
+        ]
+      : [];
+    const canConvertTrackedBalance =
+      balanceCurrencies.every(canConvertCurrency);
+    const trackedBalance =
+      balanceTrackingStatus === "tracked" && canConvertTrackedBalance
+        ? calculateTrackedBalance({
+            checkpoint: balanceCheckpoint,
+            totals: balanceMovementTotals,
+            convert,
+          })
+        : null;
+    const resolvedBalanceTrackingStatus =
+      balanceTrackingStatus === "tracked" && !canConvertTrackedBalance
+        ? ("unavailable" as const)
+        : balanceTrackingStatus;
     const previousMonthTotal =
       prevExpenses.reduce(
         (sum, e) => sum + convert(Number(e.amount), e.currency),
@@ -201,7 +281,13 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
       totalSpent,
       totalIncome,
       totalInvestmentTransfers,
-      availableBalance,
+      monthlyNetFlow,
+      monthToDateNetFlow,
+      trackedBalance,
+      balanceTrackingStatus: resolvedBalanceTrackingStatus,
+      balanceCheckpointDate: balanceCheckpoint?.as_of_date ?? null,
+      balanceCheckpoint,
+      balanceAsOfDate,
       totalBudget,
       assignedCategoryBudgetTotal,
       allocationPercent: monthlyPlan
@@ -217,7 +303,7 @@ export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
       dailySpending,
       previousMonthTotal,
     };
-  }, [rawData, convert]);
+  }, [rawData, baseCurrency, convert, rates]);
 
   return { summary, loading: isPending, refetch };
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { format } from "date-fns";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   fetchExpenses,
@@ -40,12 +41,13 @@ export function usePrefetchMonths(
 
     // Fire after a short idle to avoid competing with the current page's fetches
     const timer = setTimeout(() => {
+      const asOfDate = format(new Date(), "yyyy-MM-dd");
       for (const adjacent of adjacentMonths(month, year)) {
         const { month: m, year: y } = adjacent;
         if (mode === "summary" || mode === "all") {
           void queryClient.prefetchQuery({
-            queryKey: queryKeys.monthlySummary(m, y),
-            queryFn: () => fetchMonthlySummaryRaw(m, y),
+            queryKey: queryKeys.monthlySummary(m, y, asOfDate),
+            queryFn: () => fetchMonthlySummaryRaw(m, y, asOfDate),
           });
         }
         if (mode === "ledger" || mode === "all") {

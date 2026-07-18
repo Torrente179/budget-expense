@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   fetchInvestmentSnapshot,
   requestInvestmentMutation,
@@ -10,6 +11,7 @@ import type {
   InvestmentSavingsTransferWithJoins,
 } from "@/lib/investments";
 import type { InvestmentSavingsTransferFormValues } from "@/lib/validations";
+import { queryKeys } from "@/lib/query/keys";
 
 interface UseInvestmentSavingsOptions {
   month?: number;
@@ -44,6 +46,7 @@ export function useInvestmentSavings({
   month,
   year,
 }: UseInvestmentSavingsOptions = {}) {
+  const queryClient = useQueryClient();
   const [savingsAccounts, setSavingsAccounts] = useState<
     InvestmentSavingsAccountRow[]
   >([]);
@@ -91,6 +94,9 @@ export function useInvestmentSavings({
         values,
       });
       await fetchData();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.monthlySummaryAll,
+      });
       return null;
     } catch (error) {
       return error;
@@ -108,6 +114,9 @@ export function useInvestmentSavings({
         values,
       });
       await fetchData();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.monthlySummaryAll,
+      });
       return null;
     } catch (error) {
       return error;
@@ -121,6 +130,9 @@ export function useInvestmentSavings({
         id,
       });
       await fetchData();
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.monthlySummaryAll,
+      });
       return null;
     } catch (error) {
       return error;

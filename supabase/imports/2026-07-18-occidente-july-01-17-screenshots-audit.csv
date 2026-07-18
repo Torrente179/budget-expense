@@ -1,0 +1,52 @@
+screenshot,screenshot_row,date,visible_label,sql_description,debit,credit,row_type,category_name,income_source
+1,1,2026-07-03,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,200000.00,0.00,expense,Other,
+1,2,2026-07-03,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.27,income,,Bank interest
+1,3,2026-07-03,Gmf,GMF,1755.60,0.00,expense,Taxes,
+1,4,2026-07-02,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,32700.00,0.00,expense,Other,
+1,5,2026-07-02,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,30200.00,0.00,expense,Other,
+1,6,2026-07-02,Eds Terpel Autopista Lin,EDS TERPEL AUTOPISTA LIN,25000.00,0.00,expense,Transportation,
+1,7,2026-07-02,Eds Terpel Autopista Lin,EDS TERPEL AUTOPISTA LIN,67638.00,0.00,expense,Transportation,
+1,8,2026-07-02,Tiendas Ara,TIENDAS ARA,57590.00,0.00,expense,Groceries,
+1,9,2026-07-02,Tienda D1 El Cedro,TIENDA D1 EL CEDRO,21500.00,0.00,expense,Groceries,
+1,10,2026-07-02,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.34,income,,Bank interest
+1,11,2026-07-02,Gmf,GMF,938.51,0.00,expense,Taxes,
+2,1,2026-07-09,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,1.52,income,,Bank interest
+2,2,2026-07-08,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,1.52,income,,Bank interest
+2,3,2026-07-07,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,12000.00,0.00,expense,Other,
+2,4,2026-07-07,Gmf,GMF,48.00,0.00,expense,Taxes,
+2,5,2026-07-07,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,1.52,income,,Bank interest
+2,6,2026-07-06,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,30000.00,0.00,expense,Other,
+2,7,2026-07-06,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,280000.00,0.00,expense,Other,
+2,8,2026-07-06,Recaudo/pago Servicios Elect,RECAUDO/PAGO SERVICIOS ELECT,777254.00,0.00,expense,Other,
+2,9,2026-07-06,Recaudo/pago Servicios Elect,RECAUDO/PAGO SERVICIOS ELECT,238900.00,0.00,expense,Other,
+2,10,2026-07-06,Recaudo/pago Servicios Elect,RECAUDO/PAGO SERVICIOS ELECT,521413.00,0.00,expense,Other,
+2,11,2026-07-06,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,174000.00,0.00,expense,Other,
+2,12,2026-07-06,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,85000.00,0.00,expense,Other,
+2,13,2026-07-06,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,200000.00,0.00,expense,Other,
+2,14,2026-07-06,Gmf,GMF,9226.27,0.00,expense,Taxes,
+2,15,2026-07-06,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.15,income,,Bank interest
+2,16,2026-07-06,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.15,income,,Bank interest
+2,17,2026-07-06,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.15,income,,Bank interest
+2,18,2026-07-03,Tienda D1 Jamundi Nat Di,TIENDA D1 JAMUNDI NAT DI,170900.00,0.00,expense,Groceries,
+2,19,2026-07-03,Bold Sa*kairos Ta D C,BOLD SA*KAIROS TA D C,46000.00,0.00,expense,Food & Dining,
+2,20,2026-07-03,Bold Sa*restaura Ta D C,BOLD SA*RESTAURA TA D C,22000.00,0.00,expense,Food & Dining,
+3,1,2026-07-17,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,1.92,income,,Bank interest
+3,2,2026-07-16,Bre-b Enviada Otros Bancos,BRE-B ENVIADA OTROS BANCOS,68500.00,0.00,expense,Other,
+3,3,2026-07-16,Drogueria Cruz Verde Di,DROGUERIA CRUZ VERDE DI,10735.00,0.00,expense,Healthcare,
+3,4,2026-07-16,Tienda D1 Jamundi Nat Di,TIENDA D1 JAMUNDI NAT DI,39060.00,0.00,expense,Groceries,
+3,5,2026-07-16,Tiendas Ara Di,TIENDAS ARA DI,68880.00,0.00,expense,Groceries,
+3,6,2026-07-16,Gmf,GMF,748.70,0.00,expense,Taxes,
+3,7,2026-07-16,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,1.98,income,,Bank interest
+3,8,2026-07-15,Apple.com/bill Rtino,APPLE.COM/BILL RTINO,3900.00,0.00,expense,Subscriptions,
+3,9,2026-07-15,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,1.98,income,,Bank interest
+3,10,2026-07-15,Gmf,GMF,15.60,0.00,expense,Taxes,
+3,11,2026-07-14,Apple.com/bill Rtino,APPLE.COM/BILL RTINO,3900.00,0.00,expense,Subscriptions,
+3,12,2026-07-14,Apple.com/bill Rtino,APPLE.COM/BILL RTINO,27000.00,0.00,expense,Subscriptions,
+3,13,2026-07-14,Movistar Pagosepayco Ta,MOVISTAR PAGOSEPAYCO TA,35900.00,0.00,expense,Utilities,
+3,14,2026-07-14,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.00,income,,Bank interest
+3,15,2026-07-14,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.00,income,,Bank interest
+3,16,2026-07-14,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.00,income,,Bank interest
+3,17,2026-07-14,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.00,income,,Bank interest
+3,18,2026-07-14,Gmf,GMF,267.20,0.00,expense,Taxes,
+3,19,2026-07-10,Intereses Liquidados,INTERESES LIQUIDADOS,0.00,2.00,income,,Bank interest
+3,20,2026-07-09,Pago Tercero Recibido Desde Ach,PAGO TERCERO RECIBIDO DESDE ACH,0.00,1752458.00,income,,ACH transfer received

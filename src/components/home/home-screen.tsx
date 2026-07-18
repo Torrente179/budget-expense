@@ -73,9 +73,40 @@ export function HomeScreen() {
     return t("Good evening", "Buenas noches");
   }, [t]);
 
-  /* Current = what's actually left this month. */
-  const currentBalance =
-    summary.totalIncome - summary.totalSpent - summary.totalInvestmentTransfers;
+  /* Available is an actual checkpoint-based balance, never monthly net flow. */
+  const currentBalance = summary.trackedBalance;
+  const balanceAsOfLabel = summary.balanceAsOfDate
+    ? new Intl.DateTimeFormat(intlLocale, {
+        day: "numeric",
+        month: "short",
+        timeZone: "UTC",
+      }).format(new Date(`${summary.balanceAsOfDate}T00:00:00Z`))
+    : null;
+  const monthlyNetLabel = formatCurrency(
+    summary.monthlyNetFlow,
+    baseCurrency,
+    intlLocale
+  );
+  const availableDetail =
+    summary.balanceTrackingStatus === "tracked" && balanceAsOfLabel
+      ? t(
+          `As of ${balanceAsOfLabel} · Month net ${monthlyNetLabel}`,
+          `Al ${balanceAsOfLabel} · Flujo del mes ${monthlyNetLabel}`
+        )
+      : summary.balanceTrackingStatus === "future"
+        ? t(
+            `Not projected · Month net ${monthlyNetLabel}`,
+            `Sin proyección · Flujo del mes ${monthlyNetLabel}`
+          )
+        : summary.balanceTrackingStatus === "unavailable"
+          ? t(
+              `Temporarily unavailable · Month net ${monthlyNetLabel}`,
+              `No disponible · Flujo del mes ${monthlyNetLabel}`
+            )
+          : t(
+              `${isCurrentMonth ? "Set starting balance" : "Not reconciled"} · Month net ${monthlyNetLabel}`,
+              `${isCurrentMonth ? "Define el saldo inicial" : "Sin conciliación"} · Flujo del mes ${monthlyNetLabel}`
+            );
 
   /* Month progress, for the budget pace tick. */
   const daysInMonth = getDaysInMonth(new Date(year, month - 1));
@@ -311,7 +342,7 @@ export function HomeScreen() {
             </Card>
           )}
 
-          {/* Month status row: Income · Spent · Current · Giving */}
+          {/* Month status row: Income · Spent · Available · Giving */}
           <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
             <div className="min-w-[11rem] snap-start sm:min-w-0">
               <StatCard
@@ -361,21 +392,27 @@ export function HomeScreen() {
             </div>
             <div className="min-w-[11rem] snap-start sm:min-w-0">
               <StatCard
-                label={t("Current", "Disponible")}
+                label={t("Available", "Disponible")}
+                href="/settings#available-balance"
                 value={
                   <span
                     className={cn(
                       SUMMARY_AMOUNT_CLASS,
-                      currentBalance >= 0 ? "text-foreground" : "text-negative"
+                      currentBalance !== null && currentBalance < 0
+                        ? "text-negative"
+                        : "text-foreground"
                     )}
                   >
-                    {formatCurrencyWithBreaks(currentBalance, baseCurrency)}
+                    {currentBalance === null
+                      ? "—"
+                      : formatCurrencyWithBreaks(
+                          currentBalance,
+                          baseCurrency,
+                          intlLocale
+                        )}
                   </span>
                 }
-                detail={t(
-                  "Income − spent − transfers",
-                  "Ingresos − gastos − transferencias"
-                )}
+                detail={availableDetail}
               />
             </div>
             <div className="min-w-[11rem] snap-start sm:min-w-0">

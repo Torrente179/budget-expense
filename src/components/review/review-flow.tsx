@@ -8,7 +8,6 @@ import {
   Check,
   ChevronRight,
   Sparkles,
-  Tags,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -372,9 +371,9 @@ export function ReviewFlow() {
               good={(insights?.savingsRate ?? 0) > 0}
             />
             <SummaryLine
-              label={t("Available this month", "Disponible este mes")}
-              value={formatCurrency(summary.availableBalance, baseCurrency)}
-              good={summary.availableBalance >= 0}
+              label={t("Net flow this month", "Flujo neto este mes")}
+              value={formatCurrency(summary.monthlyNetFlow, baseCurrency)}
+              good={summary.monthlyNetFlow >= 0}
             />
             <div className="pt-2">
               <Link

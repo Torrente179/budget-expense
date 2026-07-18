@@ -1,5 +1,9 @@
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import type { Database } from "@/types/database";
+import type {
+  BalanceCheckpointRecord,
+  BalanceMovementTotals,
+} from "@/lib/balance-checkpoint";
 
 export type ExpenseWithCategory =
   Database["public"]["Tables"]["expenses"]["Row"] & {
@@ -64,6 +68,15 @@ export interface RawSummaryData {
     transfer_date: string;
   }[];
   prevInvestmentTransfers: { amount: unknown; currency: string }[];
+  balanceTrackingStatus:
+    | "tracked"
+    | "untracked"
+    | "future"
+    | "unavailable";
+  balanceCheckpoint: BalanceCheckpointRecord | null;
+  balanceAsOfDate: string | null;
+  balanceMovementTotals: BalanceMovementTotals;
+  monthToDateMovementTotals: BalanceMovementTotals | null;
 }
 
 export interface RecentMovement {
@@ -114,9 +127,11 @@ export async function fetchIncomes(
 
 export async function fetchMonthlySummaryRaw(
   month: number,
-  year: number
+  year: number,
+  asOfDate: string
 ): Promise<RawSummaryData> {
   const params = monthParams({ month, year });
+  params.set("asOf", asOfDate);
   const data = await authorizedFetch<Partial<RawSummaryData>>(
     `/api/dashboard/summary?${params.toString()}`
   );
@@ -129,5 +144,14 @@ export async function fetchMonthlySummaryRaw(
     monthlyPlan: data.monthlyPlan ?? null,
     investmentTransfers: data.investmentTransfers ?? [],
     prevInvestmentTransfers: data.prevInvestmentTransfers ?? [],
+    balanceTrackingStatus: data.balanceTrackingStatus ?? "unavailable",
+    balanceCheckpoint: data.balanceCheckpoint ?? null,
+    balanceAsOfDate: data.balanceAsOfDate ?? null,
+    balanceMovementTotals: data.balanceMovementTotals ?? {
+      incomes: [],
+      expenses: [],
+      investmentTransfers: [],
+    },
+    monthToDateMovementTotals: data.monthToDateMovementTotals ?? null,
   };
 }

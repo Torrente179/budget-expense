@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
 import { LanguagePreferenceList } from "@/components/shared/language-switch";
 import { StewardshipSettings } from "@/components/settings/stewardship-settings";
+import { BalanceCheckpointSettings } from "@/components/settings/balance-checkpoint-settings";
 import { CategoryClassification } from "@/components/settings/category-classification";
 import { useOnboarding } from "@/hooks/use-onboarding";
 
@@ -32,7 +33,12 @@ export default function SettingsPage() {
   const [displayName, setDisplayName] = useState("");
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
-  const { baseCurrency, setBaseCurrency } = useCurrency();
+  const {
+    baseCurrency,
+    currencyPreferenceReady,
+    currencyPreferenceUpdating,
+    setBaseCurrency,
+  } = useCurrency();
   const { theme, setTheme } = useTheme();
   const supabase = createClient();
   const router = useRouter();
@@ -74,6 +80,17 @@ export default function SettingsPage() {
       }
     }
     setSaving(false);
+  }
+
+  async function handleCurrencyChange(code: CurrencyCode) {
+    try {
+      await setBaseCurrency(code);
+    } catch (error) {
+      console.error("Failed to update profile currency", error);
+      toast.error(
+        t("Failed to update currency", "No se pudo actualizar la moneda")
+      );
+    }
   }
 
   async function handleDeleteAccount() {
@@ -205,7 +222,12 @@ export default function SettingsPage() {
           </p>
           <Select
             value={baseCurrency}
-            onValueChange={(v) => setBaseCurrency(v as CurrencyCode)}
+            onValueChange={(value) => {
+              void handleCurrencyChange(value as CurrencyCode);
+            }}
+            disabled={
+              !currencyPreferenceReady || currencyPreferenceUpdating
+            }
           >
             <SelectTrigger className="w-full max-w-[300px]">
               <SelectValue />
@@ -221,6 +243,9 @@ export default function SettingsPage() {
           </Select>
         </CardContent>
       </Card>
+
+      {/* Available balance reconciliation */}
+      <BalanceCheckpointSettings />
 
       {/* Stewardship */}
       <StewardshipSettings />

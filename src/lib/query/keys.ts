@@ -29,8 +29,8 @@ export const queryKeys = {
 
   categories: ["categories"] as const,
 
-  monthlySummary: (month: number, year: number) =>
-    ["monthly-summary", year, month] as const,
+  monthlySummary: (month: number, year: number, asOfDate: string) =>
+    ["monthly-summary", year, month, asOfDate] as const,
   monthlySummaryAll: ["monthly-summary"] as const,
 
   onboardingProfile: ["onboarding-profile"] as const,

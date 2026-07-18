@@ -204,3 +204,64 @@ export function parseDecimalInput(value: unknown) {
 
   return Number(normalized);
 }
+
+function normalizeCurrencyWithSeparators(
+  compact: string,
+  groupingSeparator: "." | ",",
+  decimalSeparator: "." | ","
+) {
+  const escapedGrouping = groupingSeparator === "." ? "\\." : ",";
+  const escapedDecimal = decimalSeparator === "." ? "\\." : ",";
+  const groupedPattern = new RegExp(
+    `^[+-]?[1-9]\\d{0,2}(?:${escapedGrouping}\\d{3})+(?:${escapedDecimal}\\d{1,2})?$`
+  );
+  const plainPattern = new RegExp(
+    `^[+-]?(?:0|[1-9]\\d*)(?:${escapedDecimal}\\d{1,2})?$`
+  );
+
+  if (groupedPattern.test(compact)) {
+    return compact
+      .split(groupingSeparator)
+      .join("")
+      .replace(decimalSeparator, ".");
+  }
+  if (plainPattern.test(compact)) {
+    return compact.replace(decimalSeparator, ".");
+  }
+  return null;
+}
+
+/**
+ * Parse currency values with locale-aware thousands separators and up to two
+ * decimal places. The alternate EN/ES convention is accepted for pasted data.
+ */
+export function parseLocalizedCurrencyInput(
+  value: unknown,
+  locale?: string | null
+) {
+  if (typeof value === "number") {
+    return Number.isFinite(value) ? value : Number.NaN;
+  }
+  if (typeof value !== "string") return Number.NaN;
+
+  const compact = value.trim().replace(/[\s\u00a0\u202f]+/g, "");
+  if (!compact) return Number.NaN;
+
+  const isSpanish = resolveAppLocale(locale) === "es";
+  const primary = normalizeCurrencyWithSeparators(
+    compact,
+    isSpanish ? "." : ",",
+    isSpanish ? "," : "."
+  );
+  const alternate =
+    primary ??
+    normalizeCurrencyWithSeparators(
+      compact,
+      isSpanish ? "," : ".",
+      isSpanish ? "." : ","
+    );
+  if (alternate === null) return Number.NaN;
+
+  const parsed = Number(alternate);
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}

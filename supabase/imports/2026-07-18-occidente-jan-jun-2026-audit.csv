@@ -1,0 +1,526 @@
+statement_index,statement_source,statement_period,statement_row,date,transaction,ident,debit,credit,balance,row_type,category_name,income_source
+0,ExtractoOccidente.pdf,2026-01,1,2026-01-02,BRE-B ENVIADA OTROS BANCOS,,165086.00,0.00,5247095.49,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,2,2026-01-02,BRE-B ENVIADA OTROS BANCOS,,91000.00,0.00,5156095.49,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,3,2026-01-02,BRE-B ENVIADA OTROS BANCOS,,67000.00,0.00,5089095.49,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,4,2026-01-02,INTERESES LIQUIDADOS,,0.00,1.48,5089096.97,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,5,2026-01-02,GMF,0000000,1292.34,0.00,5087804.63,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,6,2026-01-05,INTERESES LIQUIDADOS,,0.00,1.39,5087806.02,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,7,2026-01-05,INTERESES LIQUIDADOS,,0.00,1.39,5087807.41,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,8,2026-01-05,INTERESES LIQUIDADOS,,0.00,1.39,5087808.80,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,9,2026-01-06,PAGO TERCERO RECIBIDO DESDE ACH,A361262,0.00,1667420.00,6755228.80,income,,ACH transfer received
+0,ExtractoOccidente.pdf,2026-01,10,2026-01-06,PANADERIA EL SAMAN NDI,,27000.00,0.00,6728228.80,expense,Food & Dining,
+0,ExtractoOccidente.pdf,2026-01,11,2026-01-06,TIENDA D1 JAMUNDI VER DI,,288730.00,0.00,6439498.80,expense,Groceries,
+0,ExtractoOccidente.pdf,2026-01,12,2026-01-06,TIENDAS ARA DI,,170800.00,0.00,6268698.80,expense,Groceries,
+0,ExtractoOccidente.pdf,2026-01,13,2026-01-06,BRE-B ENVIADA OTROS BANCOS,,400000.00,0.00,5868698.80,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,14,2026-01-06,INTERESES LIQUIDADOS,,0.00,1.39,5868700.19,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,15,2026-01-06,GMF,0000000,3546.12,0.00,5865154.07,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,16,2026-01-07,RECAUDO/PAGO SERVICIOS ELECT,A117640,383600.00,0.00,5481554.07,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,17,2026-01-07,RECAUDO/PAGO SERVICIOS ELECT,A117644,217200.00,0.00,5264354.07,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,18,2026-01-07,RECAUDO/PAGO SERVICIOS ELECT,A117672,212576.00,0.00,5051778.07,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,19,2026-01-07,BRE-B ENVIADA OTROS BANCOS,,174000.00,0.00,4877778.07,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,20,2026-01-07,RECAUDO/PAGO SERVICIOS ELECT,A117674,47250.00,0.00,4830528.07,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,21,2026-01-07,RECAUDO/PAGO SERVICIOS ELECT,A117648,592900.00,0.00,4237628.07,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,22,2026-01-07,RECAUDO/PAGO SERVICIOS ELECT,A117676,12300.00,0.00,4225328.07,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,23,2026-01-07,INTERESES LIQUIDADOS,,0.00,1.61,4225329.68,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,24,2026-01-07,GMF,0000000,6559.30,0.00,4218770.38,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,25,2026-01-08,BRE-B ENVIADA OTROS BANCOS,,169900.00,0.00,4048870.38,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,26,2026-01-08,INTERESES LIQUIDADOS,,0.00,1.16,4048871.54,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,27,2026-01-08,GMF,0000000,679.60,0.00,4048191.94,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,28,2026-01-09,BRE-B ENVIADA OTROS BANCOS,,45000.00,0.00,4003191.94,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,29,2026-01-09,BRE-B ENVIADA OTROS BANCOS,,50000.00,0.00,3953191.94,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,30,2026-01-09,INTERESES LIQUIDADOS,,0.00,1.11,3953193.05,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,31,2026-01-09,GMF,0000000,380.00,0.00,3952813.05,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,32,2026-01-13,KRIKA COSMETIC INTERN,,95900.00,0.00,3856913.05,expense,Personal Care,
+0,ExtractoOccidente.pdf,2026-01,33,2026-01-13,DOLLARCITY CC ALFAGUA NDI,,33000.00,0.00,3823913.05,expense,Shopping,
+0,ExtractoOccidente.pdf,2026-01,34,2026-01-13,PANADERIA EL SAMAN NDI,,28000.00,0.00,3795913.05,expense,Food & Dining,
+0,ExtractoOccidente.pdf,2026-01,35,2026-01-13,MOVISTAR PAGOSEPAYCO TA,,33489.00,0.00,3762424.05,expense,Utilities,
+0,ExtractoOccidente.pdf,2026-01,36,2026-01-13,BRE-B ENVIADA OTROS BANCOS,,115000.00,0.00,3647424.05,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,37,2026-01-13,BRE-B ENVIADA OTROS BANCOS,,120000.00,0.00,3527424.05,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,38,2026-01-13,INTERESES LIQUIDADOS,,0.00,1.08,3527425.13,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,39,2026-01-13,INTERESES LIQUIDADOS,,0.00,1.08,3527426.21,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,40,2026-01-13,INTERESES LIQUIDADOS,,0.00,1.08,3527427.29,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,41,2026-01-13,INTERESES LIQUIDADOS,,0.00,1.08,3527428.37,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,42,2026-01-13,GMF,0000000,1701.56,0.00,3525726.81,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,43,2026-01-14,INTERESES LIQUIDADOS,,0.00,0.97,3525727.78,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,44,2026-01-15,BRE-B ENVIADA OTROS BANCOS,,100000.00,0.00,3425727.78,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,45,2026-01-15,INTERESES LIQUIDADOS,,0.00,0.97,3425728.75,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,46,2026-01-15,GMF,0000000,400.00,0.00,3425328.75,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,47,2026-01-16,INTERESES LIQUIDADOS,,0.00,0.94,3425329.69,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,48,2026-01-19,CARNICERIA Y SALS LOS DI,,60000.00,0.00,3365329.69,expense,Groceries,
+0,ExtractoOccidente.pdf,2026-01,49,2026-01-19,BRE-B ENVIADA OTROS BANCOS,,318000.00,0.00,3047329.69,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,50,2026-01-19,BRE-B ENVIADA OTROS BANCOS,,35000.00,0.00,3012329.69,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,51,2026-01-19,SUBWAY BODYTECH SANTA,,23300.00,0.00,2989029.69,expense,Food & Dining,
+0,ExtractoOccidente.pdf,2026-01,52,2026-01-19,DOLLARCITY CENCO MALL,,99000.00,0.00,2890029.69,expense,Shopping,
+0,ExtractoOccidente.pdf,2026-01,53,2026-01-19,INTERESES LIQUIDADOS,,0.00,0.94,2890030.63,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,54,2026-01-19,INTERESES LIQUIDADOS,,0.00,0.94,2890031.57,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,55,2026-01-19,INTERESES LIQUIDADOS,,0.00,0.94,2890032.51,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,56,2026-01-19,GMF,0000000,2141.20,0.00,2887891.31,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,57,2026-01-20,INTERESES LIQUIDADOS,,0.00,0.79,2887892.10,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,58,2026-01-21,INTERESES LIQUIDADOS,,0.00,0.79,2887892.89,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,59,2026-01-22,INTERESES LIQUIDADOS,,0.00,0.79,2887893.68,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,60,2026-01-23,INTERESES LIQUIDADOS,,0.00,0.79,2887894.47,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,61,2026-01-26,BRE-B ENVIADA OTROS BANCOS,,100000.00,0.00,2787894.47,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,62,2026-01-26,RECAUDO/PAGO SERVICIOS ELECT,A125942,20940.00,0.00,2766954.47,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,63,2026-01-26,RECAUDO/PAGO SERVICIOS ELECT,A125944,33680.00,0.00,2733274.47,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,64,2026-01-26,RECAUDO/PAGO SERVICIOS ELECT,A125928,123600.00,0.00,2609674.47,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,65,2026-01-26,RECAUDO/PAGO SERVICIOS ELECT,A125930,3865.00,0.00,2605809.47,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,66,2026-01-26,RECAUDO/PAGO SERVICIOS ELECT,A125946,12760.00,0.00,2593049.47,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,67,2026-01-26,RECAUDO/PAGO SERVICIOS ELECT,A125932,2168050.00,0.00,424999.47,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,68,2026-01-26,RECAUDO/PAGO SERVICIOS ELECT,A125952,101150.00,0.00,323849.47,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,69,2026-01-26,INTERESES LIQUIDADOS,,0.00,0.79,323850.26,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,70,2026-01-26,INTERESES LIQUIDADOS,,0.00,0.79,323851.05,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,71,2026-01-26,INTERESES LIQUIDADOS,,0.00,0.79,323851.84,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,72,2026-01-26,GMF,0000000,10256.18,0.00,313595.66,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,73,2026-01-27,GOURMET CHARDY EXPRES NDI,,46000.00,0.00,267595.66,expense,Food & Dining,
+0,ExtractoOccidente.pdf,2026-01,74,2026-01-27,CC ALFAGUARA A,,11900.00,0.00,255695.66,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,75,2026-01-27,ESTACION DE SERVICIO,,90145.00,0.00,165550.66,expense,Transportation,
+0,ExtractoOccidente.pdf,2026-01,76,2026-01-27,DOLLARCITY CC ALFAGUA NDI,,35000.00,0.00,130550.66,expense,Shopping,
+0,ExtractoOccidente.pdf,2026-01,77,2026-01-27,INTERESES LIQUIDADOS,,0.00,0.09,130550.75,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,78,2026-01-27,GMF,0000000,732.18,0.00,129818.57,expense,Taxes,
+0,ExtractoOccidente.pdf,2026-01,79,2026-01-28,INTERESES LIQUIDADOS,,0.00,0.04,129818.61,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,80,2026-01-29,INTERESES LIQUIDADOS,,0.00,0.04,129818.65,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,81,2026-01-30,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A829858,0.00,1681505.00,1811323.65,income,,Transfer from own account
+0,ExtractoOccidente.pdf,2026-01,82,2026-01-30,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A830053,0.00,1764275.00,3575598.65,income,,Transfer from own account
+0,ExtractoOccidente.pdf,2026-01,83,2026-01-30,DOLLARCITY HOLGUINES,,21000.00,0.00,3554598.65,expense,Shopping,
+0,ExtractoOccidente.pdf,2026-01,84,2026-01-30,KABUK,,80000.00,0.00,3474598.65,expense,Food & Dining,
+0,ExtractoOccidente.pdf,2026-01,85,2026-01-30,REXICO Q92 DI,,54000.00,0.00,3420598.65,expense,Food & Dining,
+0,ExtractoOccidente.pdf,2026-01,86,2026-01-30,BRE-B ENVIADA OTROS BANCOS,,120100.00,0.00,3300498.65,expense,Other,
+0,ExtractoOccidente.pdf,2026-01,87,2026-01-30,INTERESES LIQUIDADOS,,0.00,0.04,3300498.69,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,88,2026-01-30,INTERESES LIQUIDADOS,,0.00,0.90,3300499.59,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,89,2026-01-30,INTERESES LIQUIDADOS,,0.00,0.90,3300500.49,income,,Bank interest
+0,ExtractoOccidente.pdf,2026-01,90,2026-01-30,GMF,0000000,1100.40,0.00,3299400.09,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,1,2026-02-02,EL ANTOJO DE JAMUNDI NDI,,14000.00,0.00,3285400.09,expense,Food & Dining,
+1,ExtractoOccidente (1).pdf,2026-02,2,2026-02-02,BRE-B ENVIADA OTROS BANCOS,,120000.00,0.00,3165400.09,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,3,2026-02-02,INTERESES LIQUIDADOS,,0.00,0.90,3165400.99,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,4,2026-02-02,GMF,0000000,536.00,0.00,3164864.99,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,5,2026-02-03,INTERESES LIQUIDADOS,,0.00,0.87,3164865.86,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,6,2026-02-04,INTERESES LIQUIDADOS,,0.00,0.87,3164866.73,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,7,2026-02-05,BRE-B ENVIADA OTROS BANCOS,,30000.00,0.00,3134866.73,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,8,2026-02-05,INTERESES LIQUIDADOS,,0.00,0.87,3134867.60,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,9,2026-02-05,GMF,0000000,120.00,0.00,3134747.60,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,10,2026-02-06,BRE-B ENVIADA OTROS BANCOS,,50000.00,0.00,3084747.60,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,11,2026-02-06,INTERESES LIQUIDADOS,,0.00,0.86,3084748.46,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,12,2026-02-06,GMF,0000000,200.00,0.00,3084548.46,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,13,2026-02-09,BRE-B ENVIADA OTROS BANCOS,,16000.00,0.00,3068548.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,14,2026-02-09,PANADERIA EL SAMAN NDI,,57000.00,0.00,3011548.46,expense,Food & Dining,
+1,ExtractoOccidente (1).pdf,2026-02,15,2026-02-09,TIENDA D1 JAMUNDI NAT DI,,86470.00,0.00,2925078.46,expense,Groceries,
+1,ExtractoOccidente (1).pdf,2026-02,16,2026-02-09,PAGO TERCERO RECIBIDO DESDE ACH,A214221,0.00,1667420.00,4592498.46,income,,ACH transfer received
+1,ExtractoOccidente (1).pdf,2026-02,17,2026-02-09,BRE-B ENVIADA OTROS BANCOS,,174000.00,0.00,4418498.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,18,2026-02-09,RECAUDO/PAGO SERVICIOS ELECT,A214183,422400.00,0.00,3996098.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,19,2026-02-09,RECAUDO/PAGO SERVICIOS ELECT,A214185,212576.00,0.00,3783522.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,20,2026-02-09,BRE-B ENVIADA OTROS BANCOS,,100000.00,0.00,3683522.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,21,2026-02-09,RECAUDO/PAGO SERVICIOS ELECT,A214175,239622.00,0.00,3443900.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,22,2026-02-09,RECAUDO/PAGO SERVICIOS ELECT,A214177,580000.00,0.00,2863900.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,23,2026-02-09,RECAUDO/PAGO SERVICIOS ELECT,A214187,473500.00,0.00,2390400.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,24,2026-02-09,RECAUDO/PAGO SERVICIOS ELECT,A214189,116300.00,0.00,2274100.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,25,2026-02-09,RECAUDO/PAGO SERVICIOS ELECT,A214179,414000.00,0.00,1860100.46,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,26,2026-02-09,INTERESES LIQUIDADOS,,0.00,0.85,1860101.31,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,27,2026-02-09,INTERESES LIQUIDADOS,,0.00,0.85,1860102.16,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,28,2026-02-09,INTERESES LIQUIDADOS,,0.00,0.85,1860103.01,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,29,2026-02-09,GMF,0000000,11567.47,0.00,1848535.54,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,30,2026-02-10,INTERESES LIQUIDADOS,,0.00,0.51,1848536.05,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,31,2026-02-11,INTERESES LIQUIDADOS,,0.00,0.51,1848536.56,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,32,2026-02-12,BRE-B RECIBIDA OTROS BANCOS,,0.00,50000.00,1898536.56,income,,Bank transfer received
+1,ExtractoOccidente (1).pdf,2026-02,33,2026-02-12,MOVISTAR PAGOSEPAYCO TA,,33489.00,0.00,1865047.56,expense,Utilities,
+1,ExtractoOccidente (1).pdf,2026-02,34,2026-02-12,INTERESES LIQUIDADOS,,0.00,0.51,1865048.07,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,35,2026-02-12,GMF,0000000,133.96,0.00,1864914.11,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,36,2026-02-13,APPLE.COM BILL RTINO,,3900.00,0.00,1861014.11,expense,Subscriptions,
+1,ExtractoOccidente (1).pdf,2026-02,37,2026-02-13,INTERESES LIQUIDADOS,,0.00,0.51,1861014.62,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,38,2026-02-13,GMF,0000000,15.60,0.00,1860999.02,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,39,2026-02-16,RECAUDO/PAGO SERVICIOS ELECT,,498000.00,0.00,1362999.02,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,40,2026-02-16,INTERESES LIQUIDADOS,,0.00,0.51,1362999.53,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,41,2026-02-16,INTERESES LIQUIDADOS,,0.00,0.51,1363000.04,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,42,2026-02-16,INTERESES LIQUIDADOS,,0.00,0.51,1363000.55,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,43,2026-02-16,GMF,0000000,1992.00,0.00,1361008.55,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,44,2026-02-17,INTERESES LIQUIDADOS,,0.00,0.37,1361008.92,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,45,2026-02-18,BRE-B ENVIADA OTROS BANCOS,,111540.00,0.00,1249468.92,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,46,2026-02-18,INTERESES LIQUIDADOS,,0.00,0.37,1249469.29,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,47,2026-02-18,GMF,0000000,446.16,0.00,1249023.13,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,48,2026-02-19,BRE-B ENVIADA OTROS BANCOS,,115000.00,0.00,1134023.13,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,49,2026-02-19,INTERESES LIQUIDADOS,,0.00,0.34,1134023.47,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,50,2026-02-19,GMF,0000000,460.00,0.00,1133563.47,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,51,2026-02-20,INTERESES LIQUIDADOS,,0.00,0.31,1133563.78,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,52,2026-02-23,PANADERIA EL SAMAN NDI,,28000.00,0.00,1105563.78,expense,Food & Dining,
+1,ExtractoOccidente (1).pdf,2026-02,53,2026-02-23,TIENDAS ARA DI,,270035.00,0.00,835528.78,expense,Groceries,
+1,ExtractoOccidente (1).pdf,2026-02,54,2026-02-23,TIENDA D1 JAMUNDI VER DI,,19950.00,0.00,815578.78,expense,Groceries,
+1,ExtractoOccidente (1).pdf,2026-02,55,2026-02-23,BRE-B ENVIADA OTROS BANCOS,,500000.00,0.00,315578.78,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,56,2026-02-23,INTERESES LIQUIDADOS,,0.00,0.31,315579.09,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,57,2026-02-23,INTERESES LIQUIDADOS,,0.00,0.31,315579.40,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,58,2026-02-23,INTERESES LIQUIDADOS,,0.00,0.31,315579.71,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,59,2026-02-23,GMF,0000000,3271.94,0.00,312307.77,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,60,2026-02-24,INTERESES LIQUIDADOS,,0.00,0.09,312307.86,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,61,2026-02-25,RECAUDO/PAGO SERVICIOS ELECT,A823056,54620.00,0.00,257687.86,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,62,2026-02-25,RECAUDO/PAGO SERVICIOS ELECT,A822994,124750.00,0.00,132937.86,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,63,2026-02-25,RECAUDO/PAGO SERVICIOS ELECT,A822996,101160.00,0.00,31777.86,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,64,2026-02-25,RECAUDO/PAGO SERVICIOS ELECT,A822998,3870.00,0.00,27907.86,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,65,2026-02-25,RECAUDO/PAGO SERVICIOS ELECT,A823000,3870.00,0.00,24037.86,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,66,2026-02-25,BRE-B ENVIADA OTROS BANCOS,,20000.00,0.00,4037.86,expense,Other,
+1,ExtractoOccidente (1).pdf,2026-02,67,2026-02-25,INTERESES LIQUIDADOS,,0.00,0.09,4037.95,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,68,2026-02-25,GMF,0000000,1233.08,0.00,2804.87,expense,Taxes,
+1,ExtractoOccidente (1).pdf,2026-02,69,2026-02-27,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A720738,0.00,1681505.00,1684309.87,income,,Transfer from own account
+1,ExtractoOccidente (1).pdf,2026-02,70,2026-02-27,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A720688,0.00,1764275.00,3448584.87,income,,Transfer from own account
+1,ExtractoOccidente (1).pdf,2026-02,71,2026-02-27,INTERESES LIQUIDADOS,,0.00,0.94,3448585.81,income,,Bank interest
+1,ExtractoOccidente (1).pdf,2026-02,72,2026-02-27,INTERESES LIQUIDADOS,,0.00,0.94,3448586.75,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,1,2026-03-02,INTERESES LIQUIDADOS,,0.00,0.94,3448587.69,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,2,2026-03-03,INTERESES LIQUIDADOS,,0.00,0.94,3448588.63,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,3,2026-03-04,BRE-B ENVIADA OTROS BANCOS,,66200.00,0.00,3382388.63,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,4,2026-03-04,INTERESES LIQUIDADOS,,0.00,0.94,3382389.57,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,5,2026-03-04,GMF,0000000,264.80,0.00,3382124.77,expense,Taxes,
+2,ExtractoOccidente (2).pdf,2026-03,6,2026-03-05,INTERESES LIQUIDADOS,,0.00,0.93,3382125.70,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,7,2026-03-06,INTERESES LIQUIDADOS,,0.00,0.93,3382126.63,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,8,2026-03-09,DOLLARCITY CC ALFAGUA NDI,,286500.00,0.00,3095626.63,expense,Shopping,
+2,ExtractoOccidente (2).pdf,2026-03,9,2026-03-09,DOLLARCITY CC ALFAGUA NDI,,12000.00,0.00,3083626.63,expense,Shopping,
+2,ExtractoOccidente (2).pdf,2026-03,10,2026-03-09,BOLD*restaurante chi,,46000.00,0.00,3037626.63,expense,Food & Dining,
+2,ExtractoOccidente (2).pdf,2026-03,11,2026-03-09,INTERESES LIQUIDADOS,,0.00,0.93,3037627.56,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,12,2026-03-09,INTERESES LIQUIDADOS,,0.00,0.93,3037628.49,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,13,2026-03-09,INTERESES LIQUIDADOS,,0.00,0.93,3037629.42,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,14,2026-03-09,GMF,0000000,1378.00,0.00,3036251.42,expense,Taxes,
+2,ExtractoOccidente (2).pdf,2026-03,15,2026-03-10,RECAUDO/PAGO SERVICIOS ELECT,A055008,228300.00,0.00,2807951.42,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,16,2026-03-10,RECAUDO/PAGO SERVICIOS ELECT,A054994,212576.00,0.00,2595375.42,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,17,2026-03-10,BRE-B ENVIADA OTROS BANCOS,,174000.00,0.00,2421375.42,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,18,2026-03-10,RECAUDO/PAGO SERVICIOS ELECT,A055010,374000.00,0.00,2047375.42,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,19,2026-03-10,RECAUDO/PAGO SERVICIOS ELECT,A054996,54600.00,0.00,1992775.42,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,20,2026-03-10,BRE-B ENVIADA OTROS BANCOS,,150000.00,0.00,1842775.42,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,21,2026-03-10,INTERESES LIQUIDADOS,,0.00,0.83,1842776.25,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,22,2026-03-10,GMF,0000000,4773.90,0.00,1838002.35,expense,Taxes,
+2,ExtractoOccidente (2).pdf,2026-03,23,2026-03-11,INTERESES LIQUIDADOS,,0.00,0.50,1838002.85,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,24,2026-03-12,MOVISTAR PAGOSEPAYCO TA,,33489.00,0.00,1804513.85,expense,Utilities,
+2,ExtractoOccidente (2).pdf,2026-03,25,2026-03-12,INTERESES LIQUIDADOS,,0.00,0.50,1804514.35,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,26,2026-03-12,GMF,0000000,133.96,0.00,1804380.39,expense,Taxes,
+2,ExtractoOccidente (2).pdf,2026-03,27,2026-03-13,APPLE.COM/BILL RTNO,,3900.00,0.00,1800480.39,expense,Subscriptions,
+2,ExtractoOccidente (2).pdf,2026-03,28,2026-03-13,APPLE.COM/BILL RTNO,,27000.00,0.00,1773480.39,expense,Subscriptions,
+2,ExtractoOccidente (2).pdf,2026-03,29,2026-03-13,APPLE.COM/BILL RTNO,,3900.00,0.00,1769580.39,expense,Subscriptions,
+2,ExtractoOccidente (2).pdf,2026-03,30,2026-03-13,INTERESES LIQUIDADOS,,0.00,0.49,1769580.88,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,31,2026-03-13,GMF,0000000,139.20,0.00,1769441.68,expense,Taxes,
+2,ExtractoOccidente (2).pdf,2026-03,32,2026-03-16,INTERESES LIQUIDADOS,,0.00,0.48,1769442.16,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,33,2026-03-16,INTERESES LIQUIDADOS,,0.00,0.48,1769442.64,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,34,2026-03-16,INTERESES LIQUIDADOS,,0.00,0.48,1769443.12,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,35,2026-03-17,INTERESES LIQUIDADOS,,0.00,0.48,1769443.60,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,36,2026-03-18,INTERESES LIQUIDADOS,,0.00,0.48,1769444.08,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,37,2026-03-19,INTERESES LIQUIDADOS,,0.00,0.48,1769444.56,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,38,2026-03-20,INTERESES LIQUIDADOS,,0.00,0.48,1769445.04,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,39,2026-03-24,RECAUDO/PAGO SERVICIOS ELECT,A677219,58370.00,0.00,1711075.04,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,40,2026-03-24,DOMINOS PIZZA EL DORA DI,,76900.00,0.00,1634175.04,expense,Food & Dining,
+2,ExtractoOccidente (2).pdf,2026-03,41,2026-03-24,BRE-B ENVIADA OTROS BANCOS,,168000.00,0.00,1466175.04,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,42,2026-03-24,RECAUDO/PAGO SERVICIOS ELECT,,52852.00,0.00,1413323.04,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,43,2026-03-24,TIENDA D1 JAMUNDI NAT DI,,233960.00,0.00,1179363.04,expense,Groceries,
+2,ExtractoOccidente (2).pdf,2026-03,44,2026-03-24,RECAUDO/PAGO SERVICIOS ELECT,A676776,134100.00,0.00,1045263.04,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,45,2026-03-24,RECAUDO/PAGO SERVICIOS ELECT,A676778,7095.00,0.00,1038168.04,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,46,2026-03-24,RECAUDO/PAGO SERVICIOS ELECT,A676784,3911.00,0.00,1034257.04,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,47,2026-03-24,BRE-B ENVIADA OTROS BANCOS,,350000.00,0.00,684257.04,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,48,2026-03-24,INTERESES LIQUIDADOS,,0.00,0.48,684257.52,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,49,2026-03-24,INTERESES LIQUIDADOS,,0.00,0.48,684258.00,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,50,2026-03-24,INTERESES LIQUIDADOS,,0.00,0.48,684258.48,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,51,2026-03-24,INTERESES LIQUIDADOS,,0.00,0.48,684258.96,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,52,2026-03-24,GMF,0000000,4340.75,0.00,679918.21,expense,Taxes,
+2,ExtractoOccidente (2).pdf,2026-03,53,2026-03-25,INTERESES LIQUIDADOS,,0.00,0.19,679918.40,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,54,2026-03-26,BRE-B ENVIADA OTROS BANCOS,,60000.00,0.00,619918.40,expense,Other,
+2,ExtractoOccidente (2).pdf,2026-03,55,2026-03-26,INTERESES LIQUIDADOS,,0.00,0.19,619918.59,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,56,2026-03-26,GMF,0000000,240.00,0.00,619678.59,expense,Taxes,
+2,ExtractoOccidente (2).pdf,2026-03,57,2026-03-27,INTERESES LIQUIDADOS,,0.00,0.17,619678.76,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,58,2026-03-30,HOMECENTER CALI SUR,,66700.00,0.00,552978.76,expense,Housing,
+2,ExtractoOccidente (2).pdf,2026-03,59,2026-03-30,ESTACION DE SERVICIO,,53406.00,0.00,499572.76,expense,Transportation,
+2,ExtractoOccidente (2).pdf,2026-03,60,2026-03-30,SUPERMERCADO LA GRAN DI,,61369.00,0.00,438203.76,expense,Groceries,
+2,ExtractoOccidente (2).pdf,2026-03,61,2026-03-30,INTERESES LIQUIDADOS,,0.00,0.17,438203.93,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,62,2026-03-30,INTERESES LIQUIDADOS,,0.00,0.17,438204.10,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,63,2026-03-30,INTERESES LIQUIDADOS,,0.00,0.17,438204.27,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,64,2026-03-30,GMF,0000000,725.90,0.00,437478.37,expense,Taxes,
+2,ExtractoOccidente (2).pdf,2026-03,65,2026-03-31,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A307162,0.00,1764275.00,2201753.37,income,,Transfer from own account
+2,ExtractoOccidente (2).pdf,2026-03,66,2026-03-31,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A307171,0.00,1681505.00,3883258.37,income,,Transfer from own account
+2,ExtractoOccidente (2).pdf,2026-03,67,2026-03-31,INTERESES LIQUIDADOS,,0.00,0.12,3883258.49,income,,Bank interest
+2,ExtractoOccidente (2).pdf,2026-03,68,2026-03-31,INTERESES LIQUIDADOS,,0.00,1.06,3883259.55,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,1,2026-04-06,BRE-B ENVIADA OTROS BANCOS,,45000.00,0.00,3838259.55,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,2,2026-04-06,CARNICERIA Y SALS LOS DI,,58000.00,0.00,3780259.55,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,3,2026-04-06,TIENDA D1 VAL JAMUNDI DI,,317930.00,0.00,3462329.55,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,4,2026-04-06,PANADERIA EL SAMAN NDI,,42500.00,0.00,3419829.55,expense,Food & Dining,
+3,ExtractoOccidente (3).pdf,2026-04,5,2026-04-06,RECAUDO/PAGO SERVICIOS ELECT,A819501,330613.00,0.00,3089216.55,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,6,2026-04-06,RECAUDO/PAGO SERVICIOS ELECT,A819514,404000.00,0.00,2685216.55,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,7,2026-04-06,BRE-B ENVIADA OTROS BANCOS,,150000.00,0.00,2535216.55,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,8,2026-04-06,BRE-B ENVIADA OTROS BANCOS,,174000.00,0.00,2361216.55,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,9,2026-04-06,INTERESES LIQUIDADOS,,0.00,1.06,2361217.61,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,10,2026-04-06,INTERESES LIQUIDADOS,,0.00,1.06,2361218.67,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,11,2026-04-06,INTERESES LIQUIDADOS,,0.00,1.06,2361219.73,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,12,2026-04-06,INTERESES LIQUIDADOS,,0.00,1.06,2361220.79,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,13,2026-04-06,INTERESES LIQUIDADOS,,0.00,1.06,2361221.85,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,14,2026-04-06,GMF,0000000,6088.17,0.00,2355133.68,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,15,2026-04-07,INTERESES LIQUIDADOS,,0.00,0.65,2355134.33,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,16,2026-04-08,RECAUDO/PAGO SERVICIOS ELECT,A057650,270700.00,0.00,2084434.33,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,17,2026-04-08,INTERESES LIQUIDADOS,,0.00,0.65,2084434.98,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,18,2026-04-08,GMF,0000000,1082.80,0.00,2083352.18,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,19,2026-04-09,INTERESES LIQUIDADOS,,0.00,0.57,2083352.75,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,20,2026-04-10,INTERESES LIQUIDADOS,,0.00,0.57,2083353.32,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,21,2026-04-13,BRE-B ENVIADA OTROS BANCOS,,420000.00,0.00,1663353.32,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,22,2026-04-13,BRE-B ENVIADA OTROS BANCOS,,69000.00,0.00,1594353.32,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,23,2026-04-13,TIENDA D1 VAL JAMUNDI DI,,149030.00,0.00,1445323.32,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,24,2026-04-13,PANADERIA EL SAMAN NDI,,28000.00,0.00,1417323.32,expense,Food & Dining,
+3,ExtractoOccidente (3).pdf,2026-04,25,2026-04-13,TIENDAS ARA DI,,62870.00,0.00,1354453.32,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,26,2026-04-13,TIENDAS ARA DI,,29990.00,0.00,1324463.32,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,27,2026-04-13,MOVISTAR PAGOSEPAYCO TA,,33489.00,0.00,1290974.32,expense,Utilities,
+3,ExtractoOccidente (3).pdf,2026-04,28,2026-04-13,APPLE.COM/BILL RTINO,,27000.00,0.00,1263974.32,expense,Subscriptions,
+3,ExtractoOccidente (3).pdf,2026-04,29,2026-04-13,APPLE.COM/BILL RTINO,,3900.00,0.00,1260074.32,expense,Subscriptions,
+3,ExtractoOccidente (3).pdf,2026-04,30,2026-04-13,APPLE.COM/BILL RTINO,,3900.00,0.00,1256174.32,expense,Subscriptions,
+3,ExtractoOccidente (3).pdf,2026-04,31,2026-04-13,PAGO TERCERO RECIBIDO DESDE ACH,A176367,0.00,1667420.00,2923594.32,income,,ACH transfer received
+3,ExtractoOccidente (3).pdf,2026-04,32,2026-04-13,INTERESES LIQUIDADOS,,0.00,0.57,2923594.89,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,33,2026-04-13,INTERESES LIQUIDADOS,,0.00,0.57,2923595.46,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,34,2026-04-13,INTERESES LIQUIDADOS,,0.00,0.57,2923596.03,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,35,2026-04-13,GMF,0000000,3308.72,0.00,2920287.31,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,36,2026-04-14,INTERESES LIQUIDADOS,,0.00,0.80,2920288.11,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,37,2026-04-15,BRE-B ENVIADA OTROS BANCOS,,700000.00,0.00,2220288.11,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,38,2026-04-15,INTERESES LIQUIDADOS,,0.00,0.80,2220288.91,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,39,2026-04-15,GMF,0000000,2800.00,0.00,2217488.91,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,40,2026-04-16,BOLD*ELSA RICURAS RE NDI,,46000.00,0.00,2171488.91,expense,Food & Dining,
+3,ExtractoOccidente (3).pdf,2026-04,41,2026-04-16,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,450000.00,0.00,1721488.91,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,42,2026-04-16,EXITO WOW JAMUNDI NDI,,11600.00,0.00,1709888.91,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,43,2026-04-16,EL ANTOJO DE JAMUNDA NDI,,50000.00,0.00,1659888.91,expense,Food & Dining,
+3,ExtractoOccidente (3).pdf,2026-04,44,2026-04-16,SUPERMERCADOS GALERIA NDI,,6050.00,0.00,1653838.91,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,45,2026-04-16,INTERESES LIQUIDADOS,,0.00,0.61,1653839.52,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,46,2026-04-16,GMF,0000000,2254.60,0.00,1651584.92,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,47,2026-04-17,TIENDA D1 JAMUNDI NAT DI,,33420.00,0.00,1618164.92,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,48,2026-04-17,INTERESES LIQUIDADOS,,0.00,0.45,1618165.37,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,49,2026-04-17,GMF,0000000,133.68,0.00,1618031.69,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,50,2026-04-20,BRE-B ENVIADA OTROS BANCOS,,170000.00,0.00,1448031.69,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,51,2026-04-20,BRE-B ENVIADA OTROS BANCOS,,37000.00,0.00,1411031.69,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,52,2026-04-20,BRE-B ENVIADA OTROS BANCOS,,33000.00,0.00,1378031.69,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,53,2026-04-20,INTERESES LIQUIDADOS,,0.00,0.44,1378032.13,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,54,2026-04-20,INTERESES LIQUIDADOS,,0.00,0.44,1378032.57,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,55,2026-04-20,INTERESES LIQUIDADOS,,0.00,0.44,1378033.01,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,56,2026-04-20,GMF,0000000,960.00,0.00,1377073.01,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,57,2026-04-21,BRE-B ENVIADA OTROS BANCOS,,251000.00,0.00,1126073.01,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,58,2026-04-21,BRE-B ENVIADA OTROS BANCOS,,15000.00,0.00,1111073.01,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,59,2026-04-21,INTERESES LIQUIDADOS,,0.00,0.38,1111073.39,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,60,2026-04-21,GMF,0000000,1064.00,0.00,1110009.39,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,61,2026-04-22,BRE-B ENVIADA OTROS BANCOS,,30000.00,0.00,1080009.39,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,62,2026-04-22,INTERESES LIQUIDADOS,,0.00,0.30,1080009.69,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,63,2026-04-22,GMF,0000000,120.00,0.00,1079889.69,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,64,2026-04-23,BRE-B ENVIADA OTROS BANCOS,,8000.00,0.00,1071889.69,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,65,2026-04-23,INTERESES LIQUIDADOS,,0.00,0.30,1071889.99,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,66,2026-04-23,GMF,0000000,32.00,0.00,1071857.99,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,67,2026-04-24,BRE-B ENVIADA OTROS BANCOS,,380000.00,0.00,691857.99,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,68,2026-04-24,INTERESES LIQUIDADOS,,0.00,0.29,691858.28,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,69,2026-04-24,GMF,0000000,1520.00,0.00,690338.28,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,70,2026-04-27,BRE-B ENVIADA OTROS BANCOS,,72000.00,0.00,618338.28,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,71,2026-04-27,EDS JAMUNDI A,,78789.00,0.00,539549.28,expense,Transportation,
+3,ExtractoOccidente (3).pdf,2026-04,72,2026-04-27,EL ANTOJO PANAMERICAN NDI,,10000.00,0.00,529549.28,expense,Food & Dining,
+3,ExtractoOccidente (3).pdf,2026-04,73,2026-04-27,BOLD*restaurante chi,,58000.00,0.00,471549.28,expense,Food & Dining,
+3,ExtractoOccidente (3).pdf,2026-04,74,2026-04-27,INTERESES LIQUIDADOS,,0.00,0.19,471549.47,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,75,2026-04-27,INTERESES LIQUIDADOS,,0.00,0.19,471549.66,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,76,2026-04-27,INTERESES LIQUIDADOS,,0.00,0.19,471549.85,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,77,2026-04-27,GMF,0000000,875.16,0.00,470674.69,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,78,2026-04-28,BRE-B ENVIADA OTROS BANCOS,,15000.00,0.00,455674.69,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,79,2026-04-28,BRE-B ENVIADA OTROS BANCOS,,15000.00,0.00,440674.69,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,80,2026-04-28,BRE-B ENVIADA OTROS BANCOS,,65000.00,0.00,375674.69,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,81,2026-04-28,TIENDAS ARA DI,,186873.00,0.00,188801.69,expense,Groceries,
+3,ExtractoOccidente (3).pdf,2026-04,82,2026-04-28,INTERESES LIQUIDADOS,,0.00,0.13,188801.82,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,83,2026-04-28,GMF,0000000,1127.49,0.00,187674.33,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,84,2026-04-29,BRE-B ENVIADA OTROS BANCOS,,45000.00,0.00,142674.33,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,85,2026-04-29,INTERESES LIQUIDADOS,,0.00,0.05,142674.38,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,86,2026-04-29,GMF,0000000,180.00,0.00,142494.38,expense,Taxes,
+3,ExtractoOccidente (3).pdf,2026-04,87,2026-04-30,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A020193,0.00,1764275.00,1906769.38,income,,Transfer from own account
+3,ExtractoOccidente (3).pdf,2026-04,88,2026-04-30,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A020198,0.00,1681505.00,3588274.38,income,,Transfer from own account
+3,ExtractoOccidente (3).pdf,2026-04,89,2026-04-30,BRE-B ENVIADA OTROS BANCOS,,100000.00,0.00,3488274.38,expense,Other,
+3,ExtractoOccidente (3).pdf,2026-04,90,2026-04-30,INTERESES LIQUIDADOS,,0.00,0.04,3488274.42,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,91,2026-04-30,INTERESES LIQUIDADOS,,0.00,0.96,3488275.38,income,,Bank interest
+3,ExtractoOccidente (3).pdf,2026-04,92,2026-04-30,GMF,0000000,400.00,0.00,3487875.38,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,1,2026-05-04,RECAUDO/PAGO SERVICIOS ELECT,A527091,55000.00,0.00,3432875.38,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,2,2026-05-04,RECAUDO/PAGO SERVICIOS ELECT,A524704,3949.00,0.00,3428926.38,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,3,2026-05-04,RECAUDO/PAGO SERVICIOS ELECT,A524706,3949.00,0.00,3424977.38,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,4,2026-05-04,BRE-B ENVIADA OTROS BANCOS,,70000.00,0.00,3354977.38,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,5,2026-05-04,BRE-B ENVIADA OTROS BANCOS,,120000.00,0.00,3234977.38,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,6,2026-05-04,BRE-B ENVIADA OTROS BANCOS,,85000.00,0.00,3149977.38,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,7,2026-05-04,INTERESES LIQUIDADOS,,0.00,0.96,3149978.34,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,8,2026-05-04,INTERESES LIQUIDADOS,,0.00,0.96,3149979.30,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,9,2026-05-04,INTERESES LIQUIDADOS,,0.00,0.96,3149980.26,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,10,2026-05-04,GMF,0000000,1351.60,0.00,3148628.66,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,11,2026-05-05,INTERESES LIQUIDADOS,,0.00,0.86,3148629.52,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,12,2026-05-06,PAGO TERCERO RECIBIDO DESDE ACH,A717603,0.00,1752458.00,4901087.52,income,,ACH transfer received
+4,ExtractoOccidente (4).pdf,2026-05,13,2026-05-06,INTERESES LIQUIDADOS,,0.00,0.86,4901088.38,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,14,2026-05-07,INTERESES LIQUIDADOS,,0.00,1.34,4901089.72,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,15,2026-05-08,INTERESES LIQUIDADOS,,0.00,1.34,4901091.06,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,16,2026-05-11,RECAUDO/PAGO SERVICIOS ELECT,A486993,21630.00,0.00,4879461.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,17,2026-05-11,BRE-B ENVIADA OTROS BANCOS,,44000.00,0.00,4835461.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,18,2026-05-11,DOLLARCITY LA 9,,164000.00,0.00,4671461.06,expense,Shopping,
+4,ExtractoOccidente (4).pdf,2026-05,19,2026-05-11,BRE-B ENVIADA OTROS BANCOS,,275000.00,0.00,4396461.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,20,2026-05-11,TIENDAS ARA DI,,318740.00,0.00,4077721.06,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,21,2026-05-11,TIENDA D1 VAL JAMUNDI DI,,81400.00,0.00,3996321.06,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,22,2026-05-11,BRE-B ENVIADA OTROS BANCOS,,65000.00,0.00,3931321.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,23,2026-05-11,RECAUDO/PAGO SERVICIOS ELECT,A486833,509000.00,0.00,3422321.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,24,2026-05-11,RECAUDO/PAGO SERVICIOS ELECT,A486913,313900.00,0.00,3108421.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,25,2026-05-11,RECAUDO/PAGO SERVICIOS ELECT,A486915,277254.00,0.00,2831167.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,26,2026-05-11,RECAUDO/PAGO SERVICIOS ELECT,A486917,139220.00,0.00,2691947.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,27,2026-05-11,BRE-B ENVIADA OTROS BANCOS,,174000.00,0.00,2517947.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,28,2026-05-11,BRE-B ENVIADA OTROS BANCOS,,120000.00,0.00,2397947.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,29,2026-05-11,RECAUDO/PAGO SERVICIOS ELECT,A486835,107550.00,0.00,2290397.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,30,2026-05-11,INTERESES LIQUIDADOS,,0.00,1.34,2290398.40,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,31,2026-05-11,INTERESES LIQUIDADOS,,0.00,1.34,2290399.74,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,32,2026-05-11,INTERESES LIQUIDADOS,,0.00,1.34,2290401.08,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,33,2026-05-11,GMF,0000000,10442.78,0.00,2279958.30,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,34,2026-05-12,INTERESES LIQUIDADOS,,0.00,0.62,2279958.92,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,35,2026-05-13,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,24000.00,0.00,2255958.92,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,36,2026-05-13,APPLE.COM/BILL RTINO,,27000.00,0.00,2228958.92,expense,Subscriptions,
+4,ExtractoOccidente (4).pdf,2026-05,37,2026-05-13,APPLE.COM/BILL RTINO,,3900.00,0.00,2225058.92,expense,Subscriptions,
+4,ExtractoOccidente (4).pdf,2026-05,38,2026-05-13,APPLE.COM/BILL RTINO,,3900.00,0.00,2221158.92,expense,Subscriptions,
+4,ExtractoOccidente (4).pdf,2026-05,39,2026-05-13,CARNICERIA Y SALS LOS DI,,58000.00,0.00,2163158.92,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,40,2026-05-13,PANADERIA EL SAMAN NDI,,30000.00,0.00,2133158.92,expense,Food & Dining,
+4,ExtractoOccidente (4).pdf,2026-05,41,2026-05-13,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,67050.00,0.00,2066108.92,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,42,2026-05-13,SUPER LA GRAN COLOMBI DI,,16400.00,0.00,2049708.92,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,43,2026-05-13,TIENDAS ARA DI,,99780.00,0.00,1949928.92,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,44,2026-05-13,TIENDA D1 JAMUNDI NAT DI,,12700.00,0.00,1937228.92,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,45,2026-05-13,TIENDA D1 JAMUNDI NAT DI,,4450.00,0.00,1932778.92,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,46,2026-05-13,INTERESES LIQUIDADOS,,0.00,0.62,1932779.54,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,47,2026-05-13,GMF,0000000,1388.72,0.00,1931390.82,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,48,2026-05-14,MOVISTAR PAGOSEPAYCO TA,,33489.00,0.00,1897901.82,expense,Utilities,
+4,ExtractoOccidente (4).pdf,2026-05,49,2026-05-14,INTERESES LIQUIDADOS,,0.00,0.53,1897902.35,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,50,2026-05-14,GMF,0000000,133.96,0.00,1897768.39,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,51,2026-05-15,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,8000.00,0.00,1889768.39,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,52,2026-05-15,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,85000.00,0.00,1804768.39,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,53,2026-05-15,INTERESES LIQUIDADOS,,0.00,0.52,1804768.91,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,54,2026-05-15,GMF,0000000,372.00,0.00,1804396.91,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,55,2026-05-19,IKEA CALI,,150900.00,0.00,1653496.91,expense,Housing,
+4,ExtractoOccidente (4).pdf,2026-05,56,2026-05-19,IKEA CALI,,1900.00,0.00,1651596.91,expense,Housing,
+4,ExtractoOccidente (4).pdf,2026-05,57,2026-05-19,IKEA CALI,,5700.00,0.00,1645896.91,expense,Housing,
+4,ExtractoOccidente (4).pdf,2026-05,58,2026-05-19,IKEA CALI,,464805.00,0.00,1181091.91,expense,Housing,
+4,ExtractoOccidente (4).pdf,2026-05,59,2026-05-19,BRE-B ENVIADA OTROS BANCOS,,130000.00,0.00,1051091.91,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,60,2026-05-19,COSMETIC SHOP MALL PL,,32000.00,0.00,1019091.91,expense,Personal Care,
+4,ExtractoOccidente (4).pdf,2026-05,61,2026-05-19,FOOD GROUP COLOMBIA,,68700.00,0.00,950391.91,expense,Food & Dining,
+4,ExtractoOccidente (4).pdf,2026-05,62,2026-05-19,DROG CRUZ VERDE ALFAG DI,,25740.00,0.00,924651.91,expense,Healthcare,
+4,ExtractoOccidente (4).pdf,2026-05,63,2026-05-19,EXITO WOW JAMUNDI NDI,,7437.00,0.00,917214.91,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,64,2026-05-19,TIENDAS ARA DI,,20390.00,0.00,896824.91,expense,Groceries,
+4,ExtractoOccidente (4).pdf,2026-05,65,2026-05-19,BRE-B ENVIADA OTROS BANCOS,,30000.00,0.00,866824.91,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,66,2026-05-19,BRE-B ENVIADA OTROS BANCOS,,800000.00,0.00,66824.91,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,67,2026-05-19,BRE-B ENVIADA OTROS BANCOS,,22000.00,0.00,44824.91,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,68,2026-05-19,BRE-B ENVIADA OTROS BANCOS,,18000.00,0.00,26824.91,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,69,2026-05-19,INTERESES LIQUIDADOS,,0.00,0.49,26825.40,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,70,2026-05-19,INTERESES LIQUIDADOS,,0.00,0.49,26825.89,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,71,2026-05-19,INTERESES LIQUIDADOS,,0.00,0.49,26826.38,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,72,2026-05-19,INTERESES LIQUIDADOS,,0.00,0.49,26826.87,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,73,2026-05-19,GMF,0000000,7110.29,0.00,19716.58,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,74,2026-05-20,BRE-B RECIBIDA OTROS BANCOS,,0.00,850000.00,869716.58,income,,Bank transfer received
+4,ExtractoOccidente (4).pdf,2026-05,75,2026-05-20,INTERESES LIQUIDADOS,,0.00,0.01,869716.59,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,76,2026-05-21,BRE-B ENVIADA OTROS BANCOS,,17000.00,0.00,852716.59,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,77,2026-05-21,INTERESES LIQUIDADOS,,0.00,0.24,852716.83,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,78,2026-05-21,GMF,0000000,68.00,0.00,852648.83,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,79,2026-05-22,BRE-B ENVIADA OTROS BANCOS,,70000.00,0.00,782648.83,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,80,2026-05-22,BRE-B ENVIADA OTROS BANCOS,,18000.00,0.00,764648.83,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,81,2026-05-22,ABONO POR TRANSACCIONES VARIAS,M012298,0.00,94960.00,859608.83,income,,Other credit
+4,ExtractoOccidente (4).pdf,2026-05,82,2026-05-22,INTERESES LIQUIDADOS,,0.00,0.23,859609.06,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,83,2026-05-22,GMF,0000000,352.00,0.00,859257.06,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,84,2026-05-25,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,181000.00,0.00,678257.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,85,2026-05-25,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,42000.00,0.00,636257.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,86,2026-05-25,BRE-B ENVIADA OTROS BANCOS,,30000.00,0.00,606257.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,87,2026-05-25,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,20000.00,0.00,586257.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,88,2026-05-25,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,10000.00,0.00,576257.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,89,2026-05-25,BRE-B ENVIADA OTROS BANCOS,,200000.00,0.00,376257.06,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,90,2026-05-25,PAGO TERCERO RECIBIDO DESDE ACH,A967020,0.00,1752458.00,2128715.06,income,,ACH transfer received
+4,ExtractoOccidente (4).pdf,2026-05,91,2026-05-25,INTERESES LIQUIDADOS,,0.00,0.24,2128715.30,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,92,2026-05-25,INTERESES LIQUIDADOS,,0.00,0.24,2128715.54,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,93,2026-05-25,INTERESES LIQUIDADOS,,0.00,0.24,2128715.78,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,94,2026-05-25,GMF,0000000,1932.00,0.00,2126783.78,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,95,2026-05-26,INTERESES LIQUIDADOS,,0.00,0.58,2126784.36,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,96,2026-05-27,BRE-B ENVIADA OTROS BANCOS,,50000.00,0.00,2076784.36,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,97,2026-05-27,INTERESES LIQUIDADOS,,0.00,0.58,2076784.94,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,98,2026-05-27,GMF,0000000,200.00,0.00,2076584.94,expense,Taxes,
+4,ExtractoOccidente (4).pdf,2026-05,99,2026-05-28,INTERESES LIQUIDADOS,,0.00,0.57,2076585.51,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,100,2026-05-29,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A452283,0.00,1681505.00,3758090.51,income,,Transfer from own account
+4,ExtractoOccidente (4).pdf,2026-05,101,2026-05-29,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A452279,0.00,1764275.00,5522365.51,income,,Transfer from own account
+4,ExtractoOccidente (4).pdf,2026-05,102,2026-05-29,BRE-B ENVIADA OTROS BANCOS,,26000.00,0.00,5496365.51,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,103,2026-05-29,BRE-B ENVIADA OTROS BANCOS,,30000.00,0.00,5466365.51,expense,Other,
+4,ExtractoOccidente (4).pdf,2026-05,104,2026-05-29,INTERESES LIQUIDADOS,,0.00,0.57,5466366.08,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,105,2026-05-29,INTERESES LIQUIDADOS,,0.00,1.50,5466367.58,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,106,2026-05-29,INTERESES LIQUIDADOS,,0.00,1.50,5466369.08,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,107,2026-05-29,INTERESES LIQUIDADOS,,0.00,1.50,5466370.58,income,,Bank interest
+4,ExtractoOccidente (4).pdf,2026-05,108,2026-05-29,GMF,0000000,224.00,0.00,5466146.58,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,1,2026-06-01,BRE-B ENVIADA OTROS BANCOS,,26000.00,0.00,5440146.58,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,2,2026-06-01,ESTACION DE SERVICIO,,39911.00,0.00,5400235.58,expense,Transportation,
+5,ExtractoOccidente (5).pdf,2026-06,3,2026-06-01,BRE-B ENVIADA OTROS BANCOS,,152000.00,0.00,5248235.58,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,4,2026-06-01,GMF,0000000,871.64,0.00,5247363.94,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,5,2026-06-02,INTERESES LIQUIDADOS,,0.00,1.44,5247365.38,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,6,2026-06-03,INTERESES LIQUIDADOS,,0.00,1.44,5247366.82,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,7,2026-06-04,INTERESES LIQUIDADOS,,0.00,1.44,5247368.26,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,8,2026-06-05,BRE-B ENVIADA OTROS BANCOS,,149000.00,0.00,5098368.26,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,9,2026-06-05,TIENDA D1 VAL JAMUNDI DI,,26240.00,0.00,5072128.26,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,10,2026-06-05,TIENDA D1 VAL JAMUNDI DI,,114150.00,0.00,4957978.26,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,11,2026-06-05,INTERESES LIQUIDADOS,,0.00,1.44,4957979.70,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,12,2026-06-05,GMF,0000000,1157.56,0.00,4956822.14,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,13,2026-06-09,BRE-B ENVIADA OTROS BANCOS,,50000.00,0.00,4906822.14,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,14,2026-06-09,PAGO TERCERO RECIBIDO DESDE ACH,A958051,0.00,1752458.00,6659280.14,income,,ACH transfer received
+5,ExtractoOccidente (5).pdf,2026-06,15,2026-06-09,BRE-B ENVIADA OTROS BANCOS,,28000.00,0.00,6631280.14,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,16,2026-06-09,BRE-B ENVIADA OTROS BANCOS,,20000.00,0.00,6611280.14,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,17,2026-06-09,BRE-B ENVIADA OTROS BANCOS,,174000.00,0.00,6437280.14,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,18,2026-06-09,INTERESES LIQUIDADOS,,0.00,1.36,6437281.50,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,19,2026-06-09,INTERESES LIQUIDADOS,,0.00,1.36,6437282.86,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,20,2026-06-09,INTERESES LIQUIDADOS,,0.00,1.36,6437284.22,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,21,2026-06-09,INTERESES LIQUIDADOS,,0.00,1.36,6437285.58,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,22,2026-06-09,GMF,0000000,1088.00,0.00,6436197.58,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,23,2026-06-10,BRE-B ENVIADA OTROS BANCOS,,1059154.00,0.00,5377043.58,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,24,2026-06-10,BRE-B ENVIADA OTROS BANCOS,,21770.00,0.00,5355273.58,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,25,2026-06-10,INTERESES LIQUIDADOS,,0.00,1.76,5355275.34,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,26,2026-06-10,GMF,0000000,4323.70,0.00,5350951.64,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,27,2026-06-11,INTERESES LIQUIDADOS,,0.00,1.47,5350953.11,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,28,2026-06-12,BRE-B ENVIADA OTROS BANCOS,,200000.00,0.00,5150953.11,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,29,2026-06-12,MOVISTAR PAGOSEPAYCO TA,,33489.00,0.00,5117464.11,expense,Utilities,
+5,ExtractoOccidente (5).pdf,2026-06,30,2026-06-12,INTERESES LIQUIDADOS,,0.00,1.47,5117465.58,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,31,2026-06-12,GMF,0000000,933.96,0.00,5116531.62,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,32,2026-06-16,APPLE.COM/BILL RTINO,,27000.00,0.00,5089531.62,expense,Subscriptions,
+5,ExtractoOccidente (5).pdf,2026-06,33,2026-06-16,APPLE.COM/BILL RTINO,,3900.00,0.00,5085631.62,expense,Subscriptions,
+5,ExtractoOccidente (5).pdf,2026-06,34,2026-06-16,APPLE.COM/BILL RTINO,,3900.00,0.00,5081731.62,expense,Subscriptions,
+5,ExtractoOccidente (5).pdf,2026-06,35,2026-06-16,BRE-B ENVIADA OTROS BANCOS,,68000.00,0.00,5013731.62,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,36,2026-06-16,INTERESES LIQUIDADOS,,0.00,1.40,5013733.02,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,37,2026-06-16,INTERESES LIQUIDADOS,,0.00,1.40,5013734.42,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,38,2026-06-16,INTERESES LIQUIDADOS,,0.00,1.40,5013735.82,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,39,2026-06-16,INTERESES LIQUIDADOS,,0.00,1.40,5013737.22,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,40,2026-06-16,GMF,0000000,411.20,0.00,5013326.02,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,41,2026-06-17,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,8000.00,0.00,5005326.02,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,42,2026-06-17,COMPRA QR RETIRO / TRANSFERENCIA CON LLAVE DEBITO,,65100.00,0.00,4940226.02,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,43,2026-06-17,BRE-B ENVIADA OTROS BANCOS,,17500.00,0.00,4922726.02,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,44,2026-06-17,SURTIBELLEZA LORENA DI,,29500.00,0.00,4893226.02,expense,Personal Care,
+5,ExtractoOccidente (5).pdf,2026-06,45,2026-06-17,SURTIBELLEZA LORENA DI,,22500.00,0.00,4870726.02,expense,Personal Care,
+5,ExtractoOccidente (5).pdf,2026-06,46,2026-06-17,TIENDA D1 VAL JAMUNDI DI,,265130.00,0.00,4605596.02,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,47,2026-06-17,TIENDA D1 VAL JAMUNDI DI,,51940.00,0.00,4553656.02,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,48,2026-06-17,INTERESES LIQUIDADOS,,0.00,1.37,4553657.39,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,49,2026-06-17,GMF,0000000,1838.68,0.00,4551818.71,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,50,2026-06-18,BRE-B ENVIADA OTROS BANCOS,,320000.00,0.00,4231818.71,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,51,2026-06-18,INTERESES LIQUIDADOS,,0.00,1.25,4231819.96,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,52,2026-06-18,GMF,0000000,1280.00,0.00,4230539.96,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,53,2026-06-19,INTERESES LIQUIDADOS,,0.00,1.16,4230541.12,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,54,2026-06-22,BOLD SA*SERVITEC TA D C,,62900.00,0.00,4167641.12,expense,Transportation,
+5,ExtractoOccidente (5).pdf,2026-06,55,2026-06-22,PANADERIA EL SAMAN NDI,,22500.00,0.00,4145141.12,expense,Food & Dining,
+5,ExtractoOccidente (5).pdf,2026-06,56,2026-06-22,OPECOM EDS LA AUTOPIS,,90344.00,0.00,4054797.12,expense,Transportation,
+5,ExtractoOccidente (5).pdf,2026-06,57,2026-06-22,BOLD SA*RESTAURA TA D C,,67000.00,0.00,3987797.12,expense,Food & Dining,
+5,ExtractoOccidente (5).pdf,2026-06,58,2026-06-22,TIENDAS ARA DI,,64216.00,0.00,3923581.12,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,59,2026-06-22,RECAUDO/PAGO SERVICIOS ELECT,A367985,11184.00,0.00,3912397.12,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,60,2026-06-22,RECAUDO/PAGO SERVICIOS ELECT,A368010,11184.00,0.00,3901213.12,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,61,2026-06-22,RECAUDO/PAGO SERVICIOS ELECT,A368113,22000.00,0.00,3879213.12,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,62,2026-06-22,RECAUDO/PAGO SERVICIOS ELECT,A368030,251997.00,0.00,3627216.12,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,63,2026-06-22,RECAUDO/PAGO SERVICIOS ELECT,A367864,53944.00,0.00,3573272.12,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,64,2026-06-22,RECAUDO/PAGO SERVICIOS ELECT,A367870,70660.00,0.00,3502612.12,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,65,2026-06-22,BRE-B ENVIADA OTROS BANCOS,,50000.00,0.00,3452612.12,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,66,2026-06-22,INTERESES LIQUIDADOS,,0.00,1.16,3452613.28,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,67,2026-06-22,INTERESES LIQUIDADOS,,0.00,1.16,3452614.44,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,68,2026-06-22,INTERESES LIQUIDADOS,,0.00,1.16,3452615.60,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,69,2026-06-22,GMF,0000000,3111.73,0.00,3449503.87,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,70,2026-06-23,BRE-B ENVIADA OTROS BANCOS,,50000.00,0.00,3399503.87,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,71,2026-06-23,INTERESES LIQUIDADOS,,0.00,0.95,3399504.82,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,72,2026-06-23,GMF,0000000,200.00,0.00,3399304.82,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,73,2026-06-24,INTERESES LIQUIDADOS,,0.00,0.93,3399305.75,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,74,2026-06-25,RECAUDO/PAGO SERVICIOS ELECT,A383080,1634000.00,0.00,1765305.75,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,75,2026-06-25,BRE-B RECIBIDA OTROS BANCOS,,0.00,450000.00,2215305.75,income,,Bank transfer received
+5,ExtractoOccidente (5).pdf,2026-06,76,2026-06-25,BRE-B ENVIADA OTROS BANCOS,,366000.00,0.00,1849305.75,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,77,2026-06-25,INTERESES LIQUIDADOS,,0.00,0.93,1849306.68,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,78,2026-06-25,GMF,0000000,8000.00,0.00,1841306.68,expense,Taxes,
+5,ExtractoOccidente (5).pdf,2026-06,79,2026-06-26,INTERESES LIQUIDADOS,,0.00,0.50,1841307.18,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,80,2026-06-30,BRE-B ENVIADA OTROS BANCOS,,200000.00,0.00,1641307.18,expense,Other,
+5,ExtractoOccidente (5).pdf,2026-06,81,2026-06-30,EL ANTOJO DE JAMUNDI NDI,,15000.00,0.00,1626307.18,expense,Food & Dining,
+5,ExtractoOccidente (5).pdf,2026-06,82,2026-06-30,SUPER LA GRAN COLOMBI DI,,21710.00,0.00,1604597.18,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,83,2026-06-30,MERCASTILLO EXPRESS DI,,65600.00,0.00,1538997.18,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,84,2026-06-30,SC CIUDAD COUNTRY GO,,28150.00,0.00,1510847.18,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,85,2026-06-30,FD SAN JORGE COUNTRYM NDI,,44800.00,0.00,1466047.18,expense,Healthcare,
+5,ExtractoOccidente (5).pdf,2026-06,86,2026-06-30,TIENDA D1 VAL JAMUNDI DI,,125850.00,0.00,1340197.18,expense,Groceries,
+5,ExtractoOccidente (5).pdf,2026-06,87,2026-06-30,CITY PARKING,,3300.00,0.00,1336897.18,expense,Transportation,
+5,ExtractoOccidente (5).pdf,2026-06,88,2026-06-30,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A365964,0.00,3432410.00,4769307.18,income,,Transfer from own account
+5,ExtractoOccidente (5).pdf,2026-06,89,2026-06-30,PAGO A TERCEROS RECIBIDO DESDE CUENTA PROPIA,A365960,0.00,3769150.00,8538457.18,income,,Transfer from own account
+5,ExtractoOccidente (5).pdf,2026-06,90,2026-06-30,INTERESES LIQUIDADOS,,0.00,0.50,8538457.68,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,91,2026-06-30,INTERESES LIQUIDADOS,,0.00,0.50,8538458.18,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,92,2026-06-30,INTERESES LIQUIDADOS,,0.00,0.50,8538458.68,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,93,2026-06-30,INTERESES LIQUIDADOS,,0.00,0.50,8538459.18,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,94,2026-06-30,INTERESES LIQUIDADOS,,0.00,2.34,8538461.52,income,,Bank interest
+5,ExtractoOccidente (5).pdf,2026-06,95,2026-06-30,GMF,0000000,2017.64,0.00,8536443.88,expense,Taxes,

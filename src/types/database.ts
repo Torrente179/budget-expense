@@ -9,6 +9,48 @@ export type Json =
 export interface Database {
   public: {
     Tables: {
+      balance_checkpoints: {
+        Row: {
+          id: string;
+          user_id: string;
+          balance: number;
+          currency: string;
+          as_of_date: string;
+          calculated_balance_before: number | null;
+          reconciliation_delta: number | null;
+          calculation_start_date: string | null;
+          calculation_basis: "monthly_net" | "tracked_balance" | null;
+          note: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          balance: number;
+          currency: string;
+          as_of_date: string;
+          calculated_balance_before?: number | null;
+          reconciliation_delta?: number | null;
+          calculation_start_date?: string | null;
+          calculation_basis?: "monthly_net" | "tracked_balance" | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          balance?: number;
+          currency?: string;
+          as_of_date?: string;
+          calculated_balance_before?: number | null;
+          reconciliation_delta?: number | null;
+          calculation_start_date?: string | null;
+          calculation_basis?: "monthly_net" | "tracked_balance" | null;
+          note?: string | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       profiles: {
         Row: {
           id: string;

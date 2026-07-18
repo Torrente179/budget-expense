@@ -20,6 +20,8 @@ interface CurrencyContextValue {
   /** Provenance per currency — badge anything that isn't "ecb". */
   rateSources: Record<string, RateSource>;
   isLoading: boolean;
+  currencyPreferenceReady: boolean;
+  currencyPreferenceUpdating: boolean;
   convert: (amount: number, fromCurrency: string) => number;
   setBaseCurrency: (code: CurrencyCode) => Promise<void>;
 }
@@ -34,33 +36,45 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
     {}
   );
   const [manualRates, setManualRates] = useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [currencyPreferenceReady, setCurrencyPreferenceReady] =
+    useState(false);
+  const [currencyPreferenceUpdating, setCurrencyPreferenceUpdating] =
+    useState(false);
+  const [ratesLoading, setRatesLoading] = useState(true);
   const supabase = createClient();
 
   useEffect(() => {
     async function loadCurrencyPreference() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) return;
 
-      const { data } = await supabase
-        .from("profiles")
-        .select("base_currency, manual_fx_rates")
-        .eq("id", user.id)
-        .maybeSingle();
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("base_currency, manual_fx_rates")
+          .eq("id", user.id)
+          .maybeSingle();
 
-      if (data?.base_currency) {
-        setBaseCurrencyState(data.base_currency as CurrencyCode);
-      }
-      if (data?.manual_fx_rates && typeof data.manual_fx_rates === "object") {
-        const manual: Record<string, number> = {};
-        for (const [code, rate] of Object.entries(
-          data.manual_fx_rates as Record<string, unknown>
-        )) {
-          if (typeof rate === "number" && rate > 0) manual[code] = rate;
+        if (error || !data?.base_currency) return;
+
+        if (data.base_currency) {
+          setBaseCurrencyState(data.base_currency as CurrencyCode);
+          setCurrencyPreferenceReady(true);
         }
-        setManualRates(manual);
+        if (data?.manual_fx_rates && typeof data.manual_fx_rates === "object") {
+          const manual: Record<string, number> = {};
+          for (const [code, rate] of Object.entries(
+            data.manual_fx_rates as Record<string, unknown>
+          )) {
+            if (typeof rate === "number" && rate > 0) manual[code] = rate;
+          }
+          setManualRates(manual);
+        }
+      } finally {
+        setProfileLoading(false);
       }
     }
     loadCurrencyPreference().catch(() => {
@@ -80,7 +94,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       } catch {
         // Rates unavailable — conversion will return original amounts
       } finally {
-        setIsLoading(false);
+        setRatesLoading(false);
       }
     }
     fetchRates();
@@ -112,18 +126,33 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
   const setBaseCurrency = useCallback(
     async (code: CurrencyCode) => {
-      setBaseCurrencyState(code);
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
+      if (code === baseCurrency) return;
+
+      setCurrencyPreferenceUpdating(true);
+      try {
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
+        if (!user) throw new Error("No authenticated user");
+
+        const { data, error } = await supabase
           .from("profiles")
           .update({ base_currency: code })
-          .eq("id", user.id);
+          .eq("id", user.id)
+          .select("id")
+          .maybeSingle();
+
+        if (error || !data) {
+          throw error ?? new Error("Profile currency was not updated");
+        }
+
+        setBaseCurrencyState(code);
+        setCurrencyPreferenceReady(true);
+      } finally {
+        setCurrencyPreferenceUpdating(false);
       }
     },
-    [supabase]
+    [baseCurrency, supabase]
   );
 
   const value = useMemo(
@@ -131,7 +160,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       baseCurrency,
       rates: effectiveRates,
       rateSources: effectiveSources,
-      isLoading,
+      isLoading:
+        profileLoading || ratesLoading || currencyPreferenceUpdating,
+      currencyPreferenceReady,
+      currencyPreferenceUpdating,
       convert,
       setBaseCurrency,
     }),
@@ -139,7 +171,10 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       baseCurrency,
       effectiveRates,
       effectiveSources,
-      isLoading,
+      profileLoading,
+      ratesLoading,
+      currencyPreferenceReady,
+      currencyPreferenceUpdating,
       convert,
       setBaseCurrency,
     ]
