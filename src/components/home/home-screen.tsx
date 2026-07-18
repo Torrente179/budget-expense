@@ -28,7 +28,7 @@ import { resolveGivingTarget } from "@/lib/giving";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency, formatCurrencyWithBreaks } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { StatCard } from "@/components/patterns/stat-card";
@@ -40,6 +40,9 @@ import { MonthPicker } from "@/components/shared/month-picker";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+
+const SUMMARY_AMOUNT_CLASS =
+  "block max-w-full whitespace-normal font-mono text-[clamp(0.6875rem,5.5cqw,1.0625rem)] font-semibold leading-tight tracking-[-0.025em] tabular-nums";
 
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
@@ -315,8 +318,11 @@ export function HomeScreen() {
                 label={t("Income", "Ingresos")}
                 href="/movements?tab=income"
                 value={
-                  <span className="font-mono text-heading font-semibold tabular-nums text-positive">
-                    {formatCurrency(summary.totalIncome, baseCurrency)}
+                  <span className={cn(SUMMARY_AMOUNT_CLASS, "text-positive")}>
+                    {formatCurrencyWithBreaks(
+                      summary.totalIncome,
+                      baseCurrency
+                    )}
                   </span>
                 }
                 detail={t("this month", "este mes")}
@@ -327,8 +333,11 @@ export function HomeScreen() {
                 label={t("Spent", "Gastado")}
                 href="/movements?tab=expenses"
                 value={
-                  <span className="font-mono text-heading font-semibold tabular-nums">
-                    {formatCurrency(summary.totalSpent, baseCurrency)}
+                  <span className={SUMMARY_AMOUNT_CLASS}>
+                    {formatCurrencyWithBreaks(
+                      summary.totalSpent,
+                      baseCurrency
+                    )}
                   </span>
                 }
                 detail={
@@ -356,11 +365,11 @@ export function HomeScreen() {
                 value={
                   <span
                     className={cn(
-                      "font-mono text-heading font-semibold tabular-nums",
+                      SUMMARY_AMOUNT_CLASS,
                       currentBalance >= 0 ? "text-foreground" : "text-negative"
                     )}
                   >
-                    {formatCurrency(currentBalance, baseCurrency)}
+                    {formatCurrencyWithBreaks(currentBalance, baseCurrency)}
                   </span>
                 }
                 detail={t(
@@ -374,9 +383,9 @@ export function HomeScreen() {
                 label={t("Giving", "Generosidad")}
                 icon={<HandHeart className="h-4 w-4" />}
                 value={
-                  <span className="font-mono text-heading font-semibold tabular-nums">
+                  <span className={SUMMARY_AMOUNT_CLASS}>
                     {givingTarget > 0
-                      ? formatCurrency(givingTarget, baseCurrency)
+                      ? formatCurrencyWithBreaks(givingTarget, baseCurrency)
                       : "—"}
                   </span>
                 }
@@ -455,7 +464,7 @@ export function HomeScreen() {
                 <>
                   {/* Overall: what's left of the plan, paced against the calendar */}
                   <div className="space-y-1.5">
-                    <div className="flex items-baseline justify-between gap-3">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
                       <span
                         className={cn(
                           "font-mono text-title tabular-nums",
@@ -469,7 +478,7 @@ export function HomeScreen() {
                           baseCurrency
                         )}
                       </span>
-                      <span className="text-caption text-muted-foreground">
+                      <span className="min-w-0 text-caption text-muted-foreground sm:text-right">
                         {t(
                           `left of ${formatCurrency(totalBudgeted, baseCurrency)}`,
                           `restante de ${formatCurrency(totalBudgeted, baseCurrency)}`
@@ -509,13 +518,19 @@ export function HomeScreen() {
                         href="/budget"
                         className="block space-y-1.5 rounded-lg px-2 py-2 transition-colors hover:bg-accent/50"
                       >
-                        <div className="flex items-center justify-between gap-3">
+                        <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
                           <span className="min-w-0 truncate text-body font-medium">
                             {budget.name}
                           </span>
-                          <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                            {formatCurrency(budget.spent, baseCurrency)} /{" "}
-                            {formatCurrency(budget.limit, baseCurrency)}
+                          <span className="max-w-full font-mono text-[0.6875rem] leading-tight tabular-nums text-muted-foreground sm:shrink-0 sm:text-right">
+                            {formatCurrencyWithBreaks(
+                              budget.spent,
+                              baseCurrency
+                            )} {" / "}
+                            {formatCurrencyWithBreaks(
+                              budget.limit,
+                              baseCurrency
+                            )}
                           </span>
                         </div>
                         <ProgressMeter ratio={budget.ratio} className="h-1.5" />

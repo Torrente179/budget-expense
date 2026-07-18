@@ -113,6 +113,36 @@ export function formatCurrency(
   return getCurrencyFormatter(currencyCode, locale).format(amount);
 }
 
+/** Preserve Intl formatting while allowing a line break before the unit. */
+export function formatCurrencyWithBreaks(
+  amount: number,
+  currencyCode: string = "EUR",
+  locale?: string | null
+) {
+  return formatCurrency(amount, currencyCode, locale).replace(
+    /[\u00a0\u202f]/g,
+    " "
+  );
+}
+
+/** Currency value and unit split for constrained visualizations. */
+export function formatCurrencyParts(
+  amount: number,
+  currencyCode: string = "EUR",
+  locale?: string | null
+) {
+  const parts = getCurrencyFormatter(currencyCode, locale).formatToParts(amount);
+  const currency =
+    parts.find((part) => part.type === "currency")?.value ?? currencyCode;
+  const value = parts
+    .filter((part) => part.type !== "currency")
+    .map((part) => part.value)
+    .join("")
+    .trim();
+
+  return { value, currency };
+}
+
 export function getCurrencySymbol(code: string) {
   const currency = CURRENCIES.find((c) => c.code === code);
   return currency?.symbol ?? code;

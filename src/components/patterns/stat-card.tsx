@@ -30,7 +30,7 @@ export function StatCard({
     <Card
       size="sm"
       className={cn(
-        "h-full min-w-0 justify-between gap-2 px-3.5",
+        "@container/stat-card h-full min-w-0 justify-between gap-2 px-3.5",
         href &&
           "transition-all duration-200 hover:shadow-2 hover:ring-border/80",
         className
@@ -41,7 +41,7 @@ export function StatCard({
         {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
       </div>
       <div className="min-w-0">
-        <div className="truncate">{value}</div>
+        <div className="min-w-0 leading-tight">{value}</div>
         {detail && (
           <div className="mt-1 text-caption text-muted-foreground">
             {detail}

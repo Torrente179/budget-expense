@@ -20,5 +20,11 @@ No data model changes.
 
 ## Validation
 
-- Pending: lint, TypeScript/build validation, and browser checks at laptop and
-  wide-desktop widths.
+- Targeted ESLint passed with no errors. The existing TanStack Virtual
+  compiler-compatibility warning remains unchanged.
+- `npm run build` passed: production compilation, TypeScript, and all 49 static
+  pages completed successfully.
+- The local route and responsive viewport tooling were checked, but the
+  available browser profile redirects private ledger routes to login; visual
+  comparison therefore used the supplied wide-desktop screenshot as the
+  baseline.

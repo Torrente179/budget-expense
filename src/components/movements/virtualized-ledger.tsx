@@ -91,7 +91,7 @@ export function VirtualizedLedger({
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
               {item.type === "header" ? (
-                <p className="label-caps mb-1.5 px-4 pt-4 md:px-5">
+                <p className="label-caps mb-1.5 px-4 pt-4">
                   {formatDate(item.date, "EEEE d MMMM yyyy", locale)}
                 </p>
               ) : (

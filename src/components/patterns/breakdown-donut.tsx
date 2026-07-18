@@ -2,7 +2,10 @@
 
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { useCurrency } from "@/providers/currency-provider";
-import { formatCurrency } from "@/lib/utils";
+import {
+  formatCurrencyParts,
+  formatCurrencyWithBreaks,
+} from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useChartMounted } from "@/components/charts/chart-theme";
 import type { ReactNode } from "react";
@@ -46,6 +49,7 @@ export function BreakdownDonut({
   const mounted = useChartMounted();
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
   const displayTotal = centerValue ?? total;
+  const centerTotal = formatCurrencyParts(displayTotal, baseCurrency);
 
   const canSelect = (id: string) =>
     Boolean(onSelect) && !nonInteractiveIds.includes(id);
@@ -68,7 +72,7 @@ export function BreakdownDonut({
                 data={slices}
                 dataKey="value"
                 nameKey="name"
-                innerRadius={size * 0.33}
+                innerRadius={size * 0.36}
                 outerRadius={size * 0.47}
                 paddingAngle={2}
                 stroke="var(--card)"
@@ -90,10 +94,13 @@ export function BreakdownDonut({
             </PieChart>
           </ResponsiveContainer>
         )}
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5 text-center">
           <span className="label-caps">{centerLabel}</span>
-          <span className="font-mono text-caption font-semibold tabular-nums">
-            {formatCurrency(displayTotal, baseCurrency)}
+          <span className="max-w-[72%] font-mono text-[0.6875rem] font-semibold leading-none tracking-[-0.025em] tabular-nums">
+            {centerTotal.value}
+          </span>
+          <span className="font-mono text-[0.5625rem] leading-none tabular-nums text-muted-foreground">
+            {centerTotal.currency}
           </span>
         </div>
       </div>
@@ -114,8 +121,8 @@ export function BreakdownDonut({
               <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
                 {total > 0 ? Math.round((slice.value / total) * 100) : 0}%
               </span>
-              <span className="w-20 shrink-0 text-right font-mono text-caption tabular-nums">
-                {formatCurrency(slice.value, baseCurrency)}
+              <span className="max-w-28 shrink text-right font-mono text-[0.6875rem] leading-tight tabular-nums">
+                {formatCurrencyWithBreaks(slice.value, baseCurrency)}
               </span>
             </>
           );
