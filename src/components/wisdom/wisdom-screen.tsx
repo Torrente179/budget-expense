@@ -184,7 +184,7 @@ export function WisdomScreen() {
 
   return (
     <Screen
-      title={t("Wisdom & guidance", "Sabiduría y guía")}
+      title={t("Wisdom", "Sabiduría")}
       backHref="/insights"
       actions={
         <div className="hidden items-center gap-1.5 sm:flex">

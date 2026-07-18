@@ -275,7 +275,7 @@ export function InsightsScreen() {
             <Card>
               <CardHeader>
                 <SectionHeader
-                  eyebrow={t("Trailing 12 months", "Últimos 12 meses")}
+                  eyebrow={t("Last 12 months", "Últimos 12 meses")}
                   title={t(
                     "Giving · Spending · Saving",
                     "Dar · Gastar · Ahorrar"
@@ -469,11 +469,11 @@ export function InsightsScreen() {
             <Card>
               <CardHeader>
                 <SectionHeader
-                  eyebrow={t("Budget performance", "Desempeño del presupuesto")}
-                  title={t("Envelope utilization", "Uso de sobres")}
+                  eyebrow={t("Against plan", "Frente al plan")}
+                  title={t("Budget use", "Uso del presupuesto")}
                   description={t(
-                    `${budgetUtilization.filter((b) => b.ratio > 1).length} of ${budgetUtilization.length} envelopes over budget`,
-                    `${budgetUtilization.filter((b) => b.ratio > 1).length} de ${budgetUtilization.length} sobres excedidos`
+                    `${budgetUtilization.filter((b) => b.ratio > 1).length} of ${budgetUtilization.length} budgets over the limit`,
+                    `${budgetUtilization.filter((b) => b.ratio > 1).length} de ${budgetUtilization.length} presupuestos por encima del límite`
                   )}
                 />
               </CardHeader>
@@ -520,8 +520,8 @@ export function InsightsScreen() {
             <Card>
               <CardHeader>
                 <SectionHeader
-                  eyebrow={t("Watch out", "Atención")}
-                  title={t("Unusual spending", "Gasto inusual")}
+                  eyebrow={t("Heads up", "Ojo")}
+                  title={t("Unusual spending", "Gasto raro")}
                 />
               </CardHeader>
               <CardContent className="space-y-1">
@@ -572,8 +572,8 @@ export function InsightsScreen() {
               <Card>
                 <CardHeader>
                   <SectionHeader
-                    eyebrow={t("Income analysis", "Análisis de ingresos")}
-                    title={t("Income sources", "Fuentes de ingreso")}
+                    eyebrow={t("Income", "Ingresos")}
+                    title={t("Where it came from", "De dónde vino")}
                     action={
                       <div className="flex h-9 w-9 items-center justify-center rounded-full bg-success-subtle text-success">
                         <TrendingUp className="h-4.5 w-4.5" />

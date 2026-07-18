@@ -239,12 +239,12 @@ export function OnboardingWizard() {
           <Card>
             <CardContent className="space-y-4 py-6">
               <h2 className="text-heading font-semibold">
-                {t("Let's set up your money map", "Configuremos tu mapa financiero")}
+                {t("A few things about your money", "Unas cuantas cosas sobre tu dinero")}
               </h2>
               <p className="text-body text-muted-foreground">
                 {t(
-                  "We'll ask about income, fixed bills, debts, and goals — then tune Budget and Home for you. You can skip anytime.",
-                  "Te preguntaremos por ingresos, gastos fijos, deudas y metas — y ajustaremos Presupuesto e Inicio. Puedes saltarlo cuando quieras."
+                  "Income, fixed bills, debts, and goals. We'll tune Budget and Home from that. Skip whenever you want.",
+                  "Ingresos, gastos fijos, deudas y metas. Con eso ajustamos Presupuesto e Inicio. Puedes saltarlo cuando quieras."
                 )}
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
@@ -272,8 +272,8 @@ export function OnboardingWizard() {
               </h2>
               <p className="text-caption text-muted-foreground">
                 {t(
-                  "Typical take-home pay for this month.",
-                  "Tu ingreso neto habitual de este mes."
+                  "What you usually take home this month.",
+                  "Lo que sueles cobrar neto este mes."
                 )}
               </p>
               <div className="flex gap-2">
@@ -570,7 +570,7 @@ export function OnboardingWizard() {
             <CardContent className="space-y-5 py-6">
               <div className="space-y-3">
                 <h2 className="text-heading font-semibold">
-                  {t("Do you want help with budgeting?", "¿Quieres ayuda con el presupuesto?")}
+                  {t("Want a hand with the budget?", "¿Te echo una mano con el presupuesto?")}
                 </h2>
                 <div className="grid grid-cols-2 gap-2">
                   {[
@@ -631,15 +631,15 @@ export function OnboardingWizard() {
           <Card>
             <CardContent className="space-y-4 py-6">
               <h2 className="text-heading font-semibold">
-                {t("Your setup plan", "Tu plan de configuración")}
+                {t("What we'll set up", "Lo que vamos a dejar listo")}
               </h2>
               <ul className="space-y-2 text-body text-muted-foreground">
                 <li>
-                  {t("Monthly plan income will be saved for this month.", "Se guardará el ingreso del plan de este mes.")}
+                  {t("This month's income, saved on your plan.", "El ingreso de este mes, guardado en tu plan.")}
                 </li>
                 {suggestedMethod && (
                   <li>
-                    {t("Suggested method", "Método sugerido")}:{" "}
+                    {t("Method that fits", "Método que encaja")}:{" "}
                     <span className="font-medium text-foreground">
                       {suggestedMethod.name}
                     </span>{" "}
@@ -649,16 +649,16 @@ export function OnboardingWizard() {
                 {wantsBudgetHelp && personalization.seedEnvelopes.length > 0 && (
                   <li>
                     {t(
-                      `We'll create ${personalization.seedEnvelopes.length} starter budget envelopes.`,
-                      `Crearemos ${personalization.seedEnvelopes.length} presupuestos iniciales.`
+                      `We'll add ${personalization.seedEnvelopes.length} starter budgets.`,
+                      `Añadiremos ${personalization.seedEnvelopes.length} presupuestos de partida.`
                     )}
                   </li>
                 )}
                 {personalization.attentionHints.includes("pay_debt") && (
                   <li>
                     {t(
-                      "Wealth → Liabilities will be highlighted for debt payoff.",
-                      "Patrimonio → Pasivos se destacará para pagar deudas."
+                      "We'll surface your debts under Wealth.",
+                      "Destacaremos tus deudas en Patrimonio."
                     )}
                   </li>
                 )}

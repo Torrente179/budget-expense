@@ -423,10 +423,10 @@ export function HomeScreen() {
                         {t("No objectives yet", "Aún sin objetivos")}
                       </p>
                       <p className="text-caption text-muted-foreground">
-                        {t(
-                          "Group categories into budgets and we'll track every euro against them.",
-                          "Agrupa categorías en presupuestos y seguiremos cada euro contra ellos."
-                        )}
+                      {t(
+                        "Group categories into budgets and we'll track spending against them.",
+                        "Agrupa categorías en presupuestos y seguiremos el gasto frente a ellos."
+                      )}
                       </p>
                     </div>
                   </div>

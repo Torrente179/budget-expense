@@ -270,18 +270,18 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Danger zone */}
+      {/* Account deletion */}
       <Card className="border-destructive/30">
         <CardHeader>
           <CardTitle className="text-sm font-medium text-destructive">
-            {t("Danger zone", "Zona de peligro")}
+            {t("Delete account", "Eliminar cuenta")}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <p className="text-sm text-muted-foreground">
             {t(
-              "Permanently delete your account and all associated data. This action cannot be undone.",
-              "Elimina permanentemente tu cuenta y todos los datos asociados. Esta acción no se puede deshacer."
+              "This removes your account and everything in it. It can't be undone.",
+              "Esto borra tu cuenta y todo lo que hay en ella. No se puede deshacer."
             )}
           </p>
           <Separator />

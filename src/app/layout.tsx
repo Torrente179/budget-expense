@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   applicationName: "Budget & Expense",
   title: "Budget & Expense",
   description:
-    "Track expenses and monthly stewardship plans / Registra gastos y planes mensuales de mayordomía.",
+    "A private ledger for spending, budgets, and giving. / Tu libro privado de gastos, presupuestos y dar.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,

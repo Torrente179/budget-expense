@@ -147,7 +147,7 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
           <div className="flex items-center justify-between gap-3">
             <div className="space-y-2">
               <Badge variant="outline" className="bg-secondary/70 text-foreground">
-                {t("Giving & stewardship", "Donaciones y mayordomía")}
+                {t("Giving", "Dar")}
               </Badge>
               <CardTitle className="font-heading text-title font-semibold leading-none tracking-tight md:text-display">
                 {formatCurrency(analysis.totalGiving, baseCurrency)}
@@ -169,7 +169,7 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
                   `${analysis.count} giving transaction${analysis.count !== 1 ? "s" : ""}`,
                   `${analysis.count} transacci${analysis.count !== 1 ? "ones" : "ón"} de donación`
                 )
-              : t("No giving transactions yet", "Sin transacciones de donación aún")}
+              : t("No giving logged yet", "Aún no hay ofrendas registradas")}
           </p>
         </CardHeader>
 
@@ -192,12 +192,12 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
               <p className="mt-2 text-xs text-muted-foreground">
                 {analysis.isAboveTithe
                   ? t(
-                      `You have met or exceeded the ${titheTargetPercent}% giving target this month. Generosity in action.`,
-                      `Has alcanzado o superado tu meta de dar del ${titheTargetPercent}% este mes. Generosidad en acción.`
+                      `You've hit your ${titheTargetPercent}% giving target this month.`,
+                      `Has alcanzado tu meta de dar del ${titheTargetPercent}% este mes.`
                     )
                   : t(
-                      `${formatCurrency(analysis.titheGoal - analysis.totalGiving, baseCurrency)} remaining to reach the ${titheTargetPercent}% target.`,
-                      `Faltan ${formatCurrency(analysis.titheGoal - analysis.totalGiving, baseCurrency)} para alcanzar tu meta del ${titheTargetPercent}%.`
+                      `${formatCurrency(analysis.titheGoal - analysis.totalGiving, baseCurrency)} left to hit ${titheTargetPercent}%.`,
+                      `Faltan ${formatCurrency(analysis.titheGoal - analysis.totalGiving, baseCurrency)} para llegar al ${titheTargetPercent}%.`
                     )}
               </p>
             </div>
@@ -252,8 +252,8 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
               <p className="flex items-start gap-2 text-sm leading-6 text-muted-foreground">
                 <TrendingUp className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                 {t(
-                  "Tip: Create categories named 'Tithe', 'Giving', 'Donation', or 'Tzedakah' and log your giving as expenses. This tracker will automatically detect them.",
-                  "Consejo: Crea categorías con nombres como 'Diezmo', 'Donación', 'Ofrenda' o 'Tzedakah' y registra tus donaciones como gastos. Este rastreador las detectará automáticamente."
+                  "Tip: Name a category Tithe, Giving, Donation, or Tzedakah and log gifts as expenses. We'll pick them up here.",
+                  "Consejo: Nombra una categoría Diezmo, Donación, Ofrenda o Tzedakah y registra lo que das como gastos. Aparecerán aquí."
                 )}
               </p>
             </div>

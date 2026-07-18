@@ -83,7 +83,7 @@ export function WealthOverview() {
   const stats = [
     {
       key: "runway",
-      label: t("Liquidity runway", "Colchón de liquidez"),
+      label: t("Cash runway", "Meses de colchón"),
       icon: Timer,
       value:
         runwayMonths !== null
@@ -101,7 +101,7 @@ export function WealthOverview() {
     },
     {
       key: "kept",
-      label: t("Kept in 12 mo", "Guardado en 12 mo"),
+      label: t("Kept over 12 mo", "Guardado en 12 meses"),
       icon: PiggyBank,
       value: formatCurrency(keptIn12M, baseCurrency),
       detail: t("Income − spending", "Ingresos − gastos"),
@@ -261,7 +261,7 @@ export function WealthOverview() {
               <CardHeader>
                 <SectionHeader
                   eyebrow={t("Currency", "Moneda")}
-                  title={t("FX exposure", "Exposición cambiaria")}
+                  title={t("By currency", "Por divisa")}
                 />
               </CardHeader>
               <CardContent>

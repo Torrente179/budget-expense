@@ -169,7 +169,7 @@ export function FxExposureCard({
     <Card>
       <CardContent className="space-y-3">
         <p className="label-caps">
-          {t("FX exposure", "Exposición por divisa")}
+          {t("By currency", "Por divisa")}
         </p>
         {body}
       </CardContent>

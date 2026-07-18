@@ -360,17 +360,17 @@ export function BudgetScreen() {
             <Card>
               <CardHeader>
                 <SectionHeader
-                  eyebrow={t("Getting started", "Primeros pasos")}
-                  title={t("Plan your month in 3 steps", "Planifica tu mes en 3 pasos")}
+                  eyebrow={t("First time here", "Primera vez")}
+                  title={t("Three things to get started", "Tres cosas para empezar")}
                   description={
                     profile?.wants_budget_help
                       ? t(
-                          "A budget is a spending target for a group of categories. Set it once — the month is measured against it.",
-                          "Un presupuesto es un objetivo de gasto para un grupo de categorías. Defínelo una vez — el mes se mide contra él."
+                          "A budget is a monthly spending limit for a group of categories. Set it once; the month is measured against it.",
+                          "Un presupuesto es un límite de gasto mensual para un grupo de categorías. Lo defines una vez; el mes se mide contra él."
                         )
                       : t(
-                          "A budget is a spending target for a group of categories.",
-                          "Un presupuesto es un objetivo de gasto para un grupo de categorías."
+                          "A budget is a monthly spending limit for a group of categories.",
+                          "Un presupuesto es un límite de gasto mensual para un grupo de categorías."
                         )
                   }
                 />

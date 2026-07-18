@@ -140,8 +140,8 @@ export function ReviewFlow() {
             <CardTitle>{t("Needs a category", "Necesita categoría")}</CardTitle>
             <CardDescription>
               {t(
-                "Movements the importer wasn't sure about. One tap each; 'remember' teaches the importer.",
-                "Movimientos que el importador no supo clasificar. Un toque cada uno; se puede enseñar al importador."
+                "Movements the importer wasn't sure about. One tap each; 'remember' teaches it for next time.",
+                "Movimientos que el importador no supo clasificar. Un toque cada uno; 'recordar' le enseña para la próxima."
               )}
             </CardDescription>
           </CardHeader>
@@ -227,8 +227,8 @@ export function ReviewFlow() {
             <CardTitle>{t("Out of pattern", "Fuera de patrón")}</CardTitle>
             <CardDescription>
               {t(
-                "Categories running well above their usual month. Just awareness — nothing to fix here.",
-                "Categorías muy por encima de su mes habitual. Solo para tu conocimiento — nada que corregir aquí."
+                "Categories running well above their usual month. Just so you know — nothing to fix here.",
+                "Categorías muy por encima de su mes habitual. Solo para que lo sepas — nada que corregir aquí."
               )}
             </CardDescription>
           </CardHeader>
@@ -331,9 +331,12 @@ export function ReviewFlow() {
       {step === "summary" && (
         <Card>
           <CardHeader>
-            <CardTitle>{t("Steady stewardship", "Mayordomía constante")}</CardTitle>
+            <CardTitle>{t("That's the week", "Eso es la semana")}</CardTitle>
             <CardDescription>
-              {t("The three numbers that matter, then go live your week.", "Los tres números que importan; ahora ve y vive tu semana.")}
+              {t(
+                "Three numbers. Then go live your week.",
+                "Tres números. Luego ve y vive tu semana."
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">

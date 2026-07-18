@@ -249,8 +249,8 @@ export function AttentionFeed() {
             {t("All clear", "Todo en orden")}
           </span>{" "}
           {t(
-            "— nothing needs your attention this week.",
-            "— nada necesita tu atención esta semana."
+            "— nothing waiting this week.",
+            "— nada pendiente esta semana."
           )}
         </p>
       </div>
@@ -262,7 +262,7 @@ export function AttentionFeed() {
       <CardHeader>
         <SectionHeader
           eyebrow={t("This week", "Esta semana")}
-          title={t("Needs your attention", "Necesita tu atención")}
+          title={t("Worth a look", "Conviene mirar")}
         />
       </CardHeader>
       <CardContent className="px-2 pb-2">

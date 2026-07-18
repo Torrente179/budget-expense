@@ -69,7 +69,7 @@ export function CommandMenu() {
       <CommandDialog
         open={open}
         onOpenChange={setOpen}
-        title={t("Quick navigation", "Navegación rápida")}
+        title={t("Go somewhere", "Ir a…")}
         description={t(
           "Type a destination and press enter",
           "Escribe un destino y presiona enter"

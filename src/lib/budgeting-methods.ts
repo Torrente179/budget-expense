@@ -44,7 +44,7 @@ const ENGLISH_METHODS: BudgetingMethod[] = [
     name: "50 / 30 / 20",
     tagline: "Needs, wants, and future",
     description:
-      "Popularized by Senator Elizabeth Warren, this rule splits after-tax income into three buckets: essentials (housing, food, utilities), personal wants (dining out, hobbies), and savings or debt repayment. Simple to start with, easy to remember.",
+      "Split take-home pay three ways: essentials, wants, and savings or debt payoff. Easy to remember; good place to start. (Popularized by Elizabeth Warren.)",
     isFaithBased: false,
     origin: "Elizabeth Warren & Amelia Warren Tyagi, All Your Worth (2005)",
     slices: [
@@ -89,7 +89,7 @@ const ENGLISH_METHODS: BudgetingMethod[] = [
     name: "60 / 30 / 10",
     tagline: "Essentials first, then live and give",
     description:
-      "A tighter variation that allocates 60% to committed essentials, 30% to flexible spending and enjoyment, and 10% to savings or giving. This method suits higher cost-of-living areas where essentials consume more income.",
+      "Same idea as 50/30/20, but tighter: 60% for committed costs, 30% for flexible spending, 10% for saving or giving. Useful where rent and bills eat more of the paycheck.",
     isFaithBased: false,
     origin: "Adapted from Richard Jenkins' MSN Money '60% Solution'",
     slices: [
@@ -134,7 +134,7 @@ const ENGLISH_METHODS: BudgetingMethod[] = [
     name: "5 Jars",
     tagline: "Give first, then save, invest, and spend",
     description:
-      "A faith-oriented framework rooted in biblical and Jewish stewardship. The first jar goes to God as a tithe, the second to help others, then investing, saving, and finally responsible spending. It teaches that giving comes before spending — not from leftovers.",
+      "Five jars in order: tithe to God, help others, invest, save, then spend. Giving comes first — not from what's left over.",
     isFaithBased: true,
     origin: "Faith-based budgeting tradition (biblical & Jewish financial ethics)",
     slices: [
@@ -197,7 +197,7 @@ const ENGLISH_METHODS: BudgetingMethod[] = [
     name: "Zero-based",
     tagline: "Every dollar gets a job",
     description:
-      "Made popular by YNAB and Dave Ramsey's EveryDollar, zero-based budgeting assigns every unit of income to a specific category until the balance reaches zero. Nothing is left 'unassigned.' This method demands full awareness of where money flows.",
+      "Give every bit of income a job until nothing is left unassigned. Popular in YNAB and EveryDollar. Takes more attention; you always know where money goes.",
     isFaithBased: false,
     origin: "YNAB (You Need A Budget) & Dave Ramsey's EveryDollar",
     slices: [
@@ -266,7 +266,7 @@ const ENGLISH_METHODS: BudgetingMethod[] = [
     name: "Pay yourself first",
     tagline: "Save before you spend",
     description:
-      "This method flips the typical order: instead of saving what's left after spending, you set aside savings and investments immediately when income arrives. The remaining amount becomes your spending budget. It builds wealth by making saving automatic and non-negotiable.",
+      "Save and invest first, when income lands. What's left is what you may spend. Wealth grows because saving isn't optional.",
     isFaithBased: false,
     origin: "George S. Clason, The Richest Man in Babylon (1926)",
     slices: [
@@ -311,7 +311,7 @@ const ENGLISH_METHODS: BudgetingMethod[] = [
     name: "Values-based",
     tagline: "Spend in alignment with what matters most",
     description:
-      "Rather than rigid percentage targets, values-based budgeting starts by identifying what matters most to you — family, faith, health, education, community — then allocates money to reflect those priorities. It's about intentionality over formula.",
+      "Skip rigid percentages. Name what matters — family, faith, health, community — then put money there first. Intention over formula.",
     isFaithBased: false,
     origin: "Conscious spending philosophy & ethical finance movements",
     slices: [
@@ -371,7 +371,7 @@ const SPANISH_METHODS: BudgetingMethod[] = [
     name: "50 / 30 / 20",
     tagline: "Necesidades, deseos y futuro",
     description:
-      "Popularizada por la senadora Elizabeth Warren, esta regla divide el ingreso neto en tres grupos: lo esencial (vivienda, comida, servicios), lo personal (salir a comer, hobbies) y ahorro o pago de deudas. Sencilla de empezar, fácil de recordar.",
+      "Divide el neto en tres: lo esencial, lo que quieres, y ahorro o deudas. Fácil de recordar; buen punto de partida. (Popularizada por Elizabeth Warren.)",
     isFaithBased: false,
     origin: "Elizabeth Warren y Amelia Warren Tyagi, All Your Worth (2005)",
     slices: [
@@ -416,7 +416,7 @@ const SPANISH_METHODS: BudgetingMethod[] = [
     name: "60 / 30 / 10",
     tagline: "Lo esencial primero, luego vivir y dar",
     description:
-      "Una variación más ajustada que destina el 60% a gastos esenciales comprometidos, el 30% a gasto flexible y disfrute, y el 10% a ahorro o donaciones. Ideal para ciudades con alto costo de vida donde lo esencial consume más ingreso.",
+      "Como el 50/30/20, pero más apretado: 60% a costos fijos, 30% a gasto flexible, 10% a ahorrar o dar. Útil donde el alquiler y las facturas se comen más del sueldo.",
     isFaithBased: false,
     origin: "Adaptado de la 'Solución del 60%' de Richard Jenkins en MSN Money",
     slices: [
@@ -461,7 +461,7 @@ const SPANISH_METHODS: BudgetingMethod[] = [
     name: "5 Jarras",
     tagline: "Da primero, luego ahorra, invierte y gasta",
     description:
-      "Un marco orientado a la fe, con raíces en la mayordomía bíblica y la ética financiera judía. La primera jarra va para Dios como diezmo, la segunda para ayudar al prójimo, luego inversión, ahorro y finalmente gasto responsable. Enseña que dar va antes de gastar — no con lo que sobra.",
+      "Cinco jarras en orden: diezmo a Dios, ayuda al prójimo, invertir, ahorrar y luego gastar. Dar va primero — no con lo que sobra.",
     isFaithBased: true,
     origin: "Tradición de presupuesto basado en la fe (ética financiera bíblica y judía)",
     slices: [
@@ -524,7 +524,7 @@ const SPANISH_METHODS: BudgetingMethod[] = [
     name: "Base cero",
     tagline: "Cada peso tiene un trabajo",
     description:
-      "Popularizado por YNAB y EveryDollar de Dave Ramsey, el presupuesto base cero asigna cada unidad de ingreso a una categoría específica hasta que el balance llega a cero. Nada queda 'sin asignar'. Exige conciencia total de hacia dónde va el dinero.",
+      "Dale un trabajo a cada unidad de ingreso hasta que no quede nada sin asignar. Popular en YNAB y EveryDollar. Pide más atención; siempre sabes a dónde va el dinero.",
     isFaithBased: false,
     origin: "YNAB (You Need A Budget) y EveryDollar de Dave Ramsey",
     slices: [
@@ -593,7 +593,7 @@ const SPANISH_METHODS: BudgetingMethod[] = [
     name: "Págate primero",
     tagline: "Ahorra antes de gastar",
     description:
-      "Este método invierte el orden típico: en vez de ahorrar lo que sobra, apartas ahorro e inversiones inmediatamente al recibir el ingreso. Lo que queda se convierte en tu presupuesto de gasto. Construye riqueza al hacer del ahorro algo automático y no negociable.",
+      "Ahorra e invierte primero, cuando llega el ingreso. Lo que queda es lo que puedes gastar. La riqueza crece porque ahorrar no es opcional.",
     isFaithBased: false,
     origin: "George S. Clason, El hombre más rico de Babilonia (1926)",
     slices: [
@@ -638,7 +638,7 @@ const SPANISH_METHODS: BudgetingMethod[] = [
     name: "Basado en valores",
     tagline: "Gasta en línea con lo que más importa",
     description:
-      "En vez de porcentajes rígidos, el presupuesto basado en valores empieza identificando lo que más importa — familia, fe, salud, educación, comunidad — y luego asigna dinero para reflejar esas prioridades. Se trata de intencionalidad sobre fórmula.",
+      "Olvida los porcentajes rígidos. Nombra lo que importa — familia, fe, salud, comunidad — y pon el dinero ahí primero. Intención sobre fórmula.",
     isFaithBased: false,
     origin: "Filosofía de gasto consciente y movimientos de finanzas éticas",
     slices: [

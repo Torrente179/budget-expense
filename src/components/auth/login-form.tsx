@@ -52,13 +52,10 @@ export function LoginForm() {
           <span className="text-lg font-bold text-primary">B</span>
         </div>
         <CardTitle className="text-xl tracking-tight">
-          {t("Welcome back", "Bienvenido de nuevo")}
+          {t("Welcome back", "Qué bueno verte")}
         </CardTitle>
         <CardDescription>
-          {t(
-            "Enter your credentials to access your account",
-            "Ingresa tus credenciales para acceder a tu cuenta"
-          )}
+          {t("Log in to open your ledger.", "Entra para abrir tu libro.")}
         </CardDescription>
       </CardHeader>
       <CardContent>

@@ -114,8 +114,8 @@ export function SignupForm() {
           </CardTitle>
           <CardDescription>
             {t(
-              `We sent a confirmation link to ${pendingEmail}. Open it to activate your account, then you can finish setup.`,
-              `Enviamos un enlace de confirmación a ${pendingEmail}. Ábrelo para activar tu cuenta y luego podrás terminar la configuración.`
+              `We sent a link to ${pendingEmail}. Open it, then you can finish setup.`,
+              `Enviamos un enlace a ${pendingEmail}. Ábrelo y luego terminas la configuración.`
             )}
           </CardDescription>
         </CardHeader>
@@ -161,12 +161,12 @@ export function SignupForm() {
           <span className="text-lg font-bold text-primary">B</span>
         </div>
         <CardTitle className="text-xl tracking-tight">
-          {t("Create an account", "Crear una cuenta")}
+          {t("Create an account", "Crea tu cuenta")}
         </CardTitle>
         <CardDescription>
           {t(
-            "Start tracking your expenses and budgets",
-            "Empieza a registrar tus gastos y presupuestos"
+            "For spending, budgets, and giving — in one place.",
+            "Gastos, presupuestos y dar — todo en un solo sitio."
           )}
         </CardDescription>
       </CardHeader>

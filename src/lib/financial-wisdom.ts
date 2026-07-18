@@ -47,53 +47,53 @@ const ENGLISH_CONTENT: FinancialWisdomContent = {
   toolsSection: {
     title: "Money-tracking tools and apps",
     intro:
-      "Modern apps automate tracking, categorize expenses and offer analytics. There is no single 'best' tool — the best system depends on your lifestyle and habits.",
+      "Apps can track, categorize, and chart spending. None is magic — pick what you'll actually open each week.",
     tools: [
       {
         name: "YNAB",
         tagline: "You Need A Budget",
         description:
-          "Uses zero-based budgeting and teaches users to assign every dollar a job. Offers syncing across devices, goal setting and educational content. Requires a subscription.",
+          "Zero-based budgeting: every dollar gets a job. Syncs across devices, with goals and teaching built in. Paid subscription.",
       },
       {
         name: "Rocket Money",
-        tagline: "Track subscriptions and bills",
+        tagline: "Subscriptions and bills",
         description:
-          "Helps track subscriptions, monitors credit scores and offers bill-negotiation services.",
+          "Finds subscriptions, watches your credit score, and can help negotiate bills.",
       },
       {
         name: "Empower",
-        tagline: "Budget meets investing",
+        tagline: "Budget plus investing",
         description:
-          "Integrates budgeting with investment tracking and retirement planning in a single view.",
+          "Budgeting, investments, and retirement in one view.",
       },
       {
         name: "EveryDollar",
         tagline: "Dave Ramsey's Baby Steps",
         description:
-          "Based on Dave Ramsey's system using zero-based budgeting. Free version with manual entry, paid version connects to bank accounts.",
+          "Zero-based budgeting in Ramsey's system. Free with manual entry; paid connects to your bank.",
       },
       {
         name: "GoodBudget",
         tagline: "Digital envelopes",
         description:
-          "Implements the envelope system digitally. Users allocate virtual envelopes to categories and track spending against each one.",
+          "Virtual envelopes by category — spend against each one, like cash in jars.",
       },
       {
         name: "Tiller",
         tagline: "Automated spreadsheets",
         description:
-          "Imports transactions into Google Sheets or Excel so that users retain full control over categories and formulas.",
+          "Drops transactions into Google Sheets or Excel so you keep full control of formulas.",
       },
       {
         name: "Simplifi, Monarch Money & PocketGuard",
-        tagline: "Visual dashboards and forecasting",
+        tagline: "Dashboards and forecasts",
         description:
-          "Various combinations of automatic transaction import, visual dashboards and forecasting. Each has unique subscription costs and target audiences.",
+          "Auto-import, charts, and forecasts — each with its own price and audience.",
       },
     ],
     closingNote:
-      "An NFCC-certified credit counselor noted that many people use pen-and-paper budgeting or apps, but the effectiveness of a system depends on whether it fits your habits. Automating minimum payments and savings reduces missed due dates and turns a budget into a routine.",
+      "Pen and paper still work. What matters is a system that fits how you live. Automating minimum payments and savings cuts missed due dates and turns the plan into habit.",
   },
   additionalSystems: {
     title: "Additional budgeting systems",
@@ -119,61 +119,61 @@ const ENGLISH_CONTENT: FinancialWisdomContent = {
       eyebrow: "Stewardship",
       icon: "book-open",
       intro:
-        "Biblical teachings frame money management as stewardship rather than ownership. These principles emphasize planning, generosity, debt avoidance and contentment.",
+        "In Scripture, money is something you steward, not something you own. Plan, give, stay out of needless debt, and be content.",
       entries: [
         {
-          title: "Follow a plan and know your finances",
-          text: "Budgeting helps avoid impulsive spending and stay within means. Know the state of your resources and make informed decisions.",
+          title: "Know where you stand",
+          text: "A budget keeps impulse spending in check. Know what you have, then decide.",
           reference: "Proverbs 27:23",
         },
         {
           title: "Tithe faithfully (10%)",
-          text: "Giving 10% of income supports the church and teaches stewardship. Faith-based budgeting frameworks like the 5 Jars dedicate the first portion to God.",
+          text: "Setting aside the first tenth supports the church and trains the heart. Faith-based plans like the 5 Jars give God the first portion.",
           reference: "Malachi 3:10",
         },
         {
           title: "Avoid unnecessary borrowing",
-          text: "Only borrow for items that hold or gain value and avoid high-interest consumer debt. The borrower becomes servant to the lender.",
+          text: "Borrow for things that hold or grow in value; skip high-interest consumer debt. The borrower becomes servant to the lender.",
           reference: "Proverbs 22:7",
         },
         {
           title: "Save before spending",
-          text: "Saving at least 10% of income for emergencies and long-term needs prevents reliance on credit. The wise store up for the future.",
+          text: "Put something aside for emergencies and the long haul so you don't lean on credit. The wise store up for later.",
           reference: "Proverbs 21:20",
         },
         {
           title: "Give generously",
-          text: "It is more blessed to give than to receive. Giving to others brings blessings and reflects God's provision. Generosity is not optional.",
+          text: "It is more blessed to give than to receive. Generosity reflects God's provision — it isn't an afterthought.",
           reference: "Acts 20:35",
         },
         {
           title: "Trust God, not wealth",
-          text: "Wealth is temporary. Seeking God's kingdom first ensures needs are met. Trust in God rather than riches for security.",
+          text: "Wealth doesn't last. Seek God's kingdom first; needs follow. Security is in God, not in riches.",
           reference: "1 Timothy 6:17",
         },
         {
           title: "Everything is God's gift",
-          text: "The earth is the Lord's. Believers are stewards of money and possessions, not ultimate owners.",
+          text: "The earth is the Lord's. Believers steward money and possessions; they don't ultimately own them.",
           reference: "Psalm 24:1",
         },
         {
           title: "Live within your means",
-          text: "Christians are urged to plan, save and avoid accumulating unnecessary possessions. Guard against greed.",
+          text: "Plan, save, and don't pile up things you don't need. Guard against greed.",
           reference: "Luke 12:15",
         },
         {
           title: "Seek wise counsel and be content",
-          text: "Seek advice from trusted advisers. Contentment and reliance on God protect against reckless financial decisions.",
+          text: "Ask trusted people. Contentment and trust in God keep reckless money decisions at bay.",
           reference: "Proverbs 15:22",
         },
         {
-          title: "Be diligent and plan for the future",
-          text: "Hard work and planning support budgeting, saving and preparing for emergencies. Lazy hands make for poverty.",
+          title: "Be diligent and plan ahead",
+          text: "Hard work and planning underwrite budgeting, saving, and emergencies. Lazy hands make for poverty.",
           reference: "Proverbs 10:4",
         },
         {
-          title: "Honor God in financial decisions",
-          text: "Acknowledge God in all your ways. Trusting God guides wise financial choices and brings alignment between faith and money.",
+          title: "Honor God in money decisions",
+          text: "Acknowledge God in all your ways. Trusting Him lines up faith and money.",
           reference: "Proverbs 3:6",
         },
       ],
@@ -184,7 +184,7 @@ const ENGLISH_CONTENT: FinancialWisdomContent = {
       eyebrow: "Tzedakah & ethics",
       icon: "star",
       intro:
-        "Jewish tradition provides profound financial wisdom rooted in Torah law, rabbinic teaching, and communal responsibility. These principles emphasize charitable obligation, debt compassion, and disciplined stewardship.",
+        "Jewish teaching treats money with Torah, rabbinic care, and responsibility to the community — give, lend with compassion, and steward with discipline.",
       entries: [
         {
           title: "Tzedakah as sacred duty",
@@ -225,55 +225,55 @@ const ENGLISH_CONTENT: FinancialWisdomContent = {
 
 const SPANISH_CONTENT: FinancialWisdomContent = {
   toolsSection: {
-    title: "Herramientas y apps para rastrear dinero",
+    title: "Herramientas y apps para el dinero",
     intro:
-      "Las apps modernas automatizan el seguimiento, categorizan gastos y ofrecen análisis. No hay una 'mejor' herramienta — el mejor sistema depende de tu estilo de vida y hábitos.",
+      "Las apps rastrean, categorizan y muestran el gasto. Ninguna es mágica — elige la que de verdad abras cada semana.",
     tools: [
       {
         name: "YNAB",
         tagline: "You Need A Budget",
         description:
-          "Usa presupuesto base cero y enseña a asignar cada peso a un trabajo. Ofrece sincronización entre dispositivos, metas y contenido educativo. Requiere suscripción.",
+          "Presupuesto base cero: cada peso tiene un trabajo. Sincroniza entre dispositivos, con metas y enseñanza. Suscripción de pago.",
       },
       {
         name: "Rocket Money",
-        tagline: "Rastrea suscripciones y facturas",
+        tagline: "Suscripciones y facturas",
         description:
-          "Ayuda a rastrear suscripciones, monitorear puntaje crediticio y ofrece servicios de negociación de facturas.",
+          "Encuentra suscripciones, mira tu puntaje crediticio y puede ayudar a negociar facturas.",
       },
       {
         name: "Empower",
         tagline: "Presupuesto más inversiones",
         description:
-          "Integra presupuesto con seguimiento de inversiones y planificación de retiro en una sola vista.",
+          "Presupuesto, inversiones y retiro en una sola vista.",
       },
       {
         name: "EveryDollar",
         tagline: "Los Baby Steps de Dave Ramsey",
         description:
-          "Basado en el sistema de Dave Ramsey con presupuesto base cero. Versión gratuita con entrada manual, versión pagada se conecta a cuentas bancarias.",
+          "Presupuesto base cero al estilo Ramsey. Gratis con entrada manual; de pago se conecta al banco.",
       },
       {
         name: "GoodBudget",
         tagline: "Sobres digitales",
         description:
-          "Implementa el sistema de sobres de forma digital. Los usuarios asignan sobres virtuales a categorías y rastrean gastos contra cada uno.",
+          "Sobres virtuales por categoría — gasta contra cada uno, como efectivo en frascos.",
       },
       {
         name: "Tiller",
         tagline: "Hojas de cálculo automatizadas",
         description:
-          "Importa transacciones a Google Sheets o Excel para que los usuarios mantengan control total sobre categorías y fórmulas.",
+          "Lleva las transacciones a Google Sheets o Excel para que tú controles las fórmulas.",
       },
       {
         name: "Simplifi, Monarch Money y PocketGuard",
-        tagline: "Paneles visuales y pronósticos",
+        tagline: "Paneles y pronósticos",
         description:
-          "Combinaciones variadas de importación automática, paneles visuales y pronósticos. Cada una con costos y públicos diferentes.",
+          "Importación automática, gráficos y pronósticos — cada una con su precio y público.",
       },
     ],
     closingNote:
-      "Un asesor certificado del NFCC señaló que muchas personas usan presupuesto en papel o apps, pero la efectividad de un sistema depende de si se adapta a tus hábitos. Automatizar pagos mínimos y ahorros reduce fechas perdidas y convierte el presupuesto en rutina.",
+      "El papel y el lápiz siguen valiendo. Lo que importa es un sistema que encaje con cómo vives. Automatizar pagos mínimos y ahorros reduce fechas perdidas y convierte el plan en hábito.",
   },
   additionalSystems: {
     title: "Sistemas adicionales de presupuesto",
@@ -299,61 +299,61 @@ const SPANISH_CONTENT: FinancialWisdomContent = {
       eyebrow: "Mayordomía",
       icon: "book-open",
       intro:
-        "Las enseñanzas bíblicas enmarcan la administración del dinero como mayordomía en vez de propiedad. Estos principios enfatizan planificación, generosidad, evitar deudas y contentamiento.",
+        "En la Escritura, el dinero se administra; no se posee. Planifica, da, evita deudas innecesarias y conténtate.",
       entries: [
         {
-          title: "Sigue un plan y conoce tus finanzas",
-          text: "Presupuestar ayuda a evitar gastos impulsivos y mantenerse dentro de los medios. Conoce el estado de tus recursos y toma decisiones informadas.",
+          title: "Sabe en qué estás",
+          text: "Un presupuesto frena el gasto impulsivo. Conoce lo que tienes y decide.",
           reference: "Proverbios 27:23",
         },
         {
           title: "Diezma fielmente (10%)",
-          text: "Dar el 10% del ingreso apoya a la iglesia y enseña mayordomía. Marcos de presupuesto basados en la fe como las 5 Jarras dedican la primera porción a Dios.",
+          text: "Apartar el primer diezmo sostiene a la iglesia y forma el corazón. Planes como las 5 Jarras dan a Dios la primera porción.",
           reference: "Malaquías 3:10",
         },
         {
           title: "Evita endeudarte innecesariamente",
-          text: "Solo pide prestado para cosas que mantienen o ganan valor y evita deuda de consumo con alto interés. El que pide prestado se vuelve siervo del que presta.",
+          text: "Pide prestado para lo que mantiene o gana valor; evita la deuda de consumo con alto interés. El que pide prestado se vuelve siervo del que presta.",
           reference: "Proverbios 22:7",
         },
         {
           title: "Ahorra antes de gastar",
-          text: "Ahorrar al menos el 10% del ingreso para emergencias y necesidades a largo plazo previene la dependencia del crédito. El sabio guarda para el futuro.",
+          text: "Aparta algo para emergencias y el largo plazo, para no apoyarte en el crédito. El sabio guarda para después.",
           reference: "Proverbios 21:20",
         },
         {
           title: "Da con generosidad",
-          text: "Más bienaventurado es dar que recibir. Dar a otros trae bendiciones y refleja la provisión de Dios. La generosidad no es opcional.",
+          text: "Más bienaventurado es dar que recibir. La generosidad refleja la provisión de Dios — no es un añadido.",
           reference: "Hechos 20:35",
         },
         {
           title: "Confía en Dios, no en las riquezas",
-          text: "La riqueza es temporal. Buscar primero el reino de Dios asegura que las necesidades sean cubiertas. Confía en Dios más que en las riquezas.",
+          text: "La riqueza no dura. Busca primero el reino de Dios; lo demás sigue. La seguridad está en Dios, no en las riquezas.",
           reference: "1 Timoteo 6:17",
         },
         {
-          title: "Todo es regalo de Dios",
-          text: "Del Señor es la tierra. Los creyentes son mayordomos del dinero y las posesiones, no dueños absolutos.",
+          title: "Todo es don de Dios",
+          text: "De Jehová es la tierra. Los creyentes administran el dinero y las posesiones; no los poseen en última instancia.",
           reference: "Salmo 24:1",
         },
         {
-          title: "Vive dentro de tus medios",
-          text: "Los cristianos son exhortados a planificar, ahorrar y evitar acumular posesiones innecesarias. Guárdate de la avaricia.",
+          title: "Vive según tus medios",
+          text: "Planifica, ahorra y no acumules lo que no necesitas. Cuídate de la avaricia.",
           reference: "Lucas 12:15",
         },
         {
-          title: "Busca consejo sabio y sé agradecido",
-          text: "Busca consejo de asesores de confianza. El contentamiento y la dependencia en Dios protegen contra decisiones financieras temerarias.",
+          title: "Busca consejo sabio y conténtate",
+          text: "Pregunta a gente de confianza. El contentamiento y la confianza en Dios frenan las decisiones temerarias con el dinero.",
           reference: "Proverbios 15:22",
         },
         {
-          title: "Sé diligente y planifica para el futuro",
-          text: "El trabajo duro y la planificación apoyan el presupuesto, el ahorro y la preparación para emergencias. Las manos perezosas llevan a la pobreza.",
+          title: "Sé diligente y planifica",
+          text: "El trabajo y la planificación sostienen el presupuesto, el ahorro y las emergencias. La mano negligente empobrece.",
           reference: "Proverbios 10:4",
         },
         {
-          title: "Honra a Dios en decisiones financieras",
-          text: "Reconoce a Dios en todos tus caminos. Confiar en Dios guía decisiones financieras sabias y alinea fe con dinero.",
+          title: "Honra a Dios en las decisiones de dinero",
+          text: "Reconócele en todos tus caminos. Confiar en Él alinea la fe y el dinero.",
           reference: "Proverbios 3:6",
         },
       ],
@@ -364,7 +364,7 @@ const SPANISH_CONTENT: FinancialWisdomContent = {
       eyebrow: "Tzedakah y ética",
       icon: "star",
       intro:
-        "La tradición judía ofrece sabiduría financiera profunda enraizada en la ley de la Torá, la enseñanza rabínica y la responsabilidad comunitaria. Estos principios enfatizan la obligación caritativa, la compasión ante la deuda y la mayordomía disciplinada.",
+        "La enseñanza judía trata el dinero con Torá, cuidado rabínico y responsabilidad comunitaria — dar, prestar con compasión y administrar con disciplina.",
       entries: [
         {
           title: "Tzedakah como deber sagrado",
