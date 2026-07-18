@@ -63,12 +63,29 @@ vercel inspect budget-expense-seven.vercel.app
 ```env
 NEXT_PUBLIC_SUPABASE_URL=https://awpygbfocmynxpadpsji.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<publishable anon key>
+NEXT_PUBLIC_SITE_URL=https://budget-expense-seven.vercel.app
 NEXT_PUBLIC_EXCHANGE_API_URL=https://api.frankfurter.app
 SUPABASE_URL=https://awpygbfocmynxpadpsji.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<service role key>
 SUPABASE_ACCESS_TOKEN=<Management API personal access token — used by scripts/apply-sql.mjs>
 ```
+`NEXT_PUBLIC_SITE_URL` is required for signup confirmation emails — it becomes
+`emailRedirectTo` (`…/auth/callback?next=/onboarding`). Set the same value in
+Vercel Production/Preview.
+
 `SUPABASE_URL`/`SUPABASE_SERVICE_ROLE_KEY` still exist as separate vars for historical reasons (the code's `ledgerSupabase ?? appSupabase` fallback), but with no ledger project left they should just point at the same project as `NEXT_PUBLIC_SUPABASE_URL`.
+
+### Auth email / redirect settings (Supabase Dashboard → Authentication → URL Configuration)
+These must match production or confirmation emails fail / never leave:
+
+| Setting | Expected value |
+|---|---|
+| Site URL | `https://budget-expense-seven.vercel.app` |
+| Redirect URLs allow list | Production `/auth/callback` (+ `/**`), plus `http://localhost:3000/**` for local |
+| Confirm email | Enabled (`mailer_autoconfirm` = false) |
+
+Built-in Supabase SMTP is rate-limited (often ~2–4 emails/hour on free tier).
+If signups spike, configure custom SMTP under Authentication → SMTP.
 
 ## Where To Get Supabase Info
 - Supabase project URL and keys:
@@ -112,14 +129,19 @@ The ledger was reconciled end-to-end against the **official Santander xlsx expor
 - Change notes: `changes/2026-07-17-santander-reconciliation-import.md`, `changes/2026-07-17-santander-historical-backfill.md`.
 
 ## Product / schema docs (keep in sync)
-- **Design system + product IA:** [`design.md`](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/design.md) — includes first-run onboarding (§8), in-app envelope alerts (§9), Screen back-nav, and language-control placement.
-- **Migrations checklist:** [`docs/pending-migrations-runbook.md`](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/docs/pending-migrations-runbook.md) — includes pending `2026-07-18-onboarding-goals.sql` (profile onboarding/goals columns). Apply with `node scripts/apply-sql.mjs --project app --file …` before relying on `/onboarding` persistence in production.
+- **App handbook (start here):** [`docs/APP.md`](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/docs/APP.md) — IA, onboarding (new users only + skip-on-every-step), envelope alerts, Home/Budget, applied migrations, code map.
+- **Design system:** [`design.md`](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/design.md) — tokens, patterns, §8 onboarding / §9 alerts.
+- **Migrations checklist:** [`docs/pending-migrations-runbook.md`](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/docs/pending-migrations-runbook.md) — 2026-07-18 onboarding + household RPCs marked ✅ applied on live.
 
 ## Related Change Notes
 - [changes/2026-07-04-consolidate-single-supabase-project.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-04-consolidate-single-supabase-project.md) — the two-project → single-project migration
 - [changes/2026-07-17-santander-reconciliation-import.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-17-santander-reconciliation-import.md)
 - [changes/2026-07-17-santander-historical-backfill.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-17-santander-historical-backfill.md)
-- [changes/2026-07-18-onboarding-goals-budget-alerts.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-18-onboarding-goals-budget-alerts.md) — skippable onboarding, goals personalization, envelope alerts, history back nav
+- [changes/2026-07-18-onboarding-goals-budget-alerts.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-18-onboarding-goals-budget-alerts.md) — skippable onboarding, goals, alerts, back nav
+- [changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md) — skip bounce fix + new-user-only gate
+- [changes/2026-07-18-expense-path-performance.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-18-expense-path-performance.md) — Home summary path + household RPCs
+- [changes/2026-07-18-budget-objectives-and-home-stats.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-18-budget-objectives-and-home-stats.md) — Budget guided setup + Home Current card
+- [changes/2026-07-18-home-clarity-refinement.md](/Users/juanpabloramirez/Desktop/Budget%20&%20Expense/changes/2026-07-18-home-clarity-refinement.md) — Home donut / pace / desktop shortcuts
 
 ---
 

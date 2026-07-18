@@ -258,8 +258,11 @@ error states. No blank areas while fetching.
 
 ## 8. First-run onboarding & goals
 
-Skippable wizard so new users can set income, fixed costs, debt, and goals
-without blocking the app. Detail: `changes/2026-07-18-onboarding-goals-budget-alerts.md`.
+Skippable wizard so **new** users can set income, fixed costs, debt, and goals
+without blocking the app. Full product handbook:
+[`docs/APP.md`](docs/APP.md) §2. Change notes:
+`changes/2026-07-18-onboarding-goals-budget-alerts.md`,
+`changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md`.
 
 ### Entry & gate
 
@@ -267,11 +270,12 @@ without blocking the app. Detail: `changes/2026-07-18-onboarding-goals-budget-al
 |---|---|
 | Signup success | Redirect to `/onboarding` |
 | Login / signup while already authed | Middleware: only profiles created on/after `2026-07-18` with both flags null → `/onboarding`; older accounts → `/home` |
-| Soft client gate | `OnboardingGate` force-redirects **only new accounts** that have not completed/skipped (shared React Query cache + session dismiss so Skip cannot bounce back) |
-| Skip | Available on **every** wizard step; sets `onboarding_skipped_at` (+ session flag), goes `/home` — app fully usable |
-| Resume | Home “Finish setup” banner + Settings “Setup guide” when a new user skipped / never finished |
+| Soft client gate | `OnboardingGate` force-redirects **only new accounts** that have not completed/skipped |
+| Skip state sharing | React Query key `onboardingProfile` + sessionStorage `be-onboarding-dismissed` — Skip must not bounce back to the wizard |
+| Skip | On **every** step (welcome → suggestions); sets `onboarding_skipped_at`, goes `/home` |
+| Resume | Home “Finish setup” + Settings “Setup guide” when a new user skipped / never finished |
 | Finish | Sets `onboarding_completed_at`, writes plan / recurring / liabilities / optional envelopes, goes `/home` |
-| Pre-feature users | Never force-gated (grandfathered by `profiles.created_at` before launch) |
+| Pre-feature users | Never force-gated (`profiles.created_at` before `ONBOARDING_FEATURE_LAUNCH`) |
 
 ### Wizard steps
 
@@ -289,8 +293,8 @@ Allowed `primary_goals` values: `save_more`, `increase_wealth`,
 
 ### Profile columns
 
-Migration: `supabase/migrations/2026-07-18-onboarding-goals.sql` (apply on
-the app Supabase project before relying on these fields):
+Migration `supabase/migrations/2026-07-18-onboarding-goals.sql` — **applied**
+on live project `awpygbfocmynxpadpsji` (2026-07-18):
 
 - `onboarding_completed_at timestamptz null`
 - `onboarding_skipped_at timestamptz null`
@@ -301,14 +305,13 @@ the app Supabase project before relying on these fields):
 
 `src/lib/onboarding/personalize.ts` maps answers → method id, allocation %,
 seed envelopes, Home CTAs, Attention hints. Applied at finish via
-`lib/onboarding/apply.ts`. Home quick actions and Budget empty copy read
-`profile.primary_goals` / `wants_budget_help`. No separate goals table in v1;
-Settings can edit goals later.
+`lib/onboarding/apply.ts`. Home shortcuts and Budget empty/guided copy read
+`profile.primary_goals` / `wants_budget_help`. No separate goals table in v1.
 
 | Signal | App adjustment |
 |---|---|
 | `wants_budget_help` | Method % on monthly plan; seed 2–4 starter envelopes |
-| `budget_tracking` | Emphasize Budget + Movements in Home quick actions |
+| `budget_tracking` | Emphasize Budget + Movements in Home shortcuts |
 | `decrease_expenses` | Attention → Insights; Budget messaging |
 | `save_more` / `build_emergency_fund` | Savings-oriented method; optional Savings envelope |
 | `pay_debt` | Attention → Wealth/Liabilities; Wealth CTA |
@@ -335,7 +338,21 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 ---
 
+## 10. Documentation map
+
+| Doc | Owns |
+|---|---|
+| [`docs/APP.md`](docs/APP.md) | Product handbook: IA, onboarding, alerts, Home/Budget, migrations, code map |
+| [`design.md`](design.md) | Visual system, tokens, patterns, gates (this file) |
+| [`docs/vercel-supabase-handoff.md`](docs/vercel-supabase-handoff.md) | Vercel + Supabase connection |
+| [`docs/pending-migrations-runbook.md`](docs/pending-migrations-runbook.md) | Migration apply status |
+| [`changes/`](changes/) | Per-change history |
+
+---
+
 *Maintained alongside the codebase. Update this file in the same change as any
 modification to tokens (`globals.css`), patterns (`components/patterns`),
 primitives (`components/ui`), layout chrome (`components/layout`), first-run
-onboarding, or envelope-alert behavior.*
+onboarding, or envelope-alert behavior. Keep [`docs/APP.md`](docs/APP.md) in
+sync for product behavior.*
+

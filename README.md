@@ -1,36 +1,35 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Budget & Expense
 
-## Getting Started
+Bilingual (EN/ES) personal stewardship, budgeting, and expense-tracking app.
 
-First, run the development server:
+**Production:** https://budget-expense-seven.vercel.app  
+**Stack:** Next.js 16 · React 19 · Tailwind CSS v4 · Supabase · Vercel
+
+## Documentation
+
+| Doc | Purpose |
+|---|---|
+| [`docs/APP.md`](docs/APP.md) | **Start here** — product handbook (IA, onboarding, alerts, Home/Budget, schema status, code map) |
+| [`design.md`](design.md) | Design system: tokens, patterns, mobile rules, visual gates |
+| [`docs/vercel-supabase-handoff.md`](docs/vercel-supabase-handoff.md) | Vercel + Supabase connection and ops |
+| [`docs/pending-migrations-runbook.md`](docs/pending-migrations-runbook.md) | Migration apply checklist |
+| [`changes/`](changes/) | Implementation change log |
+
+## Local development
 
 ```bash
+npm install
+# Ensure .env.local has Supabase + exchange URL (see handoff doc)
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Apply SQL to Supabase
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+node scripts/apply-sql.mjs --project app --file supabase/migrations/<file>.sql
+node scripts/apply-sql.mjs --project app --query "SELECT 1"
+```
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Agent notes for this repo: [`AGENTS.md`](AGENTS.md).

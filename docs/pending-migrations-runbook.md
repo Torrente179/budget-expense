@@ -68,14 +68,22 @@ As of 2026-07-17 (post data reconciliation, see
 | `2026-07-18-household-insights-aggregates-ledger.sql` | Household expense/income aggregate RPCs (applied on app — single project) | ✅ Applied 2026-07-18 on `awpygbfocmynxpadpsji` |
 
 ```bash
+# Re-apply is safe (IF NOT EXISTS / CREATE OR REPLACE)
 node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-onboarding-goals.sql
+node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-household-insights-aggregates-app.sql
+node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-household-insights-aggregates-ledger.sql
+
 node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND (column_name LIKE 'onboarding%' OR column_name IN ('wants_budget_help','primary_goals'))"
+node scripts/apply-sql.mjs --project app --query "SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND (proname LIKE 'household%' OR proname='liability_payment_totals') ORDER BY 1"
 ```
 
-Product behavior is documented in `design.md` §8–§9 and
-`changes/2026-07-18-onboarding-goals-budget-alerts.md`. Until the migration
-runs, the client hook soft-falls back (onboarding fields treated as empty) so
-the app does not hard-crash.
+Product behavior: [`docs/APP.md`](./APP.md) §2–§3 and `design.md` §8–§9.
+Change notes: `changes/2026-07-18-onboarding-goals-budget-alerts.md`,
+`changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md`,
+`changes/2026-07-18-expense-path-performance.md`.
+
+**Status:** no pending migrations for the 2026-07-18 cluster on live
+`awpygbfocmynxpadpsji` (all three rows above ✅).
 
 ## If the project won't connect at all
 Before assuming a migration or schema problem, check whether the project is
