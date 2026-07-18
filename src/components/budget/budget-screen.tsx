@@ -110,8 +110,13 @@ export function BudgetScreen() {
   );
 
   const totalBudgeted = budgetMetrics.reduce((s, m) => s + m.resolved, 0);
-  const totalConsumed = sumConvertedAmounts(expenses, convert);
+  /* Only spending inside an objective's categories counts against the plan —
+     otherwise this total disagrees with the per-objective rows below it
+     (e.g. giving isn't in any objective, so it must not eat the plan). */
+  const totalConsumed = budgetMetrics.reduce((s, m) => s + m.spent, 0);
   const totalRemaining = totalBudgeted - totalConsumed;
+  const monthTotalSpent = sumConvertedAmounts(expenses, convert);
+  const outsideObjectivesSpent = Math.max(monthTotalSpent - totalConsumed, 0);
   const hasPlan = Boolean(plan);
   const hasBudgets = customBudgets.length > 0;
   const needsSetup = !hasPlan && !hasBudgets;
@@ -461,6 +466,14 @@ export function BudgetScreen() {
                       {isCurrentMonth &&
                         ` · ${t(`day ${dayOfMonth} of ${daysInMonth}`, `día ${dayOfMonth} de ${daysInMonth}`)}`}
                     </p>
+                    {outsideObjectivesSpent > 0 && (
+                      <p className="text-caption text-muted-foreground">
+                        {t(
+                          `+ ${formatCurrency(outsideObjectivesSpent, baseCurrency)} spent this month isn't in any objective yet — like Giving below`,
+                          `+ ${formatCurrency(outsideObjectivesSpent, baseCurrency)} gastado este mes aún no está en ningún objetivo — como Generosidad abajo`
+                        )}
+                      </p>
+                    )}
                   </div>
                 ) : (
                   <p className="text-body text-muted-foreground">

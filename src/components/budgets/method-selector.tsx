@@ -102,9 +102,25 @@ function MethodDetail({
   onApply?: (method: BudgetingMethod) => void;
 }) {
   const { t } = useLocale();
+  const totalAllocation = method.slices.reduce((sum, s) => sum + s.percent, 0);
 
   return (
     <div className="space-y-5">
+      {/* How it works — plain-language explanation, leads everything else */}
+      <div className="rounded-xl border border-border/70 bg-card p-4">
+        <p className="text-label font-medium uppercase tracking-widest text-muted-foreground">
+          {t("How it works", "Cómo funciona")}
+        </p>
+        <p className="mt-2 text-sm leading-6 text-foreground/90">
+          {method.description}
+        </p>
+        {method.origin && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            — {method.origin}
+          </p>
+        )}
+      </div>
+
       {/* Allocation bar */}
       <div className="rounded-xl border border-border/70 bg-card/90 p-4">
         <p className="text-label font-medium uppercase tracking-widest text-muted-foreground">
@@ -187,13 +203,21 @@ function MethodDetail({
       </div>
 
       {onApply && (
-        <Button className="w-full gap-2" onClick={() => onApply(method)}>
-          <Layers className="h-4 w-4" />
-          {t(
-            "Apply this method to my plan",
-            "Aplicar este método a mi plan"
-          )}
-        </Button>
+        <div className="space-y-2.5 rounded-xl border border-info/25 bg-info-subtle p-4">
+          <p className="text-sm leading-6 text-foreground/90">
+            {t(
+              `Applying this sets your monthly plan's allocation to ${totalAllocation}% of your income. You can fine-tune amounts anytime, then create objectives for each category above.`,
+              `Aplicarlo fija la asignación de tu plan mensual al ${totalAllocation}% de tu ingreso. Puedes ajustar los montos cuando quieras y luego crear objetivos para cada categoría de arriba.`
+            )}
+          </p>
+          <Button className="w-full gap-2" onClick={() => onApply(method)}>
+            <Layers className="h-4 w-4" />
+            {t(
+              "Apply this method to my plan",
+              "Aplicar este método a mi plan"
+            )}
+          </Button>
+        </div>
       )}
     </div>
   );
@@ -231,7 +255,15 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
       {trigger ? (
         <SheetTrigger render={trigger as React.ReactElement} />
       ) : (
-        <SheetTrigger render={<Button variant="outline" size="sm" className="gap-1.5" />}>
+        <SheetTrigger
+          render={
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 border-info/30 bg-info-subtle text-info hover:border-info/45 hover:bg-info/15 hover:text-info"
+            />
+          }
+        >
           <BookOpen className="h-4 w-4" />
           <span className="hidden md:inline">
             {t("Budgeting methods", "Métodos de presupuesto")}

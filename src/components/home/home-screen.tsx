@@ -108,8 +108,12 @@ export function HomeScreen() {
   }, [customBudgets, summary.categoryBreakdown, incomeAmount, convert]);
 
   const totalBudgeted = budgetsView.reduce((sum, b) => sum + b.limit, 0);
+  /* Only spending inside an objective's categories counts against the plan —
+     otherwise this number disagrees with the per-objective rows below it
+     (e.g. giving isn't in any objective, so it must not eat the plan). */
+  const budgetsSpent = budgetsView.reduce((sum, b) => sum + b.spent, 0);
   const budgetConsumedRatio =
-    totalBudgeted > 0 ? summary.totalSpent / totalBudgeted : 0;
+    totalBudgeted > 0 ? budgetsSpent / totalBudgeted : 0;
   const budgetTone =
     budgetConsumedRatio > 1
       ? "bg-danger"
@@ -455,13 +459,13 @@ export function HomeScreen() {
                       <span
                         className={cn(
                           "font-mono text-title tabular-nums",
-                          totalBudgeted - summary.totalSpent >= 0
+                          totalBudgeted - budgetsSpent >= 0
                             ? "text-foreground"
                             : "text-negative"
                         )}
                       >
                         {formatCurrency(
-                          totalBudgeted - summary.totalSpent,
+                          totalBudgeted - budgetsSpent,
                           baseCurrency
                         )}
                       </span>
