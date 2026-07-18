@@ -36,6 +36,7 @@ import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
+import { StatusTag } from "@/components/patterns/status-tag";
 import { ChartCard } from "@/components/charts/chart-card";
 import {
   ChartAreaGradient,
@@ -476,40 +477,37 @@ export function InsightsScreen() {
                   )}
                 />
               </CardHeader>
-              <CardContent className="space-y-2">
+              <CardContent className="space-y-1">
                 {budgetUtilization.map((envelope) => (
                   <button
                     key={envelope.id}
                     type="button"
                     onClick={() => handleCategoryClick(envelope.categoryId)}
-                    className="w-full rounded-lg border border-border/70 bg-secondary/30 p-3 text-left transition-colors hover:bg-secondary/50"
+                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/50"
                   >
-                    <div className="flex items-center gap-2.5">
-                      <CategoryIcon
-                        icon={envelope.categoryIcon}
-                        color={envelope.categoryColor}
-                        className="h-7 w-7 rounded-lg"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-2">
-                          <p className="truncate text-body font-medium">
+                    <CategoryIcon
+                      icon={envelope.categoryIcon}
+                      color={envelope.categoryColor}
+                      className="h-8 w-8 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-2">
+                          <span className="truncate text-body font-medium">
                             {tc(envelope.categoryName)}
-                            {envelope.ratio > 1 && (
-                              <span className="ml-2 rounded-full bg-danger-subtle px-2 py-0.5 text-label font-medium text-danger">
-                                {t("Over", "Excedido")}
-                              </span>
-                            )}
-                          </p>
-                          <span className="shrink-0 font-mono text-caption tabular-nums">
-                            {formatCurrency(envelope.spent, baseCurrency)} /{" "}
-                            {formatCurrency(envelope.budgetAmount, baseCurrency)}
                           </span>
-                        </div>
-                        <ProgressMeter
-                          ratio={envelope.ratio}
-                          className="mt-1.5"
-                        />
+                          {envelope.ratio > 1 && (
+                            <StatusTag tone="danger" className="shrink-0">
+                              {t("Over", "Excedido")}
+                            </StatusTag>
+                          )}
+                        </span>
+                        <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
+                          {formatCurrency(envelope.spent, baseCurrency)} /{" "}
+                          {formatCurrency(envelope.budgetAmount, baseCurrency)}
+                        </span>
                       </div>
+                      <ProgressMeter ratio={envelope.ratio} className="mt-1.5" />
                     </div>
                   </button>
                 ))}
@@ -583,22 +581,31 @@ export function InsightsScreen() {
                     }
                   />
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="space-y-1">
                   {incomeBySource.map((source) => {
                     const maxAmount = incomeBySource[0]?.total ?? 1;
+                    const share =
+                      summary.totalIncome > 0
+                        ? (source.total / summary.totalIncome) * 100
+                        : 0;
                     return (
-                      <div
-                        key={source.source}
-                        className="rounded-lg border border-border/70 bg-secondary/30 p-3"
-                      >
+                      <div key={source.source} className="px-2 py-2">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-2.5">
-                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-success-subtle">
-                              <ArrowDownLeft className="h-3.5 w-3.5 text-success" />
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-success-subtle">
+                              <ArrowDownLeft className="h-4 w-4 text-success" />
                             </div>
-                            <p className="truncate text-body font-medium">
-                              {source.source}
-                            </p>
+                            <div className="min-w-0">
+                              <p className="truncate text-body font-medium">
+                                {source.source}
+                              </p>
+                              {summary.totalIncome > 0 && (
+                                <p className="text-caption text-muted-foreground">
+                                  {share.toFixed(0)}%{" "}
+                                  {t("of income", "del ingreso")}
+                                </p>
+                              )}
+                            </div>
                           </div>
                           <span className="shrink-0 font-mono text-body font-medium tabular-nums text-positive">
                             {formatCurrency(source.total, baseCurrency)}
@@ -612,12 +619,6 @@ export function InsightsScreen() {
                             }}
                           />
                         </div>
-                        {summary.totalIncome > 0 && (
-                          <p className="mt-1 text-right text-label text-muted-foreground">
-                            {((source.total / summary.totalIncome) * 100).toFixed(0)}
-                            % {t("of total income", "del ingreso total")}
-                          </p>
-                        )}
                       </div>
                     );
                   })}

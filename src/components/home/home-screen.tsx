@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDaysInMonth } from "date-fns";
-import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import {
   ClipboardCheck,
   Compass,
@@ -35,17 +34,16 @@ import { StatCard } from "@/components/patterns/stat-card";
 import { TransactionRow } from "@/components/patterns/transaction-row";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { AttentionFeed } from "@/components/home/attention-feed";
+import { BreakdownDonut } from "@/components/patterns/breakdown-donut";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useChartMounted } from "@/components/charts/chart-theme";
 
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
   const { baseCurrency, convert } = useCurrency();
   const { month, year, isCurrentMonth, setMonthYear } = useMonth();
-  const mounted = useChartMounted();
   const router = useRouter();
 
   const { summary, loading } = useMonthlySummary({ month, year });
@@ -545,76 +543,14 @@ export function HomeScreen() {
                       }
                     />
                   </CardHeader>
-                  <CardContent className="flex flex-col items-center gap-5 sm:flex-row lg:flex-col xl:flex-row">
-                    <div className="relative h-40 w-40 shrink-0">
-                      {mounted && (
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={donut.slices}
-                              dataKey="value"
-                              nameKey="name"
-                              innerRadius={52}
-                              outerRadius={74}
-                              paddingAngle={2}
-                              stroke="var(--card)"
-                              strokeWidth={2}
-                              isAnimationActive={false}
-                              onClick={(_, index) => {
-                                const slice = donut.slices[index];
-                                if (slice) openCategory(slice.id);
-                              }}
-                            >
-                              {donut.slices.map((slice) => (
-                                <Cell
-                                  key={slice.id}
-                                  fill={slice.color}
-                                  cursor={
-                                    slice.id === "other" ? "default" : "pointer"
-                                  }
-                                />
-                              ))}
-                            </Pie>
-                          </PieChart>
-                        </ResponsiveContainer>
-                      )}
-                      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                        <span className="label-caps">{t("Spent", "Gastado")}</span>
-                        <span className="font-mono text-caption font-semibold tabular-nums">
-                          {formatCurrency(donut.total, baseCurrency)}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="w-full min-w-0 flex-1 space-y-0.5">
-                      {donut.slices.map((slice) => (
-                        <button
-                          key={slice.id}
-                          type="button"
-                          onClick={() => openCategory(slice.id)}
-                          disabled={slice.id === "other"}
-                          className={cn(
-                            "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left",
-                            slice.id !== "other" &&
-                              "transition-colors hover:bg-accent/50"
-                          )}
-                        >
-                          <span
-                            aria-hidden
-                            className="h-2.5 w-2.5 shrink-0 rounded-full"
-                            style={{ backgroundColor: slice.color }}
-                          />
-                          <span className="min-w-0 flex-1 truncate text-body">
-                            {slice.name}
-                          </span>
-                          <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                            {Math.round((slice.value / donut.total) * 100)}%
-                          </span>
-                          <span className="w-20 shrink-0 text-right font-mono text-caption tabular-nums">
-                            {formatCurrency(slice.value, baseCurrency)}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
+                  <CardContent>
+                    <BreakdownDonut
+                      slices={donut.slices}
+                      centerLabel={t("Spent", "Gastado")}
+                      centerValue={donut.total}
+                      onSelect={openCategory}
+                      nonInteractiveIds={["other"]}
+                    />
                   </CardContent>
                 </Card>
               )}

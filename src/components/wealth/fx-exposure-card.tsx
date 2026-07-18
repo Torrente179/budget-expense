@@ -16,6 +16,8 @@ interface FxExposureCardProps {
   savingsTransfers: { amount: number; currency: string }[];
   /** Base-value of active liabilities per original currency (subtracted) */
   liabilitiesByCurrency: Record<string, number>;
+  /** "bare" renders just the bar + list, for callers that provide their own Card. */
+  variant?: "card" | "bare";
 }
 
 const SEGMENT_COLORS = [
@@ -38,6 +40,7 @@ export function FxExposureCard({
   accountCurrencies,
   savingsTransfers,
   liabilitiesByCurrency,
+  variant = "card",
 }: FxExposureCardProps) {
   const { t } = useLocale();
   const { baseCurrency, convert, rateSources } = useCurrency();
@@ -92,74 +95,83 @@ export function FxExposureCard({
       segment.currency !== baseCurrency
   );
 
+  const body =
+    exposure.segments.length === 0 || exposure.total <= 0 ? (
+      <p className="text-sm text-muted-foreground">
+        {t(
+          "Add savings or investments to see the currency split.",
+          "Añade ahorros o inversiones para ver el reparto por divisa."
+        )}{" "}
+        <Link
+          href="/wealth/investments"
+          className="underline underline-offset-2"
+        >
+          {t("Investments", "Inversiones")}
+        </Link>
+      </p>
+    ) : (
+      <>
+        <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
+          {exposure.segments
+            .filter((segment) => segment.share > 0)
+            .map((segment, index) => (
+              <div
+                key={segment.currency}
+                style={{
+                  width: `${Math.max(segment.share * 100, 1.5)}%`,
+                  backgroundColor:
+                    SEGMENT_COLORS[index % SEGMENT_COLORS.length],
+                }}
+              />
+            ))}
+        </div>
+        <ul className="space-y-1.5">
+          {exposure.segments.map((segment, index) => (
+            <li
+              key={segment.currency}
+              className="flex items-center gap-2 text-sm"
+            >
+              <span
+                className="h-2.5 w-2.5 rounded-full"
+                style={{
+                  backgroundColor:
+                    SEGMENT_COLORS[index % SEGMENT_COLORS.length],
+                }}
+              />
+              <span className="font-medium">{segment.currency}</span>
+              <span className="ml-auto font-mono tabular-nums">
+                {(segment.share * 100).toFixed(1)}%
+              </span>
+              <span className="w-28 text-right font-mono text-xs tabular-nums text-muted-foreground">
+                {formatCurrency(segment.value, baseCurrency)}
+              </span>
+            </li>
+          ))}
+        </ul>
+        {nonLiveSources.length > 0 && (
+          <p className="text-xs text-muted-foreground">
+            {t("Rates for", "Tipos de cambio de")}{" "}
+            {nonLiveSources.map((s) => s.currency).join(", ")}{" "}
+            {t(
+              "come from a secondary or manual source.",
+              "provienen de una fuente secundaria o manual."
+            )}
+          </p>
+        )}
+      </>
+    );
+
+  if (variant === "bare") {
+    return <div className="space-y-3">{body}</div>;
+  }
+
   return (
     <Card>
       <CardContent className="space-y-3">
         <p className="label-caps">
           {t("FX exposure", "Exposición por divisa")}
         </p>
-
-        {exposure.segments.length === 0 || exposure.total <= 0 ? (
-          <p className="text-sm text-muted-foreground">
-            {t(
-              "Add savings or investments to see the currency split.",
-              "Añade ahorros o inversiones para ver el reparto por divisa."
-            )}{" "}
-            <Link href="/wealth" className="underline underline-offset-2">
-              {t("Investments", "Inversiones")}
-            </Link>
-          </p>
-        ) : (
-          <>
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-muted">
-              {exposure.segments
-                .filter((segment) => segment.share > 0)
-                .map((segment, index) => (
-                  <div
-                    key={segment.currency}
-                    style={{
-                      width: `${Math.max(segment.share * 100, 1.5)}%`,
-                      backgroundColor:
-                        SEGMENT_COLORS[index % SEGMENT_COLORS.length],
-                    }}
-                  />
-                ))}
-            </div>
-            <ul className="space-y-1.5">
-              {exposure.segments.map((segment, index) => (
-                <li
-                  key={segment.currency}
-                  className="flex items-center gap-2 text-sm"
-                >
-                  <span
-                    className="h-2.5 w-2.5 rounded-full"
-                    style={{
-                      backgroundColor:
-                        SEGMENT_COLORS[index % SEGMENT_COLORS.length],
-                    }}
-                  />
-                  <span className="font-medium">{segment.currency}</span>
-                  <span className="ml-auto font-mono tabular-nums">
-                    {(segment.share * 100).toFixed(1)}%
-                  </span>
-                  <span className="w-28 text-right font-mono text-xs tabular-nums text-muted-foreground">
-                    {formatCurrency(segment.value, baseCurrency)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-            {nonLiveSources.length > 0 && (
-              <p className="text-xs text-muted-foreground">
-                {t("Rates for", "Tipos de cambio de")}{" "}
-                {nonLiveSources.map((s) => s.currency).join(", ")}{" "}
-                {t(
-                  "come from a secondary or manual source.",
-                  "provienen de una fuente secundaria o manual."
-                )}
-              </p>
-            )}
-          </>
-        )}
+        {body}
       </CardContent>
     </Card>
   );

@@ -108,8 +108,10 @@ Three theme-aware shadows (`--elevation-1/2/3`, exposed as `shadow-1/2/3`):
 
 Radius derives from `--radius: 1rem`: `rounded-lg` (1rem) for inputs/nav rows,
 `rounded-xl` (1.4rem) for cards, `rounded-2xl`/`rounded-3xl` for
-sheets/modals, `rounded-full` for chips and pills. Arbitrary `rounded-[…rem]`
-is banned. Spacing uses Tailwind's 4px scale; screen gutters are
+sheets/modals, `rounded-full` for round icon buttons and dots only —
+**never for status pills or tab chips** (use `StatusTag` / `UnderlineTabs`).
+Arbitrary `rounded-[…rem]` is banned. Spacing uses Tailwind's 4px scale;
+screen gutters are
 `px-4 sm:px-5 lg:px-8`, matched by `Screen`'s negative margins for full-bleed
 headers and lists.
 
@@ -144,6 +146,14 @@ src/components/
                                   currency provider, tabular mono, tone, sign)
               transaction-row.tsx canonical ledger row
               progress-meter.tsx  budget/tithe bar, ok→warning→over tones
+              status-tag.tsx      quiet status indicator (tone dot + label in
+                                  ink). THE way to show state — never an
+                                  uppercase tinted pill.
+              underline-tabs.tsx  THE in-screen view switcher (text weight +
+                                  hairline indicator). No filled pill/chip
+                                  tabs; `@/components/ui/tabs` is retired.
+              breakdown-donut.tsx shared thin donut with center total + legend
+                                  (share % + amount); used by Home & Wealth.
   charts/     chart-theme.tsx (shared Recharts tooltip style, axis/grid
               presets, gradient def, useChartMounted, currency formatters) +
               chart-card.tsx. Every chart imports from here; inline tooltip

@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import { ArrowDownRight, ArrowUpRight, Check, CopyX, Loader2, Undo2 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,7 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UnderlineTabs } from "@/components/patterns/underline-tabs";
 import { CategoryIcon } from "@/components/shared/category-badge";
 import { CurrencyDisplay } from "@/components/shared/currency-display";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -105,19 +104,15 @@ export function ImportReview({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Tabs
+        <UnderlineTabs
+          tabs={filters.map((item) => ({
+            key: item.id,
+            label: `${item.label} · ${item.count}`,
+          }))}
           value={filter}
-          onValueChange={(value) => setFilter(value as Filter)}
-        >
-          <TabsList>
-            {filters.map((item) => (
-              <TabsTrigger key={item.id} value={item.id} className="gap-1.5">
-                {item.label}
-                <Badge variant="secondary">{item.count}</Badge>
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
+          onChange={(value) => setFilter(value as Filter)}
+          ariaLabel={t("Filter rows", "Filtrar filas")}
+        />
 
         {visibleRows.length === 0 ? (
           <EmptyState

@@ -20,6 +20,7 @@ import type {
   MarketPriceResponse,
 } from "@/lib/investments";
 import type { InvestmentTradeFormValues } from "@/lib/validations";
+import { StatusTag } from "@/components/patterns/status-tag";
 import { useLocale } from "@/providers/locale-provider";
 
 interface BrokerageAccountOption {
@@ -111,16 +112,10 @@ export function TradeTable({
           >
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={
-                      trade.side === "buy"
-                        ? "rounded-full border border-success/20 bg-success-subtle px-2.5 py-1 text-xs font-medium uppercase tracking-widest text-success"
-                        : "rounded-full border border-warning/20 bg-warning-subtle px-2.5 py-1 text-xs font-medium uppercase tracking-widest text-warning"
-                    }
-                  >
-                    {trade.side === "buy" ? t("buy", "compra") : t("sell", "venta")}
-                  </span>
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <StatusTag tone={trade.side === "buy" ? "success" : "warning"}>
+                    {trade.side === "buy" ? t("Buy", "Compra") : t("Sell", "Venta")}
+                  </StatusTag>
                   <p className="text-base font-medium text-foreground">
                     {trade.investment_assets.symbol}
                   </p>

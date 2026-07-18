@@ -17,6 +17,7 @@ import {
 import { SavingsTransferForm } from "@/components/wealth/savings-transfer-form";
 import { buildSavingsAccountLabel, type InvestmentSavingsTransferWithJoins } from "@/lib/investments";
 import type { InvestmentSavingsTransferFormValues } from "@/lib/validations";
+import { StatusTag } from "@/components/patterns/status-tag";
 import { useLocale } from "@/providers/locale-provider";
 import type { InvestmentSavingsAccountRow } from "@/lib/investments";
 
@@ -83,14 +84,14 @@ export function SavingsTransferTable({
           >
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="rounded-full border border-info/20 bg-info-subtle px-2.5 py-1 text-xs font-medium uppercase tracking-widest text-info">
-                    {t("transfer", "transferencia")}
-                  </span>
+                <div className="flex flex-wrap items-center gap-3">
+                  <StatusTag tone="info">
+                    {t("Transfer", "Transferencia")}
+                  </StatusTag>
                   {transfer.source_kind === "expense_flow" ? (
-                    <span className="rounded-full border border-success/20 bg-success-subtle px-2.5 py-1 text-xs font-medium uppercase tracking-widest text-success">
-                      {t("from expenses", "desde gastos")}
-                    </span>
+                    <StatusTag tone="success">
+                      {t("From expenses", "Desde gastos")}
+                    </StatusTag>
                   ) : null}
                 </div>
                 <p className="text-base font-medium text-foreground">

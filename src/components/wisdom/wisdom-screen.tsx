@@ -12,7 +12,7 @@ import { Screen } from "@/components/patterns/screen";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { UnderlineTabs } from "@/components/patterns/underline-tabs";
 import {
   ArrowUpRight,
   BookOpen,
@@ -23,10 +23,8 @@ import {
   HandCoins,
   HandHeart,
   Landmark,
-  Layers,
   Scale,
   Star,
-  Wrench,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/providers/locale-provider";
@@ -211,47 +209,34 @@ export function WisdomScreen() {
       {/*  Tab navigation                                               */}
       {/* ------------------------------------------------------------ */}
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="space-y-6"
-      >
-        <TabsList className="flex w-full flex-wrap gap-1 bg-transparent p-0">
-          <TabsTrigger
-            value="stewardship"
-            className="gap-1.5 rounded-lg border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
-          >
-            <BookOpenText className="h-3.5 w-3.5" />
-            {t("Biblical stewardship", "Mayordomía bíblica")}
-          </TabsTrigger>
-          <TabsTrigger
-            value="methods"
-            className="gap-1.5 rounded-lg border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
-          >
-            <Layers className="h-3.5 w-3.5" />
-            {t("Budgeting methods", "Métodos de presupuesto")}
-          </TabsTrigger>
-          <TabsTrigger
-            value="principles"
-            className="gap-1.5 rounded-lg border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
-          >
-            <Star className="h-3.5 w-3.5" />
-            {t("Financial principles", "Principios financieros")}
-          </TabsTrigger>
-          <TabsTrigger
-            value="tools"
-            className="gap-1.5 rounded-lg border border-border/70 px-4 py-2.5 text-sm data-[state=active]:bg-secondary data-[state=active]:ring-1 data-[state=active]:ring-border"
-          >
-            <Wrench className="h-3.5 w-3.5" />
-            {t("Tools & apps", "Herramientas y apps")}
-          </TabsTrigger>
-        </TabsList>
+      <div className="space-y-6">
+        <UnderlineTabs
+          tabs={[
+            {
+              key: "stewardship",
+              label: t("Biblical stewardship", "Mayordomía bíblica"),
+            },
+            {
+              key: "methods",
+              label: t("Budgeting methods", "Métodos de presupuesto"),
+            },
+            {
+              key: "principles",
+              label: t("Financial principles", "Principios financieros"),
+            },
+            { key: "tools", label: t("Tools & apps", "Herramientas y apps") },
+          ]}
+          value={activeTab}
+          onChange={setActiveTab}
+          ariaLabel={t("Wisdom sections", "Secciones de sabiduría")}
+        />
 
         {/* ---------------------------------------------------------- */}
         {/*  TAB 1: Biblical stewardship (original wisdom page)         */}
         {/* ---------------------------------------------------------- */}
 
-        <TabsContent value="stewardship" className="space-y-4">
+        {activeTab === "stewardship" && (
+        <div className="space-y-4">
           <div className="grid gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
             <Card className="bg-card xl:sticky xl:top-24 xl:h-fit">
               <CardHeader className="space-y-3">
@@ -481,13 +466,15 @@ export function WisdomScreen() {
               </div>
             </div>
           </div>
-        </TabsContent>
+        </div>
+        )}
 
         {/* ---------------------------------------------------------- */}
         {/*  TAB 2: Budgeting methods                                   */}
         {/* ---------------------------------------------------------- */}
 
-        <TabsContent value="methods" className="space-y-6">
+        {activeTab === "methods" && (
+        <div className="space-y-6">
           <Card className="bg-card">
             <CardHeader className="space-y-3">
               <Badge
@@ -547,13 +534,15 @@ export function WisdomScreen() {
               ))}
             </CardContent>
           </Card>
-        </TabsContent>
+        </div>
+        )}
 
         {/* ---------------------------------------------------------- */}
         {/*  TAB 3: Financial principles (biblical + Jewish)            */}
         {/* ---------------------------------------------------------- */}
 
-        <TabsContent value="principles" className="space-y-6">
+        {activeTab === "principles" && (
+        <div className="space-y-6">
           {financialContent.sections.map((section) => {
             const SIcon = sectionIconMap[section.icon] ?? BookOpen;
             return (
@@ -614,13 +603,15 @@ export function WisdomScreen() {
               </Card>
             );
           })}
-        </TabsContent>
+        </div>
+        )}
 
         {/* ---------------------------------------------------------- */}
         {/*  TAB 4: Tools & apps                                        */}
         {/* ---------------------------------------------------------- */}
 
-        <TabsContent value="tools" className="space-y-6">
+        {activeTab === "tools" && (
+        <div className="space-y-6">
           <Card className="bg-card">
             <CardHeader className="space-y-3">
               <Badge
@@ -666,8 +657,9 @@ export function WisdomScreen() {
               </div>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
+        </div>
+        )}
+      </div>
     </Screen>
   );
 }

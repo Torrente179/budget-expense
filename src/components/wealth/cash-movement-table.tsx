@@ -17,6 +17,7 @@ import {
 import { CashMovementForm } from "@/components/wealth/cash-movement-form";
 import type { InvestmentCashMovementWithJoins } from "@/lib/investments";
 import type { InvestmentCashMovementFormValues } from "@/lib/validations";
+import { StatusTag } from "@/components/patterns/status-tag";
 import { useLocale } from "@/providers/locale-provider";
 
 interface BrokerageAccountOption {
@@ -93,18 +94,16 @@ export function CashMovementTable({
           >
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span
-                    className={
-                      movement.movement_type === "deposit"
-                        ? "rounded-full border border-success/20 bg-success-subtle px-2.5 py-1 text-xs font-medium uppercase tracking-widest text-success"
-                        : "rounded-full border border-info/20 bg-info-subtle px-2.5 py-1 text-xs font-medium uppercase tracking-widest text-info"
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <StatusTag
+                    tone={
+                      movement.movement_type === "deposit" ? "success" : "info"
                     }
                   >
                     {movement.movement_type === "deposit"
-                      ? t("deposit", "depósito")
-                      : t("withdrawal", "retiro")}
-                  </span>
+                      ? t("Deposit", "Depósito")
+                      : t("Withdrawal", "Retiro")}
+                  </StatusTag>
                   <p className="text-base font-medium text-foreground">
                     {movement.brokerage_accounts.broker_kind}
                   </p>
