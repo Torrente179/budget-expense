@@ -40,7 +40,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  BookOpen,
   Check,
+  CircleDollarSign,
   Copy,
   HandHeart,
   Loader2,
@@ -286,6 +288,12 @@ export function BudgetScreen() {
                 }
               : undefined
           }
+          trigger={
+            <Button size="sm" className="gap-1.5">
+              <CircleDollarSign className="h-3.5 w-3.5" />
+              {t("Set plan", "Definir plan")}
+            </Button>
+          }
         />
       ),
     },
@@ -298,7 +306,17 @@ export function BudgetScreen() {
         "50/30/20 and others fill in the plan for you.",
         "50/30/20 y otros rellenan el plan por ti."
       ),
-      action: <MethodSelector onApply={handleApplyMethod} />,
+      action: (
+        <MethodSelector
+          onApply={handleApplyMethod}
+          trigger={
+            <Button variant="outline" size="sm" className="gap-1.5">
+              <BookOpen className="h-3.5 w-3.5" />
+              {t("Methods", "Métodos")}
+            </Button>
+          }
+        />
+      ),
     },
     {
       key: "objectives",
@@ -317,7 +335,7 @@ export function BudgetScreen() {
           onSubmit={handleAddBudget}
           trigger={
             <Button variant="outline" size="sm" className="gap-1.5">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3.5 w-3.5" />
               {t("Create", "Crear")}
             </Button>
           }
@@ -363,11 +381,11 @@ export function BudgetScreen() {
                 {setupSteps.map((step, index) => (
                   <div
                     key={step.key}
-                    className="flex items-center gap-3.5 rounded-lg px-2 py-3"
+                    className="flex items-start gap-3.5 rounded-lg px-2 py-3"
                   >
                     <div
                       className={cn(
-                        "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-caption font-semibold",
+                        "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-caption font-semibold",
                         step.done
                           ? "bg-success-subtle text-success"
                           : "bg-secondary text-muted-foreground"
@@ -375,20 +393,22 @@ export function BudgetScreen() {
                     >
                       {step.done ? <Check className="h-4 w-4" /> : index + 1}
                     </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-body font-medium">
-                        {step.title}
-                        {step.optional && (
-                          <span className="ml-2 text-caption font-normal text-muted-foreground">
-                            {t("optional", "opcional")}
-                          </span>
-                        )}
-                      </p>
-                      <p className="text-caption text-muted-foreground">
-                        {step.caption}
-                      </p>
+                    <div className="min-w-0 flex-1 space-y-2.5">
+                      <div>
+                        <p className="text-body font-medium">
+                          {step.title}
+                          {step.optional && (
+                            <span className="ml-2 text-caption font-normal text-muted-foreground">
+                              {t("optional", "opcional")}
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-caption text-muted-foreground">
+                          {step.caption}
+                        </p>
+                      </div>
+                      {step.action}
                     </div>
-                    <div className="shrink-0">{step.action}</div>
                   </div>
                 ))}
               </CardContent>
