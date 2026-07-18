@@ -18,9 +18,52 @@ function getDocumentLocale() {
   return document.documentElement.lang || null;
 }
 
+/**
+ * Map a BCP-47 tag (or Accept-Language snippet) to the app's two locales.
+ * Spanish → es; English → en; anything else → en.
+ */
 export function resolveAppLocale(locale?: string | null): AppLocale {
   const candidate = (locale ?? getDocumentLocale() ?? "en").toLowerCase();
-  return candidate.startsWith("es") ? "es" : "en";
+  if (candidate.startsWith("es")) return "es";
+  if (candidate.startsWith("en")) return "en";
+  return "en";
+}
+
+/** Highest-preference tag from an Accept-Language header. */
+export function preferredLanguageFromAcceptHeader(
+  header?: string | null
+): string | null {
+  if (!header?.trim()) return null;
+
+  const parts = header.split(",").map((chunk) => {
+    const [rawTag, ...params] = chunk.trim().split(";");
+    const qParam = params.find((item) => item.trim().startsWith("q="));
+    const quality = qParam ? Number.parseFloat(qParam.split("=")[1] ?? "1") : 1;
+    return {
+      tag: (rawTag ?? "").trim().toLowerCase(),
+      quality: Number.isFinite(quality) ? quality : 0,
+    };
+  });
+
+  parts.sort((a, b) => b.quality - a.quality);
+  return parts.find((part) => part.tag)?.tag ?? null;
+}
+
+/** Device / phone primary language → app locale (unsupported → English). */
+export function localeFromDeviceLanguages(
+  languages: readonly string[] | string | null | undefined
+): AppLocale {
+  const list = Array.isArray(languages)
+    ? languages
+    : languages
+      ? [languages]
+      : [];
+  const primary = list[0] ?? null;
+  return resolveAppLocale(primary);
+}
+
+export function localeFromAcceptLanguage(header?: string | null): AppLocale {
+  return resolveAppLocale(preferredLanguageFromAcceptHeader(header));
 }
 
 export function getIntlLocale(locale?: string | null) {

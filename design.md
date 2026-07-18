@@ -17,7 +17,7 @@
 - **Stack:** Next.js 16 (App Router) · React 19 · Tailwind CSS v4 (CSS-first
   config) · Base UI primitives · shadcn (`base-nova`) · Framer Motion ·
   Recharts · Supabase · Vercel.
-- **Theme model:** class-based light/dark via `next-themes`, **dark by
+- **Theme model:** class-based light/dark via `next-themes`, **light by
   default**, system preference enabled.
 
 ---
@@ -241,6 +241,10 @@ error states. No blank areas while fetching.
 
 - Every user-facing string ships EN + ES via `t(en, es)`; category names go
   through `tc()`. Layouts must tolerate ±35% text-length variance.
+- **Default language** follows the device / browser primary language
+  (`Accept-Language` on first paint, then `navigator.language`). Spanish →
+  `es`; anything else (including English) → `en`. A choice in Settings or the
+  language toggle is saved and wins over the device after that.
 - **Language controls never live in `Screen` header chrome** (they crowd month
   pickers and actions). Placement:
   - **Mobile:** profile sheet — a Language row that toggles EN ↔ ES.
