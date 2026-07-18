@@ -18,17 +18,22 @@ export interface PersonalizationPlan {
 
 /**
  * Deterministic mapping from onboarding answers → method, envelopes, CTAs.
+ * Pass `methodId` to keep a user-chosen budget profile instead of the suggestion.
  */
 export function buildPersonalization(input: {
   wantsBudgetHelp: boolean;
   goals: PrimaryGoal[];
   hasDebts: boolean;
+  /** When set, overrides the goal-based method suggestion. */
+  methodId?: string | null;
 }): PersonalizationPlan {
   const goals = new Set(input.goals);
   let methodId: string | null = null;
 
   if (input.wantsBudgetHelp) {
-    if (goals.has("pay_debt") || input.hasDebts) {
+    if (input.methodId) {
+      methodId = input.methodId;
+    } else if (goals.has("pay_debt") || input.hasDebts) {
       methodId = "60-30-10";
     } else if (goals.has("give_generously")) {
       methodId = "5-jars";

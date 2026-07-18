@@ -16,6 +16,8 @@ export async function applyOnboardingPersonalization(input: {
   wantsBudgetHelp: boolean;
   goals: PrimaryGoal[];
   hasDebts: boolean;
+  /** User-picked budget method; overrides the goal-based suggestion. */
+  methodId?: string | null;
 }) {
   const supabase = createClient();
   const {
@@ -29,6 +31,7 @@ export async function applyOnboardingPersonalization(input: {
     wantsBudgetHelp: input.wantsBudgetHelp,
     goals: input.goals,
     hasDebts: input.hasDebts,
+    methodId: input.methodId,
   });
 
   const method = plan.methodId

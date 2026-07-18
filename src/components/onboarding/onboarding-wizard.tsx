@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Plus, Trash2 } from "lucide-react";
+import { Check, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
@@ -17,7 +17,10 @@ import {
   goalLabel,
   type PrimaryGoal,
 } from "@/lib/onboarding/goals";
-import { getBudgetingMethodById } from "@/lib/budgeting-methods";
+import {
+  getBudgetingMethodById,
+  getBudgetingMethods,
+} from "@/lib/budgeting-methods";
 import { CURRENCIES } from "@/lib/constants";
 import {
   getCurrentMonth,
@@ -88,14 +91,21 @@ export function OnboardingWizard() {
   const [debtRows, setDebtRows] = useState<DraftDebt[]>([]);
   const [wantsBudgetHelp, setWantsBudgetHelp] = useState<boolean | null>(null);
   const [goals, setGoals] = useState<PrimaryGoal[]>([]);
+  /** User-chosen budget profile; null until seeded from the suggestion. */
+  const [methodId, setMethodId] = useState<string | null>(null);
+  const [methodTouched, setMethodTouched] = useState(false);
 
   const stepIndex = STEPS.indexOf(step);
   const currencyItems = useMemo(
     () => CURRENCIES.map((item) => ({ value: item.code, label: item.code })),
     []
   );
+  const budgetingMethods = useMemo(
+    () => getBudgetingMethods(locale).methods,
+    [locale]
+  );
 
-  const personalization = useMemo(
+  const suggestedPersonalization = useMemo(
     () =>
       buildPersonalization({
         wantsBudgetHelp: wantsBudgetHelp === true,
@@ -105,9 +115,27 @@ export function OnboardingWizard() {
     [wantsBudgetHelp, goals, debtRows]
   );
 
-  const suggestedMethod = personalization.methodId
+  // Keep the picker on the suggested method until the user picks another.
+  useEffect(() => {
+    if (methodTouched) return;
+    setMethodId(suggestedPersonalization.methodId);
+  }, [suggestedPersonalization.methodId, methodTouched]);
+
+  const personalization = useMemo(
+    () =>
+      buildPersonalization({
+        wantsBudgetHelp: wantsBudgetHelp === true,
+        goals,
+        hasDebts: debtRows.some((row) => parseDecimalInput(row.balance)),
+        methodId,
+      }),
+    [wantsBudgetHelp, goals, debtRows, methodId]
+  );
+
+  const selectedMethod = personalization.methodId
     ? getBudgetingMethodById(locale, personalization.methodId)
     : null;
+  const suggestedMethodId = suggestedPersonalization.methodId;
 
   function goNext() {
     const next = STEPS[stepIndex + 1];
@@ -196,6 +224,7 @@ export function OnboardingWizard() {
         wantsBudgetHelp,
         goals,
         hasDebts: debtRows.length > 0,
+        methodId: wantsBudgetHelp ? methodId : null,
       });
 
       await completeOnboarding({ wantsBudgetHelp, goals });
@@ -635,17 +664,11 @@ export function OnboardingWizard() {
               </h2>
               <ul className="space-y-2 text-body text-muted-foreground">
                 <li>
-                  {t("This month's income, saved on your plan.", "El ingreso de este mes, guardado en tu plan.")}
+                  {t(
+                    "This month's income, saved on your plan.",
+                    "El ingreso de este mes, guardado en tu plan."
+                  )}
                 </li>
-                {suggestedMethod && (
-                  <li>
-                    {t("Method that fits", "Método que encaja")}:{" "}
-                    <span className="font-medium text-foreground">
-                      {suggestedMethod.name}
-                    </span>{" "}
-                    — {suggestedMethod.tagline}
-                  </li>
-                )}
                 {wantsBudgetHelp && personalization.seedEnvelopes.length > 0 && (
                   <li>
                     {t(
@@ -663,12 +686,94 @@ export function OnboardingWizard() {
                   </li>
                 )}
               </ul>
+
+              {wantsBudgetHelp && (
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label>
+                      {t("Budget profile", "Perfil de presupuesto")}
+                    </Label>
+                    <p className="text-caption text-muted-foreground">
+                      {t(
+                        "We suggested one from your goals — tap another if you prefer.",
+                        "Sugerimos uno según tus metas — toca otro si prefieres."
+                      )}
+                    </p>
+                  </div>
+                  <div
+                    role="radiogroup"
+                    aria-label={t("Budget profile", "Perfil de presupuesto")}
+                    className="grid gap-2"
+                  >
+                    {budgetingMethods.map((method) => {
+                      const selected = methodId === method.id;
+                      const isSuggestion = method.id === suggestedMethodId;
+                      return (
+                        <button
+                          key={method.id}
+                          type="button"
+                          role="radio"
+                          aria-checked={selected}
+                          onClick={() => {
+                            setMethodTouched(true);
+                            setMethodId(method.id);
+                          }}
+                          className={cn(
+                            "min-h-14 rounded-xl border px-3 py-3 text-left transition-colors",
+                            selected
+                              ? "border-foreground bg-secondary"
+                              : "border-border hover:bg-accent"
+                          )}
+                        >
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={cn(
+                                "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                                selected
+                                  ? "border-foreground bg-foreground text-background"
+                                  : "border-border"
+                              )}
+                            >
+                              {selected && <Check className="h-3 w-3" />}
+                            </span>
+                            <span className="min-w-0 flex-1 space-y-0.5">
+                              <span className="flex flex-wrap items-center gap-2">
+                                <span className="text-body font-medium text-foreground">
+                                  {method.name}
+                                </span>
+                                {isSuggestion && (
+                                  <span className="text-caption text-muted-foreground">
+                                    {t("Suggested", "Sugerido")}
+                                  </span>
+                                )}
+                              </span>
+                              <span className="block text-caption text-muted-foreground">
+                                {method.tagline}
+                              </span>
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {selectedMethod && (
+                    <p className="text-caption text-muted-foreground">
+                      {selectedMethod.description}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-col gap-2">
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Button variant="ghost" onClick={goBack} disabled={saving}>
                     {t("Back", "Atrás")}
                   </Button>
-                  <Button className="flex-1" onClick={handleFinish} disabled={saving}>
+                  <Button
+                    className="flex-1"
+                    onClick={handleFinish}
+                    disabled={saving}
+                  >
                     {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {t("Finish setup", "Terminar configuración")}
                   </Button>

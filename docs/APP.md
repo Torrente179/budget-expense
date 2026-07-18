@@ -79,7 +79,8 @@ looked “pending” and redirected back. Fix:
 3. Recurring / fixed (0–N)  
 4. Debt / liabilities (0–N)  
 5. Goals — budgeting help yes/no + multi-select  
-6. Suggestions — method + starter envelopes when help requested  
+6. Suggestions — choosable budget method (pre-selected from goals) + starter
+   envelopes when help requested  
 7. Done → `/home`
 
 **Goals** (`profiles.primary_goals`): `save_more`, `increase_wealth`,
