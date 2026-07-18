@@ -31,7 +31,7 @@ of truth for every nav surface is
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — safe-to-spend hero, month stat row, attention feed, recent movements, quick actions. Current month only, everything actionable. |
+| **Home** | `/home` | "How am I doing right now" — safe-to-spend hero with spending-pace bar, month stat row, category donut ("Where it went"), attention feed, recent movements, desktop-only shortcuts. Current month only, everything actionable. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
 | **Budget** | `/budget` | Giving pillar (always first), income-pool plan, custom budgets, method selector. |
 | **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts. If it's a balance, it lives here. |

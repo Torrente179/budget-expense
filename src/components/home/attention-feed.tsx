@@ -239,6 +239,24 @@ export function AttentionFeed() {
     convert,
   ]);
 
+  /* Nothing pending: one calm line, not a full card of empty space. */
+  if (items.length === 0) {
+    return (
+      <div className="flex items-center gap-2.5 rounded-xl bg-card px-4 py-3 ring-1 ring-border shadow-1">
+        <CheckCircle2 className="h-4.5 w-4.5 shrink-0 text-success" />
+        <p className="min-w-0 truncate text-body text-muted-foreground">
+          <span className="font-medium text-foreground">
+            {t("All clear", "Todo en orden")}
+          </span>{" "}
+          {t(
+            "— nothing needs your attention this week.",
+            "— nada necesita tu atención esta semana."
+          )}
+        </p>
+      </div>
+    );
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -248,25 +266,7 @@ export function AttentionFeed() {
         />
       </CardHeader>
       <CardContent className="px-2 pb-2">
-        {items.length === 0 ? (
-          <div className="flex items-center gap-3 rounded-lg px-3 py-4">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-success-subtle text-success">
-              <CheckCircle2 className="h-4.5 w-4.5" />
-            </div>
-            <div>
-              <p className="text-body font-medium">
-                {t("All clear", "Todo en orden")}
-              </p>
-              <p className="text-caption text-muted-foreground">
-                {t(
-                  "Nothing pending — enjoy the peace of mind.",
-                  "Nada pendiente — disfruta la tranquilidad."
-                )}
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col">
+        <div className="flex flex-col">
             {items.map((item) => (
               <Link
                 key={item.key}
@@ -291,8 +291,7 @@ export function AttentionFeed() {
                 <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/50" />
               </Link>
             ))}
-          </div>
-        )}
+        </div>
       </CardContent>
     </Card>
   );

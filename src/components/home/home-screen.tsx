@@ -1,15 +1,16 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getDaysInMonth } from "date-fns";
+import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import {
   ClipboardCheck,
   Compass,
   FileUp,
   HandHeart,
   LineChart,
-  Plus,
   TrendingDown,
   TrendingUp,
   ArrowUpDown,
@@ -32,29 +33,21 @@ import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { AttentionFeed } from "@/components/home/attention-feed";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { EmptyState } from "@/components/shared/empty-state";
-import { CaptureSheet, type CaptureKind } from "@/components/capture/capture-sheet";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useChartMounted } from "@/components/charts/chart-theme";
 
-const HomeSparkline = dynamic(
-  () =>
-    import("@/components/home/home-sparkline").then((mod) => mod.HomeSparkline),
-  { ssr: false }
-);
-
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
   const { baseCurrency } = useCurrency();
-  const { month, year, setMonthYear } = useMonth();
+  const { month, year, isCurrentMonth, setMonthYear } = useMonth();
   const mounted = useChartMounted();
+  const router = useRouter();
 
   const { summary, loading } = useMonthlySummary({ month, year });
   const titheTarget = useTitheTarget();
   const { incomplete, profile } = useOnboarding();
   usePrefetchMonths(month, year, loading, "summary");
-
-  const [captureKind, setCaptureKind] = useState<CaptureKind | null>(null);
 
   const personalizedCtas = useMemo(() => {
     if (!profile) return [] as ReturnType<typeof buildPersonalization>["homeCtas"];
@@ -84,16 +77,56 @@ export function HomeScreen() {
   const boundByBudget =
     budgetRemaining !== null && budgetRemaining < cashAvailable;
 
-  const sparkData = useMemo(() => {
-    const sorted = [...summary.dailySpending].sort((a, b) =>
-      a.date.localeCompare(b.date)
+  /* Spending pace: % of income spent vs % of the month elapsed. */
+  const daysInMonth = getDaysInMonth(new Date(year, month - 1));
+  const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
+  const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
+  const spentRatio =
+    summary.totalIncome > 0 ? summary.totalSpent / summary.totalIncome : null;
+  const paceTone =
+    spentRatio === null
+      ? "bg-secondary"
+      : spentRatio > 1
+        ? "bg-danger"
+        : spentRatio > monthProgress
+          ? "bg-warning"
+          : "bg-success";
+
+  /* Category donut: top slices + Other, colored by DB category color. */
+  const donut = useMemo(() => {
+    const rows = summary.categoryBreakdown;
+    const total = rows.reduce((sum, row) => sum + row.total_amount, 0);
+    const slices: { id: string; name: string; value: number; color: string }[] =
+      [];
+    if (total <= 0) return { total: 0, slices };
+    for (const row of rows.slice(0, 6)) {
+      slices.push({
+        id: row.category_id,
+        name: tc(row.category_name),
+        value: row.total_amount,
+        color: row.category_color,
+      });
+    }
+    const restSum = rows
+      .slice(6)
+      .reduce((sum, row) => sum + row.total_amount, 0);
+    if (restSum > 0) {
+      slices.push({
+        id: "other",
+        name: t("Other", "Otros"),
+        value: restSum,
+        color: "var(--chart-3)",
+      });
+    }
+    return { total, slices };
+  }, [summary.categoryBreakdown, tc, t]);
+
+  function openCategory(categoryId: string) {
+    if (categoryId === "other") return;
+    router.push(
+      `/insights/categories/${categoryId}?month=${month}&year=${year}&from=dashboard`
     );
-    let cumulative = 0;
-    return sorted.map((day) => {
-      cumulative += day.amount;
-      return { date: day.date, total: cumulative };
-    });
-  }, [summary.dailySpending]);
+  }
 
   const givingSpent = summary.givingSpent;
   const givingTarget =
@@ -174,13 +207,9 @@ export function HomeScreen() {
     })
     .filter((action): action is NonNullable<typeof action> => action !== null);
 
+  /* Adding movements is the FAB's job; these are personalized shortcuts
+     plus the two flows without a primary-nav home (import, review). */
   const fallbackQuickActions = [
-    {
-      key: "income",
-      label: t("Add income", "Añadir ingreso"),
-      icon: TrendingUp,
-      onClick: () => setCaptureKind("income"),
-    },
     {
       key: "import",
       label: t("Import CSV", "Importar CSV"),
@@ -195,16 +224,7 @@ export function HomeScreen() {
     },
   ];
 
-  const quickActions = [
-    {
-      key: "expense",
-      label: t("Add expense", "Añadir gasto"),
-      icon: Plus,
-      onClick: () => setCaptureKind("expense"),
-    },
-    ...goalQuickActions,
-    ...fallbackQuickActions,
-  ]
+  const quickActions = [...goalQuickActions, ...fallbackQuickActions]
     .filter(
       (action, index, list) =>
         list.findIndex((item) => item.key === action.key) === index
@@ -259,36 +279,60 @@ export function HomeScreen() {
           )}
 
           {/* Safe-to-spend hero — the one number, plus the month's pace. */}
-          <Card className="relative overflow-hidden">
-            <CardContent className="relative z-10 space-y-1.5 py-6">
-              <p className="label-caps">
-                {t("Safe to spend", "Disponible para gastar")}
-              </p>
-              <p
-                className={cn(
-                  "font-mono text-display tabular-nums",
-                  safeToSpend >= 0 ? "text-foreground" : "text-negative"
-                )}
-              >
-                {formatCurrency(safeToSpend, baseCurrency)}
-              </p>
-              <p className="text-caption text-muted-foreground">
-                {boundByBudget
-                  ? t(
-                      `Budget cap: ${formatCurrency(budgetRemaining ?? 0, baseCurrency)} left of ${formatCurrency(summary.totalBudget, baseCurrency)} plan`,
-                      `Límite del plan: quedan ${formatCurrency(budgetRemaining ?? 0, baseCurrency)} de ${formatCurrency(summary.totalBudget, baseCurrency)}`
-                    )
-                  : t(
-                      "Income − spent − transfers this month",
-                      "Ingresos − gastos − transferencias del mes"
-                    )}
-              </p>
-            </CardContent>
-            {mounted && sparkData.length > 1 && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 opacity-60">
-                <HomeSparkline data={sparkData} />
+          <Card>
+            <CardContent className="space-y-4 py-5">
+              <div className="space-y-1">
+                <p className="label-caps">
+                  {t("Safe to spend", "Disponible para gastar")}
+                </p>
+                <p
+                  className={cn(
+                    "font-mono text-display tabular-nums",
+                    safeToSpend >= 0 ? "text-foreground" : "text-negative"
+                  )}
+                >
+                  {formatCurrency(safeToSpend, baseCurrency)}
+                </p>
+                <p className="text-caption text-muted-foreground">
+                  {boundByBudget
+                    ? t(
+                        `Budget cap: ${formatCurrency(budgetRemaining ?? 0, baseCurrency)} left of ${formatCurrency(summary.totalBudget, baseCurrency)} plan`,
+                        `Límite del plan: quedan ${formatCurrency(budgetRemaining ?? 0, baseCurrency)} de ${formatCurrency(summary.totalBudget, baseCurrency)}`
+                      )
+                    : t(
+                        "Income − spent − transfers this month",
+                        "Ingresos − gastos − transferencias del mes"
+                      )}
+                </p>
               </div>
-            )}
+
+              {/* Pace: how much of income is spent vs how far into the month we are */}
+              {spentRatio !== null && (
+                <div className="space-y-1.5">
+                  <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
+                    <div
+                      className={cn("h-full rounded-full", paceTone)}
+                      style={{ width: `${Math.min(spentRatio, 1) * 100}%` }}
+                    />
+                    {isCurrentMonth && (
+                      <div
+                        aria-hidden
+                        className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/60"
+                        style={{ left: `${monthProgress * 100}%` }}
+                      />
+                    )}
+                  </div>
+                  <p className="text-caption text-muted-foreground">
+                    {t(
+                      `${Math.round(spentRatio * 100)}% of income spent`,
+                      `${Math.round(spentRatio * 100)}% de los ingresos gastado`
+                    )}
+                    {isCurrentMonth &&
+                      ` · ${t(`day ${dayOfMonth} of ${daysInMonth}`, `día ${dayOfMonth} de ${daysInMonth}`)}`}
+                  </p>
+                </div>
+              )}
+            </CardContent>
           </Card>
 
           {/* Month status row */}
@@ -318,7 +362,10 @@ export function HomeScreen() {
                       {`${Math.abs(spentDelta * 100).toFixed(0)}% ${t("vs last month", "vs mes anterior")}`}
                     </span>
                   ) : (
-                    t("No previous month", "Sin mes anterior")
+                    t(
+                      `${summary.expenseCount} movements`,
+                      `${summary.expenseCount} movimientos`
+                    )
                   )
                 }
               />
@@ -332,10 +379,7 @@ export function HomeScreen() {
                     {formatCurrency(summary.totalIncome, baseCurrency)}
                   </span>
                 }
-                detail={t(
-                  `${summary.expenseCount} movements`,
-                  `${summary.expenseCount} movimientos`
-                )}
+                detail={t("this month", "este mes")}
               />
             </div>
             <div className="min-w-[11rem] snap-start sm:min-w-0">
@@ -370,28 +414,138 @@ export function HomeScreen() {
               />
             </div>
             <div className="min-w-[11rem] snap-start sm:min-w-0">
-              <StatCard
-                label={t("Budget used", "Plan usado")}
-                value={
-                  <span className="font-mono text-heading font-semibold tabular-nums">
-                    {budgetRatio !== null
-                      ? `${Math.round(budgetRatio * 100)}%`
-                      : "—"}
-                  </span>
-                }
-                detail={
-                  budgetRatio !== null ? (
-                    <ProgressMeter ratio={budgetRatio} className="h-1" />
-                  ) : (
-                    t("No plan this month", "Sin plan este mes")
-                  )
-                }
-                href="/budget"
-              />
+              {budgetRatio !== null ? (
+                <StatCard
+                  label={t("Budget used", "Plan usado")}
+                  value={
+                    <span className="font-mono text-heading font-semibold tabular-nums">
+                      {`${Math.round(budgetRatio * 100)}%`}
+                    </span>
+                  }
+                  detail={<ProgressMeter ratio={budgetRatio} className="h-1" />}
+                  href="/budget"
+                />
+              ) : (
+                <StatCard
+                  label={t("Kept", "Guardado")}
+                  value={
+                    <span
+                      className={cn(
+                        "font-mono text-heading font-semibold tabular-nums",
+                        summary.totalIncome - summary.totalSpent >= 0
+                          ? "text-foreground"
+                          : "text-negative"
+                      )}
+                    >
+                      {formatCurrency(
+                        summary.totalIncome - summary.totalSpent,
+                        baseCurrency
+                      )}
+                    </span>
+                  }
+                  detail={t("Income − spent", "Ingresos − gastos")}
+                  href="/budget"
+                />
+              )}
             </div>
           </div>
 
-          <AttentionFeed />
+          {/* Desktop: attention + recents left, donut right. Mobile: donut first. */}
+          <div className="grid gap-4 lg:grid-cols-5">
+            <div className="min-w-0 space-y-4 lg:order-2 lg:col-span-2">
+              {donut.slices.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <SectionHeader
+                      eyebrow={t("This month", "Este mes")}
+                      title={t("Where it went", "A dónde se fue")}
+                      action={
+                        <Link
+                          href="/insights"
+                          className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {t("Insights", "Análisis")}
+                        </Link>
+                      }
+                    />
+                  </CardHeader>
+                  <CardContent className="flex flex-col items-center gap-5 sm:flex-row lg:flex-col xl:flex-row">
+                    <div className="relative h-40 w-40 shrink-0">
+                      {mounted && (
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={donut.slices}
+                              dataKey="value"
+                              nameKey="name"
+                              innerRadius={52}
+                              outerRadius={74}
+                              paddingAngle={2}
+                              stroke="var(--card)"
+                              strokeWidth={2}
+                              isAnimationActive={false}
+                              onClick={(_, index) => {
+                                const slice = donut.slices[index];
+                                if (slice) openCategory(slice.id);
+                              }}
+                            >
+                              {donut.slices.map((slice) => (
+                                <Cell
+                                  key={slice.id}
+                                  fill={slice.color}
+                                  cursor={
+                                    slice.id === "other" ? "default" : "pointer"
+                                  }
+                                />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      )}
+                      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                        <span className="label-caps">{t("Spent", "Gastado")}</span>
+                        <span className="font-mono text-caption font-semibold tabular-nums">
+                          {formatCurrency(donut.total, baseCurrency)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="w-full min-w-0 flex-1 space-y-0.5">
+                      {donut.slices.map((slice) => (
+                        <button
+                          key={slice.id}
+                          type="button"
+                          onClick={() => openCategory(slice.id)}
+                          disabled={slice.id === "other"}
+                          className={cn(
+                            "flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left",
+                            slice.id !== "other" &&
+                              "transition-colors hover:bg-accent/50"
+                          )}
+                        >
+                          <span
+                            aria-hidden
+                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                            style={{ backgroundColor: slice.color }}
+                          />
+                          <span className="min-w-0 flex-1 truncate text-body">
+                            {slice.name}
+                          </span>
+                          <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
+                            {Math.round((slice.value / donut.total) * 100)}%
+                          </span>
+                          <span className="w-20 shrink-0 text-right font-mono text-caption tabular-nums">
+                            {formatCurrency(slice.value, baseCurrency)}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+
+            <div className="min-w-0 space-y-4 lg:order-1 lg:col-span-3">
+              <AttentionFeed />
 
           {/* Recent movements */}
           <Card>
@@ -443,48 +597,24 @@ export function HomeScreen() {
             </CardContent>
           </Card>
 
-          {/* Quick actions */}
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {quickActions.map((action) => {
-              if ("href" in action && action.href) {
-                return (
-                  <Link
-                    key={action.key}
-                    href={action.href}
-                    className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 text-body font-medium transition-colors hover:bg-secondary"
-                  >
-                    <action.icon className="h-4 w-4 text-muted-foreground" />
-                    {action.label}
-                  </Link>
-                );
-              }
-              if ("onClick" in action && action.onClick) {
-                return (
-                  <button
-                    key={action.key}
-                    type="button"
-                    onClick={action.onClick}
-                    className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 text-body font-medium transition-colors hover:bg-secondary"
-                  >
-                    <action.icon className="h-4 w-4 text-muted-foreground" />
-                    {action.label}
-                  </button>
-                );
-              }
-              return null;
-            })}
+              {/* Quick shortcuts — desktop only; mobile has the tab bar + FAB */}
+              {quickActions.length > 0 && (
+                <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4">
+                  {quickActions.map((action) => (
+                    <Link
+                      key={action.key}
+                      href={action.href}
+                      className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 text-body font-medium transition-colors hover:bg-secondary"
+                    >
+                      <action.icon className="h-4 w-4 text-muted-foreground" />
+                      {action.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         </>
-      )}
-
-      {captureKind !== null && (
-        <CaptureSheet
-          open
-          onOpenChange={(open) => {
-            if (!open) setCaptureKind(null);
-          }}
-          kind={captureKind}
-        />
       )}
     </Screen>
   );
