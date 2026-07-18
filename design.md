@@ -122,6 +122,34 @@ Route transitions are **opacity-only** (transforms break sticky headers),
 `prefers-reduced-motion` collapses all animation globally. Touch devices get
 `scale(0.98)` press feedback and `overscroll-behavior-y: contain`.
 
+### 2.6 Brand identity & app icon
+
+The canonical product mark is a single condensed, forward-leaning warm-white
+**B** with an emerald ledger/growth slash, set on a near-black rounded
+superellipse with a restrained graphite rim. It carries the reference logo's
+speed and contrast while remaining recognizable at browser-favicon size. The
+slash uses the product's success green (`#18b986`); it signals positive
+progress and must remain subordinate to the letter.
+
+The mark is a flat, front-facing asset. Do not add the former serif `BE`
+monogram, photographic perspective, leather texture, gold accents, finance
+clip art, extra lettering, or alternate colorways. Do not stretch, crop,
+re-typeset, or reconstruct the mark in component code. Use the owned assets:
+
+| Surface | Canonical asset | Size / contents |
+|---|---|---|
+| In-app `SiteBrand` | `public/icons/budget-expense-app-icon.png` | 1024×1024 PNG master |
+| Browser / metadata icon | `src/app/icon.png` | 512×512 PNG |
+| Browser favicon | `src/app/favicon.ico` | 16, 32, 48, 64, 128, and 256px |
+| Apple touch icon | `src/app/apple-icon.png` | 180×180 PNG |
+| PWA install icon | `public/icons/budget-expense-icon-192.png` | 192×192 PNG |
+| PWA install icon | `public/icons/budget-expense-icon-512.png` | 512×512 PNG |
+
+All icon surfaces must be regenerated from the same master artwork so the
+browser tab, installed app, home screen, and app chrome never show different
+identities. Preserve the built-in outer padding and high-contrast silhouette;
+at 16px the white `B` must remain the dominant readable shape.
+
 ---
 
 ## 3. Component architecture
@@ -250,6 +278,7 @@ error states. No blank areas while fetching.
 | Async result | Sonner toast (destructive ops offer Undo) |
 | New string | `t("English", "Español")` |
 | New nav destination | add to `lib/navigation.ts` only |
+| Brand / app icon | canonical assets and rules in §2.6 |
 
 ---
 
@@ -365,4 +394,3 @@ modification to tokens (`globals.css`), patterns (`components/patterns`),
 primitives (`components/ui`), layout chrome (`components/layout`), first-run
 onboarding, or envelope-alert behavior. Keep [`docs/APP.md`](docs/APP.md) in
 sync for product behavior.*
-
