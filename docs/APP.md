@@ -34,7 +34,45 @@ Secondary: `/review`, `/import`, `/wisdom`, `/settings`, `/onboarding` (first-ru
 
 ---
 
-## 2. First-run onboarding (new users only)
+## 2. Defaults — theme, language, voice
+
+### Theme
+
+- `next-themes` class strategy; **default theme is light**
+  (`ThemeProvider` `defaultTheme="light"`).
+- System preference still enabled; a saved user choice wins.
+- See [`design.md`](../design.md) theme model.
+
+### Language
+
+- Supported locales: **EN** and **ES** only (`AppLocale`).
+- **Default:** device / browser primary language
+  (`Accept-Language` on SSR via root layout, then `navigator.language`).
+  - Primary tag starts with `es` → Spanish
+  - Anything else (including English, French, etc.) → English
+- Explicit choice (Settings / language toggle) sets `be-locale-explicit` and
+  persists; that wins over the device after that.
+- Soft device default is **not** written to storage until the user picks.
+- Helpers: `localeFromAcceptLanguage`, `localeFromDeviceLanguages`,
+  `resolveAppLocale` in `src/lib/utils.ts`; provider
+  `src/providers/locale-provider.tsx`.
+
+### Voice / copy
+
+- Warm, plain-spoken stewardship — not SaaS boilerplate or encyclopedia tone.
+- Domain words: *stewardship, ledger, envelopes/pool, giving, tithe, wisdom*.
+- Brand kicker: **Stewardship / Mayordomía**.
+- Meta description: private ledger for spending, budgets, and giving.
+- 2026-07-18 copy pass covered auth, onboarding, Home/Attention/Review,
+  Insights/Wealth labels, Settings delete wording, Wisdom + method blurbs.
+
+Change notes: `changes/2026-07-18-default-theme-light.md`,
+`changes/2026-07-18-device-default-language.md`,
+`changes/2026-07-18-natural-voice-copy-pass.md`.
+
+---
+
+## 3. First-run onboarding (new users only)
 
 **Route:** `/onboarding` — not in primary nav. Chrome (sidebar, topbar, tab bar,
 FAB) is hidden on this route.
@@ -79,13 +117,24 @@ looked “pending” and redirected back. Fix:
 3. Recurring / fixed (0–N)  
 4. Debt / liabilities (0–N)  
 5. Goals — budgeting help yes/no + multi-select  
-6. Suggestions — choosable budget method (pre-selected from goals) + starter
-   envelopes when help requested  
+6. Suggestions — **choosable budget profile** (method list; goal-based suggestion
+   pre-selected; user can tap another) + starter envelopes when help requested  
 7. Done → `/home`
 
 **Goals** (`profiles.primary_goals`): `save_more`, `increase_wealth`,
 `budget_tracking`, `decrease_expenses`, `pay_debt`, `give_generously`,
 `build_emergency_fund`.
+
+### Budget profile on suggestions
+
+- When `wants_budget_help` is yes, the suggestions step lists every method from
+  `getBudgetingMethods(locale)` as a radio list.
+- One method is marked **Suggested** from goals/debts
+  (`buildPersonalization` without override).
+- Until the user taps another method, the suggestion stays selected; after they
+  pick, that choice is sticky even if they go back and change goals.
+- Finish passes `methodId` into `applyOnboardingPersonalization` → plan
+  `allocation_percent` from the chosen method’s slices.
 
 ### Profile columns (applied)
 
@@ -100,29 +149,77 @@ Migration [`supabase/migrations/2026-07-18-onboarding-goals.sql`](../supabase/mi
 ### Personalization
 
 [`src/lib/onboarding/personalize.ts`](../src/lib/onboarding/personalize.ts) →
-method, seed envelopes, Home CTAs, Attention hints. Applied at finish via
+method, seed envelopes, Home CTAs, Attention hints. Optional `methodId`
+overrides the goal-based suggestion. Applied at finish via
 [`apply.ts`](../src/lib/onboarding/apply.ts).
 
 | Signal | Effect |
 |---|---|
 | `wants_budget_help` | Method % + 2–4 starter envelopes |
+| User-picked `methodId` | Wins over goal-based method suggestion |
 | `budget_tracking` | Budget + Movements shortcuts |
 | `decrease_expenses` | Attention → Insights |
 | `save_more` / `build_emergency_fund` | Savings-oriented method / Savings envelope |
 | `pay_debt` | Attention → Liabilities; Wealth CTA |
 | `increase_wealth` | Wealth CTA |
-| `give_generously` | Giving envelope / Giving card emphasis |
+| `give_generously` | Giving envelope; sets `tithe_target_percent` to 10%; ensures Tithe/Diezmo category |
 
 Key files: `onboarding-wizard.tsx`, `onboarding-gate.tsx`, `use-onboarding.ts`,
 middleware onboarding branch.
 
 Change notes:
 `changes/2026-07-18-onboarding-goals-budget-alerts.md`,
-`changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md`.
+`changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md`,
+`changes/2026-07-18-onboarding-choosable-budget-profile.md`.
 
 ---
 
-## 3. In-app budget limit alerts
+## 4. Capture (expenses & income)
+
+Single surface: `CaptureSheet` + global FAB (`CaptureFab`). Also opened from
+Movements for create/edit.
+
+### Rules (must hold)
+
+1. **Await save before close** — never dismiss the sheet (or unmount it) until
+   `addExpense` / `addIncome` / update succeeds. On error, keep the sheet open;
+   toasts come from `use-capture`.
+2. **Keep sheet mounted while open** — FAB and Movements pass `open={…}`; do
+   not remount-destroy mid-request.
+3. **Currency seeds only on open edge** (false → true). Do **not** reset
+   currency when `baseCurrency` loads later (that wiped COP → EUR).
+4. **Snapshot currency** into the payload before awaits.
+5. **Persist last-used currency** for expense *and* income
+   (`lib/capture/defaults.ts`).
+6. **Save & add another** (create mode) — saves, clears amount/description,
+   keeps kind + currency + category/source, stays open.
+7. Income requires **Source**; expense requires **Category**.
+8. Optimistic updates for **both** expense and income.
+9. Ledger rows use `AmountText` with `showOriginal` so foreign currencies
+   (e.g. COP) show next to the converted base amount.
+
+Change note: `changes/2026-07-18-fix-capture-multi-add-currency-income.md`.
+
+---
+
+## 5. Giving / Generosidad (income-based)
+
+Giving is a **share of income**, never a mirror of total expenses.
+
+| Concept | Source |
+|---|---|
+| Target | `resolveGivingTarget` in `src/lib/giving.ts`: `tithe_target_percent` × (**plan income** first, else recorded income) |
+| Given | Sum of expenses classified / named as giving (Tithe, Diezmo, Donaciones, etc.) |
+| Home + Budget cards | **Primary number = target**; detail = amount given toward it |
+| Onboarding `give_generously` | Sets profile `tithe_target_percent` to 10%; seeds Generosidad envelope; creates Tithe/Diezmo category if missing so the envelope never binds to essentials/lifestyle |
+
+Settings → Stewardship still edits the giving % of income.
+
+Change note: `changes/2026-07-18-fix-giving-income-based.md`.
+
+---
+
+## 6. In-app budget limit alerts
 
 No push / email. Thresholds: **75%** warn · **90%** danger · **100%** over.
 
@@ -137,7 +234,7 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 ---
 
-## 4. Navigation & chrome rules
+## 7. Navigation & chrome rules
 
 - **Screen back:** `router.back()` when history exists; else `backHref` (or
   `/home`). Never a hard-coded `/home`-only Link for pushed screens.
@@ -150,14 +247,15 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 - **Status indicators:** `patterns/status-tag.tsx` (tone dot + label in ink)
   is the only way to show state (Buy/Sell, Deposit/Withdrawal, Over-budget,
   etc.) — never an uppercase tinted pill.
-- **Capture:** one form — `CaptureSheet` + FAB; optimistic expense add with Undo.
+- **Capture:** one form — `CaptureSheet` + FAB (see §4).
 
 ---
 
-## 5. Home (current composition)
+## 8. Home (current composition)
 
 - Stat row: **Income** (positive) · **Spent** · **Current** (income − spent −
-  transfers) · **Giving** — Spent/Income link into Movements tabs.
+  transfers) · **Giving** (income-based **target** as the hero number; given
+  shown in the detail line) — Spent/Income link into Movements tabs.
 - Budgets area: paced remaining + top objectives, or empty CTA into `/budget`.
 - “Where it went” category donut (top categories + Other).
 - Attention feed (review, envelopes, anomalies, bills, onboarding hints).
@@ -167,26 +265,42 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 ---
 
-## 6. Budget (current composition)
+## 9. Budget (current composition)
 
 - **Empty (no plan, no objectives):** 3-step guided setup — income → optional
   method → create objectives (plain-language copy; profile-aware when
   `wants_budget_help`).
 - **Otherwise:** “Your plan” overview (remaining, pace bar) + objectives list
-  (tap to edit) + standing Giving card.
+  (tap to edit; always-visible delete) + standing Giving card (income-based
+  target as primary). Monthly plan can be deleted from the plan sheet
+  (confirm); expenses and objectives are kept.
+
 
 ---
 
-## 7. Wealth (current composition)
+## 10. Movements (current composition)
+
+- Unified ledger: expenses + income, underline filter tabs, search,
+  swipe-delete (mobile), edit via CaptureSheet.
+- Desktop: readable centered width; date labels aligned with row inset;
+  delete control in a stable trailing column (hover + keyboard focus).
+- Amounts show converted base value plus original currency when different
+  (`showOriginal` on `TransactionRow` → `AmountText`).
+
+Change note: `changes/2026-07-18-fix-desktop-movements-alignment.md`.
+
+---
+
+## 11. Wealth (current composition)
 
 - **Overview** (`/wealth`): net worth + allocation together in one hero card
   — big net-worth number, then a `BreakdownDonut` split across
   investments / savings / broker cash (center total, legend with share %
-  and amount). A 3-up stat row (liquidity runway, kept in 12mo, debts).
-  Premium jump-in cards to Investments / Savings / Debts, each showing its
-  current balance. FX exposure in its own titled card.
+  and amount). A 3-up stat row (cash runway / months of buffer, kept over
+  12mo, debts). Premium jump-in cards to Investments / Savings / Debts.
+  FX shown as **By currency**.
 - **Investments** (`/wealth/investments`): `UnderlineTabs` for
-  Overview / Orders / Cash / Watchlist (no more boxed Base-UI `Tabs`).
+  Overview / Orders / Cash / Watchlist.
   Overview/cash mini-stats are plain label+number pairs, not bordered
   blocks. Buy/Sell and Deposit/Withdrawal use `StatusTag`.
 - **Savings** / **Liabilities**: unchanged data model, same `WealthNav`
@@ -198,37 +312,36 @@ Change note: `changes/2026-07-18-premium-sweep-wealth-insights.md`.
 
 ---
 
-## 8. Insights (current composition)
+## 12. Insights (current composition)
 
 Past + patterns only — no data-entry CTAs (see the editorial rule in
 `design.md` §1).
 
 - Ratio stat row (savings rate, expense ratio, budget usage, transactions).
-- Trailing-12-month pillars (Giving · Spending · Saving) when income data
-  exists.
+- Last-12-month pillars (Giving · Spending · Saving) when income data exists.
 - 12-month spending trend + this-month cumulative-spend charts
   (`ChartCard`).
-- Category breakdown, envelope utilization (rows, not boxes; over-budget
-  uses `StatusTag`), anomalies, monthly report, giving insights, income
-  sources — all de-boxed into clean rows.
+- Category breakdown, budget use against plan (rows; over-budget uses
+  `StatusTag`), anomalies (“Heads up”), monthly report, giving insights,
+  income sources (“Where it came from”).
 - Footer link to `/wisdom`.
 
 Change note: `changes/2026-07-18-premium-sweep-wealth-insights.md`.
 
 ---
 
-## 9. Performance (expense path)
+## 13. Performance (expense path)
 
 Documented in `changes/2026-07-18-expense-path-performance.md`:
 
 - Home: single monthly summary fetch; summary-only adjacent prefetch
 - Recurring sync: `POST /api/recurring/sync` (not on every GET)
-- Lazy CaptureSheet; virtualized Movements; review count endpoint
-- Household Insight RPCs (see §8 migrations) for aggregate queries
+- CaptureSheet loads with FAB; virtualized Movements; review count endpoint
+- Household Insight RPCs for aggregate queries
 
 ---
 
-## 10. Supabase schema status (live)
+## 14. Supabase schema status (live)
 
 Project `awpygbfocmynxpadpsji`. As of 2026-07-18 **all of these are applied**:
 
@@ -254,7 +367,7 @@ production, not localhost). Built-in SMTP is rate-limited.
 
 ---
 
-## 11. Key code map
+## 15. Key code map
 
 | Area | Location |
 |---|---|
@@ -263,36 +376,67 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Underline tabs | `src/components/patterns/underline-tabs.tsx` |
 | Status indicator | `src/components/patterns/status-tag.tsx` |
 | Shared donut | `src/components/patterns/breakdown-donut.tsx` |
+| Locale + device default | `src/providers/locale-provider.tsx`, `src/lib/utils.ts` |
+| Theme default | `src/providers/theme-provider.tsx` |
 | Onboarding UI + gate | `src/components/onboarding/` |
 | Onboarding logic | `src/hooks/use-onboarding.ts`, `src/lib/onboarding/` |
+| Capture UI | `src/components/capture/capture-sheet.tsx`, `capture-fab.tsx` |
 | Capture writes | `src/hooks/use-capture.ts` |
+| Capture defaults | `src/lib/capture/defaults.ts` |
+| Giving helpers | `src/lib/giving.ts` (`resolveGivingTarget`, `isGivingExpense`) |
 | Envelope alerts | `src/lib/budgeting/envelope-alerts.ts` |
 | Home | `src/components/home/home-screen.tsx`, `attention-feed.tsx` |
 | Budget | `src/components/budget/budget-screen.tsx` |
+| Movements | `src/components/movements/movements-screen.tsx`, `virtualized-ledger.tsx` |
 | Wealth | `src/components/wealth/wealth-overview.tsx`, `wealth-nav.tsx` |
 | Insights | `src/components/insights/insights-screen.tsx` |
+| Wisdom content | `src/lib/financial-wisdom.ts`, `src/lib/budgeting-methods.ts` |
 | Query keys | `src/lib/query/keys.ts` |
 | Auth middleware | `src/lib/supabase/middleware.ts` |
 | Apply SQL | `node scripts/apply-sql.mjs --project app --file …` |
 
 ---
 
-## 12. Related change notes (2026-07-18 cluster)
+## 16. Related change notes (2026-07-18 cluster)
+
+### Defaults, voice, language
+
+- `2026-07-18-natural-voice-copy-pass.md`
+- `2026-07-18-default-theme-light.md`
+- `2026-07-18-device-default-language.md`
+- `2026-07-18-smart-language-preference-ui.md`
+- `2026-07-18-fix-mobile-spanish-language-switch.md`
+- `2026-07-18-home-stat-links-and-mobile-language.md`
+
+### Onboarding & giving
 
 - `2026-07-18-onboarding-goals-budget-alerts.md`
 - `2026-07-18-fix-onboarding-skip-and-new-user-gate.md`
 - `2026-07-18-document-onboarding-in-design.md`
-- `2026-07-18-expense-path-performance.md`
-- `2026-07-18-smart-language-preference-ui.md`
-- `2026-07-18-fix-mobile-spanish-language-switch.md`
+- `2026-07-18-onboarding-choosable-budget-profile.md`
+- `2026-07-18-fix-giving-income-based.md`
+
+### Capture & movements
+
+- `2026-07-18-fix-capture-multi-add-currency-income.md`
 - `2026-07-18-fix-capture-category-label-layout.md`
-- `2026-07-18-home-stat-links-and-mobile-language.md`
+- `2026-07-18-fix-desktop-movements-alignment.md`
+
+### Home, budget, wealth, insights, brand
+
 - `2026-07-18-home-clarity-refinement.md`
 - `2026-07-18-budget-objectives-and-home-stats.md`
+- `2026-07-18-fix-budget-math-mismatch-and-method-clarity.md`
+- `2026-07-18-fix-budget-setup-cta-layout.md`
+- `2026-07-18-fix-large-currency-layout.md`
+- `2026-07-18-premium-sweep-wealth-insights.md`
+- `2026-07-18-expense-path-performance.md`
+- `2026-07-18-new-budget-expense-favicon.md`
+- `2026-07-18-document-brand-icon-system.md`
 - `2026-07-18-fix-signup-confirmation-email.md`
 - `2026-07-18-app-handbook-documentation.md`
-- `2026-07-18-premium-sweep-wealth-insights.md`
-- `2026-07-18-new-budget-expense-favicon.md`
+- `2026-07-18-sync-app-handbook-wealth-insights.md`
+- `2026-07-18-document-session-product-rules.md` (this sync)
 
 ---
 

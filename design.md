@@ -31,9 +31,9 @@ of truth for every nav surface is
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — stat row (Income · Spent · Current · Giving), monthly-budgets area with calendar-pace bar, category donut ("Where it went"), attention feed, recent movements, desktop-only shortcuts. Current month only, everything actionable. |
+| **Home** | `/home` | "How am I doing right now" — stat row (Income · Spent · Current · Giving as income-based target), monthly-budgets area with calendar-pace bar, category donut ("Where it went"), attention feed, recent movements, desktop-only shortcuts. Current month only, everything actionable. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
-| **Budget** | `/budget` | Guided 3-step setup on first run (income plan → method → objectives); then "Your plan" overview with paced remaining, an objectives list (tap to edit), and the standing Giving card. |
+| **Budget** | `/budget` | Guided 3-step setup on first run (income plan → method → objectives); then "Your plan" overview with paced remaining, an objectives list (tap to edit; always-visible delete), and the standing Giving card. Monthly plan is deletable from the plan sheet. |
 | **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts. If it's a balance, it lives here. |
 | **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, 12-month trend, pillars, category breakdown, envelope utilization, anomalies, monthly report, calendar. No data-entry CTAs. |
 
@@ -244,7 +244,8 @@ error states. No blank areas while fetching.
 - **Default language** follows the device / browser primary language
   (`Accept-Language` on first paint, then `navigator.language`). Spanish →
   `es`; anything else (including English) → `en`. A choice in Settings or the
-  language toggle is saved and wins over the device after that.
+  language toggle sets an explicit flag and wins over the device after that.
+  Soft device defaults are not persisted until the user chooses.
 - **Language controls never live in `Screen` header chrome** (they crowd month
   pickers and actions). Placement:
   - **Mobile:** profile sheet — a Language row that toggles EN ↔ ES.
@@ -252,9 +253,14 @@ error states. No blank areas while fetching.
   - **Desktop / auth:** compact Languages chip where appropriate.
 - Amounts are stored in their original currency and converted for display;
   income renders `positive` tone with a `+` sign, expenses render negative.
-- Tone: warm, plain-spoken stewardship language. Domain vocabulary:
-  *stewardship, ledger, envelopes/pool, giving, tithe, wisdom*. Brand kicker:
-  **"Stewardship / Mayordomía."** Numbers are always formatted, never raw.
+  When the stored currency differs from the base, ledger rows show the
+  original via `AmountText` `showOriginal`.
+- Tone: warm, plain-spoken stewardship language — not SaaS boilerplate or
+  encyclopedia AI. Domain vocabulary: *stewardship, ledger, envelopes/pool,
+  giving, tithe, wisdom*. Brand kicker: **"Stewardship / Mayordomía."**
+  Numbers are always formatted, never raw.
+- **Giving / Generosidad** hero figures are a **% of income** (plan income
+  first), not total expenses. See `docs/APP.md` §5 and `lib/giving.ts`.
 
 ---
 
@@ -271,9 +277,10 @@ error states. No blank areas while fetching.
 | Ledger row | `<TransactionRow>` |
 | Stat tile | `<StatCard label value detail href?>` |
 | Budget/tithe progress | `<ProgressMeter ratio>` |
-| Add/edit a movement | `<CaptureSheet>` (never a bespoke form) |
+| Add/edit a movement | `<CaptureSheet>` (await save before close; Save & add another) |
 | First-run setup | `/onboarding` + `useOnboarding` / `OnboardingGate` |
-| Goal → UI mapping | `lib/onboarding/personalize.ts` |
+| Goal → UI mapping | `lib/onboarding/personalize.ts` (optional `methodId` override) |
+| Giving target | `lib/giving.ts` `resolveGivingTarget` |
 | Envelope limit check | `lib/budgeting/envelope-alerts.ts` + notify helper |
 | Positive / negative amount | `text-positive` / `text-negative` |
 | Status chip | `bg-success-subtle text-success` (or warning/danger/info) |
@@ -303,9 +310,10 @@ error states. No blank areas while fetching.
 
 Skippable wizard so **new** users can set income, fixed costs, debt, and goals
 without blocking the app. Full product handbook:
-[`docs/APP.md`](docs/APP.md) §2. Change notes:
+[`docs/APP.md`](docs/APP.md) §3. Change notes:
 `changes/2026-07-18-onboarding-goals-budget-alerts.md`,
-`changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md`.
+`changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md`,
+`changes/2026-07-18-onboarding-choosable-budget-profile.md`.
 
 ### Entry & gate
 
@@ -327,7 +335,8 @@ without blocking the app. Full product handbook:
 3. Recurring / fixed expenses (0–N)  
 4. Debt / liabilities (0–N)  
 5. Goals — “want budgeting help?” + multi-select  
-6. Suggestions — method + starter envelopes (when help requested)  
+6. Suggestions — **choosable** budget profile (suggested from goals, user can
+   pick another) + starter envelopes when help requested  
 7. Done  
 
 Allowed `primary_goals` values: `save_more`, `increase_wealth`,
@@ -347,19 +356,21 @@ on live project `awpygbfocmynxpadpsji` (2026-07-18):
 ### Personalization (deterministic)
 
 `src/lib/onboarding/personalize.ts` maps answers → method id, allocation %,
-seed envelopes, Home CTAs, Attention hints. Applied at finish via
-`lib/onboarding/apply.ts`. Home shortcuts and Budget empty/guided copy read
-`profile.primary_goals` / `wants_budget_help`. No separate goals table in v1.
+seed envelopes, Home CTAs, Attention hints. Optional `methodId` keeps a
+user-chosen budget profile. Applied at finish via `lib/onboarding/apply.ts`.
+Home shortcuts and Budget empty/guided copy read `profile.primary_goals` /
+`wants_budget_help`. No separate goals table in v1.
 
 | Signal | App adjustment |
 |---|---|
 | `wants_budget_help` | Method % on monthly plan; seed 2–4 starter envelopes |
+| User-picked `methodId` | Overrides goal-based method suggestion |
 | `budget_tracking` | Emphasize Budget + Movements in Home shortcuts |
 | `decrease_expenses` | Attention → Insights; Budget messaging |
 | `save_more` / `build_emergency_fund` | Savings-oriented method; optional Savings envelope |
 | `pay_debt` | Attention → Wealth/Liabilities; Wealth CTA |
 | `increase_wealth` | Wealth CTA on Home |
-| `give_generously` | Giving envelope / keep Giving card prominent |
+| `give_generously` | Giving envelope; `tithe_target_percent` → 10%; ensure Tithe/Diezmo category |
 
 ---
 

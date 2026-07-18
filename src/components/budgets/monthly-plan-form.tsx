@@ -14,6 +14,14 @@ import { formatCurrency } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/constants";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -44,6 +52,8 @@ interface MonthlyPlanFormProps {
   /** When a budgeting method is applied, auto-open and show the method info */
   appliedMethodId?: string | null;
   onMethodConsumed?: () => void;
+  /** Remove the saved monthly plan for this month. */
+  onDelete?: () => Promise<unknown>;
 }
 
 export function MonthlyPlanForm({
@@ -54,12 +64,16 @@ export function MonthlyPlanForm({
   trigger,
   appliedMethodId,
   onMethodConsumed,
+  onDelete,
 }: MonthlyPlanFormProps) {
   const { locale, t } = useLocale();
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const isMobile = useMediaQuery("(max-width: 767px)");
   const { baseCurrency } = useCurrency();
+  const hasExistingPlan = Boolean(defaultValues?.income_amount);
 
   /* When a budgeting method is applied externally, auto-open the form */
   const appliedMethod = useMemo(
@@ -110,7 +124,19 @@ export function MonthlyPlanForm({
     }
   }
 
+  async function handleDelete() {
+    if (!onDelete) return;
+    setDeleting(true);
+    const error = await onDelete();
+    setDeleting(false);
+    if (!error) {
+      setConfirmDelete(false);
+      setOpen(false);
+    }
+  }
+
   return (
+    <>
     <Sheet open={open} onOpenChange={setOpen}>
       {trigger ? (
         <SheetTrigger render={trigger as React.ReactElement} />
@@ -295,23 +321,72 @@ export function MonthlyPlanForm({
             </div>
           </div>
 
-          <SheetFooter className="border-t border-border/70 bg-background/92 px-5 py-4 sm:flex-row sm:justify-end">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setOpen(false)}
-            >
-              {t("Cancel", "Cancelar")}
-            </Button>
-            <Button type="submit" disabled={submitting}>
-              {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {defaultValues?.income_amount
-                ? t("Save plan", "Guardar plan")
-                : t("Create plan", "Crear plan")}
-            </Button>
+          <SheetFooter className="border-t border-border/70 bg-background/92 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
+            {hasExistingPlan && onDelete ? (
+              <Button
+                type="button"
+                variant="ghost"
+                className="justify-self-start text-danger hover:bg-danger-subtle hover:text-danger"
+                onClick={() => setConfirmDelete(true)}
+                disabled={submitting || deleting}
+              >
+                {t("Delete plan", "Eliminar plan")}
+              </Button>
+            ) : (
+              <span />
+            )}
+            <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setOpen(false)}
+              >
+                {t("Cancel", "Cancelar")}
+              </Button>
+              <Button type="submit" disabled={submitting || deleting}>
+                {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {hasExistingPlan
+                  ? t("Save plan", "Guardar plan")
+                  : t("Create plan", "Crear plan")}
+              </Button>
+            </div>
           </SheetFooter>
         </form>
       </SheetContent>
     </Sheet>
+
+    <Dialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>
+            {t("Delete monthly plan?", "¿Eliminar plan mensual?")}
+          </DialogTitle>
+          <DialogDescription>
+            {t(
+              "This removes this month’s income and allocation. Your expenses and objectives stay — you can set a new plan anytime.",
+              "Esto quita el ingreso y la asignación de este mes. Tus gastos y objetivos se quedan — puedes definir un plan nuevo cuando quieras."
+            )}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter>
+          <Button
+            variant="ghost"
+            onClick={() => setConfirmDelete(false)}
+            disabled={deleting}
+          >
+            {t("Cancel", "Cancelar")}
+          </Button>
+          <Button
+            variant="destructive"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {t("Delete plan", "Eliminar plan")}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

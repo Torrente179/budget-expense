@@ -77,6 +77,7 @@ export function BudgetScreen() {
     plan,
     loading: planLoading,
     upsertPlan,
+    deletePlan,
   } = useMonthlyBudgetPlan({ month, year });
   const titheTarget = useTitheTarget();
   const { profile } = useOnboarding();
@@ -204,6 +205,19 @@ export function BudgetScreen() {
     }
     toast.success(t("Monthly plan updated", "Plan mensual actualizado"));
     return error;
+  }
+
+  async function handleDeletePlan() {
+    if (!plan) return;
+    const error = await deletePlan(plan.id);
+    if (error) {
+      toast.error(
+        t("Could not delete the monthly plan", "No se pudo eliminar el plan mensual")
+      );
+      return error;
+    }
+    toast.success(t("Monthly plan removed", "Plan mensual eliminado"));
+    return null;
   }
 
   async function handleAddBudget(values: {
@@ -427,6 +441,7 @@ export function BudgetScreen() {
                         month={month}
                         year={year}
                         onSubmit={handleSavePlan}
+                        onDelete={plan ? handleDeletePlan : undefined}
                         appliedMethodId={appliedMethod}
                         onMethodConsumed={() => setAppliedMethod(null)}
                         defaultValues={
@@ -644,9 +659,9 @@ export function BudgetScreen() {
                           type="button"
                           aria-label={t("Delete budget", "Eliminar presupuesto")}
                           onClick={() => setDeleteId(budget.id)}
-                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg opacity-40 transition-opacity hover:bg-danger-subtle hover:opacity-100 md:opacity-0 md:group-hover:opacity-100"
+                          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-danger-subtle hover:text-danger"
                         >
-                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground hover:text-danger" />
+                          <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
                     );
