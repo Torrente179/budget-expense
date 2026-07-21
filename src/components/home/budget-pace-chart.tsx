@@ -35,9 +35,15 @@ const TONE_SUBTLE: Record<PaceTone, string> = {
 };
 
 function resolveTone(ratio: number, monthProgress: number): PaceTone {
-  if (ratio >= 1) return "danger";
+  if (!Number.isFinite(ratio) || ratio >= 1) return "danger";
   if (ratio > monthProgress + 0.02) return "warning";
   return "success";
+}
+
+function formatUsagePercent(ratio: number): string {
+  if (!Number.isFinite(ratio)) return "∞";
+  const pct = Math.round(Math.min(ratio, 9.99) * 100);
+  return pct > 999 ? "999+" : String(pct);
 }
 
 function CircularMeter({
@@ -59,7 +65,9 @@ function CircularMeter({
 }) {
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
-  const filled = Math.min(Math.max(ratio, 0), 1);
+  const filled = Number.isFinite(ratio)
+    ? Math.min(Math.max(ratio, 0), 1)
+    : 1;
   const dashOffset = circumference * (1 - filled);
   const paceAngle = monthProgress * 360 - 90;
   const paceRad = (paceAngle * Math.PI) / 180;
@@ -99,7 +107,7 @@ function CircularMeter({
       {showPaceMark && (
         <span
           aria-hidden
-          className="absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-1 ring-2 ring-card"
+          className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-1 ring-2 ring-card"
           style={{ left: paceX, top: paceY }}
         />
       )}
@@ -124,9 +132,8 @@ interface BudgetPaceChartProps {
 }
 
 /**
- * Home monthly-budget overview: a large % ring (pace vs calendar) plus
- * per-budget rows with compact meters. Stacks on mobile; ring + list
- * side-by-side from sm up.
+ * Compact home budget overview: small % ring + per-budget bars.
+ * Always ring-beside-list so it stays short on mobile.
  */
 export function BudgetPaceChart({
   budgets,
@@ -142,127 +149,114 @@ export function BudgetPaceChart({
   const { baseCurrency } = useCurrency();
 
   const remaining = totalBudgeted - totalSpent;
-  const usedPercent = Math.round(Math.min(consumedRatio, 9.99) * 100);
+  const usedLabel = formatUsagePercent(consumedRatio);
   const tone = resolveTone(consumedRatio, monthProgress);
-  const paceTone = resolveTone(consumedRatio, monthProgress);
+  const overBudget = !Number.isFinite(consumedRatio) || consumedRatio >= 1;
 
-  const statusLabel =
-    consumedRatio >= 1
-      ? t("Over budget", "Sobre presupuesto")
-      : consumedRatio > monthProgress + 0.02
-        ? t("Ahead of pace", "Por delante del ritmo")
-        : consumedRatio < monthProgress - 0.08
-          ? t("Under pace", "Por debajo del ritmo")
-          : t("On pace", "Al ritmo");
+  const statusLabel = overBudget
+    ? t("Over budget", "Sobre presupuesto")
+    : consumedRatio > monthProgress + 0.02
+      ? t("Ahead of pace", "Por delante del ritmo")
+      : consumedRatio < monthProgress - 0.08
+        ? t("Under pace", "Por debajo del ritmo")
+        : t("On pace", "Al ritmo");
 
   return (
     <div
-      className="flex flex-col gap-5 sm:flex-row sm:items-center sm:gap-6 lg:flex-col xl:flex-row xl:items-center"
+      className="flex items-start gap-3 sm:gap-4"
       role="group"
       aria-label={t(
-        `Budget ${usedPercent}% used, ${statusLabel}`,
-        `Presupuesto ${usedPercent}% usado, ${statusLabel}`
+        `Budget ${usedLabel}% used, ${statusLabel}`,
+        `Presupuesto ${usedLabel}% usado, ${statusLabel}`
       )}
     >
-      <div className="flex w-full flex-col items-center gap-3 sm:w-auto sm:shrink-0">
+      <div className="flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 sm:w-[6.5rem]">
         <CircularMeter
           ratio={consumedRatio}
           monthProgress={monthProgress}
           showPaceMark={isCurrentMonth}
-          size={152}
-          strokeWidth={11}
+          size={88}
+          strokeWidth={8}
           tone={tone}
         >
           <span
             className={cn(
-              "font-mono text-[1.75rem] font-semibold leading-none tracking-[-0.03em] tabular-nums",
+              "font-mono text-base font-semibold leading-none tracking-[-0.03em] tabular-nums sm:text-lg",
               TONE_TEXT[tone]
             )}
           >
-            {usedPercent > 999 ? "999+" : usedPercent}
-            <span className="text-[0.95rem]">%</span>
-          </span>
-          <span className="label-caps mt-1">
-            {t("used", "usado")}
+            {usedLabel}
+            {usedLabel !== "∞" && (
+              <span className="text-[0.625rem]">%</span>
+            )}
           </span>
         </CircularMeter>
-
-        <div className="w-full max-w-[16rem] space-y-1.5 text-center sm:max-w-[11.5rem]">
-          <p
-            className={cn(
-              "inline-flex rounded-full px-2.5 py-0.5 text-caption font-medium",
-              TONE_SUBTLE[paceTone],
-              TONE_TEXT[paceTone]
-            )}
-          >
-            {statusLabel}
-          </p>
-          <p
-            className={cn(
-              "font-mono text-heading tabular-nums",
-              remaining >= 0 ? "text-foreground" : "text-negative"
-            )}
-          >
-            {formatCurrency(remaining, baseCurrency)}
-          </p>
-          <p className="text-caption text-muted-foreground">
-            {t(
-              `left of ${formatCurrency(totalBudgeted, baseCurrency)}`,
-              `restante de ${formatCurrency(totalBudgeted, baseCurrency)}`
-            )}
-          </p>
-          {isCurrentMonth && (
-            <p className="text-caption text-muted-foreground">
-              {t(
-                `Day ${dayOfMonth} of ${daysInMonth} · mark = today`,
-                `Día ${dayOfMonth} de ${daysInMonth} · marca = hoy`
-              )}
-            </p>
+        <p
+          className={cn(
+            "rounded-full px-2 py-0.5 text-center text-[0.625rem] font-medium leading-tight",
+            TONE_SUBTLE[tone],
+            TONE_TEXT[tone]
           )}
-        </div>
+        >
+          {statusLabel}
+        </p>
+        <p
+          className={cn(
+            "text-center font-mono text-caption tabular-nums",
+            remaining >= 0 ? "text-foreground" : "text-negative"
+          )}
+        >
+          {formatCurrency(remaining, baseCurrency)}
+        </p>
+        <p className="text-center text-[0.625rem] leading-tight text-muted-foreground">
+          {t(
+            `of ${formatCurrency(totalBudgeted, baseCurrency)}`,
+            `de ${formatCurrency(totalBudgeted, baseCurrency)}`
+          )}
+        </p>
+        {isCurrentMonth && (
+          <p className="text-center text-[0.5625rem] leading-tight text-muted-foreground">
+            {t(
+              `Day ${dayOfMonth}/${daysInMonth}`,
+              `Día ${dayOfMonth}/${daysInMonth}`
+            )}
+          </p>
+        )}
       </div>
 
-      <div className="min-w-0 flex-1 space-y-1">
+      <div className="min-w-0 flex-1 space-y-0.5">
         {budgets.map((budget) => {
           const itemTone = resolveTone(budget.ratio, monthProgress);
-          const pct = Math.round(Math.min(budget.ratio, 9.99) * 100);
+          const pct = formatUsagePercent(budget.ratio);
+          const barWidth = Number.isFinite(budget.ratio)
+            ? Math.min(Math.max(budget.ratio, 0), 1) * 100
+            : 100;
           return (
             <Link
               key={budget.id}
               href="/budget"
-              className="flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-accent/50 active:bg-accent/70"
+              className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-accent/50 active:bg-accent/70"
             >
-              <CircularMeter
-                ratio={budget.ratio}
-                monthProgress={monthProgress}
-                showPaceMark={false}
-                size={40}
-                strokeWidth={4}
-                tone={itemTone}
-              >
-                <span
-                  className={cn(
-                    "font-mono text-[0.5625rem] font-semibold leading-none tabular-nums",
-                    TONE_TEXT[itemTone]
-                  )}
-                >
-                  {pct > 999 ? "∞" : pct}
-                </span>
-              </CircularMeter>
               <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex items-baseline justify-between gap-2">
                   <span className="min-w-0 truncate text-body font-medium">
                     {budget.name}
                   </span>
-                  <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                    {pct}%
+                  <span
+                    className={cn(
+                      "shrink-0 font-mono text-caption tabular-nums",
+                      TONE_TEXT[itemTone]
+                    )}
+                  >
+                    {pct}
+                    {pct !== "∞" ? "%" : ""}
                   </span>
                 </div>
                 <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
                   <div
                     className="h-full rounded-full transition-[width] duration-500 ease-out"
                     style={{
-                      width: `${Math.min(Math.max(budget.ratio, 0), 1) * 100}%`,
+                      width: `${barWidth}%`,
                       backgroundColor: TONE_STROKE[itemTone],
                     }}
                   />

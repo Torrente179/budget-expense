@@ -23,7 +23,10 @@ import { useOnboarding } from "@/hooks/use-onboarding";
 import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
 import { buildPersonalization } from "@/lib/onboarding/personalize";
-import { resolveCustomBudgetAmount } from "@/lib/budgeting";
+import {
+  resolveCustomBudgetAmount,
+  budgetUsageRatio,
+} from "@/lib/budgeting";
 import { resolveGivingTarget } from "@/lib/giving";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -114,10 +117,17 @@ export function HomeScreen() {
   const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
   const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
 
-  /* Budget limits: spend per budget from the category breakdown. */
-  const incomeAmount = plan
+  /* Budget limits: spend per budget from the category breakdown.
+     Percentage budgets fall back to recorded income when the plan is missing. */
+  const planIncome = plan
     ? convert(plan.income_amount, plan.income_currency)
     : null;
+  const incomeAmount =
+    planIncome !== null && planIncome > 0
+      ? planIncome
+      : summary.totalIncome > 0
+        ? summary.totalIncome
+        : null;
 
   const budgetsView = useMemo(() => {
     if (customBudgets.length === 0) return [];
@@ -136,10 +146,14 @@ export function HomeScreen() {
           name: budget.name,
           limit,
           spent,
-          ratio: limit > 0 ? spent / limit : 0,
+          ratio: budgetUsageRatio(spent, limit),
         };
       })
-      .sort((a, b) => b.ratio - a.ratio);
+      .sort((a, b) => {
+        const ar = Number.isFinite(a.ratio) ? a.ratio : Number.MAX_VALUE;
+        const br = Number.isFinite(b.ratio) ? b.ratio : Number.MAX_VALUE;
+        return br - ar;
+      });
   }, [customBudgets, summary.categoryBreakdown, incomeAmount, convert]);
 
   const totalBudgeted = budgetsView.reduce((sum, b) => sum + b.limit, 0);
@@ -147,8 +161,7 @@ export function HomeScreen() {
      otherwise this number disagrees with the per-budget rows below it
      (e.g. Generosidad isn't in any budget, so it must not eat the plan). */
   const budgetsSpent = budgetsView.reduce((sum, b) => sum + b.spent, 0);
-  const budgetConsumedRatio =
-    totalBudgeted > 0 ? budgetsSpent / totalBudgeted : 0;
+  const budgetConsumedRatio = budgetUsageRatio(budgetsSpent, totalBudgeted);
 
   /* Category donut: every spent category, colored by DB category color. */
   const donut = useMemo(() => {
@@ -174,7 +187,7 @@ export function HomeScreen() {
   // Generosidad is a share of income (plan first), not of expenses.
   const givingTarget = resolveGivingTarget({
     tithePercent: titheTarget,
-    planIncome: incomeAmount,
+    planIncome: planIncome,
     recordedIncome: summary.totalIncome,
   });
 

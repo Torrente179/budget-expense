@@ -19,6 +19,7 @@ import {
   resolveCustomBudgetAmount,
   calculateCustomBudgetSpending,
   sumConvertedAmounts,
+  budgetUsageRatio,
 } from "@/lib/budgeting";
 import {
   buildMethodBudgetSeeds,
@@ -89,9 +90,15 @@ export function BudgetScreen() {
   const titheTarget = useTitheTarget();
   const { profile } = useOnboarding();
 
-  const incomeAmount = plan
+  const planIncome = plan
     ? convert(plan.income_amount, plan.income_currency)
     : null;
+  const incomeAmount =
+    planIncome !== null && planIncome > 0
+      ? planIncome
+      : summary.totalIncome > 0
+        ? summary.totalIncome
+        : null;
 
   const budgetMetrics = useMemo(
     () =>
@@ -113,7 +120,7 @@ export function BudgetScreen() {
           id: budget.id,
           resolved,
           spent,
-          ratio: resolved > 0 ? spent / resolved : 0,
+          ratio: budgetUsageRatio(spent, resolved),
         };
       }),
     [customBudgets, incomeAmount, expenses, convert]
@@ -133,9 +140,9 @@ export function BudgetScreen() {
   const daysInMonth = getDaysInMonth(new Date(year, month - 1));
   const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
   const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
-  const consumedRatio = totalBudgeted > 0 ? totalConsumed / totalBudgeted : 0;
+  const consumedRatio = budgetUsageRatio(totalConsumed, totalBudgeted);
   const overviewTone =
-    consumedRatio > 1
+    !Number.isFinite(consumedRatio) || consumedRatio > 1
       ? "bg-danger"
       : consumedRatio > monthProgress
         ? "bg-warning"
@@ -152,7 +159,7 @@ export function BudgetScreen() {
   );
   const givingTarget = resolveGivingTarget({
     tithePercent: titheTarget,
-    planIncome: incomeAmount,
+    planIncome: planIncome,
     recordedIncome: summary.totalIncome,
   });
   const givingRatio = givingTarget > 0 ? givingSpent / givingTarget : null;

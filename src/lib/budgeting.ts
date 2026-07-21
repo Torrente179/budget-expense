@@ -77,9 +77,17 @@ export function resolveCustomBudgetAmount(
   convert: (amount: number, fromCurrency: string) => number
 ): number {
   if (budget.amount_type === "percentage") {
-    return incomeAmount !== null ? incomeAmount * (budget.amount_value / 100) : 0;
+    if (incomeAmount === null || incomeAmount <= 0) return 0;
+    return incomeAmount * (budget.amount_value / 100);
   }
   return convert(budget.amount_value, budget.currency);
+}
+
+/** Spent / limit. Spend with a zero limit counts as fully over budget. */
+export function budgetUsageRatio(spent: number, limit: number): number {
+  if (limit > 0) return spent / limit;
+  if (spent > 0) return Number.POSITIVE_INFINITY;
+  return 0;
 }
 
 export function calculateCustomBudgetSpending(
