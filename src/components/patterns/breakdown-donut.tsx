@@ -1,6 +1,5 @@
 "use client";
 
-import type { CSSProperties, ReactNode } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 import { useCurrency } from "@/providers/currency-provider";
 import {
@@ -9,6 +8,7 @@ import {
 } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { useChartMounted } from "@/components/charts/chart-theme";
+import type { ReactNode } from "react";
 
 export interface DonutSlice {
   id: string;
@@ -29,16 +29,14 @@ interface BreakdownDonutProps {
   onSelect?: (id: string) => void;
   /** Ids that should not be clickable (e.g. an aggregated "Other"). */
   nonInteractiveIds?: string[];
-  /** Ring diameter in px below `md`. */
   size?: number;
-  /** Ring diameter from `md` up — keeps desktop dense. */
-  desktopSize?: number;
   className?: string;
 }
 
 /**
- * The app's one donut: a thin ring with a center total and a live legend.
- * Mobile gets a slightly larger ring; desktop stays compact so the legend leads.
+ * The app's one donut: a thin ring with a center total and a live legend
+ * showing share % and amount. Colors come from the caller (category hex or
+ * chart tokens). Used by Home and Wealth for a single visual language.
  */
 export function BreakdownDonut({
   slices,
@@ -47,8 +45,7 @@ export function BreakdownDonut({
   amountTone = "default",
   onSelect,
   nonInteractiveIds = [],
-  size = 128,
-  desktopSize = 96,
+  size = 160,
   className,
 }: BreakdownDonutProps) {
   const amountClass =
@@ -62,21 +59,16 @@ export function BreakdownDonut({
   const canSelect = (id: string) =>
     Boolean(onSelect) && !nonInteractiveIds.includes(id);
 
-  const frameStyle = {
-    "--donut-size": `${size}px`,
-    "--donut-size-md": `${desktopSize}px`,
-  } as CSSProperties;
-
   return (
     <div
       className={cn(
-        "flex flex-col items-stretch gap-3 sm:flex-row sm:items-start sm:gap-4",
+        "flex flex-col items-center gap-5 sm:flex-row lg:flex-col xl:flex-row",
         className
       )}
     >
       <div
-        className="relative mx-auto h-[var(--donut-size)] w-[var(--donut-size)] shrink-0 md:h-[var(--donut-size-md)] md:w-[var(--donut-size-md)] sm:mx-0"
-        style={frameStyle}
+        className="relative shrink-0"
+        style={{ height: size, width: size }}
       >
         {mounted && total > 0 && (
           <ResponsiveContainer width="100%" height="100%">
@@ -85,8 +77,8 @@ export function BreakdownDonut({
                 data={slices}
                 dataKey="value"
                 nameKey="name"
-                innerRadius="72%"
-                outerRadius="94%"
+                innerRadius={size * 0.36}
+                outerRadius={size * 0.47}
                 paddingAngle={2}
                 stroke="var(--card)"
                 strokeWidth={2}
@@ -108,40 +100,40 @@ export function BreakdownDonut({
           </ResponsiveContainer>
         )}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5 text-center">
-          <span className="label-caps text-[0.5625rem]">{centerLabel}</span>
+          <span className="label-caps">{centerLabel}</span>
           <span
             className={cn(
-              "max-w-[78%] font-mono text-[0.625rem] font-semibold leading-none tracking-[-0.025em] tabular-nums md:text-[0.5625rem]",
+              "max-w-[72%] font-mono text-[0.6875rem] font-semibold leading-none tracking-[-0.025em] tabular-nums",
               amountClass
             )}
           >
             {centerTotal.value}
           </span>
-          <span className="font-mono text-[0.5rem] leading-none tabular-nums text-muted-foreground">
+          <span className="font-mono text-[0.5625rem] leading-none tabular-nums text-muted-foreground">
             {centerTotal.currency}
           </span>
         </div>
       </div>
 
-      <div className="min-h-0 min-w-0 flex-1 space-y-0 overflow-y-auto sm:max-h-[14rem]">
+      <div className="w-full min-w-0 flex-1 space-y-0.5">
         {slices.map((slice) => {
           const interactive = canSelect(slice.id);
           const row = (
             <>
               <span
                 aria-hidden
-                className="h-2 w-2 shrink-0 rounded-full"
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: slice.color }}
               />
-              <span className="min-w-0 flex-1 truncate text-caption sm:text-body">
+              <span className="min-w-0 flex-1 truncate text-body">
                 {slice.name}
               </span>
-              <span className="shrink-0 font-mono text-[0.625rem] tabular-nums text-muted-foreground">
+              <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
                 {total > 0 ? Math.round((slice.value / total) * 100) : 0}%
               </span>
               <span
                 className={cn(
-                  "max-w-24 shrink text-right font-mono text-[0.625rem] leading-tight tabular-nums",
+                  "max-w-28 shrink text-right font-mono text-[0.6875rem] leading-tight tabular-nums",
                   amountClass
                 )}
               >
@@ -154,14 +146,14 @@ export function BreakdownDonut({
               key={slice.id}
               type="button"
               onClick={() => onSelect?.(slice.id)}
-              className="flex w-full items-center gap-2 rounded-md px-1.5 py-1 text-left transition-colors hover:bg-accent/50"
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/50"
             >
               {row}
             </button>
           ) : (
             <div
               key={slice.id}
-              className="flex w-full items-center gap-2 px-1.5 py-1 text-left"
+              className="flex w-full items-center gap-2.5 px-2 py-1.5 text-left"
             >
               {row}
             </div>
