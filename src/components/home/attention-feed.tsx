@@ -52,7 +52,7 @@ function nextChargeDate(chargeDay: number, from: Date): Date {
 }
 
 /**
- * "What needs me": review queue, spending anomalies, budget envelopes,
+ * "What needs me": review queue, spending anomalies, budgets near limits,
  * onboarding hints, and bills due in the next 7 days.
  */
 export function AttentionFeed() {

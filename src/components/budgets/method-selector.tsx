@@ -206,15 +206,15 @@ function MethodDetail({
         <div className="space-y-2.5 rounded-xl border border-info/25 bg-info-subtle p-4">
           <p className="text-sm leading-6 text-foreground/90">
             {t(
-              `Applying this sets your monthly plan's allocation to ${totalAllocation}% of your income. You can fine-tune amounts anytime, then create objectives for each category above.`,
-              `Aplicarlo fija la asignación de tu plan mensual al ${totalAllocation}% de tu ingreso. Puedes ajustar los montos cuando quieras y luego crear objetivos para cada categoría de arriba.`
+              `Applying this creates named budgets from the slices above (% of income) and sets your plan allocation to ${totalAllocation}%. Generosidad / giving stays on its own Primicias card — not duplicated here.`,
+              `Aplicarlo crea presupuestos con las franjas de arriba (% del ingreso) y fija la asignación del plan al ${totalAllocation}%. Generosidad sigue en su tarjeta de Primicias — no se duplica aquí.`
             )}
           </p>
           <Button className="w-full gap-2" onClick={() => onApply(method)}>
             <Layers className="h-4 w-4" />
             {t(
-              "Apply this method to my plan",
-              "Aplicar este método a mi plan"
+              "Create budgets with this method",
+              "Crear presupuestos con este método"
             )}
           </Button>
         </div>
@@ -228,7 +228,7 @@ function MethodDetail({
 /* ------------------------------------------------------------------ */
 
 interface MethodSelectorProps {
-  onApply?: (method: BudgetingMethod) => void;
+  onApply?: (method: BudgetingMethod) => void | Promise<void>;
   trigger?: React.ReactNode;
 }
 
@@ -245,9 +245,10 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
   );
 
   function handleApply(method: BudgetingMethod) {
-    onApply?.(method);
-    setOpen(false);
-    setSelectedMethodId(null);
+    void Promise.resolve(onApply?.(method)).finally(() => {
+      setOpen(false);
+      setSelectedMethodId(null);
+    });
   }
 
   return (
@@ -290,8 +291,8 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
                 {selectedMethod
                   ? selectedMethod.tagline
                   : t(
-                      "Explore different frameworks and apply one to your monthly plan.",
-                      "Explora diferentes marcos y aplica uno a tu plan mensual."
+                      "Explore frameworks. Applying one creates real budgets you can track.",
+                      "Explora marcos. Aplicar uno crea presupuestos reales que puedes seguir."
                     )}
               </SheetDescription>
             </div>

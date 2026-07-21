@@ -125,7 +125,7 @@ interface BudgetPaceChartProps {
 
 /**
  * Home monthly-budget overview: a large % ring (pace vs calendar) plus
- * per-objective rows with compact meters. Stacks on mobile; ring + list
+ * per-budget rows with compact meters. Stacks on mobile; ring + list
  * side-by-side from sm up.
  */
 export function BudgetPaceChart({

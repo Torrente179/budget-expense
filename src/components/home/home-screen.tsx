@@ -114,7 +114,7 @@ export function HomeScreen() {
   const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
   const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
 
-  /* Budget objectives: spend per budget from the category breakdown. */
+  /* Budget limits: spend per budget from the category breakdown. */
   const incomeAmount = plan
     ? convert(plan.income_amount, plan.income_currency)
     : null;
@@ -143,9 +143,9 @@ export function HomeScreen() {
   }, [customBudgets, summary.categoryBreakdown, incomeAmount, convert]);
 
   const totalBudgeted = budgetsView.reduce((sum, b) => sum + b.limit, 0);
-  /* Only spending inside an objective's categories counts against the plan —
-     otherwise this number disagrees with the per-objective rows below it
-     (e.g. giving isn't in any objective, so it must not eat the plan). */
+  /* Only spending inside a budget's categories counts against the plan —
+     otherwise this number disagrees with the per-budget rows below it
+     (e.g. Generosidad isn't in any budget, so it must not eat the plan). */
   const budgetsSpent = budgetsView.reduce((sum, b) => sum + b.spent, 0);
   const budgetConsumedRatio =
     totalBudgeted > 0 ? budgetsSpent / totalBudgeted : 0;
@@ -435,11 +435,11 @@ export function HomeScreen() {
             </div>
           </div>
 
-          {/* Budget objectives — the month's plan at a glance */}
+          {/* Monthly budgets — pace at a glance */}
           <Card>
             <CardHeader>
               <SectionHeader
-                eyebrow={t("Objectives", "Objetivos")}
+                eyebrow={t("Budgets", "Presupuestos")}
                 title={t("Monthly budgets", "Presupuestos del mes")}
                 action={
                   budgetsView.length > 0 ? (
@@ -462,7 +462,7 @@ export function HomeScreen() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-body font-medium">
-                        {t("No objectives yet", "Aún sin objetivos")}
+                        {t("No budgets yet", "Aún sin presupuestos")}
                       </p>
                       <p className="text-caption text-muted-foreground">
                       {t(

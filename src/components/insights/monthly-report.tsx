@@ -46,7 +46,9 @@ interface MonthlyReportProps {
   totalIncome: number;
   previousMonthTotal: number;
   categoryBreakdown: CategoryBreakdownItem[];
-  budgets: BudgetItem[];
+  budgets?: BudgetItem[];
+  /** Count of custom budgets over limit (preferred over legacy envelopes). */
+  overBudgetCount?: number;
   onCategoryClick?: (categoryId: string) => void;
 }
 
@@ -59,7 +61,8 @@ export function MonthlyReport({
   totalIncome,
   previousMonthTotal,
   categoryBreakdown,
-  budgets,
+  budgets = [],
+  overBudgetCount: overBudgetCountProp,
   onCategoryClick,
 }: MonthlyReportProps) {
   const { baseCurrency, convert } = useCurrency();
@@ -154,23 +157,35 @@ export function MonthlyReport({
       );
     }
 
-    /* Check for over-budget categories */
-    let overBudgetCount = 0;
-    for (const cat of sortedCategories) {
-      const budget = budgetMap.get(cat.category_id);
-      if (budget && cat.total_amount > budget) overBudgetCount++;
+    /* Check for over-budget custom budgets / legacy category envelopes */
+    let overBudgetCount = overBudgetCountProp ?? 0;
+    if (overBudgetCountProp === undefined) {
+      for (const cat of sortedCategories) {
+        const budget = budgetMap.get(cat.category_id);
+        if (budget && cat.total_amount > budget) overBudgetCount++;
+      }
     }
     if (overBudgetCount > 0) {
       items.push(
         t(
-          `${overBudgetCount} categor${overBudgetCount !== 1 ? "ies" : "y"} exceeded their envelope this month.`,
-          `${overBudgetCount} categoría${overBudgetCount !== 1 ? "s" : ""} excedió su sobre este mes.`
+          `${overBudgetCount} budget${overBudgetCount !== 1 ? "s" : ""} exceeded their limit this month.`,
+          `${overBudgetCount} presupuesto${overBudgetCount !== 1 ? "s" : ""} excedió su límite este mes.`
         )
       );
     }
 
     return items;
-  }, [totalSpent, totalIncome, topCategory, monthChange, sortedCategories, budgetMap, t, tc]);
+  }, [
+    totalSpent,
+    totalIncome,
+    topCategory,
+    monthChange,
+    sortedCategories,
+    budgetMap,
+    overBudgetCountProp,
+    t,
+    tc,
+  ]);
 
   if (sortedCategories.length === 0) return null;
 

@@ -25,8 +25,13 @@ import {
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
-import { useBudgets } from "@/hooks/use-budgets";
+import { useCustomBudgets } from "@/hooks/use-custom-budgets";
+import { useMonthlyBudgetPlan } from "@/hooks/use-monthly-budget-plan";
 import { useHouseholdInsights } from "@/hooks/use-household-insights";
+import {
+  calculateCustomBudgetSpending,
+  resolveCustomBudgetAmount,
+} from "@/lib/budgeting";
 import { detectAnomalies } from "@/lib/insights/anomalies";
 import { useMonth } from "@/providers/month-provider";
 import { useCurrency } from "@/providers/currency-provider";
@@ -63,8 +68,13 @@ export function InsightsScreen() {
   const { summary, loading } = useMonthlySummary({ month, year });
   const { expenses } = useExpenses({ month, year });
   const { incomes } = useIncomes({ month, year });
-  const { budgets } = useBudgets({ month, year });
+  const { customBudgets } = useCustomBudgets({ month, year });
+  const { plan } = useMonthlyBudgetPlan({ month, year });
   const { insights } = useHouseholdInsights();
+
+  const incomeAmount = plan
+    ? convert(plan.income_amount, plan.income_currency)
+    : null;
 
   const handleCategoryClick = useCallback(
     (categoryId: string) => {
@@ -132,34 +142,38 @@ export function InsightsScreen() {
     0
   );
 
-  /* Envelope utilization */
+  /* Custom budget utilization (same model as Budget tab / Home) */
   const budgetUtilization = useMemo(() => {
-    if (budgets.length === 0) return [];
-    const spentMap = new Map<string, number>();
-    for (const expense of expenses) {
-      spentMap.set(
-        expense.category_id,
-        (spentMap.get(expense.category_id) ?? 0) +
-          convert(expense.amount, expense.currency)
-      );
-    }
-    return budgets
+    if (customBudgets.length === 0) return [];
+    return customBudgets
       .map((budget) => {
-        const budgetAmount = convert(budget.amount, budget.currency);
-        const spent = spentMap.get(budget.category_id) ?? 0;
+        const categoryIds = budget.custom_budget_categories.map(
+          (link) => link.category_id
+        );
+        const budgetAmount = resolveCustomBudgetAmount(
+          budget,
+          incomeAmount,
+          convert
+        );
+        const spent = calculateCustomBudgetSpending(
+          categoryIds,
+          expenses,
+          convert
+        );
+        const primary = budget.custom_budget_categories[0]?.categories;
         return {
           id: budget.id,
-          categoryId: budget.category_id,
-          categoryName: budget.categories.name,
-          categoryIcon: budget.categories.icon,
-          categoryColor: budget.categories.color,
+          name: budget.name,
+          categoryId: primary?.id ?? null,
+          categoryIcon: primary?.icon ?? "more-horizontal",
+          categoryColor: primary?.color ?? "var(--muted-foreground)",
           budgetAmount,
           spent,
           ratio: budgetAmount > 0 ? spent / budgetAmount : 0,
         };
       })
       .sort((a, b) => b.ratio - a.ratio);
-  }, [budgets, expenses, convert]);
+  }, [customBudgets, expenses, incomeAmount, convert]);
 
   /* Income sources */
   const incomeBySource = useMemo(() => {
@@ -464,7 +478,7 @@ export function InsightsScreen() {
             </CardContent>
           </Card>
 
-          {/* Envelope utilization */}
+          {/* Budget utilization */}
           {budgetUtilization.length > 0 && (
             <Card>
               <CardHeader>
@@ -478,25 +492,31 @@ export function InsightsScreen() {
                 />
               </CardHeader>
               <CardContent className="space-y-1">
-                {budgetUtilization.map((envelope) => (
+                {budgetUtilization.map((row) => (
                   <button
-                    key={envelope.id}
+                    key={row.id}
                     type="button"
-                    onClick={() => handleCategoryClick(envelope.categoryId)}
+                    onClick={() => {
+                      if (row.categoryId) {
+                        handleCategoryClick(row.categoryId);
+                      } else {
+                        router.push("/budget");
+                      }
+                    }}
                     className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/50"
                   >
                     <CategoryIcon
-                      icon={envelope.categoryIcon}
-                      color={envelope.categoryColor}
+                      icon={row.categoryIcon}
+                      color={row.categoryColor}
                       className="h-8 w-8 shrink-0"
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-2">
                         <span className="flex min-w-0 items-center gap-2">
                           <span className="truncate text-body font-medium">
-                            {tc(envelope.categoryName)}
+                            {row.name}
                           </span>
-                          {envelope.ratio > 1 && (
+                          {row.ratio > 1 && (
                             <StatusTag tone="danger" className="shrink-0">
                               {t("Over", "Excedido")}
                             </StatusTag>
@@ -504,13 +524,13 @@ export function InsightsScreen() {
                         </span>
                         <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
                           <span className="text-negative">
-                            {formatCurrency(envelope.spent, baseCurrency)}
+                            {formatCurrency(row.spent, baseCurrency)}
                           </span>
                           {" / "}
-                          {formatCurrency(envelope.budgetAmount, baseCurrency)}
+                          {formatCurrency(row.budgetAmount, baseCurrency)}
                         </span>
                       </div>
-                      <ProgressMeter ratio={envelope.ratio} className="mt-1.5" />
+                      <ProgressMeter ratio={row.ratio} className="mt-1.5" />
                     </div>
                   </button>
                 ))}
@@ -564,7 +584,10 @@ export function InsightsScreen() {
             totalIncome={summary.totalIncome}
             previousMonthTotal={summary.previousMonthTotal}
             categoryBreakdown={summary.categoryBreakdown}
-            budgets={budgets}
+            budgets={[]}
+            overBudgetCount={
+              budgetUtilization.filter((row) => row.ratio > 1).length
+            }
             onCategoryClick={handleCategoryClick}
           />
 

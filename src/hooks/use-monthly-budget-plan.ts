@@ -81,5 +81,39 @@ export function useMonthlyBudgetPlan({
     return error;
   }
 
-  return { plan, loading, upsertPlan, deletePlan, refetch: fetchPlan };
+  /** Copy previous month's plan into this month when this month has none. */
+  async function copyPlanFromPreviousMonth() {
+    if (plan) return false;
+
+    const prevMonth = month === 1 ? 12 : month - 1;
+    const prevYear = month === 1 ? year - 1 : year;
+
+    const { data: prevPlan } = await supabase
+      .from("monthly_budget_plans")
+      .select("*")
+      .eq("month", prevMonth)
+      .eq("year", prevYear)
+      .maybeSingle();
+
+    if (!prevPlan) return false;
+
+    const error = await upsertPlan({
+      income_amount: prevPlan.income_amount,
+      income_currency: prevPlan.income_currency,
+      allocation_percent: prevPlan.allocation_percent,
+      month,
+      year,
+    });
+
+    return !error;
+  }
+
+  return {
+    plan,
+    loading,
+    upsertPlan,
+    deletePlan,
+    copyPlanFromPreviousMonth,
+    refetch: fetchPlan,
+  };
 }

@@ -315,8 +315,8 @@ export function MonthlyPlanForm({
 
             <div className="rounded-xl border border-border/70 bg-secondary/60 p-4 text-sm text-muted-foreground">
               {t(
-                "Category budgets remain optional. When you set them, they work as envelopes inside this monthly pool instead of replacing it.",
-                "Los presupuestos por categoría son opcionales. Cuando los defines, funcionan como sobres dentro de este fondo mensual en lugar de reemplazarlo."
+                "Named budgets on the Budget tab track groups of categories against this month's income. Generosidad stays on its own Primicias card.",
+                "Los presupuestos con nombre en la pestaña Presupuesto siguen grupos de categorías frente al ingreso del mes. Generosidad sigue en su tarjeta de Primicias."
               )}
             </div>
           </div>
@@ -363,8 +363,8 @@ export function MonthlyPlanForm({
           </DialogTitle>
           <DialogDescription>
             {t(
-              "This removes this month’s income and allocation. Your expenses and objectives stay — you can set a new plan anytime.",
-              "Esto quita el ingreso y la asignación de este mes. Tus gastos y objetivos se quedan — puedes definir un plan nuevo cuando quieras."
+              "This removes this month’s income and allocation. Your expenses and budgets stay — you can set a new plan anytime.",
+              "Esto quita el ingreso y la asignación de este mes. Tus gastos y presupuestos se quedan — puedes definir un plan nuevo cuando quieras."
             )}
           </DialogDescription>
         </DialogHeader>

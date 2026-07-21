@@ -209,6 +209,78 @@ export function useCustomBudgets({ month, year }: UseCustomBudgetsOptions) {
     return error;
   }
 
+  /**
+   * Seed named budgets for the month from a method template.
+   * When `replaceExisting` is true, deletes this month's budgets first.
+   */
+  async function seedBudgets(
+    budgets: Array<{
+      name: string;
+      amount_type: string;
+      amount_value: number;
+      currency: string;
+      category_ids: string[];
+    }>,
+    options?: { replaceExisting?: boolean }
+  ) {
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) return { error: new Error("Not signed in"), count: 0 };
+
+    if (options?.replaceExisting && customBudgets.length > 0) {
+      for (const budget of customBudgets) {
+        const { error } = await supabase
+          .from("custom_budgets")
+          .delete()
+          .eq("id", budget.id);
+        if (error) return { error, count: 0 };
+      }
+    }
+
+    let count = 0;
+    for (const values of budgets) {
+      const { data: inserted, error } = await supabase
+        .from("custom_budgets")
+        .upsert(
+          {
+            user_id: userData.user.id,
+            name: values.name,
+            amount_type: values.amount_type,
+            amount_value: values.amount_value,
+            currency: values.currency,
+            month,
+            year,
+          },
+          { onConflict: "user_id,name,month,year" }
+        )
+        .select("id")
+        .single();
+
+      if (error || !inserted) return { error: error ?? new Error("Insert failed"), count };
+
+      await supabase
+        .from("custom_budget_categories")
+        .delete()
+        .eq("custom_budget_id", inserted.id);
+
+      if (values.category_ids.length > 0) {
+        const { error: junctionError } = await supabase
+          .from("custom_budget_categories")
+          .insert(
+            values.category_ids.map((category_id) => ({
+              custom_budget_id: inserted.id,
+              category_id,
+            }))
+          );
+        if (junctionError) return { error: junctionError, count };
+      }
+
+      count += 1;
+    }
+
+    await fetchCustomBudgets();
+    return { error: null, count };
+  }
+
   async function copyFromPreviousMonth() {
     const prevMonth = month === 1 ? 12 : month - 1;
     const prevYear = month === 1 ? year - 1 : year;
@@ -249,7 +321,6 @@ export function useCustomBudgets({ month, year }: UseCustomBudgetsOptions) {
 
       if (error || !inserted) continue;
 
-      // Clear existing junction rows (in case of upsert match)
       await supabase
         .from("custom_budget_categories")
         .delete()
@@ -277,6 +348,7 @@ export function useCustomBudgets({ month, year }: UseCustomBudgetsOptions) {
     addCustomBudget,
     updateCustomBudget,
     deleteCustomBudget,
+    seedBudgets,
     copyFromPreviousMonth,
     refetch: fetchCustomBudgets,
   };
