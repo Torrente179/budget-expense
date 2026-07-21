@@ -348,7 +348,7 @@ export function BudgetScreen() {
           incomeCurrency={plan?.income_currency ?? baseCurrency}
           onSubmit={handleAddBudget}
           trigger={
-            <Button variant="outline" size="sm" className="gap-1.5">
+            <Button size="sm" className="w-fit gap-1.5">
               <Plus className="h-3.5 w-3.5" />
               {t("Create", "Crear")}
             </Button>
@@ -576,9 +576,12 @@ export function BudgetScreen() {
                         incomeCurrency={plan?.income_currency ?? baseCurrency}
                         onSubmit={handleAddBudget}
                         trigger={
-                          <Button variant="outline" size="sm" className="gap-1.5">
+                          <Button size="sm" className="w-fit gap-1.5">
                             <Plus className="h-4 w-4" />
-                            <span className="hidden md:inline">
+                            <span className="hidden sm:inline">
+                              {t("New budget", "Nuevo presupuesto")}
+                            </span>
+                            <span className="sm:hidden">
                               {t("New", "Nuevo")}
                             </span>
                           </Button>

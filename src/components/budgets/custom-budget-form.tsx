@@ -108,6 +108,10 @@ export function CustomBudgetForm({
     selectedCategoryIds.includes(c.id)
   );
 
+  // Edit mode is opened via controlledOpen from a list row — never show a
+  // stray "Add budget" trigger that can't open the controlled sheet.
+  const showTrigger = Boolean(trigger) || !isControlled;
+
   function toggleCategory(categoryId: string) {
     const current = form.getValues("category_ids") ?? [];
     const next = current.includes(categoryId)
@@ -136,14 +140,19 @@ export function CustomBudgetForm({
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      {trigger ? (
-        <SheetTrigger render={trigger as React.ReactElement} />
-      ) : (
-        <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
-          <Plus className="h-4 w-4" />
-          {t("Add budget", "Agregar presupuesto")}
-        </SheetTrigger>
-      )}
+      {showTrigger &&
+        (trigger ? (
+          <SheetTrigger render={trigger as React.ReactElement} />
+        ) : (
+          <SheetTrigger
+            render={
+              <Button size="sm" className="w-fit gap-1.5 self-start" />
+            }
+          >
+            <Plus className="h-4 w-4" />
+            {t("Add budget", "Agregar presupuesto")}
+          </SheetTrigger>
+        ))}
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
