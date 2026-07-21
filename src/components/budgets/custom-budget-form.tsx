@@ -249,7 +249,7 @@ export function CustomBudgetForm({
                     id="budget-amount"
                     type="number"
                     step={amountType === "fixed" ? "0.01" : "1"}
-                    min="0.01"
+                    min={amountType === "fixed" ? "0.01" : "1"}
                     max={amountType === "percentage" ? "100" : undefined}
                     placeholder={amountType === "fixed" ? "0.00" : "30"}
                     className={`font-mono ${amountType === "percentage" ? "pr-8" : ""}`}
