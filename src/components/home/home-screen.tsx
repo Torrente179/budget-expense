@@ -35,6 +35,7 @@ import { StatCard } from "@/components/patterns/stat-card";
 import { TransactionRow } from "@/components/patterns/transaction-row";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { AttentionFeed } from "@/components/home/attention-feed";
+import { BudgetPaceChart } from "@/components/home/budget-pace-chart";
 import { BreakdownDonut, type DonutSlice } from "@/components/patterns/breakdown-donut";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -148,12 +149,6 @@ export function HomeScreen() {
   const budgetsSpent = budgetsView.reduce((sum, b) => sum + b.spent, 0);
   const budgetConsumedRatio =
     totalBudgeted > 0 ? budgetsSpent / totalBudgeted : 0;
-  const budgetTone =
-    budgetConsumedRatio > 1
-      ? "bg-danger"
-      : budgetConsumedRatio > monthProgress
-        ? "bg-warning"
-        : "bg-success";
 
   /* Category donut: every spent category, colored by DB category color. */
   const donut = useMemo(() => {
@@ -485,97 +480,16 @@ export function HomeScreen() {
                   </Link>
                 </div>
               ) : (
-                <>
-                  {/* Overall: what's left of the plan, paced against the calendar */}
-                  <div className="space-y-1.5">
-                    <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                      <span
-                        className={cn(
-                          "font-mono text-title tabular-nums",
-                          totalBudgeted - budgetsSpent >= 0
-                            ? "text-foreground"
-                            : "text-negative"
-                        )}
-                      >
-                        {formatCurrency(
-                          totalBudgeted - budgetsSpent,
-                          baseCurrency
-                        )}
-                      </span>
-                      <span className="min-w-0 text-caption text-muted-foreground sm:text-right">
-                        {t(
-                          `left of ${formatCurrency(totalBudgeted, baseCurrency)}`,
-                          `restante de ${formatCurrency(totalBudgeted, baseCurrency)}`
-                        )}
-                      </span>
-                    </div>
-                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                      <div
-                        className={cn("h-full rounded-full", budgetTone)}
-                        style={{
-                          width: `${Math.min(budgetConsumedRatio, 1) * 100}%`,
-                        }}
-                      />
-                      {isCurrentMonth && (
-                        <div
-                          aria-hidden
-                          className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/60"
-                          style={{ left: `${monthProgress * 100}%` }}
-                        />
-                      )}
-                    </div>
-                    {isCurrentMonth && (
-                      <p className="text-caption text-muted-foreground">
-                        {t(
-                          `day ${dayOfMonth} of ${daysInMonth} — the mark shows where the month is`,
-                          `día ${dayOfMonth} de ${daysInMonth} — la marca muestra dónde va el mes`
-                        )}
-                      </p>
-                    )}
-                  </div>
-
-                  {/* Top objectives */}
-                  <div className="space-y-1">
-                    {budgetsView.slice(0, 3).map((budget) => (
-                      <Link
-                        key={budget.id}
-                        href="/budget"
-                        className="block space-y-1.5 rounded-lg px-2 py-2 transition-colors hover:bg-accent/50"
-                      >
-                        <div className="flex flex-col items-start gap-1 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-                          <span className="min-w-0 truncate text-body font-medium">
-                            {budget.name}
-                          </span>
-                          <span className="max-w-full font-mono text-[0.6875rem] leading-tight tabular-nums text-muted-foreground sm:shrink-0 sm:text-right">
-                            <span className="text-negative">
-                              {formatCurrencyWithBreaks(
-                                budget.spent,
-                                baseCurrency
-                              )}
-                            </span>
-                            {" / "}
-                            {formatCurrencyWithBreaks(
-                              budget.limit,
-                              baseCurrency
-                            )}
-                          </span>
-                        </div>
-                        <ProgressMeter ratio={budget.ratio} className="h-1.5" />
-                      </Link>
-                    ))}
-                    {budgetsView.length > 3 && (
-                      <Link
-                        href="/budget"
-                        className="block px-2 pt-1 text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {t(
-                          `+${budgetsView.length - 3} more`,
-                          `+${budgetsView.length - 3} más`
-                        )}
-                      </Link>
-                    )}
-                  </div>
-                </>
+                <BudgetPaceChart
+                  budgets={budgetsView}
+                  totalBudgeted={totalBudgeted}
+                  totalSpent={budgetsSpent}
+                  consumedRatio={budgetConsumedRatio}
+                  monthProgress={monthProgress}
+                  dayOfMonth={dayOfMonth}
+                  daysInMonth={daysInMonth}
+                  isCurrentMonth={isCurrentMonth}
+                />
               )}
             </CardContent>
           </Card>
