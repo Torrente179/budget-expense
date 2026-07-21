@@ -35,7 +35,7 @@ import { StatCard } from "@/components/patterns/stat-card";
 import { TransactionRow } from "@/components/patterns/transaction-row";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { AttentionFeed } from "@/components/home/attention-feed";
-import { BreakdownDonut } from "@/components/patterns/breakdown-donut";
+import { BreakdownDonut, type DonutSlice } from "@/components/patterns/breakdown-donut";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -155,37 +155,21 @@ export function HomeScreen() {
         ? "bg-warning"
         : "bg-success";
 
-  /* Category donut: top slices + Other, colored by DB category color. */
+  /* Category donut: every spent category, colored by DB category color. */
   const donut = useMemo(() => {
     const rows = summary.categoryBreakdown;
     const total = rows.reduce((sum, row) => sum + row.total_amount, 0);
-    const slices: { id: string; name: string; value: number; color: string }[] =
-      [];
-    if (total <= 0) return { total: 0, slices };
-    for (const row of rows.slice(0, 6)) {
-      slices.push({
-        id: row.category_id,
-        name: tc(row.category_name),
-        value: row.total_amount,
-        color: row.category_color,
-      });
-    }
-    const restSum = rows
-      .slice(6)
-      .reduce((sum, row) => sum + row.total_amount, 0);
-    if (restSum > 0) {
-      slices.push({
-        id: "other",
-        name: t("Other", "Otros"),
-        value: restSum,
-        color: "var(--chart-3)",
-      });
-    }
+    if (total <= 0) return { total: 0, slices: [] as DonutSlice[] };
+    const slices: DonutSlice[] = rows.map((row) => ({
+      id: row.category_id,
+      name: tc(row.category_name),
+      value: row.total_amount,
+      color: row.category_color,
+    }));
     return { total, slices };
-  }, [summary.categoryBreakdown, tc, t]);
+  }, [summary.categoryBreakdown, tc]);
 
   function openCategory(categoryId: string) {
-    if (categoryId === "other") return;
     router.push(
       `/insights/categories/${categoryId}?month=${month}&year=${year}&from=dashboard`
     );
@@ -622,7 +606,6 @@ export function HomeScreen() {
                       centerValue={donut.total}
                       amountTone="negative"
                       onSelect={openCategory}
-                      nonInteractiveIds={["other"]}
                     />
                   </CardContent>
                 </Card>

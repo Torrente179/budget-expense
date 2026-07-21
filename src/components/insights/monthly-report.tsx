@@ -65,17 +65,12 @@ export function MonthlyReport({
   const { baseCurrency, convert } = useCurrency();
   const { t, tc } = useLocale();
 
-  /* Sort categories by amount descending */
   const sortedCategories = useMemo(
     () => [...categoryBreakdown].sort((a, b) => b.total_amount - a.total_amount),
     [categoryBreakdown]
   );
 
-  const MAX_VISIBLE_CATEGORIES = 5;
-  const visibleCategories = sortedCategories.slice(0, MAX_VISIBLE_CATEGORIES);
-  const hiddenCategories = sortedCategories.slice(MAX_VISIBLE_CATEGORIES);
-  const hiddenTotal = hiddenCategories.reduce((sum, c) => sum + c.total_amount, 0);
-
+  const visibleCategories = sortedCategories;
   const topCategory = sortedCategories[0] ?? null;
   const maxCategoryAmount = topCategory?.total_amount ?? 1;
 
@@ -334,16 +329,6 @@ export function MonthlyReport({
               );
             })}
             </div>
-            {hiddenCategories.length > 0 && (
-              <div className="flex items-center justify-between rounded-xl px-3 py-2 text-xs text-muted-foreground">
-                <span>
-                  +{hiddenCategories.length} {t("more categories", "categorías más")}
-                </span>
-                <span className="font-mono">
-                  {formatCurrency(hiddenTotal, baseCurrency)}
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Insights */}
