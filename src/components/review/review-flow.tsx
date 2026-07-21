@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CategoryIcon } from "@/components/shared/category-badge";
+import { CategoryIcon, CategoryOption, CATEGORY_SELECT_CONTENT_CLASS } from "@/components/shared/category-badge";
 import { CurrencyDisplay } from "@/components/shared/currency-display";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useCategories } from "@/hooks/use-categories";
@@ -49,7 +49,7 @@ const STEP_ORDER: Step[] = ["uncategorized", "anomalies", "upcoming", "summary"]
  * design: the only mutation is categorization.
  */
 export function ReviewFlow() {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const { baseCurrency } = useCurrency();
   const [step, setStep] = useState<Step>("uncategorized");
 
@@ -195,19 +195,23 @@ export function ReviewFlow() {
                           });
                         }}
                       >
-                        <SelectTrigger className="h-8 text-xs">
+                        <SelectTrigger className="h-8 border-border/80 bg-secondary/40 text-xs">
                           <SelectValue
                             placeholder={t("Set category", "Asignar categoría")}
                           />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className={CATEGORY_SELECT_CONTENT_CLASS}>
                           {categories.map((category) => (
                             <SelectItem
                               key={category.id}
                               value={category.id}
                               className="text-sm"
                             >
-                              {category.name}
+                              <CategoryOption
+                                name={tc(category.name)}
+                                icon={category.icon}
+                                color={category.color}
+                              />
                             </SelectItem>
                           ))}
                         </SelectContent>

@@ -347,7 +347,7 @@ BEGIN
     SELECT gen_random_uuid(), CASE WHEN v_is_default THEN NULL ELSE v_uid END, v_name, v_icon, v_color, v_is_default
     WHERE NOT EXISTS (
       SELECT 1 FROM public.categories
-      WHERE name = v_name AND (user_id = v_uid OR (v_is_default AND user_id IS NULL))
+      WHERE name = v_name AND (user_id IS NULL OR user_id = v_uid)
     );
   END LOOP;
 END $$;
@@ -360,7 +360,7 @@ SELECT needed.name,
     FROM public.categories CROSS JOIN ctx
     WHERE categories.name = needed.name
       AND (categories.user_id = ctx.user_id OR categories.user_id IS NULL)
-    ORDER BY CASE WHEN categories.user_id = ctx.user_id THEN 0 ELSE 1 END
+    ORDER BY CASE WHEN categories.user_id IS NULL THEN 0 ELSE 1 END
     LIMIT 1
   ) AS category_id
 FROM (VALUES

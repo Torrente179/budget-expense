@@ -19,7 +19,11 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { CategoryBadge } from "@/components/shared/category-badge";
+import {
+  CategoryBadge,
+  CategoryOption,
+  CATEGORY_SELECT_CONTENT_CLASS,
+} from "@/components/shared/category-badge";
 import { useCategories } from "@/hooks/use-categories";
 import { useMediaQuery } from "@/hooks/use-media-query";
 import { useCapture } from "@/hooks/use-capture";
@@ -431,22 +435,30 @@ export function CaptureSheet({
                 >
                   <SelectTrigger
                     id="capture-category"
-                    className="h-11 w-full min-w-0"
+                    className="h-11 w-full min-w-0 border-border/80 bg-secondary/40"
                   >
                     <SelectValue placeholder={t("Select", "Selecciona")}>
-                      {selectedCategory
-                        ? tc(selectedCategory.name)
-                        : undefined}
+                      {selectedCategory ? (
+                        <CategoryOption
+                          name={tc(selectedCategory.name)}
+                          icon={selectedCategory.icon}
+                          color={selectedCategory.color}
+                        />
+                      ) : undefined}
                     </SelectValue>
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className={CATEGORY_SELECT_CONTENT_CLASS}>
                     {categories.map((category) => (
                       <SelectItem
                         key={category.id}
                         value={category.id}
                         className="text-sm"
                       >
-                        {tc(category.name)}
+                        <CategoryOption
+                          name={tc(category.name)}
+                          icon={category.icon}
+                          color={category.color}
+                        />
                       </SelectItem>
                     ))}
                   </SelectContent>

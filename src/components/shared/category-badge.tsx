@@ -14,6 +14,12 @@ import {
   MoreHorizontal,
   Receipt,
   TrendingUp,
+  Church,
+  Landmark,
+  Briefcase,
+  HeartHandshake,
+  Sparkles,
+  HandHeart,
   type LucideIcon,
 } from "lucide-react";
 
@@ -32,7 +38,17 @@ const iconMap: Record<string, LucideIcon> = {
   "more-horizontal": MoreHorizontal,
   receipt: Receipt,
   "trending-up": TrendingUp,
+  church: Church,
+  landmark: Landmark,
+  briefcase: Briefcase,
+  "heart-handshake": HeartHandshake,
+  sparkles: Sparkles,
+  "hand-heart": HandHeart,
 };
+
+/** Elevated surface for category menus nested inside sheets/dialogs. */
+export const CATEGORY_SELECT_CONTENT_CLASS =
+  "border border-border bg-card shadow-3 ring-1 ring-foreground/8";
 
 interface CategoryBadgeProps {
   name: string;
@@ -90,5 +106,29 @@ export function CategoryIcon({
     >
       <Icon className="h-4 w-4" style={{ color }} />
     </div>
+  );
+}
+
+/** Compact icon + label used inside SelectItem / SelectValue. */
+export function CategoryOption({
+  name,
+  icon,
+  color,
+  className,
+}: {
+  name: string;
+  icon: string;
+  color: string;
+  className?: string;
+}) {
+  return (
+    <span className={cn("flex min-w-0 items-center gap-2", className)}>
+      <CategoryIcon
+        icon={icon}
+        color={color}
+        className="h-5 w-5 shrink-0 rounded-lg"
+      />
+      <span className="truncate">{name}</span>
+    </span>
   );
 }

@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/select";
 import { CURRENCIES } from "@/lib/constants";
 import { Loader2, Plus } from "lucide-react";
-import { CategoryIcon } from "@/components/shared/category-badge";
+import { CategoryOption, CATEGORY_SELECT_CONTENT_CLASS } from "@/components/shared/category-badge";
 import { useLocale } from "@/providers/locale-provider";
 
 interface BudgetFormProps {
@@ -114,20 +114,33 @@ export function BudgetForm({
               value={form.watch("category_id")}
               onValueChange={(v) => v && form.setValue("category_id", v)}
             >
-              <SelectTrigger id="budget-category">
-                <SelectValue placeholder={t("Select category", "Selecciona categoría")} />
+              <SelectTrigger
+                id="budget-category"
+                className="border-border/80 bg-secondary/40"
+              >
+                <SelectValue placeholder={t("Select category", "Selecciona categoría")}>
+                  {(() => {
+                    const selected = categories.find(
+                      (cat) => cat.id === form.watch("category_id")
+                    );
+                    return selected ? (
+                      <CategoryOption
+                        name={tc(selected.name)}
+                        icon={selected.icon}
+                        color={selected.color}
+                      />
+                    ) : undefined;
+                  })()}
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className={CATEGORY_SELECT_CONTENT_CLASS}>
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
-                    <div className="flex items-center gap-2">
-                      <CategoryIcon
-                        icon={cat.icon}
-                        color={cat.color}
-                        className="h-5 w-5"
-                      />
-                      <span className="text-sm">{tc(cat.name)}</span>
-                    </div>
+                    <CategoryOption
+                      name={tc(cat.name)}
+                      icon={cat.icon}
+                      color={cat.color}
+                    />
                   </SelectItem>
                 ))}
               </SelectContent>

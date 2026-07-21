@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
-import { CategoryIcon } from "@/components/shared/category-badge";
+import { CategoryIcon, CategoryOption, CATEGORY_SELECT_CONTENT_CLASS } from "@/components/shared/category-badge";
 import { CurrencyDisplay } from "@/components/shared/currency-display";
 import { EmptyState } from "@/components/shared/empty-state";
 import { useCategories } from "@/hooks/use-categories";
@@ -185,7 +185,7 @@ function ReviewRow({
   editable,
   onOverride,
 }: ReviewRowProps) {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const isIncome = row.rowType === "income";
 
   return (
@@ -256,17 +256,29 @@ function ReviewRow({
               }}
             >
               <SelectTrigger
-                className="h-8 text-xs"
+                className="h-8 border-border/80 bg-secondary/40 text-xs"
                 aria-invalid={!row.categoryId}
               >
                 <SelectValue
                   placeholder={t("Choose category", "Elige categoría")}
-                />
+                >
+                  {category ? (
+                    <CategoryOption
+                      name={tc(category.name)}
+                      icon={category.icon}
+                      color={category.color}
+                    />
+                  ) : undefined}
+                </SelectValue>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className={CATEGORY_SELECT_CONTENT_CLASS}>
                 {categories.map((item) => (
                   <SelectItem key={item.id} value={item.id} className="text-sm">
-                    {item.name}
+                    <CategoryOption
+                      name={tc(item.name)}
+                      icon={item.icon}
+                      color={item.color}
+                    />
                   </SelectItem>
                 ))}
               </SelectContent>

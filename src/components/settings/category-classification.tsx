@@ -26,7 +26,7 @@ type Classification = "essential" | "discretionary" | "giving" | "savings";
  * Supabase projects to keep the mirrored category rows in sync.
  */
 export function CategoryClassification() {
-  const { t } = useLocale();
+  const { t, tc } = useLocale();
   const { categories, loading } = useCategories();
   const queryClient = useQueryClient();
   const [savingId, setSavingId] = useState<string | null>(null);
@@ -77,7 +77,7 @@ export function CategoryClassification() {
             {categories.map((category) => (
               <li key={category.id} className="flex items-center gap-3">
                 <CategoryBadge
-                  name={category.name}
+                  name={tc(category.name)}
                   icon={category.icon}
                   color={category.color}
                 />

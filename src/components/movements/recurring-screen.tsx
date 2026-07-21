@@ -11,7 +11,7 @@ import { normalizeDecimalInput, parseDecimalInput } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/constants";
 import { Screen } from "@/components/patterns/screen";
 import { AmountText } from "@/components/patterns/amount-text";
-import { CategoryIcon } from "@/components/shared/category-badge";
+import { CategoryIcon, CategoryOption, CATEGORY_SELECT_CONTENT_CLASS } from "@/components/shared/category-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -313,17 +313,37 @@ export function RecurringScreen() {
                       setForm({ ...form, categoryId: value ?? "" })
                     }
                   >
-                    <SelectTrigger id="recurring-category" className="h-11">
-                      <SelectValue placeholder={t("Select", "Selecciona")} />
+                    <SelectTrigger
+                      id="recurring-category"
+                      className="h-11 border-border/80 bg-secondary/40"
+                    >
+                      <SelectValue placeholder={t("Select", "Selecciona")}>
+                        {(() => {
+                          const selected = categories.find(
+                            (category) => category.id === form.categoryId
+                          );
+                          return selected ? (
+                            <CategoryOption
+                              name={tc(selected.name)}
+                              icon={selected.icon}
+                              color={selected.color}
+                            />
+                          ) : undefined;
+                        })()}
+                      </SelectValue>
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className={CATEGORY_SELECT_CONTENT_CLASS}>
                       {categories.map((category) => (
                         <SelectItem
                           key={category.id}
                           value={category.id}
                           className="text-sm"
                         >
-                          {tc(category.name)}
+                          <CategoryOption
+                            name={tc(category.name)}
+                            icon={category.icon}
+                            color={category.color}
+                          />
                         </SelectItem>
                       ))}
                     </SelectContent>
