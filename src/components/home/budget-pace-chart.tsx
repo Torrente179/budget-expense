@@ -107,7 +107,7 @@ function CircularMeter({
       {showPaceMark && (
         <span
           aria-hidden
-          className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-1 ring-2 ring-card"
+          className="absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground ring-2 ring-card"
           style={{ left: paceX, top: paceY }}
         />
       )}
@@ -117,6 +117,64 @@ function CircularMeter({
         </div>
       )}
     </div>
+  );
+}
+
+function BudgetRow({
+  budget,
+  monthProgress,
+  dense,
+}: {
+  budget: BudgetPaceItem;
+  monthProgress: number;
+  dense?: boolean;
+}) {
+  const { baseCurrency } = useCurrency();
+  const itemTone = resolveTone(budget.ratio, monthProgress);
+  const pct = formatUsagePercent(budget.ratio);
+  const barWidth = Number.isFinite(budget.ratio)
+    ? Math.min(Math.max(budget.ratio, 0), 1) * 100
+    : 100;
+
+  return (
+    <Link
+      href="/budget"
+      className={cn(
+        "block rounded-lg transition-colors hover:bg-accent/50 active:bg-accent/70",
+        dense ? "px-2.5 py-2" : "px-1.5 py-1.5"
+      )}
+    >
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="min-w-0 truncate text-body font-medium">
+          {budget.name}
+        </span>
+        <span
+          className={cn(
+            "shrink-0 font-mono text-caption tabular-nums",
+            TONE_TEXT[itemTone]
+          )}
+        >
+          {pct}
+          {pct !== "∞" ? "%" : ""}
+        </span>
+      </div>
+      <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-secondary">
+        <div
+          className="h-full rounded-full transition-[width] duration-500 ease-out"
+          style={{
+            width: `${barWidth}%`,
+            backgroundColor: TONE_STROKE[itemTone],
+          }}
+        />
+      </div>
+      <p className="mt-1 font-mono text-[0.625rem] leading-tight tabular-nums text-muted-foreground">
+        <span className="text-negative">
+          {formatCurrencyWithBreaks(budget.spent, baseCurrency)}
+        </span>
+        {" / "}
+        {formatCurrencyWithBreaks(budget.limit, baseCurrency)}
+      </p>
+    </Link>
   );
 }
 
@@ -132,8 +190,10 @@ interface BudgetPaceChartProps {
 }
 
 /**
- * Compact home budget overview: small % ring + per-budget bars.
- * Always ring-beside-list so it stays short on mobile.
+ * Home budgets overview.
+ * Mobile: compact ring + stacked list (charts earn their keep in a narrow column).
+ * Desktop: dense header strip + multi-column budget grid — no oversized rings.
+ * Both layouts are always in the DOM; CSS toggles visibility (no media-query flash).
  */
 export function BudgetPaceChart({
   budgets,
@@ -152,6 +212,9 @@ export function BudgetPaceChart({
   const usedLabel = formatUsagePercent(consumedRatio);
   const tone = resolveTone(consumedRatio, monthProgress);
   const overBudget = !Number.isFinite(consumedRatio) || consumedRatio >= 1;
+  const filled = Number.isFinite(consumedRatio)
+    ? Math.min(Math.max(consumedRatio, 0), 1)
+    : 1;
 
   const statusLabel = overBudget
     ? t("Over budget", "Sobre presupuesto")
@@ -161,117 +224,138 @@ export function BudgetPaceChart({
         ? t("Under pace", "Por debajo del ritmo")
         : t("On pace", "Al ritmo");
 
+  const aria = t(
+    `Budget ${usedLabel}% used, ${statusLabel}`,
+    `Presupuesto ${usedLabel}% usado, ${statusLabel}`
+  );
+
   return (
-    <div
-      className="flex items-start gap-3 sm:gap-4"
-      role="group"
-      aria-label={t(
-        `Budget ${usedLabel}% used, ${statusLabel}`,
-        `Presupuesto ${usedLabel}% usado, ${statusLabel}`
-      )}
-    >
-      <div className="flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 sm:w-[6.5rem]">
-        <CircularMeter
-          ratio={consumedRatio}
-          monthProgress={monthProgress}
-          showPaceMark={isCurrentMonth}
-          size={88}
-          strokeWidth={8}
-          tone={tone}
-        >
-          <span
+    <div role="group" aria-label={aria}>
+      {/* Desktop — dense strip + grid */}
+      <div className="hidden space-y-3 md:block">
+        <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2">
+          <div className="min-w-0 space-y-0.5">
+            <p className="label-caps">{statusLabel}</p>
+            <p className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+              <span
+                className={cn(
+                  "font-mono text-title font-semibold tabular-nums",
+                  remaining >= 0 ? "text-foreground" : "text-negative"
+                )}
+              >
+                {formatCurrency(remaining, baseCurrency)}
+              </span>
+              <span className="text-caption text-muted-foreground">
+                {t(
+                  `left of ${formatCurrency(totalBudgeted, baseCurrency)}`,
+                  `restante de ${formatCurrency(totalBudgeted, baseCurrency)}`
+                )}
+              </span>
+              <span
+                className={cn(
+                  "rounded-full px-2 py-0.5 font-mono text-[0.625rem] font-medium tabular-nums",
+                  TONE_SUBTLE[tone],
+                  TONE_TEXT[tone]
+                )}
+              >
+                {usedLabel}
+                {usedLabel !== "∞" ? "%" : ""} {t("used", "usado")}
+              </span>
+            </p>
+          </div>
+          {isCurrentMonth && (
+            <p className="text-caption text-muted-foreground">
+              {t(
+                `Day ${dayOfMonth} of ${daysInMonth}`,
+                `Día ${dayOfMonth} de ${daysInMonth}`
+              )}
+            </p>
+          )}
+        </div>
+
+        <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-secondary">
+          <div
+            className="h-full rounded-full transition-[width] duration-500 ease-out"
+            style={{
+              width: `${filled * 100}%`,
+              backgroundColor: TONE_STROKE[tone],
+            }}
+          />
+          {isCurrentMonth && (
+            <div
+              aria-hidden
+              className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/55"
+              style={{ left: `${monthProgress * 100}%` }}
+            />
+          )}
+        </div>
+
+        <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+          {budgets.map((budget) => (
+            <div
+              key={budget.id}
+              className="rounded-xl border border-border/60 bg-secondary/25"
+            >
+              <BudgetRow
+                budget={budget}
+                monthProgress={monthProgress}
+                dense
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Mobile — ring + list */}
+      <div className="flex items-start gap-3 md:hidden">
+        <div className="flex w-[4.75rem] shrink-0 flex-col items-center gap-1">
+          <CircularMeter
+            ratio={consumedRatio}
+            monthProgress={monthProgress}
+            showPaceMark={isCurrentMonth}
+            size={72}
+            strokeWidth={7}
+            tone={tone}
+          >
+            <span
+              className={cn(
+                "font-mono text-sm font-semibold leading-none tracking-[-0.03em] tabular-nums",
+                TONE_TEXT[tone]
+              )}
+            >
+              {usedLabel}
+              {usedLabel !== "∞" && (
+                <span className="text-[0.5rem]">%</span>
+              )}
+            </span>
+          </CircularMeter>
+          <p
             className={cn(
-              "font-mono text-base font-semibold leading-none tracking-[-0.03em] tabular-nums sm:text-lg",
+              "text-center text-[0.5625rem] font-medium leading-tight",
               TONE_TEXT[tone]
             )}
           >
-            {usedLabel}
-            {usedLabel !== "∞" && (
-              <span className="text-[0.625rem]">%</span>
-            )}
-          </span>
-        </CircularMeter>
-        <p
-          className={cn(
-            "rounded-full px-2 py-0.5 text-center text-[0.625rem] font-medium leading-tight",
-            TONE_SUBTLE[tone],
-            TONE_TEXT[tone]
-          )}
-        >
-          {statusLabel}
-        </p>
-        <p
-          className={cn(
-            "text-center font-mono text-caption tabular-nums",
-            remaining >= 0 ? "text-foreground" : "text-negative"
-          )}
-        >
-          {formatCurrency(remaining, baseCurrency)}
-        </p>
-        <p className="text-center text-[0.625rem] leading-tight text-muted-foreground">
-          {t(
-            `of ${formatCurrency(totalBudgeted, baseCurrency)}`,
-            `de ${formatCurrency(totalBudgeted, baseCurrency)}`
-          )}
-        </p>
-        {isCurrentMonth && (
-          <p className="text-center text-[0.5625rem] leading-tight text-muted-foreground">
-            {t(
-              `Day ${dayOfMonth}/${daysInMonth}`,
-              `Día ${dayOfMonth}/${daysInMonth}`
-            )}
+            {statusLabel}
           </p>
-        )}
-      </div>
+          <p
+            className={cn(
+              "text-center font-mono text-[0.625rem] tabular-nums",
+              remaining >= 0 ? "text-foreground" : "text-negative"
+            )}
+          >
+            {formatCurrency(remaining, baseCurrency)}
+          </p>
+        </div>
 
-      <div className="min-w-0 flex-1 space-y-0.5">
-        {budgets.map((budget) => {
-          const itemTone = resolveTone(budget.ratio, monthProgress);
-          const pct = formatUsagePercent(budget.ratio);
-          const barWidth = Number.isFinite(budget.ratio)
-            ? Math.min(Math.max(budget.ratio, 0), 1) * 100
-            : 100;
-          return (
-            <Link
+        <div className="min-w-0 flex-1 divide-y divide-border/50">
+          {budgets.map((budget) => (
+            <BudgetRow
               key={budget.id}
-              href="/budget"
-              className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-accent/50 active:bg-accent/70"
-            >
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="min-w-0 truncate text-body font-medium">
-                    {budget.name}
-                  </span>
-                  <span
-                    className={cn(
-                      "shrink-0 font-mono text-caption tabular-nums",
-                      TONE_TEXT[itemTone]
-                    )}
-                  >
-                    {pct}
-                    {pct !== "∞" ? "%" : ""}
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-                  <div
-                    className="h-full rounded-full transition-[width] duration-500 ease-out"
-                    style={{
-                      width: `${barWidth}%`,
-                      backgroundColor: TONE_STROKE[itemTone],
-                    }}
-                  />
-                </div>
-                <p className="font-mono text-[0.6875rem] leading-tight tabular-nums text-muted-foreground">
-                  <span className="text-negative">
-                    {formatCurrencyWithBreaks(budget.spent, baseCurrency)}
-                  </span>
-                  {" / "}
-                  {formatCurrencyWithBreaks(budget.limit, baseCurrency)}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
+              budget={budget}
+              monthProgress={monthProgress}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );
