@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { resolveLedgerWriteClient } from "@/lib/loans/ledger";
+import { resolveLedgerWriteClient, resolveLoanCategoryId } from "@/lib/loans/ledger";
 import { createRequestClient } from "@/lib/supabase/request";
 
 const paramsSchema = z.object({ id: z.string().uuid() });
@@ -10,6 +10,8 @@ const repaymentSchema = z.object({
   amount: z.number().positive(),
   currency: z.string().trim().length(3),
   note: z.string().trim().max(300).nullable().optional(),
+  /** Localized income source (e.g. "Cobro de préstamo — Ana"). */
+  income_source: z.string().trim().min(1).max(100).optional(),
   /** When true (default), also create an income movement. */
   create_movement: z.boolean().optional().default(true),
 });
@@ -85,7 +87,11 @@ export async function POST(
   let incomeEntryId: string | null = null;
 
   if (parsedBody.data.create_movement) {
-    const source = `Loan repayment — ${loan.borrower_name}`.slice(0, 100);
+    const categoryId = await resolveLoanCategoryId(app.supabase);
+    const source = (
+      parsedBody.data.income_source?.trim() ||
+      `Loan repayment — ${loan.borrower_name}`
+    ).slice(0, 100);
     const { data: income, error: incomeError } = await ledger
       .from("income_entries")
       .insert({
@@ -96,6 +102,7 @@ export async function POST(
         description: parsedBody.data.note ?? null,
         date: parsedBody.data.repayment_date,
         source_kind: "manual",
+        category_id: categoryId,
       })
       .select("id")
       .single();

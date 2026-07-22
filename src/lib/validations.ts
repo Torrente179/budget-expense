@@ -38,6 +38,9 @@ export const incomeSchema = z.object({
   source: z.string().min(1, "Source is required").max(100),
   description: z.string().max(255).optional(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+  category_id: z.string().uuid().nullable().optional(),
+  /** When set with a Loan income, also records a loan repayment. */
+  loan_id: z.string().uuid().optional(),
 });
 
 export type IncomeFormValues = z.output<typeof incomeSchema>;

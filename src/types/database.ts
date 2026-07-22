@@ -105,6 +105,7 @@ export interface Database {
           color: string;
           is_default: boolean;
           classification: "essential" | "discretionary" | "giving" | "savings";
+          applies_to: "expense" | "income" | "both";
           created_at: string;
         };
         Insert: {
@@ -115,6 +116,7 @@ export interface Database {
           color?: string;
           is_default?: boolean;
           classification?: "essential" | "discretionary" | "giving" | "savings";
+          applies_to?: "expense" | "income" | "both";
           created_at?: string;
         };
         Update: {
@@ -125,6 +127,7 @@ export interface Database {
           color?: string;
           is_default?: boolean;
           classification?: "essential" | "discretionary" | "giving" | "savings";
+          applies_to?: "expense" | "income" | "both";
           created_at?: string;
         };
         Relationships: [];
@@ -257,6 +260,7 @@ export interface Database {
           currency: string;
           description: string | null;
           date: string;
+          category_id: string | null;
           source_kind: "manual" | "import_csv" | "import_script" | "recurring";
           external_ref: string | null;
           import_batch_id: string | null;
@@ -272,6 +276,7 @@ export interface Database {
           currency?: string;
           description?: string | null;
           date?: string;
+          category_id?: string | null;
           source_kind?: "manual" | "import_csv" | "import_script" | "recurring";
           external_ref?: string | null;
           import_batch_id?: string | null;
@@ -287,6 +292,7 @@ export interface Database {
           currency?: string;
           description?: string | null;
           date?: string;
+          category_id?: string | null;
           source_kind?: "manual" | "import_csv" | "import_script" | "recurring";
           external_ref?: string | null;
           import_batch_id?: string | null;
@@ -565,6 +571,30 @@ export interface Database {
             referencedColumns: ["id"];
           },
         ];
+      };
+      loan_people: {
+        Row: {
+          id: string;
+          user_id: string;
+          name: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          name: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          name?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
       budgets: {
         Row: {

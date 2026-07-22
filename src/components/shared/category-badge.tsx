@@ -21,6 +21,7 @@ import {
   Sparkles,
   HandHeart,
   Banknote,
+  CircleDollarSign,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,6 +47,7 @@ const iconMap: Record<string, LucideIcon> = {
   sparkles: Sparkles,
   "hand-heart": HandHeart,
   banknote: Banknote,
+  "circle-dollar-sign": CircleDollarSign,
 };
 
 /** Elevated surface for category menus nested inside sheets/dialogs. */

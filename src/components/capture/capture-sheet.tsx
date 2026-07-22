@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,9 +35,22 @@ import {
 import { CURRENCIES } from "@/lib/constants";
 import { isLoanCategoryName } from "@/lib/loans/is-loan-category";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
-import { cn, normalizeDecimalInput, parseDecimalInput } from "@/lib/utils";
+import { cn, formatCurrency, normalizeDecimalInput, parseDecimalInput } from "@/lib/utils";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
+import type { Database } from "@/types/database";
+
+type Loan = Database["public"]["Tables"]["loans"]["Row"];
+type LoanRepayment = Database["public"]["Tables"]["loan_repayments"]["Row"];
+type LoanPerson = Database["public"]["Tables"]["loan_people"]["Row"];
+
+function categoryAppliesTo(
+  category: { applies_to?: string | null },
+  side: "expense" | "income"
+) {
+  const value = category.applies_to ?? "expense";
+  return value === "both" || value === side;
+}
 
 export type CaptureKind = "expense" | "income";
 
@@ -96,11 +110,23 @@ export function CaptureSheet({
   const [description, setDescription] = useState("");
   const [source, setSource] = useState("");
   const [borrowerName, setBorrowerName] = useState("");
+  const [loanId, setLoanId] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [categoryTouched, setCategoryTouched] = useState(false);
   const [currency, setCurrency] = useState<string>(baseCurrency);
   const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+
+  const { data: loansData } = useQuery({
+    queryKey: ["loans"],
+    enabled: open,
+    queryFn: () =>
+      authorizedFetch<{
+        loans: Loan[];
+        repayments: LoanRepayment[];
+        people: LoanPerson[];
+      }>("/api/loans"),
+  });
 
   function seedForm() {
     const defaults = readCaptureDefaults();
@@ -113,6 +139,7 @@ export function CaptureSheet({
     setDescription(initialValues?.description ?? "");
     setSource(initialValues?.source ?? "");
     setBorrowerName("");
+    setLoanId("");
     setCategoryId(initialValues?.categoryId ?? defaults.categoryId ?? "");
     setCurrency(initialValues?.currency ?? defaults.currency ?? baseCurrency);
     setDate(initialValues?.date ?? format(new Date(), "yyyy-MM-dd"));
@@ -160,26 +187,69 @@ export function CaptureSheet({
     [categories, categoryId]
   );
 
+  const sideCategories = useMemo(
+    () =>
+      categories.filter((category) =>
+        categoryAppliesTo(category, kind === "income" ? "income" : "expense")
+      ),
+    [categories, kind]
+  );
+
   const isLoanExpense =
     kind === "expense" &&
     selectedCategory !== null &&
     isLoanCategoryName(selectedCategory.name);
 
+  const isLoanIncome =
+    kind === "income" &&
+    selectedCategory !== null &&
+    isLoanCategoryName(selectedCategory.name);
+
+  const openLoans = useMemo(() => {
+    if (!loansData) return [];
+    return loansData.loans
+      .filter((loan) => loan.is_active)
+      .map((loan) => {
+        const repaid = loansData.repayments
+          .filter((repayment) => repayment.loan_id === loan.id)
+          .reduce((sum, repayment) => sum + Number(repayment.amount), 0);
+        const outstanding = Math.max(Number(loan.principal) - repaid, 0);
+        return { loan, outstanding };
+      })
+      .filter((row) => row.outstanding > 0);
+  }, [loansData]);
+
+  const peopleNames = useMemo(
+    () => (loansData?.people ?? []).map((person) => person.name),
+    [loansData?.people]
+  );
+
   // Base UI Select renders the raw value unless items (or a Value children
   // formatter) supplies labels — without this the trigger shows a UUID.
   const categoryItems = useMemo(
     () =>
-      categories.map((category) => ({
+      sideCategories.map((category) => ({
         value: category.id,
         label: tc(category.name),
       })),
-    [categories, tc]
+    [sideCategories, tc]
   );
 
   const currencyItems = useMemo(
     () => CURRENCIES.map((item) => ({ value: item.code, label: item.code })),
     []
   );
+
+  const loanItems = useMemo(
+    () =>
+      openLoans.map(({ loan, outstanding }) => ({
+        value: loan.id,
+        label: `${loan.borrower_name} · ${formatCurrency(outstanding, loan.currency)}`,
+      })),
+    [openLoans]
+  );
+
+  const selectedOpenLoan = openLoans.find((row) => row.loan.id === loanId);
 
   const parsedAmount = parseDecimalInput(amount);
   const amountValid =
@@ -192,7 +262,9 @@ export function CaptureSheet({
     (kind === "expense"
       ? Boolean(selectedCategory) &&
         (!isLoanExpense || isEdit || borrowerName.trim().length > 0)
-      : source.trim().length > 0);
+      : isLoanIncome
+        ? Boolean(selectedCategory) && Boolean(loanId)
+        : Boolean(selectedCategory) && source.trim().length > 0);
 
   async function persistMovement() {
     const numericAmount = parsedAmount as number;
@@ -232,12 +304,14 @@ export function CaptureSheet({
           }
         }
       } else if (isLoanExpense) {
+        const name = borrowerName.trim();
         await addLoan({
-          borrower_name: borrowerName.trim(),
+          borrower_name: name,
           amount: numericAmount,
           currency: movementCurrency,
           date,
           description: trimmedDescription || undefined,
+          movement_description: t(`Loan to ${name}`, `Préstamo a ${name}`),
         });
       } else {
         await addExpense(
@@ -254,23 +328,34 @@ export function CaptureSheet({
       return;
     }
 
-    if (kind === "income") {
+    if (kind === "income" && selectedCategory) {
       writeCaptureDefaults({ currency: movementCurrency });
+      const loanBorrower = selectedOpenLoan?.loan.borrower_name;
+      const incomeSource = isLoanIncome
+        ? t(
+            `Loan repayment — ${loanBorrower}`,
+            `Cobro de préstamo — ${loanBorrower}`
+          )
+        : source.trim();
+
       if (isEdit && initialValues?.id) {
         await updateIncome(initialValues.id, {
           amount: numericAmount,
           currency: movementCurrency,
-          source: source.trim(),
+          source: incomeSource,
           date,
           description: trimmedDescription || null,
+          category_id: selectedCategory.id,
         });
       } else {
         await addIncome({
           amount: numericAmount,
           currency: movementCurrency,
-          source: source.trim(),
+          source: incomeSource,
           date,
           description: trimmedDescription || undefined,
+          category_id: selectedCategory.id,
+          loan_id: isLoanIncome ? loanId : undefined,
         });
       }
     }
@@ -299,6 +384,7 @@ export function CaptureSheet({
       setAmount("");
       setDescription("");
       setBorrowerName("");
+      setLoanId("");
       setSuggestion(null);
       if (kind === "income") {
         // Keep source — same paycheck often repeats.
@@ -344,7 +430,13 @@ export function CaptureSheet({
                 type="button"
                 role="tab"
                 aria-selected={kind === value}
-                onClick={() => setKind(value)}
+                onClick={() => {
+                  setKind(value);
+                  setCategoryId("");
+                  setCategoryTouched(false);
+                  setLoanId("");
+                  setBorrowerName("");
+                }}
                 className={cn(
                   "rounded-md py-2 text-body font-medium transition-colors",
                   kind === value
@@ -409,7 +501,7 @@ export function CaptureSheet({
               </div>
             </div>
 
-            {kind === "income" && (
+            {kind === "income" && !isLoanIncome && (
               <div className="space-y-1.5">
                 <Label htmlFor="capture-source">{t("Source", "Fuente")}</Label>
                 <Input
@@ -456,51 +548,50 @@ export function CaptureSheet({
                 )}
             </div>
 
-            {kind === "expense" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="capture-category">
-                  {t("Category", "Categoría")}
-                </Label>
-                <Select
-                  value={categoryId || null}
-                  onValueChange={(value) => {
-                    setCategoryId(value ?? "");
-                    setCategoryTouched(true);
-                  }}
-                  items={categoryItems}
+            <div className="space-y-1.5">
+              <Label htmlFor="capture-category">
+                {t("Category", "Categoría")}
+              </Label>
+              <Select
+                value={categoryId || null}
+                onValueChange={(value) => {
+                  setCategoryId(value ?? "");
+                  setCategoryTouched(true);
+                  setLoanId("");
+                }}
+                items={categoryItems}
+              >
+                <SelectTrigger
+                  id="capture-category"
+                  className="h-11 w-full min-w-0 border-border/80 bg-secondary/40"
                 >
-                  <SelectTrigger
-                    id="capture-category"
-                    className="h-11 w-full min-w-0 border-border/80 bg-secondary/40"
-                  >
-                    <SelectValue placeholder={t("Select", "Selecciona")}>
-                      {selectedCategory ? (
-                        <CategoryOption
-                          name={tc(selectedCategory.name)}
-                          icon={selectedCategory.icon}
-                          color={selectedCategory.color}
-                        />
-                      ) : undefined}
-                    </SelectValue>
-                  </SelectTrigger>
-                  <SelectContent className={CATEGORY_SELECT_CONTENT_CLASS}>
-                    {categories.map((category) => (
-                      <SelectItem
-                        key={category.id}
-                        value={category.id}
-                        className="text-sm"
-                      >
-                        <CategoryOption
-                          name={tc(category.name)}
-                          icon={category.icon}
-                          color={category.color}
-                        />
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                  <SelectValue placeholder={t("Select", "Selecciona")}>
+                    {selectedCategory ? (
+                      <CategoryOption
+                        name={tc(selectedCategory.name)}
+                        icon={selectedCategory.icon}
+                        color={selectedCategory.color}
+                      />
+                    ) : undefined}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent className={CATEGORY_SELECT_CONTENT_CLASS}>
+                  {sideCategories.map((category) => (
+                    <SelectItem
+                      key={category.id}
+                      value={category.id}
+                      className="text-sm"
+                    >
+                      <CategoryOption
+                        name={tc(category.name)}
+                        icon={category.icon}
+                        color={category.color}
+                      />
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             {isLoanExpense && (
               <div className="space-y-1.5">
@@ -512,18 +603,71 @@ export function CaptureSheet({
                 </Label>
                 <Input
                   id="capture-borrower"
+                  list="capture-loan-people"
                   autoComplete="off"
                   placeholder={t("e.g. Ana", "p. ej. Ana")}
                   value={borrowerName}
                   onChange={(event) => setBorrowerName(event.target.value)}
                   className="h-11"
                 />
+                <datalist id="capture-loan-people">
+                  {peopleNames.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
                 <p className="text-caption text-muted-foreground">
                   {t(
                     "Also tracked under Wealth → Loans.",
                     "También se registra en Patrimonio → Préstamos."
                   )}
                 </p>
+              </div>
+            )}
+
+            {isLoanIncome && (
+              <div className="space-y-1.5">
+                <Label htmlFor="capture-loan-person">
+                  {t("Person / open loan", "Persona / préstamo abierto")}
+                </Label>
+                <Select
+                  value={loanId || null}
+                  onValueChange={(value) => setLoanId(value ?? "")}
+                  items={loanItems}
+                >
+                  <SelectTrigger
+                    id="capture-loan-person"
+                    className="h-11 w-full"
+                  >
+                    <SelectValue
+                      placeholder={t(
+                        "Select who repaid you",
+                        "Elige quién te devolvió"
+                      )}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {openLoans.map(({ loan, outstanding }) => (
+                      <SelectItem key={loan.id} value={loan.id}>
+                        {loan.borrower_name} ·{" "}
+                        {formatCurrency(outstanding, loan.currency)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-caption text-muted-foreground">
+                  {t(
+                    "Records income and reduces what they owe in Wealth → Loans.",
+                    "Registra el ingreso y reduce lo que te deben en Patrimonio → Préstamos."
+                  )}
+                </p>
+                {openLoans.length === 0 && (
+                  <p className="text-caption text-destructive">
+                    {t(
+                      "No open loans to repay. Add a loan first.",
+                      "No hay préstamos abiertos. Primero añade un préstamo."
+                    )}
+                  </p>
+                )}
               </div>
             )}
 

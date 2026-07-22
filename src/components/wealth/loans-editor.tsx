@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Banknote, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ import type { Database } from "@/types/database";
 
 type Loan = Database["public"]["Tables"]["loans"]["Row"];
 type LoanRepayment = Database["public"]["Tables"]["loan_repayments"]["Row"];
+type LoanPerson = Database["public"]["Tables"]["loan_people"]["Row"];
 
 const loansKey = ["loans"] as const;
 
@@ -38,9 +39,11 @@ export function LoansEditor() {
   const { data, isPending, isError } = useQuery({
     queryKey: loansKey,
     queryFn: () =>
-      authorizedFetch<{ loans: Loan[]; repayments: LoanRepayment[] }>(
-        "/api/loans"
-      ),
+      authorizedFetch<{
+        loans: Loan[];
+        repayments: LoanRepayment[];
+        people: LoanPerson[];
+      }>("/api/loans"),
   });
 
   const invalidate = () =>
@@ -56,6 +59,14 @@ export function LoansEditor() {
   const [borrower, setBorrower] = useState("");
   const [principal, setPrincipal] = useState("");
   const [currency, setCurrency] = useState(baseCurrency);
+  const [lentDate, setLentDate] = useState(() =>
+    new Date().toISOString().slice(0, 10)
+  );
+
+  const peopleNames = useMemo(
+    () => (data?.people ?? []).map((person) => person.name),
+    [data?.people]
+  );
 
   const addLoan = useMutation({
     mutationFn: () => {
@@ -67,13 +78,15 @@ export function LoansEditor() {
       ) {
         throw new Error(t("Invalid amount", "Importe inválido"));
       }
+      const name = borrower.trim();
       return authorizedFetch("/api/loans", {
         method: "POST",
         body: JSON.stringify({
-          borrower_name: borrower.trim(),
+          borrower_name: name,
           principal: parsedPrincipal,
           currency,
-          lent_date: new Date().toISOString().slice(0, 10),
+          lent_date: lentDate,
+          movement_description: t(`Loan to ${name}`, `Préstamo a ${name}`),
           create_movement: true,
         }),
       });
@@ -83,6 +96,7 @@ export function LoansEditor() {
       setShowForm(false);
       setBorrower("");
       setPrincipal("");
+      setLentDate(new Date().toISOString().slice(0, 10));
       toast.success(
         t(
           "Loan added — also recorded as an expense",
@@ -99,9 +113,7 @@ export function LoansEditor() {
   });
 
   const activeLoans =
-    data?.loans.filter((loan) => loan.is_active) ??
-    data?.loans ??
-    [];
+    data?.loans.filter((loan) => loan.is_active) ?? data?.loans ?? [];
   const closedLoans = data?.loans.filter((loan) => !loan.is_active) ?? [];
 
   return (
@@ -114,8 +126,8 @@ export function LoansEditor() {
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
           {t(
-            "Money you lent to people. Creating a loan records a Loan expense; repayments record income and reduce what you’re owed.",
-            "Dinero que prestaste. Crear un préstamo registra un gasto Préstamo; los cobros registran ingreso y reducen lo que te deben."
+            "Money you lent to people. Creating a loan records a Loan expense; repayments record income and reduce what you’re owed. You can also record a repayment from Movements → Income → Loan.",
+            "Dinero que prestaste. Crear un préstamo registra un gasto Préstamo; los cobros registran ingreso y reducen lo que te deben. También puedes registrar un cobro en Movimientos → Ingreso → Préstamo."
           )}
         </p>
 
@@ -184,10 +196,16 @@ export function LoansEditor() {
                 </Label>
                 <Input
                   id="loan-borrower"
+                  list="loan-people-options"
                   value={borrower}
                   onChange={(event) => setBorrower(event.target.value)}
                   placeholder={t("e.g. Ana", "p. ej. Ana")}
                 />
+                <datalist id="loan-people-options">
+                  {peopleNames.map((name) => (
+                    <option key={name} value={name} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="loan-principal">
@@ -219,6 +237,15 @@ export function LoansEditor() {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="loan-date">{t("Date", "Fecha")}</Label>
+                <Input
+                  id="loan-date"
+                  type="date"
+                  value={lentDate}
+                  onChange={(event) => setLentDate(event.target.value)}
+                />
               </div>
             </div>
             <div className="flex gap-2">
@@ -255,11 +282,6 @@ export function LoansEditor() {
             </Button>
           )
         )}
-
-        <p className="text-xs text-muted-foreground">
-          {t("Balances shown in", "Saldos mostrados en")} {baseCurrency}{" "}
-          {t("where converted.", "cuando se convierten.")}
-        </p>
       </CardContent>
     </Card>
   );
@@ -276,6 +298,9 @@ function LoanRow({
 }) {
   const { t } = useLocale();
   const [repaymentAmount, setRepaymentAmount] = useState("");
+  const [repaymentDate, setRepaymentDate] = useState(() =>
+    new Date().toISOString().slice(0, 10)
+  );
   const [busy, setBusy] = useState(false);
 
   const repaidTotal = repayments.reduce(
@@ -299,19 +324,20 @@ function LoanRow({
       await authorizedFetch(`/api/loans/${loan.id}/repayments`, {
         method: "POST",
         body: JSON.stringify({
-          repayment_date: new Date().toISOString().slice(0, 10),
+          repayment_date: repaymentDate,
           amount: parsed,
           currency: loan.currency,
+          income_source: t(
+            `Loan repayment — ${loan.borrower_name}`,
+            `Cobro de préstamo — ${loan.borrower_name}`
+          ),
           create_movement: true,
         }),
       });
       setRepaymentAmount("");
       await onChanged();
       toast.success(
-        t(
-          "Repayment recorded as income",
-          "Cobro registrado como ingreso"
-        )
+        t("Repayment recorded as income", "Cobro registrado como ingreso")
       );
     } catch (error) {
       toast.error(
@@ -352,7 +378,8 @@ function LoanRow({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{loan.borrower_name}</p>
           <p className="text-xs text-muted-foreground">
-            {formatCurrency(Number(loan.principal), loan.currency)}{" "}
+            {loan.lent_date}
+            {` · ${formatCurrency(Number(loan.principal), loan.currency)} `}
             {t("lent", "prestados")}
             {` · ${repayments.length} ${t("repayments", "cobros")}`}
             {!loan.is_active && ` · ${t("closed", "cerrado")}`}
@@ -372,7 +399,13 @@ function LoanRow({
         </Button>
       </div>
       {loan.is_active && outstanding > 0 && (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Input
+            type="date"
+            value={repaymentDate}
+            onChange={(event) => setRepaymentDate(event.target.value)}
+            className="h-8 w-[150px] text-sm"
+          />
           <Input
             inputMode="decimal"
             placeholder={t("Repayment amount", "Importe del cobro")}

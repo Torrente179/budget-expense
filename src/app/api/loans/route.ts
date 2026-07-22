@@ -4,6 +4,7 @@ import {
   resolveLedgerWriteClient,
   resolveLoanCategoryId,
 } from "@/lib/loans/ledger";
+import { upsertLoanPerson } from "@/lib/loans/people";
 import { createRequestClient } from "@/lib/supabase/request";
 
 const loanSchema = z.object({
@@ -15,6 +16,8 @@ const loanSchema = z.object({
     .regex(/^\d{4}-\d{2}-\d{2}$/)
     .optional(),
   notes: z.string().trim().max(500).nullable().optional(),
+  /** Localized expense description (e.g. "Préstamo a Ana"). */
+  movement_description: z.string().trim().min(1).max(255).optional(),
   /** When true (default), also create a Loan-category expense movement. */
   create_movement: z.boolean().optional().default(true),
   /** Link an existing expense instead of creating one (create_movement ignored). */
@@ -28,12 +31,13 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const [loansResult, repaymentsResult] = await Promise.all([
+  const [loansResult, repaymentsResult, peopleResult] = await Promise.all([
     supabase.from("loans").select("*").order("lent_date", { ascending: false }),
     supabase
       .from("loan_repayments")
       .select("*")
       .order("repayment_date", { ascending: false }),
+    supabase.from("loan_people").select("*").order("name", { ascending: true }),
   ]);
 
   if (loansResult.error || repaymentsResult.error) {
@@ -50,6 +54,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     loans: loansResult.data ?? [],
     repayments: repaymentsResult.data ?? [],
+    people: peopleResult.error ? [] : (peopleResult.data ?? []),
   });
 }
 
@@ -71,10 +76,13 @@ export async function POST(request: NextRequest) {
     currency,
     lent_date,
     notes,
+    movement_description,
     create_movement,
     expense_id: existingExpenseId,
   } = parsed.data;
   const date = lent_date ?? new Date().toISOString().slice(0, 10);
+
+  await upsertLoanPerson(app.supabase, user.id, borrower_name);
 
   let expenseId: string | null = existingExpenseId ?? null;
 
@@ -103,6 +111,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const expenseDescription =
+      movement_description?.trim() ||
+      (typeof notes === "string" && notes.trim()) ||
+      `Loan to ${borrower_name}`;
+
     const { data: expense, error: expenseError } = await ledger
       .from("expenses")
       .insert({
@@ -110,9 +123,7 @@ export async function POST(request: NextRequest) {
         amount: principal,
         currency,
         category_id: categoryId,
-        description:
-          (typeof notes === "string" && notes.trim()) ||
-          `Loan to ${borrower_name}`,
+        description: expenseDescription,
         date,
         source_kind: "manual",
       })

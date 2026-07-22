@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from("income_entries")
-    .select("*")
+    .select("*, categories(*)")
     .eq("user_id", effectiveUserId)
     .gte("date", startDate)
     .lt("date", endDate)
@@ -83,7 +83,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // No HTTP cache: the client-side react-query cache owns freshness.
   return NextResponse.json({ incomes: data ?? [] });
 }
 
@@ -110,14 +109,57 @@ export async function POST(request: NextRequest) {
   const supabase = ledgerSupabase ?? appSupabase;
   const effectiveUserId = ledgerUser?.id ?? user.id;
 
-  const { error } = await supabase.from("income_entries").insert({
-    ...parsed.data,
-    source: parsed.data.source.trim(),
-    description: normalizeDescription(parsed.data.description),
-    user_id: effectiveUserId,
-  });
+  const { loan_id: loanId, category_id, ...incomeFields } = parsed.data;
 
-  if (error) {
+  if (loanId) {
+    const { data: loan, error: loanError } = await appSupabase
+      .from("loans")
+      .select("*")
+      .eq("id", loanId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (loanError || !loan) {
+      return NextResponse.json(
+        { error: "Loan not found for repayment" },
+        { status: loanError ? 500 : 404 }
+      );
+    }
+
+    const { data: existingRepayments } = await appSupabase
+      .from("loan_repayments")
+      .select("amount")
+      .eq("loan_id", loan.id);
+
+    const repaidSoFar = (existingRepayments ?? []).reduce(
+      (sum, row) => sum + Number(row.amount),
+      0
+    );
+    const outstanding = Math.max(Number(loan.principal) - repaidSoFar, 0);
+    if (Number(incomeFields.amount) > outstanding + 0.001) {
+      return NextResponse.json(
+        {
+          error: "Repayment exceeds outstanding balance",
+          outstanding,
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  const { data: income, error } = await supabase
+    .from("income_entries")
+    .insert({
+      ...incomeFields,
+      category_id: category_id ?? null,
+      source: incomeFields.source.trim(),
+      description: normalizeDescription(incomeFields.description),
+      user_id: effectiveUserId,
+    })
+    .select("id")
+    .single();
+
+  if (error || !income) {
     console.error("Failed to create income entry", error);
     return NextResponse.json(
       { error: "Unable to create income entry" },
@@ -125,5 +167,55 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ ok: true }, { status: 201 });
+  if (loanId) {
+    const { error: repaymentError } = await appSupabase
+      .from("loan_repayments")
+      .insert({
+        loan_id: loanId,
+        user_id: user.id,
+        repayment_date: incomeFields.date,
+        amount: incomeFields.amount,
+        currency: incomeFields.currency,
+        note: normalizeDescription(incomeFields.description),
+        income_entry_id: income.id,
+      });
+
+    if (repaymentError) {
+      await supabase.from("income_entries").delete().eq("id", income.id);
+      return NextResponse.json(
+        {
+          error: "Unable to record loan repayment",
+          details: repaymentError.message,
+        },
+        { status: 500 }
+      );
+    }
+
+    const { data: allRepayments } = await appSupabase
+      .from("loan_repayments")
+      .select("amount")
+      .eq("loan_id", loanId);
+    const repaid = (allRepayments ?? []).reduce(
+      (sum, row) => sum + Number(row.amount),
+      0
+    );
+    const { data: loan } = await appSupabase
+      .from("loans")
+      .select("principal, is_active")
+      .eq("id", loanId)
+      .maybeSingle();
+    if (
+      loan &&
+      loan.is_active &&
+      Math.max(Number(loan.principal) - repaid, 0) <= 0.001
+    ) {
+      await appSupabase
+        .from("loans")
+        .update({ is_active: false, updated_at: new Date().toISOString() })
+        .eq("id", loanId)
+        .eq("user_id", user.id);
+    }
+  }
+
+  return NextResponse.json({ ok: true, income_id: income.id }, { status: 201 });
 }

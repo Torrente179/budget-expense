@@ -55,6 +55,8 @@ const CATEGORY_LOCALIZATIONS = [
   { en: "Groceries", es: "Supermercado" },
   { en: "Other", es: "Otros" },
   { en: "Loan", es: "Préstamo" },
+  { en: "Salary", es: "Nómina" },
+  { en: "Other Income", es: "Otros ingresos" },
   { en: "Taxes", es: "Impuestos" },
   { en: "Professional Services", es: "Servicios Profesionales" },
   { en: "Donations", es: "Donaciones" },

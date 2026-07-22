@@ -27,6 +27,7 @@ export interface LoanCaptureValues {
   currency: string;
   date: string;
   description?: string;
+  movement_description: string;
 }
 
 export interface IncomeCaptureValues {
@@ -35,6 +36,8 @@ export interface IncomeCaptureValues {
   source: string;
   date: string; // YYYY-MM-DD
   description?: string;
+  category_id?: string | null;
+  loan_id?: string;
 }
 
 /**
@@ -173,6 +176,7 @@ export function useCapture() {
         currency: values.currency,
         description: values.description?.trim() || null,
         date: values.date,
+        category_id: values.category_id ?? null,
         source_kind: "manual",
         external_ref: null,
         import_batch_id: null,
@@ -198,7 +202,10 @@ export function useCapture() {
       );
     },
     onSuccess: async () => {
-      await invalidateIncomes();
+      await Promise.all([
+        invalidateIncomes(),
+        queryClient.invalidateQueries({ queryKey: ["loans"] }),
+      ]);
       toast.success(t("Income added", "Ingreso añadido"));
     },
   });
@@ -215,6 +222,7 @@ export function useCapture() {
             currency: values.currency,
             lent_date: values.date,
             notes: values.description?.trim() || null,
+            movement_description: values.movement_description,
             create_movement: true,
           }),
         }
