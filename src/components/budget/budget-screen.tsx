@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import dynamic from "next/dynamic";
 import { getDaysInMonth } from "date-fns";
 import {
   useCustomBudgets,
@@ -31,9 +32,6 @@ import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { MonthPicker } from "@/components/shared/month-picker";
-import { CustomBudgetForm } from "@/components/budgets/custom-budget-form";
-import { MonthlyPlanForm } from "@/components/budgets/monthly-plan-form";
-import { MethodSelector } from "@/components/budgets/method-selector";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -57,6 +55,22 @@ import {
 import { toast } from "sonner";
 import { isGivingExpense, resolveGivingTarget } from "@/lib/giving";
 
+const CustomBudgetForm = dynamic(() =>
+  import("@/components/budgets/custom-budget-form").then(
+    (module) => module.CustomBudgetForm
+  )
+);
+const MonthlyPlanForm = dynamic(() =>
+  import("@/components/budgets/monthly-plan-form").then(
+    (module) => module.MonthlyPlanForm
+  )
+);
+const MethodSelector = dynamic(() =>
+  import("@/components/budgets/method-selector").then(
+    (module) => module.MethodSelector
+  )
+);
+
 export function BudgetScreen() {
   const { t } = useLocale();
   const { month, year, isCurrentMonth, setMonthYear } = useMonth();
@@ -67,6 +81,12 @@ export function BudgetScreen() {
   const [copying, setCopying] = useState(false);
   const [seeding, setSeeding] = useState(false);
   const [editBudget, setEditBudget] = useState<CustomBudget | null>(null);
+  const [budgetSheetMounted, setBudgetSheetMounted] = useState(false);
+  const [budgetSheetOpen, setBudgetSheetOpen] = useState(false);
+  const [planSheetMounted, setPlanSheetMounted] = useState(false);
+  const [planSheetOpen, setPlanSheetOpen] = useState(false);
+  const [methodSheetMounted, setMethodSheetMounted] = useState(false);
+  const [methodSheetOpen, setMethodSheetOpen] = useState(false);
 
   const {
     customBudgets,
@@ -291,8 +311,25 @@ export function BudgetScreen() {
       return error;
     }
     setEditBudget(null);
+    setBudgetSheetOpen(false);
     toast.success(t("Budget updated", "Presupuesto actualizado"));
     return error;
+  }
+
+  function openBudgetSheet(budget: CustomBudget | null = null) {
+    setEditBudget(budget);
+    setBudgetSheetMounted(true);
+    setBudgetSheetOpen(true);
+  }
+
+  function openPlanSheet() {
+    setPlanSheetMounted(true);
+    setPlanSheetOpen(true);
+  }
+
+  function openMethodSheet() {
+    setMethodSheetMounted(true);
+    setMethodSheetOpen(true);
   }
 
   async function handleApplyMethod(method: BudgetingMethod) {
@@ -374,32 +411,28 @@ export function BudgetScreen() {
 
   const buildBudgetsActions = (
     <div className="flex flex-wrap gap-2">
-      <MethodSelector
-        onApply={handleApplyMethod}
-        trigger={
-          <Button size="sm" className="w-fit gap-1.5" disabled={seeding}>
-            {seeding ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <BookOpen className="h-3.5 w-3.5" />
-            )}
-            {t("Use a method", "Usar un método")}
-          </Button>
-        }
-      />
-      <CustomBudgetForm
-        month={month}
-        year={year}
-        incomeAmount={incomeAmount}
-        incomeCurrency={plan?.income_currency ?? baseCurrency}
-        onSubmit={handleAddBudget}
-        trigger={
-          <Button variant="outline" size="sm" className="w-fit gap-1.5">
-            <Plus className="h-3.5 w-3.5" />
-            {t("Build myself", "Crear yo mismo")}
-          </Button>
-        }
-      />
+      <Button
+        size="sm"
+        className="w-fit gap-1.5"
+        disabled={seeding}
+        onClick={openMethodSheet}
+      >
+        {seeding ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+        ) : (
+          <BookOpen className="h-3.5 w-3.5" />
+        )}
+        {t("Use a method", "Usar un método")}
+      </Button>
+      <Button
+        variant="outline"
+        size="sm"
+        className="w-fit gap-1.5"
+        onClick={() => openBudgetSheet()}
+      >
+        <Plus className="h-3.5 w-3.5" />
+        {t("Build myself", "Crear yo mismo")}
+      </Button>
     </div>
   );
 
@@ -452,17 +485,14 @@ export function BudgetScreen() {
                         )}
                       </p>
                     </div>
-                    <MonthlyPlanForm
-                      month={month}
-                      year={year}
-                      onSubmit={handleSavePlan}
-                      trigger={
-                        <Button size="sm" className="w-fit gap-1.5">
-                          <CircleDollarSign className="h-3.5 w-3.5" />
-                          {t("Set income", "Definir ingreso")}
-                        </Button>
-                      }
-                    />
+                    <Button
+                      size="sm"
+                      className="w-fit gap-1.5"
+                      onClick={openPlanSheet}
+                    >
+                      <CircleDollarSign className="h-3.5 w-3.5" />
+                      {t("Set income", "Definir ingreso")}
+                    </Button>
                   </div>
                 </div>
                 <div className="flex items-start gap-3.5 rounded-lg px-2 py-3">
@@ -500,41 +530,32 @@ export function BudgetScreen() {
                   title={t("Your plan", "Tu plan")}
                   action={
                     <div className="flex items-center gap-1.5">
-                      <MethodSelector
-                        onApply={handleApplyMethod}
-                        trigger={
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-fit gap-1.5"
-                            disabled={seeding}
-                          >
-                            {seeding ? (
-                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                            ) : (
-                              <BookOpen className="h-3.5 w-3.5" />
-                            )}
-                            <span className="hidden sm:inline">
-                              {t("Methods", "Métodos")}
-                            </span>
-                          </Button>
-                        }
-                      />
-                      <MonthlyPlanForm
-                        month={month}
-                        year={year}
-                        onSubmit={handleSavePlan}
-                        onDelete={plan ? handleDeletePlan : undefined}
-                        defaultValues={
-                          plan
-                            ? {
-                                income_amount: plan.income_amount,
-                                income_currency: plan.income_currency,
-                                allocation_percent: plan.allocation_percent,
-                              }
-                            : undefined
-                        }
-                      />
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-fit gap-1.5"
+                        disabled={seeding}
+                        onClick={openMethodSheet}
+                      >
+                        {seeding ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <BookOpen className="h-3.5 w-3.5" />
+                        )}
+                        <span className="hidden sm:inline">
+                          {t("Methods", "Métodos")}
+                        </span>
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={openPlanSheet}
+                      >
+                        <CircleDollarSign className="h-4 w-4" />
+                        <span className="hidden md:inline">
+                          {t("Set monthly plan", "Definir plan mensual")}
+                        </span>
+                      </Button>
                     </div>
                   }
                 />
@@ -643,24 +664,17 @@ export function BudgetScreen() {
                           {t("Copy last month", "Copiar mes anterior")}
                         </span>
                       </Button>
-                      <CustomBudgetForm
-                        month={month}
-                        year={year}
-                        incomeAmount={incomeAmount}
-                        incomeCurrency={plan?.income_currency ?? baseCurrency}
-                        onSubmit={handleAddBudget}
-                        trigger={
-                          <Button size="sm" className="w-fit gap-1.5">
-                            <Plus className="h-4 w-4" />
-                            <span className="hidden sm:inline">
-                              {t("New budget", "Nuevo presupuesto")}
-                            </span>
-                            <span className="sm:hidden">
-                              {t("New", "Nuevo")}
-                            </span>
-                          </Button>
-                        }
-                      />
+                      <Button
+                        size="sm"
+                        className="w-fit gap-1.5"
+                        onClick={() => openBudgetSheet()}
+                      >
+                        <Plus className="h-4 w-4" />
+                        <span className="hidden sm:inline">
+                          {t("New budget", "Nuevo presupuesto")}
+                        </span>
+                        <span className="sm:hidden">{t("New", "Nuevo")}</span>
+                      </Button>
                     </div>
                   }
                 />
@@ -693,7 +707,7 @@ export function BudgetScreen() {
                         >
                           <button
                             type="button"
-                            onClick={() => setEditBudget(budget)}
+                            onClick={() => openBudgetSheet(budget)}
                             className="min-w-0 flex-1 space-y-1.5 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-accent/50"
                           >
                             <div className="flex items-center justify-between gap-3">
@@ -834,31 +848,64 @@ export function BudgetScreen() {
         </>
       )}
 
-      <CustomBudgetForm
-        key={editBudget?.id ?? "edit"}
-        month={month}
-        year={year}
-        incomeAmount={incomeAmount}
-        incomeCurrency={plan?.income_currency ?? baseCurrency}
-        onSubmit={handleEditBudget}
-        controlledOpen={!!editBudget}
-        onOpenChange={(open) => {
-          if (!open) setEditBudget(null);
-        }}
-        defaultValues={
-          editBudget
-            ? {
-                name: editBudget.name,
-                amount_type: editBudget.amount_type as "fixed" | "percentage",
-                amount_value: editBudget.amount_value,
-                currency: editBudget.currency,
-                category_ids: editBudget.custom_budget_categories.map(
-                  (c) => c.category_id
-                ),
-              }
-            : undefined
-        }
-      />
+      {budgetSheetMounted ? (
+        <CustomBudgetForm
+          key={editBudget?.id ?? "new"}
+          month={month}
+          year={year}
+          incomeAmount={incomeAmount}
+          incomeCurrency={plan?.income_currency ?? baseCurrency}
+          onSubmit={editBudget ? handleEditBudget : handleAddBudget}
+          controlledOpen={budgetSheetOpen}
+          onOpenChange={(open) => {
+            setBudgetSheetOpen(open);
+            if (!open) setEditBudget(null);
+          }}
+          defaultValues={
+            editBudget
+              ? {
+                  name: editBudget.name,
+                  amount_type: editBudget.amount_type as
+                    | "fixed"
+                    | "percentage",
+                  amount_value: editBudget.amount_value,
+                  currency: editBudget.currency,
+                  category_ids: editBudget.custom_budget_categories.map(
+                    (category) => category.category_id
+                  ),
+                }
+              : undefined
+          }
+        />
+      ) : null}
+
+      {planSheetMounted ? (
+        <MonthlyPlanForm
+          month={month}
+          year={year}
+          onSubmit={handleSavePlan}
+          onDelete={plan ? handleDeletePlan : undefined}
+          defaultValues={
+            plan
+              ? {
+                  income_amount: plan.income_amount,
+                  income_currency: plan.income_currency,
+                  allocation_percent: plan.allocation_percent,
+                }
+              : undefined
+          }
+          controlledOpen={planSheetOpen}
+          onOpenChange={setPlanSheetOpen}
+        />
+      ) : null}
+
+      {methodSheetMounted ? (
+        <MethodSelector
+          onApply={handleApplyMethod}
+          controlledOpen={methodSheetOpen}
+          onOpenChange={setMethodSheetOpen}
+        />
+      ) : null}
 
       <Dialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <DialogContent className="sm:max-w-[380px]">

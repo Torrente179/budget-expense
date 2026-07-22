@@ -10,6 +10,7 @@ Bilingual (EN/ES) personal stewardship, budgeting, and expense-tracking app.
 | Doc | Purpose |
 |---|---|
 | [`docs/APP.md`](docs/APP.md) | **Start here** — product handbook (IA, onboarding, alerts, Home/Budget, schema status, code map) |
+| [`docs/performance-and-rebuild-plan.md`](docs/performance-and-rebuild-plan.md) | Performance baseline, recovery contracts, rollout/rollback, and future Vite/Go architecture |
 | [`design.md`](design.md) | Design system: tokens, patterns, mobile rules, visual gates |
 | [`docs/vercel-supabase-handoff.md`](docs/vercel-supabase-handoff.md) | Vercel + Supabase connection and ops |
 | [`docs/pending-migrations-runbook.md`](docs/pending-migrations-runbook.md) | Migration apply checklist |

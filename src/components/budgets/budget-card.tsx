@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
 import type { Database } from "@/types/database";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -28,7 +27,6 @@ export function BudgetCard({
   budget,
   spent,
   spentCurrency,
-  index,
   poolAmount = 0,
   onDelete,
 }: BudgetCardProps) {
@@ -61,12 +59,7 @@ export function BudgetCard({
   }[status];
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: index * 0.04, duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-      className="group rounded-lg border bg-card p-4 shadow-sm md:rounded-xl md:p-5 md:shadow-1"
-    >
+    <div className="group rounded-lg border bg-card p-4 shadow-sm md:rounded-xl md:p-5 md:shadow-1">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <CategoryIcon
@@ -139,6 +132,6 @@ export function BudgetCard({
         </div>
         <Progress value={cappedPercentage} className={`gap-0 ${progressColor}`} />
       </div>
-    </motion.div>
+    </div>
   );
 }

@@ -50,7 +50,8 @@ export function useImportBatches() {
       queryClient.invalidateQueries({ queryKey: batchesKey }),
       queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
       queryClient.invalidateQueries({ queryKey: queryKeys.incomesAll }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthSnapshotAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.appBootstrap }),
     ]);
   };
 

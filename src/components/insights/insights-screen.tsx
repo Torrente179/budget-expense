@@ -11,17 +11,6 @@ import {
   BookOpenText,
   TrendingUp,
 } from "lucide-react";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
@@ -42,19 +31,11 @@ import { SectionHeader } from "@/components/patterns/section-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { StatusTag } from "@/components/patterns/status-tag";
-import { ChartCard } from "@/components/charts/chart-card";
-import {
-  ChartAreaGradient,
-  chartAxisProps,
-  chartGridProps,
-  chartTooltipStyle,
-  compactCurrencyTick,
-  currencyTooltipFormatter,
-} from "@/components/charts/chart-theme";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { CategoryIcon } from "@/components/shared/category-badge";
 import { MonthlyReport } from "@/components/insights/monthly-report";
 import { GivingInsights } from "@/components/insights/giving-insights";
+import { DeferredInsightsTrendCharts } from "@/components/insights/deferred-insights-trend-charts";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDaysInMonth, parseISO } from "date-fns";
@@ -215,8 +196,6 @@ export function InsightsScreen() {
     [expenses]
   );
 
-  const tooltipFormatter = currencyTooltipFormatter(intlLocale, baseCurrency);
-
   return (
     <Screen
       title={t("Insights", "Análisis")}
@@ -358,74 +337,12 @@ export function InsightsScreen() {
           )}
 
           {/* Trends */}
-          <div className="grid gap-4 lg:grid-cols-2">
-            <ChartCard
-              eyebrow={t("Trend", "Tendencia")}
-              title={t("Monthly spending, 12 months", "Gasto mensual, 12 meses")}
-            >
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <BarChart data={trendData}>
-                  <CartesianGrid {...chartGridProps} />
-                  <XAxis dataKey="label" {...chartAxisProps} />
-                  <YAxis
-                    {...chartAxisProps}
-                    tickFormatter={compactCurrencyTick(intlLocale, baseCurrency)}
-                    width={56}
-                  />
-                  <Tooltip
-                    contentStyle={chartTooltipStyle}
-                    cursor={{ fill: "var(--chart-grid)" }}
-                    formatter={(value) => [
-                      tooltipFormatter(Number(value)),
-                      t("Spent", "Gastado"),
-                    ]}
-                  />
-                  <Bar
-                    dataKey="total"
-                    fill="var(--chart-1)"
-                    radius={[4, 4, 0, 0]}
-                    maxBarSize={28}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </ChartCard>
-
-            <ChartCard
-              eyebrow={t("This month", "Este mes")}
-              title={t("Cumulative spending", "Gasto acumulado")}
-            >
-              <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-                <AreaChart data={cumulativeData}>
-                  <ChartAreaGradient id="insightsCumulative" />
-                  <CartesianGrid {...chartGridProps} />
-                  <XAxis
-                    dataKey="label"
-                    {...chartAxisProps}
-                    interval="preserveStartEnd"
-                  />
-                  <YAxis
-                    {...chartAxisProps}
-                    tickFormatter={compactCurrencyTick(intlLocale, baseCurrency)}
-                    width={56}
-                  />
-                  <Tooltip
-                    contentStyle={chartTooltipStyle}
-                    formatter={(value) => [
-                      tooltipFormatter(Number(value)),
-                      t("Total", "Total"),
-                    ]}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="total"
-                    stroke="var(--chart-1)"
-                    strokeWidth={2}
-                    fill="url(#insightsCumulative)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </ChartCard>
-          </div>
+          <DeferredInsightsTrendCharts
+            trendData={trendData}
+            cumulativeData={cumulativeData}
+            intlLocale={intlLocale}
+            baseCurrency={baseCurrency}
+          />
 
           {/* Category breakdown */}
           <Card>

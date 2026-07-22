@@ -46,15 +46,15 @@ Secondary: `/review`, `/import`, `/wisdom`, `/settings`, `/onboarding` (first-ru
 ### Language
 
 - Supported locales: **EN** and **ES** only (`AppLocale`).
-- **Default:** device / browser primary language
-  (`Accept-Language` on SSR via root layout, then `navigator.language`).
+- **Default:** the static server shell renders English, then the client resolves
+  the device / browser primary language from `navigator.languages`.
   - Primary tag starts with `es` → Spanish
   - Anything else (including English, French, etc.) → English
 - Explicit choice (Settings / language toggle) sets `be-locale-explicit` and
   persists; that wins over the device after that.
 - Soft device default is **not** written to storage until the user picks.
-- Helpers: `localeFromAcceptLanguage`, `localeFromDeviceLanguages`,
-  `resolveAppLocale` in `src/lib/utils.ts`; provider
+- Helpers: `localeFromDeviceLanguages` and `resolveAppLocale` in
+  `src/lib/locale.ts`; provider
   `src/providers/locale-provider.tsx`.
 
 ### Voice / copy
@@ -330,14 +330,30 @@ Change note: `changes/2026-07-18-premium-sweep-wealth-insights.md`.
 
 ---
 
-## 13. Performance (expense path)
+## 13. Performance architecture
 
-Documented in `changes/2026-07-18-expense-path-performance.md`:
+The authoritative baseline, implementation, rollout, and rebuild record is
+[`performance-and-rebuild-plan.md`](./performance-and-rebuild-plan.md).
 
-- Home: single monthly summary fetch; summary-only adjacent prefetch
-- Recurring sync: `POST /api/recurring/sync` (not on every GET)
-- CaptureSheet loads with FAB; virtualized Movements; review count endpoint
-- Household Insight RPCs for aggregate queries
+- The app shell is statically eligible; root rendering no longer reads request
+  headers. Stored/browser language is resolved client-side.
+- Home shares `get_app_bootstrap()` and `prepare_month_snapshot()` caches.
+  Attention Feed selects from those caches instead of launching a duplicate
+  request wave.
+- Month preparation atomically materializes missing recurring rows and only
+  invalidates a month when inserts occurred. The old sync route is a
+  compatibility adapter, not the normal read path.
+- Adjacent months prefetch on pointer/focus/touch intent, not on a 600 ms timer.
+- Capture, movement editing, Command Menu, and Profile contents mount/load only
+  after first interaction. Movements remain virtualized.
+- Budget, brokerage, trade, cash, watchlist, and savings forms load only after
+  their trigger is used; Insights charts load near the viewport.
+- Household data uses one RLS-protected RPC; market quote inputs are deduped,
+  bulk-cache checked, and capped at five provider calls concurrently.
+- Investments use a compact overview payload plus independent cached pages for
+  orders, cash, savings movements, and watchlist data.
+- Direct RPCs are additive and fall back to the legacy API for one release.
+  Production migration/deployment remains a separate reviewed action.
 
 ---
 
@@ -376,7 +392,7 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Underline tabs | `src/components/patterns/underline-tabs.tsx` |
 | Status indicator | `src/components/patterns/status-tag.tsx` |
 | Shared donut | `src/components/patterns/breakdown-donut.tsx` |
-| Locale + device default | `src/providers/locale-provider.tsx`, `src/lib/utils.ts` |
+| Locale + device default | `src/providers/locale-provider.tsx`, `src/lib/locale.ts` |
 | Theme default | `src/providers/theme-provider.tsx` |
 | Onboarding UI + gate | `src/components/onboarding/` |
 | Onboarding logic | `src/hooks/use-onboarding.ts`, `src/lib/onboarding/` |

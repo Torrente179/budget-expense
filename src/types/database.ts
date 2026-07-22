@@ -1160,6 +1160,45 @@ export interface Database {
       };
     };
     Functions: {
+      get_app_bootstrap: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      prepare_month_snapshot: {
+        Args: { p_year: number; p_month: number; p_as_of?: string };
+        Returns: Json;
+      };
+      get_household_insights: {
+        Args: Record<string, never>;
+        Returns: Json;
+      };
+      replace_custom_budget_set: {
+        Args: {
+          p_year: number;
+          p_month: number;
+          p_budgets: Json;
+          p_replace_existing?: boolean;
+        };
+        Returns: number;
+      };
+      copy_custom_budgets_from_previous_month: {
+        Args: { p_year: number; p_month: number };
+        Returns: number;
+      };
+      copy_category_budgets_from_previous_month: {
+        Args: { p_year: number; p_month: number };
+        Returns: number;
+      };
+      create_expense_with_envelope_status: {
+        Args: {
+          p_category_id: string;
+          p_amount: number;
+          p_currency: string;
+          p_date: string;
+          p_description?: string | null;
+        };
+        Returns: Json;
+      };
       household_expense_category_aggregates: {
         Args: { p_user_id: string; p_start_date: string };
         Returns: {

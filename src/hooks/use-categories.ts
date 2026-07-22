@@ -48,13 +48,15 @@ export function useCategories() {
   const { data, isPending } = useQuery({
     queryKey: queryKeys.categories,
     // Categories change rarely — keep them fresh for the whole session
-    staleTime: 5 * 60 * 1000,
-    queryFn: async (): Promise<Category[]> => {
+    staleTime: 60 * 60 * 1000,
+    queryFn: async ({ signal }): Promise<Category[]> => {
       const supabase = createClient();
-      const { data: rows, error } = await supabase
+      const query = supabase
         .from("categories")
         .select("*")
         .order("name");
+      query.abortSignal(signal);
+      const { data: rows, error } = await query;
       if (error) throw error;
       return dedupeCategories(rows ?? []);
     },

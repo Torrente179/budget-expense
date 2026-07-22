@@ -1,4 +1,5 @@
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
+import { getExpenses, getIncomes } from "@/lib/data";
 import type { Database } from "@/types/database";
 import type {
   BalanceCheckpointRecord,
@@ -99,30 +100,17 @@ function monthParams(filters: { month: number; year: number }) {
 }
 
 export async function fetchExpenses(
-  filters: ExpenseFilters
+  filters: ExpenseFilters,
+  signal?: AbortSignal
 ): Promise<ExpenseWithCategory[]> {
-  const params = monthParams(filters);
-  if (filters.categoryId) params.set("categoryId", filters.categoryId);
-  const trimmedSearch = filters.search?.trim();
-  if (trimmedSearch) params.set("search", trimmedSearch);
-
-  const result = await authorizedFetch<{ expenses?: ExpenseWithCategory[] }>(
-    `/api/expenses?${params.toString()}`
-  );
-  return result.expenses ?? [];
+  return getExpenses({ ...filters, signal });
 }
 
 export async function fetchIncomes(
-  filters: IncomeFilters
+  filters: IncomeFilters,
+  signal?: AbortSignal
 ): Promise<IncomeEntry[]> {
-  const params = monthParams(filters);
-  const trimmedSearch = filters.search?.trim();
-  if (trimmedSearch) params.set("search", trimmedSearch);
-
-  const result = await authorizedFetch<{ incomes?: IncomeEntry[] }>(
-    `/api/incomes?${params.toString()}`
-  );
-  return result.incomes ?? [];
+  return getIncomes({ ...filters, signal });
 }
 
 export async function fetchMonthlySummaryRaw(

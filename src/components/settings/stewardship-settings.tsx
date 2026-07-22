@@ -20,14 +20,13 @@ export function StewardshipSettings() {
 
   useEffect(() => {
     async function load() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: claimsData } = await supabase.auth.getClaims();
+      const userId = claimsData?.claims.sub;
+      if (!userId) return;
       const { data, error } = await supabase
         .from("profiles")
         .select("tithe_target_percent")
-        .eq("id", user.id)
+        .eq("id", userId)
         .maybeSingle();
       if (error) {
         setAvailable(false); // column missing until migrations run
@@ -45,14 +44,13 @@ export function StewardshipSettings() {
       return;
     }
     setSaving(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
+    const { data: claimsData } = await supabase.auth.getClaims();
+    const userId = claimsData?.claims.sub;
+    if (userId) {
       const { error } = await supabase
         .from("profiles")
         .update({ tithe_target_percent: value })
-        .eq("id", user.id);
+        .eq("id", userId);
       if (error) {
         toast.error(
           t(

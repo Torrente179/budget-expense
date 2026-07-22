@@ -5,6 +5,13 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { notifyEnvelopeLimitsAfterExpense } from "@/lib/budgeting/notify-envelope-limits";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
+import {
+  createExpense,
+  createIncome,
+  deleteExpense,
+  updateExpense,
+  updateIncome,
+} from "@/lib/data";
 import type { ExpenseWithCategory, IncomeEntry } from "@/lib/query/fetchers";
 import { queryKeys } from "@/lib/query/keys";
 import { useCurrency } from "@/providers/currency-provider";
@@ -51,20 +58,40 @@ export function useCapture() {
   const { convert } = useCurrency();
 
   const invalidateExpenses = useCallback(
-    () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
-      ]),
+    (date?: string) => {
+      const [year, month] = date?.split("-").map(Number) ?? [];
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey:
+            year && month ? ["expenses", year, month] : queryKeys.expensesAll,
+        }),
+        queryClient.invalidateQueries({
+          queryKey:
+            year && month
+              ? ["month-snapshot", year, month]
+              : queryKeys.monthSnapshotAll,
+        }),
+      ]);
+    },
     [queryClient]
   );
 
   const invalidateIncomes = useCallback(
-    () =>
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: queryKeys.incomesAll }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
-      ]),
+    (date?: string) => {
+      const [year, month] = date?.split("-").map(Number) ?? [];
+      return Promise.all([
+        queryClient.invalidateQueries({
+          queryKey:
+            year && month ? ["incomes", year, month] : queryKeys.incomesAll,
+        }),
+        queryClient.invalidateQueries({
+          queryKey:
+            year && month
+              ? ["month-snapshot", year, month]
+              : queryKeys.monthSnapshotAll,
+        }),
+      ]);
+    },
     [queryClient]
   );
 
@@ -72,11 +99,7 @@ export function useCapture() {
     mutationFn: async (input: {
       values: ExpenseCaptureValues;
       category: Category;
-    }) =>
-      authorizedFetch<{ expense: ExpenseWithCategory }>("/api/expenses", {
-        method: "POST",
-        body: JSON.stringify(input.values),
-      }),
+    }) => createExpense(input.values),
 
     onMutate: async ({ values, category }) => {
       const [yearString, monthString] = values.date.split("-");
@@ -124,18 +147,15 @@ export function useCapture() {
       );
     },
 
-    onSuccess: async (result, variables) => {
-      await invalidateExpenses();
-      const created = result.expense;
+    onSuccess: (created, variables) => {
+      void invalidateExpenses(variables.values.date);
       toast.success(t("Expense added", "Gasto añadido"), {
         duration: 5000,
         action: {
           label: t("Undo", "Deshacer"),
           onClick: () => {
-            void authorizedFetch(`/api/expenses/${created.id}`, {
-              method: "DELETE",
-            })
-              .then(() => invalidateExpenses())
+            void deleteExpense(created.expense.id)
+              .then(() => invalidateExpenses(variables.values.date))
               .catch(() =>
                 toast.error(t("Could not undo", "No se pudo deshacer"))
               );
@@ -147,16 +167,21 @@ export function useCapture() {
         date: variables.values.date,
         convert,
         t,
+        context: created.envelopeContext,
       });
     },
   });
 
   const addIncomeMutation = useMutation({
-    mutationFn: async (values: IncomeCaptureValues) =>
-      authorizedFetch<{ ok: true }>("/api/incomes", {
-        method: "POST",
-        body: JSON.stringify(values),
-      }),
+    mutationFn: async (values: IncomeCaptureValues) => {
+      if (values.loan_id) {
+        return authorizedFetch<{ ok: true }>("/api/incomes", {
+          method: "POST",
+          body: JSON.stringify(values),
+        });
+      }
+      return createIncome(values);
+    },
 
     onMutate: async (values) => {
       const [yearString, monthString] = values.date.split("-");
@@ -201,11 +226,11 @@ export function useCapture() {
         t("Could not save the income", "No se pudo guardar el ingreso")
       );
     },
-    onSuccess: async () => {
-      await Promise.all([
-        invalidateIncomes(),
-        queryClient.invalidateQueries({ queryKey: ["loans"] }),
-      ]);
+    onSuccess: (_result, values) => {
+      void invalidateIncomes(values.date);
+      if (values.loan_id) {
+        void queryClient.invalidateQueries({ queryKey: ["loans"] });
+      }
       toast.success(t("Income added", "Ingreso añadido"));
     },
   });
@@ -232,11 +257,9 @@ export function useCapture() {
         t("Could not save the loan", "No se pudo guardar el préstamo")
       );
     },
-    onSuccess: async (result) => {
-      await Promise.all([
-        invalidateExpenses(),
-        queryClient.invalidateQueries({ queryKey: ["loans"] }),
-      ]);
+    onSuccess: (result, values) => {
+      void invalidateExpenses(values.date);
+      void queryClient.invalidateQueries({ queryKey: ["loans"] });
       const loanId = result.loan.id;
       toast.success(
         t(
@@ -254,7 +277,7 @@ export function useCapture() {
               )
                 .then(() =>
                   Promise.all([
-                    invalidateExpenses(),
+                    invalidateExpenses(values.date),
                     queryClient.invalidateQueries({ queryKey: ["loans"] }),
                   ])
                 )
@@ -272,16 +295,12 @@ export function useCapture() {
     mutationFn: async (input: {
       id: string;
       updates: Database["public"]["Tables"]["expenses"]["Update"];
-    }) =>
-      authorizedFetch(`/api/expenses/${input.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(input.updates),
-      }),
+    }) => updateExpense(input.id, input.updates),
     onError: () => {
       toast.error(t("Could not save changes", "No se pudieron guardar los cambios"));
     },
-    onSuccess: async () => {
-      await invalidateExpenses();
+    onSuccess: (_result, input) => {
+      void invalidateExpenses(input.updates.date);
       toast.success(t("Expense updated", "Gasto actualizado"));
     },
   });
@@ -290,16 +309,12 @@ export function useCapture() {
     mutationFn: async (input: {
       id: string;
       updates: Database["public"]["Tables"]["income_entries"]["Update"];
-    }) =>
-      authorizedFetch(`/api/incomes/${input.id}`, {
-        method: "PATCH",
-        body: JSON.stringify(input.updates),
-      }),
+    }) => updateIncome(input.id, input.updates),
     onError: () => {
       toast.error(t("Could not save changes", "No se pudieron guardar los cambios"));
     },
-    onSuccess: async () => {
-      await invalidateIncomes();
+    onSuccess: (_result, input) => {
+      void invalidateIncomes(input.updates.date);
       toast.success(t("Income updated", "Ingreso actualizado"));
     },
   });

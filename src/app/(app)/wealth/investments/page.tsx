@@ -1,7 +1,8 @@
 "use client";
 
 import { useDeferredValue, useState } from "react";
-import { Search, Trash2 } from "lucide-react";
+import dynamic from "next/dynamic";
+import { Plus, Search, Trash2 } from "lucide-react";
 import { useCurrency } from "@/providers/currency-provider";
 import { useInvestments } from "@/hooks/use-investments";
 import { formatCurrency } from "@/lib/utils";
@@ -10,13 +11,6 @@ import { UnderlineTabs } from "@/components/patterns/underline-tabs";
 import { WealthNav } from "@/components/wealth/wealth-nav";
 import { InvestmentOverviewCards } from "@/components/wealth/investment-overview-cards";
 import { HoldingsTable } from "@/components/wealth/holdings-table";
-import { BrokerageAccountForm } from "@/components/wealth/brokerage-account-form";
-import { TradeForm } from "@/components/wealth/trade-form";
-import { TradeTable } from "@/components/wealth/trade-table";
-import { CashMovementForm } from "@/components/wealth/cash-movement-form";
-import { CashMovementTable } from "@/components/wealth/cash-movement-table";
-import { WatchlistForm } from "@/components/wealth/watchlist-form";
-import { WatchlistGrid } from "@/components/wealth/watchlist-grid";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { Button } from "@/components/ui/button";
@@ -29,6 +23,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLocale } from "@/providers/locale-provider";
+import type { BrokerageAccountRow } from "@/lib/investments";
+
+const BrokerageAccountForm = dynamic(() =>
+  import("@/components/wealth/brokerage-account-form").then(
+    (module) => module.BrokerageAccountForm
+  )
+);
+const TradeForm = dynamic(() =>
+  import("@/components/wealth/trade-form").then((module) => module.TradeForm)
+);
+const TradeTable = dynamic(() =>
+  import("@/components/wealth/trade-table").then((module) => module.TradeTable)
+);
+const CashMovementForm = dynamic(() =>
+  import("@/components/wealth/cash-movement-form").then(
+    (module) => module.CashMovementForm
+  )
+);
+const CashMovementTable = dynamic(() =>
+  import("@/components/wealth/cash-movement-table").then(
+    (module) => module.CashMovementTable
+  )
+);
+const WatchlistForm = dynamic(() =>
+  import("@/components/wealth/watchlist-form").then(
+    (module) => module.WatchlistForm
+  )
+);
+const WatchlistGrid = dynamic(() =>
+  import("@/components/wealth/watchlist-grid").then(
+    (module) => module.WatchlistGrid
+  )
+);
 
 type InvestTab = "overview" | "orders" | "cash" | "watchlist";
 
@@ -49,6 +76,12 @@ export default function InvestmentStocksPage() {
   const [search, setSearch] = useState("");
   const [brokerFilter, setBrokerFilter] = useState("all");
   const [sideFilter, setSideFilter] = useState("all");
+  const [tradeSheetMounted, setTradeSheetMounted] = useState(false);
+  const [tradeSheetOpen, setTradeSheetOpen] = useState(false);
+  const [accountDialogMounted, setAccountDialogMounted] = useState(false);
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
+  const [editingAccount, setEditingAccount] =
+    useState<BrokerageAccountRow | null>(null);
   const deferredSearch = useDeferredValue(search);
   const { baseCurrency } = useCurrency();
 
@@ -73,7 +106,18 @@ export default function InvestmentStocksPage() {
     deleteCashMovement,
     addWatchlistItem,
     deleteWatchlistItem,
-  } = useInvestments();
+    hasMoreTrades,
+    loadMoreTrades,
+    loadingMoreTrades,
+    hasMoreCash,
+    loadMoreCash,
+    loadingMoreCash,
+  } = useInvestments({
+    includeTrades: tab === "orders",
+    includeCash: tab === "cash",
+    includeSavings: false,
+    includeWatchlist: tab === "watchlist",
+  });
 
   const brokerChoices = Array.from(
     new Set([
@@ -120,6 +164,17 @@ export default function InvestmentStocksPage() {
     await deleteBrokerageAccount(id);
   }
 
+  function openTradeSheet() {
+    setTradeSheetMounted(true);
+    setTradeSheetOpen(true);
+  }
+
+  function openAccountDialog(account: BrokerageAccountRow | null = null) {
+    setEditingAccount(account);
+    setAccountDialogMounted(true);
+    setAccountDialogOpen(true);
+  }
+
   const tabs: { key: InvestTab; label: string }[] = [
     { key: "overview", label: t("Overview", "Resumen") },
     { key: "orders", label: t("Orders", "Órdenes") },
@@ -133,12 +188,18 @@ export default function InvestmentStocksPage() {
       backHref="/wealth"
       actions={
         <>
-          <TradeForm
-            accounts={accounts}
-            lookupPrice={lookupMarketPrice}
-            onSubmit={addTrade}
-          />
-          <BrokerageAccountForm onSubmit={addBrokerageAccount} />
+          <Button size="sm" className="gap-1.5" onClick={openTradeSheet}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden md:inline">{t("Add trade", "Agregar operación")}</span>
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={() => openAccountDialog()}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden md:inline">{t("Add broker", "Agregar broker")}</span>
+          </Button>
         </>
       }
       subheader={<WealthNav />}
@@ -153,12 +214,18 @@ export default function InvestmentStocksPage() {
               )}
             </p>
             <div className="flex shrink-0 gap-2">
-              <TradeForm
-                accounts={accounts}
-                lookupPrice={lookupMarketPrice}
-                onSubmit={addTrade}
-              />
-              <BrokerageAccountForm onSubmit={addBrokerageAccount} />
+              <Button size="sm" className="gap-1.5" onClick={openTradeSheet}>
+                <Plus className="h-4 w-4" />
+                {t("Add trade", "Agregar operación")}
+              </Button>
+              <Button
+                size="sm"
+                className="gap-1.5"
+                onClick={() => openAccountDialog()}
+              >
+                <Plus className="h-4 w-4" />
+                {t("Add broker", "Agregar broker")}
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -268,34 +335,14 @@ export default function InvestmentStocksPage() {
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-1">
-                          <BrokerageAccountForm
-                            defaultValues={{
-                              broker_kind: account.broker_kind,
-                              name: account.name,
-                              account_currency: account.account_currency,
-                              fee_mode: account.fee_mode as
-                                | "manual"
-                                | "percent"
-                                | "fixed"
-                                | "percent_plus_fixed",
-                              fee_percent: Number(account.fee_percent),
-                              fee_fixed_amount: Number(account.fee_fixed_amount),
-                              fee_min_amount: Number(account.fee_min_amount),
-                              fee_currency: account.fee_currency,
-                            }}
-                            onSubmit={(values) =>
-                              updateBrokerageAccount(account.id, values)
-                            }
-                            trigger={
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="opacity-0 group-hover:opacity-100"
-                              >
-                                {t("Edit", "Editar")}
-                              </Button>
-                            }
-                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="opacity-0 group-hover:opacity-100"
+                            onClick={() => openAccountDialog(account)}
+                          >
+                            {t("Edit", "Editar")}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="icon"
@@ -369,11 +416,12 @@ export default function InvestmentStocksPage() {
                   <SelectItem value="sell">{t("Sell", "Venta")}</SelectItem>
                 </SelectContent>
               </Select>
-              <TradeForm
-                accounts={accounts}
-                lookupPrice={lookupMarketPrice}
-                onSubmit={addTrade}
-              />
+              <Button size="sm" className="gap-1.5" onClick={openTradeSheet}>
+                <Plus className="h-4 w-4" />
+                <span className="hidden md:inline">
+                  {t("Add trade", "Agregar operación")}
+                </span>
+              </Button>
             </div>
           </div>
 
@@ -385,6 +433,18 @@ export default function InvestmentStocksPage() {
             onUpdate={updateTrade}
             onDelete={deleteTrade}
           />
+          {hasMoreTrades ? (
+            <Button
+              variant="outline"
+              className="mx-auto"
+              disabled={loadingMoreTrades}
+              onClick={() => void loadMoreTrades()}
+            >
+              {loadingMoreTrades
+                ? t("Loading…", "Cargando…")
+                : t("Load more orders", "Cargar más órdenes")}
+            </Button>
+          ) : null}
         </div>
       )}
 
@@ -411,6 +471,18 @@ export default function InvestmentStocksPage() {
             onUpdate={updateCashMovement}
             onDelete={deleteCashMovement}
           />
+          {hasMoreCash ? (
+            <Button
+              variant="outline"
+              className="mx-auto"
+              disabled={loadingMoreCash}
+              onClick={() => void loadMoreCash()}
+            >
+              {loadingMoreCash
+                ? t("Loading…", "Cargando…")
+                : t("Load more cash movements", "Cargar más movimientos")}
+            </Button>
+          ) : null}
         </div>
       )}
 
@@ -447,6 +519,50 @@ export default function InvestmentStocksPage() {
           />
         </div>
       )}
+
+      {tradeSheetMounted ? (
+        <TradeForm
+          accounts={accounts}
+          lookupPrice={lookupMarketPrice}
+          onSubmit={addTrade}
+          controlledOpen={tradeSheetOpen}
+          onOpenChange={setTradeSheetOpen}
+        />
+      ) : null}
+
+      {accountDialogMounted ? (
+        <BrokerageAccountForm
+          key={editingAccount?.id ?? "new"}
+          defaultValues={
+            editingAccount
+              ? {
+                  broker_kind: editingAccount.broker_kind,
+                  name: editingAccount.name,
+                  account_currency: editingAccount.account_currency,
+                  fee_mode: editingAccount.fee_mode as
+                    | "manual"
+                    | "percent"
+                    | "fixed"
+                    | "percent_plus_fixed",
+                  fee_percent: Number(editingAccount.fee_percent),
+                  fee_fixed_amount: Number(editingAccount.fee_fixed_amount),
+                  fee_min_amount: Number(editingAccount.fee_min_amount),
+                  fee_currency: editingAccount.fee_currency,
+                }
+              : undefined
+          }
+          onSubmit={(values) =>
+            editingAccount
+              ? updateBrokerageAccount(editingAccount.id, values)
+              : addBrokerageAccount(values)
+          }
+          controlledOpen={accountDialogOpen}
+          onOpenChange={(open) => {
+            setAccountDialogOpen(open);
+            if (!open) setEditingAccount(null);
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }

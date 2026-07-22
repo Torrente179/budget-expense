@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getMonthDateRange } from "@/lib/recurring-expenses";
 import { createRequestClient } from "@/lib/supabase/request";
-import {
-  createServiceRoleClient,
-  resolveServiceRoleUserByEmail,
-} from "@/lib/supabase/service-role";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 import { expenseSchema } from "@/lib/validations";
 
 const expenseQuerySchema = z.object({
@@ -21,6 +18,12 @@ function normalizeDescription(description: string | null | undefined) {
 }
 
 export async function GET(request: NextRequest) {
+  const { supabase: appSupabase, user } = await createRequestClient(request);
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsed = expenseQuerySchema.safeParse({
     month: request.nextUrl.searchParams.get("month"),
     year: request.nextUrl.searchParams.get("year"),
@@ -35,18 +38,10 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const { supabase: appSupabase, user } = await createRequestClient(request);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
-  const supabase = ledgerSupabase ?? appSupabase;
-  const effectiveUserId = ledgerUser?.id ?? user.id;
+  const { supabase, userId: effectiveUserId } = await resolveUserDataClient({
+    supabase: appSupabase,
+    user,
+  });
 
   const { startDate, endDate } = getMonthDateRange(
     parsed.data.month,
@@ -85,6 +80,12 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
+  const { supabase: appSupabase, user } = await createRequestClient(request);
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsed = expenseSchema.safeParse(await request.json());
 
   if (!parsed.success) {
@@ -94,18 +95,10 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { supabase: appSupabase, user } = await createRequestClient(request);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
-  const supabase = ledgerSupabase ?? appSupabase;
-  const effectiveUserId = ledgerUser?.id ?? user.id;
+  const { supabase, userId: effectiveUserId } = await resolveUserDataClient({
+    supabase: appSupabase,
+    user,
+  });
 
   const { data, error } = await supabase
     .from("expenses")

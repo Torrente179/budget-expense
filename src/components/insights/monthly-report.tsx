@@ -14,7 +14,6 @@ import {
   Equal,
   Lightbulb,
 } from "lucide-react";
-import { motion } from "framer-motion";
 
 /* ------------------------------------------------------------------ */
 /*  Types                                                              */
@@ -190,11 +189,7 @@ export function MonthlyReport({
   if (sortedCategories.length === 0) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: 0.1, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <div>
       <Card className="bg-card">
         <CardHeader className="space-y-3 pb-3">
           <div className="flex items-center justify-between gap-3">
@@ -266,21 +261,14 @@ export function MonthlyReport({
               {t("Spending by category", "Gasto por categoría")}
             </p>
             <div className="grid gap-2 lg:grid-cols-2">
-            {visibleCategories.map((cat, index) => {
+            {visibleCategories.map((cat) => {
               const budget = budgetMap.get(cat.category_id);
               const barPercent = maxCategoryAmount > 0 ? (cat.total_amount / maxCategoryAmount) * 100 : 0;
               const overBudget = budget !== undefined && cat.total_amount > budget;
 
               return (
-                <motion.div
+                <div
                   key={cat.category_id}
-                  initial={{ opacity: 0, x: -8 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{
-                    delay: index * 0.03,
-                    duration: 0.24,
-                    ease: [0.22, 1, 0.36, 1],
-                  }}
                   role={onCategoryClick ? "button" : undefined}
                   tabIndex={onCategoryClick ? 0 : undefined}
                   onClick={onCategoryClick ? () => onCategoryClick(cat.category_id) : undefined}
@@ -340,7 +328,7 @@ export function MonthlyReport({
                       </span>
                     )}
                   </div>
-                </motion.div>
+                </div>
               );
             })}
             </div>
@@ -368,6 +356,6 @@ export function MonthlyReport({
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }

@@ -1,9 +1,13 @@
 import type { NextRequest } from "next/server";
 import { createClient as createSupabaseClient } from "@supabase/supabase-js";
-import type { User } from "@supabase/supabase-js";
 import { createClient as createServerClient } from "@/lib/supabase/server";
 import { getSupabaseEnv } from "@/lib/supabase/env";
 import type { Database } from "@/types/database";
+
+export interface AuthenticatedIdentity {
+  id: string;
+  email: string | null;
+}
 
 function getBearerToken(request: NextRequest) {
   const authorization = request.headers.get("authorization");
@@ -33,13 +37,10 @@ async function createBearerClient(token: string) {
     },
   });
 
-  const {
-    data: { user },
-    error,
-  } = await verificationClient.auth.getUser(token);
+  const { data, error } = await verificationClient.auth.getClaims(token);
 
-  if (error || !user) {
-    return null;
+  if (error || !data?.claims.sub) {
+    return { supabase: verificationClient, user: null };
   }
 
   const supabase = createSupabaseClient<Database>(env.url, env.key, {
@@ -51,28 +52,36 @@ async function createBearerClient(token: string) {
     },
   });
 
-  return { supabase, user };
+  return {
+    supabase,
+    user: {
+      id: data.claims.sub,
+      email: typeof data.claims.email === "string" ? data.claims.email : null,
+    } satisfies AuthenticatedIdentity,
+  };
 }
 
 export async function createRequestClient(request: NextRequest): Promise<{
   supabase:
     | Awaited<ReturnType<typeof createServerClient>>
     | ReturnType<typeof createSupabaseClient<Database>>;
-  user: User | null;
+  user: AuthenticatedIdentity | null;
 }> {
   const token = getBearerToken(request);
 
   if (token) {
-    const bearerClient = await createBearerClient(token);
-    if (bearerClient) {
-      return bearerClient;
-    }
+    return createBearerClient(token);
   }
 
   const supabase = await createServerClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
+  const user = claims?.sub
+    ? ({
+        id: claims.sub,
+        email: typeof claims.email === "string" ? claims.email : null,
+      } satisfies AuthenticatedIdentity)
+    : null;
 
   return { supabase, user };
 }

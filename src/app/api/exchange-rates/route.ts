@@ -3,6 +3,9 @@ import { NextResponse } from "next/server";
 export type RateSource = "ecb" | "open-er-api" | "fallback";
 
 const CACHE_TTL = 60 * 60 * 1000; // 1 hour
+const CACHE_HEADERS = {
+  "Cache-Control": "public, s-maxage=3600, stale-while-revalidate=86400",
+};
 let cachedData: {
   rates: Record<string, number>;
   sources: Record<string, RateSource>;
@@ -52,11 +55,14 @@ async function fetchSecondary(): Promise<Record<string, number> | null> {
 
 export async function GET() {
   if (cachedData && Date.now() - cachedData.timestamp < CACHE_TTL) {
-    return NextResponse.json({
-      rates: cachedData.rates,
-      sources: cachedData.sources,
-      stale: false,
-    });
+    return NextResponse.json(
+      {
+        rates: cachedData.rates,
+        sources: cachedData.sources,
+        stale: false,
+      },
+      { headers: CACHE_HEADERS }
+    );
   }
 
   const primary = await fetchPrimary();
@@ -92,22 +98,28 @@ export async function GET() {
       }
     }
     cachedData = { rates, sources, timestamp: Date.now() };
-    return NextResponse.json({ rates, sources, stale: false });
+    return NextResponse.json(
+      { rates, sources, stale: false },
+      { headers: CACHE_HEADERS }
+    );
   }
 
   // Both providers down
   if (cachedData) {
-    return NextResponse.json({
-      rates: cachedData.rates,
-      sources: cachedData.sources,
-      stale: true,
-    });
+    return NextResponse.json(
+      {
+        rates: cachedData.rates,
+        sources: cachedData.sources,
+        stale: true,
+      },
+      { headers: CACHE_HEADERS }
+    );
   }
   const fallbackSources = Object.fromEntries(
     Object.keys(FALLBACK_RATES).map((code) => [code, "fallback" as const])
   );
   return NextResponse.json(
     { rates: FALLBACK_RATES, sources: fallbackSources, stale: true },
-    { status: 503 }
+    { headers: CACHE_HEADERS }
   );
 }

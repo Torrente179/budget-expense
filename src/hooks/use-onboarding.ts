@@ -1,23 +1,22 @@
 "use client";
 
 import { useCallback } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { isPrimaryGoal, type PrimaryGoal } from "@/lib/onboarding/goals";
 import { queryKeys } from "@/lib/query/keys";
+import { useAppBootstrap } from "@/hooks/use-app-bootstrap";
+import type { AppBootstrap } from "@/lib/data";
 
 export interface OnboardingProfile {
   onboarding_completed_at: string | null;
   onboarding_skipped_at: string | null;
   wants_budget_help: boolean | null;
   primary_goals: PrimaryGoal[];
-  /** Profile row created_at — used to grandfather pre-feature accounts. */
   created_at: string | null;
 }
 
-/** Users whose profile existed before this date are never force-gated. */
 export const ONBOARDING_FEATURE_LAUNCH = "2026-07-18T00:00:00.000Z";
-
 const DISMISS_SESSION_KEY = "be-onboarding-dismissed";
 
 function normalizeGoals(raw: unknown): PrimaryGoal[] {
@@ -28,22 +27,12 @@ function normalizeGoals(raw: unknown): PrimaryGoal[] {
   );
 }
 
-function emptyProfile(): OnboardingProfile {
-  return {
-    onboarding_completed_at: null,
-    onboarding_skipped_at: null,
-    wants_budget_help: null,
-    primary_goals: [],
-    created_at: null,
-  };
-}
-
 export function markOnboardingDismissedInSession() {
   if (typeof window === "undefined") return;
   try {
     sessionStorage.setItem(DISMISS_SESSION_KEY, "1");
   } catch {
-    /* ignore */
+    // Session storage is optional.
   }
 }
 
@@ -64,74 +53,41 @@ function isNewUserForOnboarding(profile: OnboardingProfile): boolean {
   );
 }
 
-async function fetchOnboardingProfile(): Promise<OnboardingProfile | null> {
-  const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from("profiles")
-    .select(
-      "onboarding_completed_at, onboarding_skipped_at, wants_budget_help, primary_goals, created_at"
-    )
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (error) {
-    // Columns may be missing until migration is applied — do not force wizard.
-    return {
-      ...emptyProfile(),
-      onboarding_skipped_at: new Date().toISOString(),
-      created_at: user.created_at ?? null,
-    };
-  }
-
-  if (!data) {
-    return {
-      ...emptyProfile(),
-      created_at: user.created_at ?? null,
-    };
-  }
-
-  return {
-    onboarding_completed_at: data.onboarding_completed_at ?? null,
-    onboarding_skipped_at: data.onboarding_skipped_at ?? null,
-    wants_budget_help: data.wants_budget_help ?? null,
-    primary_goals: normalizeGoals(data.primary_goals),
-    created_at: data.created_at ?? user.created_at ?? null,
-  };
+function updateBootstrapProfile(
+  queryClient: ReturnType<typeof useQueryClient>,
+  update: Partial<AppBootstrap["profile"]>
+) {
+  queryClient.setQueryData<AppBootstrap>(queryKeys.appBootstrap, (previous) =>
+    previous
+      ? { ...previous, profile: { ...previous.profile, ...update } }
+      : previous
+  );
 }
 
 export function useOnboarding() {
   const queryClient = useQueryClient();
-
-  const {
-    data: profile = null,
-    isPending: loading,
-    refetch,
-  } = useQuery({
-    queryKey: queryKeys.onboardingProfile,
-    queryFn: fetchOnboardingProfile,
-    staleTime: 30_000,
-  });
-
+  const bootstrap = useAppBootstrap();
+  const source = bootstrap.data?.profile;
+  const profile: OnboardingProfile | null = source
+    ? {
+        onboarding_completed_at: source.onboardingCompletedAt,
+        onboarding_skipped_at: source.onboardingSkippedAt,
+        wants_budget_help: source.wantsBudgetHelp,
+        primary_goals: normalizeGoals(source.primaryGoals),
+        created_at: source.createdAt,
+      }
+    : null;
+  const loading = bootstrap.isPending;
   const dismissedInSession = isOnboardingDismissedInSession();
-
   const settled =
     Boolean(profile?.onboarding_completed_at) ||
     Boolean(profile?.onboarding_skipped_at) ||
     dismissedInSession;
-
-  /** Force redirect only for brand-new accounts that have not finished/skipped. */
   const needsOnboarding =
     !loading &&
     profile !== null &&
     !settled &&
     isNewUserForOnboarding(profile);
-
-  /** Resume CTAs for new users who skipped or never finished — not a force-gate. */
   const incomplete =
     !loading &&
     profile !== null &&
@@ -139,67 +95,34 @@ export function useOnboarding() {
     isNewUserForOnboarding(profile);
 
   const skipOnboarding = useCallback(async () => {
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (!user) throw new Error("Not signed in");
-
+    const userId = bootstrap.data?.identity.id;
+    if (!userId) throw new Error("Not signed in");
     const skippedAt = new Date().toISOString();
-
-    // Optimistic dismiss first so OnboardingGate cannot bounce to /onboarding.
     markOnboardingDismissedInSession();
-    queryClient.setQueryData<OnboardingProfile | null>(
-      queryKeys.onboardingProfile,
-      (previous) =>
-        previous
-          ? { ...previous, onboarding_skipped_at: skippedAt }
-          : { ...emptyProfile(), onboarding_skipped_at: skippedAt }
-    );
-
-    const { data, error } = await supabase
+    updateBootstrapProfile(queryClient, { onboardingSkippedAt: skippedAt });
+    const { data, error } = await createClient()
       .from("profiles")
       .update({ onboarding_skipped_at: skippedAt })
-      .eq("id", user.id)
+      .eq("id", userId)
       .select("id")
       .maybeSingle();
-
     if (error) throw error;
-    if (!data) {
-      throw new Error("Profile not found — cannot skip onboarding");
-    }
-  }, [queryClient]);
+    if (!data) throw new Error("Profile not found — cannot skip onboarding");
+  }, [bootstrap.data?.identity.id, queryClient]);
 
   const completeOnboarding = useCallback(
     async (input: { wantsBudgetHelp: boolean; goals: PrimaryGoal[] }) => {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) throw new Error("Not signed in");
-
+      const userId = bootstrap.data?.identity.id;
+      if (!userId) throw new Error("Not signed in");
       const completedAt = new Date().toISOString();
       markOnboardingDismissedInSession();
-      queryClient.setQueryData<OnboardingProfile | null>(
-        queryKeys.onboardingProfile,
-        (previous) =>
-          previous
-            ? {
-                ...previous,
-                wants_budget_help: input.wantsBudgetHelp,
-                primary_goals: input.goals,
-                onboarding_completed_at: completedAt,
-                onboarding_skipped_at: null,
-              }
-            : {
-                ...emptyProfile(),
-                wants_budget_help: input.wantsBudgetHelp,
-                primary_goals: input.goals,
-                onboarding_completed_at: completedAt,
-              }
-      );
-
-      const { error } = await supabase
+      updateBootstrapProfile(queryClient, {
+        wantsBudgetHelp: input.wantsBudgetHelp,
+        primaryGoals: input.goals,
+        onboardingCompletedAt: completedAt,
+        onboardingSkippedAt: null,
+      });
+      const { error } = await createClient()
         .from("profiles")
         .update({
           wants_budget_help: input.wantsBudgetHelp,
@@ -207,11 +130,10 @@ export function useOnboarding() {
           onboarding_completed_at: completedAt,
           onboarding_skipped_at: null,
         })
-        .eq("id", user.id);
-
+        .eq("id", userId);
       if (error) throw error;
     },
-    [queryClient]
+    [bootstrap.data?.identity.id, queryClient]
   );
 
   return {
@@ -219,7 +141,7 @@ export function useOnboarding() {
     loading,
     needsOnboarding,
     incomplete,
-    refetch: () => refetch(),
+    refetch: bootstrap.refetch,
     skipOnboarding,
     completeOnboarding,
   };

@@ -7,7 +7,6 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2 } from "lucide-react";
-import { motion } from "framer-motion";
 import type { CustomBudget } from "@/hooks/use-custom-budgets";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -24,7 +23,6 @@ export function CustomBudgetCard({
   budget,
   spent,
   resolvedAmount,
-  index,
   onDelete,
   onEdit,
 }: CustomBudgetCardProps) {
@@ -56,16 +54,7 @@ export function CustomBudgetCard({
   const categories = budget.custom_budget_categories.map((c) => c.categories);
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{
-        delay: index * 0.04,
-        duration: 0.24,
-        ease: [0.22, 1, 0.36, 1],
-      }}
-      className="group rounded-lg border bg-card p-4 shadow-sm md:rounded-xl md:p-5 md:shadow-1"
-    >
+    <div className="group rounded-lg border bg-card p-4 shadow-sm md:rounded-xl md:p-5 md:shadow-1">
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
@@ -170,6 +159,6 @@ export function CustomBudgetCard({
           />
         </div>
       )}
-    </motion.div>
+    </div>
   );
 }

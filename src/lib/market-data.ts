@@ -14,6 +14,7 @@ import {
 
 type ServerSupabase = SupabaseClient<Database>;
 type MarketPriceRow = Database["public"]["Tables"]["market_price_history"]["Row"];
+type InvestmentAssetRow = Database["public"]["Tables"]["investment_assets"]["Row"];
 
 const LATEST_CACHE_TTL_MS = 15 * 60 * 1000;
 const HISTORICAL_FALLBACK_DAYS = 7;
@@ -309,6 +310,8 @@ export async function getMarketPrice({
   exchangeCode,
   providerSymbolTwelve,
   providerSymbolEodhd,
+  assetMetadata,
+  latestCache,
 }: {
   supabase: ServerSupabase;
   symbol: string;
@@ -318,14 +321,19 @@ export async function getMarketPrice({
   exchangeCode?: string | null;
   providerSymbolTwelve?: string | null;
   providerSymbolEodhd?: string | null;
+  assetMetadata?: InvestmentAssetRow | null;
+  latestCache?: Map<string, MarketPriceRow>;
 }): Promise<MarketPriceResponse> {
   const requestedDate = toDateParam(date);
   const normalizedSymbol = symbol.trim().toUpperCase();
-  const asset = await findAssetMetadata(supabase, {
-    symbol: normalizedSymbol,
-    marketCode,
-    exchangeCode,
-  });
+  const asset =
+    assetMetadata === undefined
+      ? await findAssetMetadata(supabase, {
+          symbol: normalizedSymbol,
+          marketCode,
+          exchangeCode,
+        })
+      : assetMetadata;
   const fallbackCurrency =
     asset?.quote_currency ??
     (marketCode === "CO" ? "COP" : "USD");
@@ -369,11 +377,12 @@ export async function getMarketPrice({
           candidate.providerSymbol!,
           requestedDate
         )
-      : await readCachedLatestQuote(
+      : latestCache?.get(`${candidate.provider}|${candidate.providerSymbol}`) ??
+        (await readCachedLatestQuote(
           supabase,
           candidate.provider,
           candidate.providerSymbol!
-        );
+        ));
 
     if (cached) {
       return buildCachedResponse({

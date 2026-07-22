@@ -10,10 +10,7 @@ import {
   type BalanceMovementTotals,
 } from "@/lib/balance-checkpoint";
 import { createRequestClient } from "@/lib/supabase/request";
-import {
-  createServiceRoleClient,
-  resolveServiceRoleUserByEmail,
-} from "@/lib/supabase/service-role";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 import {
   isMissingTableError,
   logSuppressedSupabaseError,
@@ -31,6 +28,12 @@ const summaryQuerySchema = z.object({
 });
 
 export async function GET(request: NextRequest) {
+  const { supabase: appSupabase, user } = await createRequestClient(request);
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsed = summaryQuerySchema.safeParse({
     month: request.nextUrl.searchParams.get("month"),
     year: request.nextUrl.searchParams.get("year"),
@@ -47,22 +50,10 @@ export async function GET(request: NextRequest) {
   const { month, year } = parsed.data;
   const requestedAsOfDate =
     parsed.data.asOf ?? format(new Date(), "yyyy-MM-dd");
-  const { supabase: appSupabase, user } = await createRequestClient(request);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
   const appUserId = user.id;
 
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
-
-  // Expenses and incomes live in the ledger project; budgets, plans,
-  // and investment transfers remain in the app project.
-  const ledger = ledgerSupabase ?? appSupabase;
-  const ledgerUserId = ledgerUser?.id ?? user.id;
+  const { supabase: ledger, userId: ledgerUserId } =
+    await resolveUserDataClient({ supabase: appSupabase, user });
 
   const { startDate, endDate } = getMonthDateRange(month, year);
   const periodEndDate = format(subDays(parseISO(endDate), 1), "yyyy-MM-dd");

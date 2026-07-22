@@ -20,10 +20,9 @@ export async function applyOnboardingPersonalization(input: {
   methodId?: string | null;
 }) {
   const supabase = createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Unauthorized");
+  const { data, error } = await supabase.auth.getClaims();
+  const userId = data?.claims.sub;
+  if (error || !userId) throw error ?? new Error("Unauthorized");
 
   const month = getCurrentMonth();
   const year = getCurrentYear();
@@ -43,7 +42,7 @@ export async function applyOnboardingPersonalization(input: {
 
   await supabase.from("monthly_budget_plans").upsert(
     {
-      user_id: user.id,
+      user_id: userId,
       month,
       year,
       income_amount: input.incomeAmount,
@@ -58,7 +57,7 @@ export async function applyOnboardingPersonalization(input: {
     await supabase
       .from("profiles")
       .update({ tithe_target_percent: 10 })
-      .eq("id", user.id);
+      .eq("id", userId);
   }
 
   if (!input.wantsBudgetHelp || plan.seedEnvelopes.length === 0) {
@@ -68,7 +67,7 @@ export async function applyOnboardingPersonalization(input: {
   const { data: categories } = await supabase
     .from("categories")
     .select("id, classification, name")
-    .or(`user_id.eq.${user.id},is_default.eq.true`);
+    .or(`user_id.eq.${userId},is_default.eq.true`);
 
   let categoryRows = categories ?? [];
 
@@ -88,7 +87,7 @@ export async function applyOnboardingPersonalization(input: {
     const { data: created } = await supabase
       .from("categories")
       .insert({
-        user_id: user.id,
+        user_id: userId,
         name: titheName,
         icon: "hand-heart",
         color: "#10b981",
@@ -133,7 +132,7 @@ export async function applyOnboardingPersonalization(input: {
       .from("custom_budgets")
       .upsert(
         {
-          user_id: user.id,
+          user_id: userId,
           name,
           amount_type: envelope.amount_type,
           amount_value: envelope.amount_value,

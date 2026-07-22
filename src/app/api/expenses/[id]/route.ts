@@ -1,10 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createRequestClient } from "@/lib/supabase/request";
-import {
-  createServiceRoleClient,
-  resolveServiceRoleUserByEmail,
-} from "@/lib/supabase/service-role";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 import { expenseSchema } from "@/lib/validations";
 
 const expenseUpdateSchema = expenseSchema.partial().extend({
@@ -25,6 +22,12 @@ export async function PATCH(
   request: NextRequest,
   context: RouteContext<"/api/expenses/[id]">
 ) {
+  const { supabase: appSupabase, user } = await createRequestClient(request);
+
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await context.params;
   const parsed = expenseUpdateSchema.safeParse(await request.json());
 
@@ -40,18 +43,10 @@ export async function PATCH(
     description: normalizeDescription(parsed.data.description),
   };
 
-  const { supabase: appSupabase, user } = await createRequestClient(request);
-
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
-  const supabase = ledgerSupabase ?? appSupabase;
-  const effectiveUserId = ledgerUser?.id ?? user.id;
+  const { supabase, userId: effectiveUserId } = await resolveUserDataClient({
+    supabase: appSupabase,
+    user,
+  });
 
   const { error } = await supabase
     .from("expenses")
@@ -81,12 +76,10 @@ export async function DELETE(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
-  const supabase = ledgerSupabase ?? appSupabase;
-  const effectiveUserId = ledgerUser?.id ?? user.id;
+  const { supabase, userId: effectiveUserId } = await resolveUserDataClient({
+    supabase: appSupabase,
+    user,
+  });
 
   const { error } = await supabase
     .from("expenses")

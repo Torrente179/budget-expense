@@ -37,15 +37,24 @@ interface BrokerageAccountFormProps {
   onSubmit: (values: BrokerageAccountFormValues) => Promise<unknown>;
   defaultValues?: Partial<BrokerageAccountFormValues>;
   trigger?: React.ReactNode;
+  controlledOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function BrokerageAccountForm({
   onSubmit,
   defaultValues,
   trigger,
+  controlledOpen,
+  onOpenChange,
 }: BrokerageAccountFormProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const resolvedOpen = isControlled ? controlledOpen : open;
+  const setResolvedOpen = isControlled
+    ? (value: boolean) => onOpenChange?.(value)
+    : setOpen;
   const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<BrokerageAccountFormValues>({
@@ -77,7 +86,7 @@ export function BrokerageAccountForm({
     setSubmitting(false);
 
     if (!error) {
-      setOpen(false);
+      setResolvedOpen(false);
     }
   }
 
@@ -89,15 +98,15 @@ export function BrokerageAccountForm({
     : CUSTOM_BROKER_VALUE;
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={resolvedOpen} onOpenChange={setResolvedOpen}>
       {trigger ? (
         <DialogTrigger render={trigger as React.ReactElement} />
-      ) : (
+      ) : !isControlled ? (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
           <span className="hidden md:inline">{t("Add broker", "Agregar broker")}</span>
         </DialogTrigger>
-      )}
+      ) : null}
 
       <DialogContent className="sm:max-w-[520px]">
         <DialogHeader className="space-y-3">
@@ -322,7 +331,7 @@ export function BrokerageAccountForm({
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            <Button type="button" variant="ghost" onClick={() => setResolvedOpen(false)}>
               {t("Cancel", "Cancelar")}
             </Button>
             <Button type="submit" disabled={submitting}>

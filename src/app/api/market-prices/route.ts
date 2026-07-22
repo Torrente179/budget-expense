@@ -3,6 +3,8 @@ import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { getMarketPrice } from "@/lib/market-data";
 import { buildAssetKey } from "@/lib/investments";
+import { getDefaultTwelveSymbol } from "@/lib/investments";
+import type { Database } from "@/types/database";
 import {
   assetTypeSchema,
   marketCodeSchema,
@@ -28,6 +30,27 @@ const batchItemSchema = querySchema.extend({
 const batchBodySchema = z.object({
   assets: z.array(batchItemSchema).min(1).max(80),
 });
+
+type AssetRow = Database["public"]["Tables"]["investment_assets"]["Row"];
+type QuoteRow = Database["public"]["Tables"]["market_price_history"]["Row"];
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<R>
+) {
+  const results = new Array<R>(items.length);
+  let cursor = 0;
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, items.length) }, async () => {
+      while (cursor < items.length) {
+        const index = cursor++;
+        results[index] = await mapper(items[index]);
+      }
+    })
+  );
+  return results;
+}
 
 export async function GET(request: NextRequest) {
   const parsed = querySchema.safeParse({
@@ -84,8 +107,53 @@ export async function POST(request: NextRequest) {
 
   try {
     const supabase = await createClient();
-    const quotes = await Promise.all(
-      parsed.data.assets.map(async (asset) => {
+    const uniqueAssets = Array.from(
+      new Map(
+        parsed.data.assets.map((asset) => {
+          const assetKey =
+            asset.assetKey ??
+            buildAssetKey(asset.marketCode, asset.symbol, asset.exchangeCode);
+          return [assetKey, { ...asset, assetKey }] as const;
+        })
+      ).values()
+    );
+    const assetKeys = uniqueAssets.map((asset) => asset.assetKey);
+    const { data: metadataRows } = await supabase
+      .from("investment_assets")
+      .select("*")
+      .in("asset_key", assetKeys);
+    const metadata = new Map(
+      ((metadataRows ?? []) as AssetRow[]).map((asset) => [asset.asset_key, asset])
+    );
+    const providerSymbols = uniqueAssets.flatMap((asset) => {
+      const row = metadata.get(asset.assetKey);
+      return [
+        asset.providerSymbolTwelve ??
+          row?.provider_symbol_twelve ??
+          getDefaultTwelveSymbol(asset.symbol, asset.marketCode, asset.assetType),
+        asset.providerSymbolEodhd ?? row?.provider_symbol_eodhd ?? null,
+      ].filter((symbol): symbol is string => Boolean(symbol));
+    });
+    const latestCache = new Map<string, QuoteRow>();
+    if (providerSymbols.length > 0) {
+      const { data: cachedRows } = await supabase
+        .from("market_price_history")
+        .select("*")
+        .in("provider_symbol", [...new Set(providerSymbols)])
+        .order("quote_date", { ascending: false });
+      const freshAfter = Date.now() - 15 * 60 * 1000;
+      for (const row of (cachedRows ?? []) as QuoteRow[]) {
+        const key = `${row.provider}|${row.provider_symbol}`;
+        if (
+          !latestCache.has(key) &&
+          new Date(row.fetched_at).getTime() >= freshAfter
+        ) {
+          latestCache.set(key, row);
+        }
+      }
+    }
+
+    const quotes = await mapWithConcurrency(uniqueAssets, 5, async (asset) => {
         try {
           const quote = await getMarketPrice({
             supabase,
@@ -96,18 +164,18 @@ export async function POST(request: NextRequest) {
             exchangeCode: asset.exchangeCode,
             providerSymbolTwelve: asset.providerSymbolTwelve,
             providerSymbolEodhd: asset.providerSymbolEodhd,
+            assetMetadata: metadata.get(asset.assetKey) ?? null,
+            latestCache: asset.date ? undefined : latestCache,
           });
           return {
             ...quote,
             assetKey:
-              asset.assetKey ??
-              buildAssetKey(asset.marketCode, asset.symbol, asset.exchangeCode),
+              asset.assetKey,
           };
         } catch {
           return null;
         }
-      })
-    );
+      });
 
     return NextResponse.json({
       quotes: quotes.filter((quote) => quote !== null),

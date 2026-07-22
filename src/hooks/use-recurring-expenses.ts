@@ -1,64 +1,33 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import { resolveOptionalTableResult } from "@/lib/supabase/postgrest-errors";
-import { syncRecurringMonth } from "@/lib/query/sync-recurring";
+import { getRecurringExpenses } from "@/lib/data";
 import { queryKeys } from "@/lib/query/keys";
-import { getCurrentMonth, getCurrentYear } from "@/lib/utils";
+import { getCurrentMonth, getCurrentYear } from "@/lib/calendar";
 import type { Database } from "@/types/database";
 
-type RecurringExpense = Database["public"]["Tables"]["recurring_expenses"]["Row"] & {
-  categories: Database["public"]["Tables"]["categories"]["Row"];
-};
-
-async function refreshRecurringMaterialization(
-  queryClient: ReturnType<typeof useQueryClient>
-) {
-  try {
-    await syncRecurringMonth(getCurrentMonth(), getCurrentYear());
-    void queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll });
-    void queryClient.invalidateQueries({
-      queryKey: queryKeys.monthlySummaryAll,
-    });
-  } catch (error) {
-    console.error("Failed to sync recurring after rule write", error);
-  }
-}
+type RecurringExpense =
+  Database["public"]["Tables"]["recurring_expenses"]["Row"] & {
+    categories: Database["public"]["Tables"]["categories"]["Row"];
+  };
 
 export function useRecurringExpenses() {
-  const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
-  const [loading, setLoading] = useState(true);
   const supabase = createClient();
   const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: queryKeys.recurringExpenses,
+    queryFn: ({ signal }) => getRecurringExpenses(signal),
+  });
 
-  const fetchRecurringExpenses = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await supabase
-        .from("recurring_expenses")
-        .select("*, categories(*)")
-        .order("created_at", { ascending: false });
-
-      const data = resolveOptionalTableResult(result, {
-        table: "recurring_expenses",
-        context: "Recurring expenses table is unavailable during fetch",
-        fallback: [],
-      });
-
-      setRecurringExpenses(data as RecurringExpense[]);
-    } catch (error) {
-      console.error("Failed to fetch recurring expenses", error);
-      setRecurringExpenses([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [supabase]);
-
-  useEffect(() => {
-    fetchRecurringExpenses();
-  }, [fetchRecurringExpenses]);
+  function refresh() {
+    const month = getCurrentMonth();
+    const year = getCurrentYear();
+    void queryClient.invalidateQueries({ queryKey: queryKeys.recurringExpenses });
+    void queryClient.invalidateQueries({
+      queryKey: ["month-snapshot", year, month],
+    });
+  }
 
   async function addRecurringExpense(expense: {
     amount: number;
@@ -69,19 +38,13 @@ export function useRecurringExpenses() {
     description?: string;
     is_active?: boolean;
   }) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-
+    const { data: claims, error: claimsError } = await supabase.auth.getClaims();
+    if (claimsError || !claims?.claims.sub) return claimsError;
     const { error } = await supabase.from("recurring_expenses").insert({
       ...expense,
-      user_id: userData.user.id,
+      user_id: claims.claims.sub,
     });
-
-    if (!error) {
-      await fetchRecurringExpenses();
-      await refreshRecurringMaterialization(queryClient);
-    }
-
+    if (!error) refresh();
     return error;
   }
 
@@ -93,35 +56,22 @@ export function useRecurringExpenses() {
       .from("recurring_expenses")
       .update(updates)
       .eq("id", id);
-
-    if (!error) {
-      await fetchRecurringExpenses();
-      await refreshRecurringMaterialization(queryClient);
-    }
-
+    if (!error) refresh();
     return error;
   }
 
   async function deleteRecurringExpense(id: string) {
-    const { error } = await supabase
-      .from("recurring_expenses")
-      .delete()
-      .eq("id", id);
-
-    if (!error) {
-      await fetchRecurringExpenses();
-      await refreshRecurringMaterialization(queryClient);
-    }
-
+    const { error } = await supabase.from("recurring_expenses").delete().eq("id", id);
+    if (!error) refresh();
     return error;
   }
 
   return {
-    recurringExpenses,
-    loading,
+    recurringExpenses: (query.data ?? []) as RecurringExpense[],
+    loading: query.isPending,
     addRecurringExpense,
     updateRecurringExpense,
     deleteRecurringExpense,
-    refetch: fetchRecurringExpenses,
+    refetch: query.refetch,
   };
 }

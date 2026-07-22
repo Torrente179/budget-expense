@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { syncRecurringExpensesForMonth } from "@/lib/recurring-expenses";
 import { createRequestClient } from "@/lib/supabase/request";
-import {
-  createServiceRoleClient,
-  resolveServiceRoleUserByEmail,
-} from "@/lib/supabase/service-role";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 
 const syncBodySchema = z.object({
   month: z.coerce.number().int().min(1).max(12),
@@ -17,24 +14,22 @@ const syncBodySchema = z.object({
  * after recurring-rule writes — not on every ledger GET.
  */
 export async function POST(request: NextRequest) {
-  const parsed = syncBodySchema.safeParse(await request.json().catch(() => null));
-
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid sync payload" }, { status: 400 });
-  }
-
   const { supabase: appSupabase, user } = await createRequestClient(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
-  const supabase = ledgerSupabase ?? appSupabase;
-  const effectiveUserId = ledgerUser?.id ?? user.id;
+  const parsed = syncBodySchema.safeParse(await request.json().catch(() => null));
+
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid sync payload" }, { status: 400 });
+  }
+
+  const { supabase, userId: effectiveUserId } = await resolveUserDataClient({
+    supabase: appSupabase,
+    user,
+  });
 
   try {
     await syncRecurringExpensesForMonth({

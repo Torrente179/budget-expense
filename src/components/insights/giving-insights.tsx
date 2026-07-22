@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { CategoryIcon } from "@/components/shared/category-badge";
 import { HandHeart, TrendingUp } from "lucide-react";
-import { motion } from "framer-motion";
 
 /* ------------------------------------------------------------------ */
 /*  Giving detection                                                   */
@@ -137,11 +136,7 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
   if (analysis.count === 0 && totalIncome === 0) return null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-    >
+    <div>
       <Card className="bg-card">
         <CardHeader className="space-y-3 pb-3">
           <div className="flex items-center justify-between gap-3">
@@ -264,6 +259,6 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }

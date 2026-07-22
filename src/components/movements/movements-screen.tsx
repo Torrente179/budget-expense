@@ -1,6 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo, useRef, useState } from "react";
+import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowUpDown,
@@ -14,11 +15,12 @@ import Link from "next/link";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
+import { useMonthSnapshot } from "@/hooks/use-month-snapshot";
 import { useMonth } from "@/providers/month-provider";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { cn } from "@/lib/utils";
+import { getTodayIsoDate } from "@/lib/calendar";
 import { Screen } from "@/components/patterns/screen";
 import { AmountText } from "@/components/patterns/amount-text";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
@@ -29,10 +31,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { VirtualizedLedger } from "@/components/movements/virtualized-ledger";
-import {
-  CaptureSheet,
-  type CaptureInitialValues,
-  type CaptureKind,
+import type {
+  CaptureInitialValues,
+  CaptureKind,
 } from "@/components/capture/capture-sheet";
 import {
   Dialog,
@@ -67,10 +68,19 @@ type TabFilter = "all" | "expenses" | "income";
 
 const TAB_VALUES: TabFilter[] = ["all", "expenses", "income"];
 
+const CaptureSheet = dynamic(
+  () =>
+    import("@/components/capture/capture-sheet").then(
+      (module) => module.CaptureSheet
+    ),
+  { ssr: false }
+);
+
 export function MovementsScreen() {
   const { t, tc } = useLocale();
   const { convert, baseCurrency } = useCurrency();
   const { month, year, setMonthYear } = useMonth();
+  useMonthSnapshot({ month, year, asOfDate: getTodayIsoDate() });
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -104,7 +114,6 @@ export function MovementsScreen() {
   } = useIncomes({ month, year, search: deferredSearch || undefined });
 
   const loading = loadingExpenses || loadingIncomes;
-  usePrefetchMonths(month, year, loading, "ledger");
   const isMobile = useMediaQuery("(max-width: 767px)");
 
   function setTab(next: TabFilter) {
@@ -406,18 +415,20 @@ export function MovementsScreen() {
       )}
 
       {/* Single capture sheet for create + edit (mobile FAB uses its own lazy sheet) */}
-      <CaptureSheet
-        open={captureOpen || editTarget !== null}
-        onOpenChange={(nextOpen) => {
-          if (!nextOpen) {
-            setCaptureOpen(false);
-            setEditTarget(null);
-          }
-        }}
-        mode={editTarget ? "edit" : "create"}
-        kind={editTarget?.kind}
-        initialValues={editTarget?.values}
-      />
+      {(captureOpen || editTarget !== null) && (
+        <CaptureSheet
+          open
+          onOpenChange={(nextOpen) => {
+            if (!nextOpen) {
+              setCaptureOpen(false);
+              setEditTarget(null);
+            }
+          }}
+          mode={editTarget ? "edit" : "create"}
+          kind={editTarget?.kind}
+          initialValues={editTarget?.values}
+        />
+      )}
 
       {/* Delete confirmation (desktop) */}
       <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>

@@ -39,6 +39,8 @@ interface SavingsAccountFormProps {
   onSubmit: (values: InvestmentSavingsAccountFormValues) => Promise<unknown>;
   defaultValues?: Partial<InvestmentSavingsAccountFormValues>;
   trigger?: React.ReactNode;
+  controlledOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 function getDefaults(
@@ -67,9 +69,16 @@ export function SavingsAccountForm({
   onSubmit,
   defaultValues,
   trigger,
+  controlledOpen,
+  onOpenChange,
 }: SavingsAccountFormProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const resolvedOpen = isControlled ? controlledOpen : open;
+  const setResolvedOpen = isControlled
+    ? (value: boolean) => onOpenChange?.(value)
+    : setOpen;
   const [submitting, setSubmitting] = useState(false);
 
   const form = useForm<InvestmentSavingsAccountFormValues>({
@@ -94,9 +103,9 @@ export function SavingsAccountForm({
     null;
 
   useEffect(() => {
-    if (!open) return;
+    if (!resolvedOpen) return;
     form.reset(getDefaults(defaultValues));
-  }, [defaultValues, form, open]);
+  }, [defaultValues, form, resolvedOpen]);
 
   useEffect(() => {
     if (!selectedBank) return;
@@ -133,20 +142,20 @@ export function SavingsAccountForm({
     setSubmitting(false);
 
     if (!error) {
-      setOpen(false);
+      setResolvedOpen(false);
     }
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={resolvedOpen} onOpenChange={setResolvedOpen}>
       {trigger ? (
         <DialogTrigger render={trigger as React.ReactElement} />
-      ) : (
+      ) : !isControlled ? (
         <DialogTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
           <span className="hidden md:inline">{t("Add savings account", "Agregar cuenta de ahorro")}</span>
         </DialogTrigger>
-      )}
+      ) : null}
 
       <DialogContent className="sm:max-w-[540px]">
         <DialogHeader className="space-y-3">
@@ -316,7 +325,7 @@ export function SavingsAccountForm({
           </div>
 
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+            <Button type="button" variant="ghost" onClick={() => setResolvedOpen(false)}>
               {t("Cancel", "Cancelar")}
             </Button>
             <Button type="submit" disabled={submitting}>

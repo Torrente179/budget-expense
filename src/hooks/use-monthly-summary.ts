@@ -1,20 +1,12 @@
 "use client";
 
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { format } from "date-fns";
-import {
-  fetchMonthlySummaryRaw,
-  type RecentMovement,
-} from "@/lib/query/fetchers";
-import { queryKeys } from "@/lib/query/keys";
-import { isGivingExpense } from "@/lib/giving";
+import { calculateTrackedBalance } from "@/lib/balance-checkpoint";
+import type { MonthSnapshot } from "@/lib/data";
+import type { RecentMovement } from "@/lib/query/fetchers";
 import { useCurrency } from "@/providers/currency-provider";
-import {
-  calculateTrackedBalance,
-  type BalanceCheckpointRecord,
-  type BalanceMovementTotals,
-} from "@/lib/balance-checkpoint";
+import { useMonthSnapshot } from "@/hooks/use-month-snapshot";
+import { getTodayIsoDate } from "@/lib/calendar";
 
 export interface MonthlySummary {
   totalSpent: number;
@@ -23,13 +15,9 @@ export interface MonthlySummary {
   monthlyNetFlow: number;
   monthToDateNetFlow: number | null;
   trackedBalance: number | null;
-  balanceTrackingStatus:
-    | "tracked"
-    | "untracked"
-    | "future"
-    | "unavailable";
+  balanceTrackingStatus: "tracked" | "untracked" | "future" | "unavailable";
   balanceCheckpointDate: string | null;
-  balanceCheckpoint: BalanceCheckpointRecord | null;
+  balanceCheckpoint: MonthSnapshot["balance"]["checkpoint"];
   balanceAsOfDate: string | null;
   totalBudget: number;
   assignedCategoryBudgetTotal: number;
@@ -48,11 +36,6 @@ export interface MonthlySummary {
   }[];
   dailySpending: { date: string; amount: number }[];
   previousMonthTotal: number;
-}
-
-interface UseMonthlySummaryOptions {
-  month: number;
-  year: number;
 }
 
 const emptySummary: MonthlySummary = {
@@ -78,232 +61,139 @@ const emptySummary: MonthlySummary = {
   previousMonthTotal: 0,
 };
 
-export function useMonthlySummary({ month, year }: UseMonthlySummaryOptions) {
+export function useMonthlySummary({ month, year }: { month: number; year: number }) {
   const { baseCurrency, convert, rates } = useCurrency();
-  const asOfDate = format(new Date(), "yyyy-MM-dd");
+  const asOfDate = getTodayIsoDate();
+  const query = useMonthSnapshot({ month, year, asOfDate });
 
-  const {
-    data: rawData,
-    isPending,
-    refetch,
-  } = useQuery({
-    queryKey: queryKeys.monthlySummary(month, year, asOfDate),
-    queryFn: () => fetchMonthlySummaryRaw(month, year, asOfDate),
-  });
-
-  // Derive converted summary from raw data + convert — recomputes when rates
-  // change without triggering a new API fetch
   const summary = useMemo<MonthlySummary>(() => {
-    if (!rawData) return emptySummary;
+    const snapshot = query.data;
+    if (!snapshot) return emptySummary;
 
-    const {
-      expenses,
-      incomes,
-      prevExpenses,
-      budgets,
-      monthlyPlan,
-      investmentTransfers,
-      prevInvestmentTransfers,
-      balanceTrackingStatus,
-      balanceCheckpoint,
-      balanceAsOfDate,
-      balanceMovementTotals,
-      monthToDateMovementTotals,
-    } = rawData;
+    const convertTotal = (
+      field: keyof Omit<MonthSnapshot["currencyTotals"][number], "currency">
+    ) =>
+      snapshot.currencyTotals.reduce(
+        (sum, row) => sum + convert(Number(row[field]), row.currency),
+        0
+      );
+    const totalSpent = convertTotal("totalSpent");
+    const totalIncome = convertTotal("totalIncome");
+    const totalInvestmentTransfers = convertTotal("totalInvestmentTransfers");
+    const monthToDateNetFlow =
+      convertTotal("monthToDateIncome") -
+      convertTotal("monthToDateSpent") -
+      convertTotal("monthToDateInvestmentTransfers");
 
-    const totalSpent = expenses.reduce(
-      (sum, e) => sum + convert(Number(e.amount), e.currency),
+    const assignedCategoryBudgetTotal = snapshot.budgets.reduce(
+      (sum, budget) => sum + convert(Number(budget.amount), budget.currency),
       0
     );
-    const totalIncome = incomes.reduce(
-      (sum, i) => sum + convert(Number(i.amount), i.currency),
-      0
-    );
-    const totalInvestmentTransfers = investmentTransfers.reduce(
-      (sum, t) => sum + convert(Number(t.amount), t.currency),
-      0
-    );
-    const assignedCategoryBudgetTotal = budgets.reduce(
-      (sum, b) => sum + convert(Number(b.amount), b.currency),
-      0
-    );
-    const incomeAmount = monthlyPlan
+    const incomeAmount = snapshot.monthlyPlan
       ? convert(
-          Number(monthlyPlan.income_amount),
-          monthlyPlan.income_currency
+          Number(snapshot.monthlyPlan.incomeAmount),
+          snapshot.monthlyPlan.incomeCurrency
         )
       : null;
-    const totalBudget = monthlyPlan
-      ? incomeAmount! * (Number(monthlyPlan.allocation_percent) / 100)
+    const totalBudget = snapshot.monthlyPlan
+      ? (incomeAmount ?? 0) *
+        (Number(snapshot.monthlyPlan.allocationPercent) / 100)
       : assignedCategoryBudgetTotal;
-    const monthlyNetFlow =
-      totalIncome - totalSpent - totalInvestmentTransfers;
-    const canConvertCurrency = (currency: string) =>
-      currency === baseCurrency ||
-      (Boolean(rates[currency]) && Boolean(rates[baseCurrency]));
-    const sumConverted = (
-      rows: BalanceMovementTotals["incomes"]
-    ) =>
-      rows.reduce(
-        (sum, row) => sum + convert(Number(row.amount), row.currency),
-        0
-      );
-    const monthToDateCurrencies = monthToDateMovementTotals
-      ? [
-          ...monthToDateMovementTotals.incomes.map((row) => row.currency),
-          ...monthToDateMovementTotals.expenses.map((row) => row.currency),
-          ...monthToDateMovementTotals.investmentTransfers.map(
-            (row) => row.currency
-          ),
-        ]
-      : [];
-    const canConvertMonthToDate = monthToDateCurrencies.every(
-      canConvertCurrency
-    );
-    const monthToDateNetFlow =
-      monthToDateMovementTotals && canConvertMonthToDate
-        ? sumConverted(monthToDateMovementTotals.incomes) -
-          sumConverted(monthToDateMovementTotals.expenses) -
-          sumConverted(monthToDateMovementTotals.investmentTransfers)
-        : null;
-    const balanceCurrencies = balanceCheckpoint
-      ? [
-          balanceCheckpoint.currency,
-          ...balanceMovementTotals.incomes.map((row) => row.currency),
-          ...balanceMovementTotals.expenses.map((row) => row.currency),
-          ...balanceMovementTotals.investmentTransfers.map(
-            (row) => row.currency
-          ),
-        ]
-      : [];
-    const canConvertTrackedBalance =
-      balanceCurrencies.every(canConvertCurrency);
-    const trackedBalance =
-      balanceTrackingStatus === "tracked" && canConvertTrackedBalance
-        ? calculateTrackedBalance({
-            checkpoint: balanceCheckpoint,
-            totals: balanceMovementTotals,
-            convert,
-          })
-        : null;
-    const resolvedBalanceTrackingStatus =
-      balanceTrackingStatus === "tracked" && !canConvertTrackedBalance
-        ? ("unavailable" as const)
-        : balanceTrackingStatus;
-    const previousMonthTotal =
-      prevExpenses.reduce(
-        (sum, e) => sum + convert(Number(e.amount), e.currency),
-        0
-      ) +
-      prevInvestmentTransfers.reduce(
-        (sum, t) => sum + convert(Number(t.amount), t.currency),
-        0
-      );
 
-    const givingSpent = expenses.reduce((sum, expense) => {
-      if (!isGivingExpense(expense)) return sum;
-      return sum + convert(Number(expense.amount), expense.currency);
-    }, 0);
-
-    const categoryMap = new Map<
+    const categories = new Map<
       string,
-      MonthlySummary["categoryBreakdown"][0]
+      MonthlySummary["categoryBreakdown"][number]
     >();
-    for (const expense of expenses) {
-      const category = expense.categories;
-      if (!category) continue;
-      const convertedAmount = convert(Number(expense.amount), expense.currency);
-      const existing = categoryMap.get(category.id);
-
-      if (existing) {
-        existing.total_amount += convertedAmount;
-        existing.expense_count += 1;
+    for (const row of snapshot.categoryAggregates) {
+      const current = categories.get(row.categoryId);
+      const amount = convert(Number(row.totalAmount), row.currency);
+      if (current) {
+        current.total_amount += amount;
+        current.expense_count += Number(row.expenseCount);
       } else {
-        categoryMap.set(category.id, {
-          category_id: category.id,
-          category_name: category.name,
-          category_color: category.color,
-          category_icon: category.icon,
-          total_amount: convertedAmount,
-          expense_count: 1,
+        categories.set(row.categoryId, {
+          category_id: row.categoryId,
+          category_name: row.categoryName,
+          category_color: row.categoryColor,
+          category_icon: row.categoryIcon,
+          total_amount: amount,
+          expense_count: Number(row.expenseCount),
         });
       }
     }
 
-    const dailyMap = new Map<string, number>();
-    for (const expense of expenses) {
-      const existing = dailyMap.get(expense.date) ?? 0;
-      dailyMap.set(
-        expense.date,
-        existing + convert(Number(expense.amount), expense.currency)
+    const days = new Map<string, number>();
+    for (const row of snapshot.dailyAggregates) {
+      days.set(
+        row.date,
+        (days.get(row.date) ?? 0) + convert(Number(row.amount), row.currency)
       );
     }
-    for (const transfer of investmentTransfers) {
-      const existing = dailyMap.get(transfer.transfer_date) ?? 0;
-      dailyMap.set(
-        transfer.transfer_date,
-        existing + convert(Number(transfer.amount), transfer.currency)
-      );
-    }
-    const dailySpending = Array.from(dailyMap.entries())
-      .map(([date, amount]) => ({ date, amount }))
-      .sort((a, b) => a.date.localeCompare(b.date));
 
-    const expenseItems: RecentMovement[] = expenses.map((expense) => ({
-      id: expense.id,
-      kind: "expense" as const,
-      title: expense.description || expense.categories?.name || "—",
-      subtitle: expense.categories?.name || "—",
-      amount: Number(expense.amount),
-      currency: expense.currency,
-      date: expense.date,
-      category: expense.categories
-        ? { icon: expense.categories.icon, color: expense.categories.color }
-        : null,
-      needsReview: expense.needs_review,
-    }));
-    const incomeItems: RecentMovement[] = incomes.map((income) => ({
-      id: income.id,
-      kind: "income" as const,
-      title: income.source,
-      subtitle: income.description || "Income",
-      amount: Number(income.amount),
-      currency: income.currency,
-      date: income.date,
-      category: null,
-      needsReview: false,
-    }));
-    const recentMovements = [...expenseItems, ...incomeItems]
-      .sort((a, b) => b.date.localeCompare(a.date))
-      .slice(0, 5);
+    const balanceCurrencies = snapshot.balance.checkpoint
+      ? [
+          snapshot.balance.checkpoint.currency,
+          ...snapshot.balance.movementTotals.incomes.map((row) => row.currency),
+          ...snapshot.balance.movementTotals.expenses.map((row) => row.currency),
+          ...snapshot.balance.movementTotals.investmentTransfers.map(
+            (row) => row.currency
+          ),
+        ]
+      : [];
+    const canConvertBalance = balanceCurrencies.every(
+      (currency) =>
+        currency === baseCurrency ||
+        (Boolean(rates[currency]) && Boolean(rates[baseCurrency]))
+    );
+    const trackedBalance = canConvertBalance
+      ? calculateTrackedBalance({
+          checkpoint: snapshot.balance.checkpoint,
+          totals: snapshot.balance.movementTotals,
+          convert,
+        })
+      : null;
+    const balanceTrackingStatus =
+      snapshot.balance.status === "tracked" && !canConvertBalance
+        ? "unavailable"
+        : snapshot.balance.status;
 
     return {
       totalSpent,
       totalIncome,
       totalInvestmentTransfers,
-      monthlyNetFlow,
+      monthlyNetFlow: totalIncome - totalSpent - totalInvestmentTransfers,
       monthToDateNetFlow,
       trackedBalance,
-      balanceTrackingStatus: resolvedBalanceTrackingStatus,
-      balanceCheckpointDate: balanceCheckpoint?.as_of_date ?? null,
-      balanceCheckpoint,
-      balanceAsOfDate,
+      balanceTrackingStatus,
+      balanceCheckpointDate:
+        snapshot.balance.checkpoint?.as_of_date ?? null,
+      balanceCheckpoint: snapshot.balance.checkpoint,
+      balanceAsOfDate: snapshot.balance.asOfDate,
       totalBudget,
       assignedCategoryBudgetTotal,
-      allocationPercent: monthlyPlan
-        ? Number(monthlyPlan.allocation_percent)
+      allocationPercent: snapshot.monthlyPlan
+        ? Number(snapshot.monthlyPlan.allocationPercent)
         : null,
       incomeAmount,
-      expenseCount: expenses.length + investmentTransfers.length,
-      givingSpent,
-      recentMovements,
-      categoryBreakdown: Array.from(categoryMap.values()).sort(
+      expenseCount: snapshot.expenseCount,
+      givingSpent: convertTotal("givingSpent"),
+      recentMovements: snapshot.recentMovements,
+      categoryBreakdown: [...categories.values()].sort(
         (a, b) => b.total_amount - a.total_amount
       ),
-      dailySpending,
-      previousMonthTotal,
+      dailySpending: [...days.entries()]
+        .map(([date, amount]) => ({ date, amount }))
+        .sort((a, b) => a.date.localeCompare(b.date)),
+      previousMonthTotal:
+        convertTotal("previousSpent") +
+        convertTotal("previousInvestmentTransfers"),
     };
-  }, [rawData, baseCurrency, convert, rates]);
+  }, [baseCurrency, convert, query.data, rates]);
 
-  return { summary, loading: isPending, refetch };
+  return {
+    summary,
+    snapshot: query.data ?? null,
+    loading: query.isPending,
+    refetch: query.refetch,
+  };
 }

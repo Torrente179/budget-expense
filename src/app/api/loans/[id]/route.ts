@@ -18,6 +18,11 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { supabase, user } = await createRequestClient(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsedParams = paramsSchema.safeParse(await params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: "Invalid loan id" }, { status: 400 });
@@ -26,11 +31,6 @@ export async function PATCH(
   const parsedBody = updateSchema.safeParse(await request.json());
   if (!parsedBody.success) {
     return NextResponse.json({ error: "Invalid loan payload" }, { status: 400 });
-  }
-
-  const { supabase, user } = await createRequestClient(request);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { data, error } = await supabase
@@ -58,6 +58,12 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const app = await createRequestClient(request);
+  if (!app.user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { supabase, user } = app;
+
   const parsedParams = paramsSchema.safeParse(await params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: "Invalid loan id" }, { status: 400 });
@@ -66,11 +72,6 @@ export async function DELETE(
   const deleteExpense =
     request.nextUrl.searchParams.get("delete_expense") === "1" ||
     request.nextUrl.searchParams.get("delete_expense") === "true";
-
-  const { supabase, user } = await createRequestClient(request);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   const { data: loan, error: loadError } = await supabase
     .from("loans")
@@ -105,7 +106,7 @@ export async function DELETE(
   }
 
   if (deleteExpense && expenseId) {
-    const clients = await resolveLedgerWriteClient(request);
+    const clients = await resolveLedgerWriteClient(request, app);
     if (clients) {
       await clients.ledger.from("expenses").delete().eq("id", expenseId);
     }

@@ -14,26 +14,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { SavingsTransferForm } from "@/components/wealth/savings-transfer-form";
 import { buildSavingsAccountLabel, type InvestmentSavingsTransferWithJoins } from "@/lib/investments";
-import type { InvestmentSavingsTransferFormValues } from "@/lib/validations";
 import { StatusTag } from "@/components/patterns/status-tag";
 import { useLocale } from "@/providers/locale-provider";
-import type { InvestmentSavingsAccountRow } from "@/lib/investments";
 
 interface SavingsTransferTableProps {
   transfers: InvestmentSavingsTransferWithJoins[];
-  accounts: InvestmentSavingsAccountRow[];
   loading: boolean;
-  onUpdate: (id: string, values: InvestmentSavingsTransferFormValues) => Promise<unknown>;
+  onEdit: (transfer: InvestmentSavingsTransferWithJoins) => void;
   onDelete: (id: string) => Promise<unknown>;
 }
 
 export function SavingsTransferTable({
   transfers,
-  accounts,
   loading,
-  onUpdate,
+  onEdit,
   onDelete,
 }: SavingsTransferTableProps) {
   const { t } = useLocale();
@@ -119,27 +114,15 @@ export function SavingsTransferTable({
                   className="font-heading text-title font-semibold leading-none tracking-tight"
                 />
                 <div className="flex items-center gap-1">
-                  <SavingsTransferForm
-                    accounts={accounts}
-                    defaultValues={{
-                      savings_account_id: transfer.savings_account_id,
-                      transfer_date: transfer.transfer_date,
-                      amount: Number(transfer.amount),
-                      currency: transfer.currency,
-                      notes: transfer.notes ?? "",
-                      source_kind: transfer.source_kind as "manual" | "expense_flow",
-                    }}
-                    onSubmit={(values) => onUpdate(transfer.id, values)}
-                    trigger={
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                    }
-                  />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    onClick={() => onEdit(transfer)}
+                    aria-label={t("Edit movement", "Editar movimiento")}
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </Button>
                   <Button
                     variant="ghost"
                     size="icon"

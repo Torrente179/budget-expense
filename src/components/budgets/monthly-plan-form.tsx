@@ -54,6 +54,9 @@ interface MonthlyPlanFormProps {
   onMethodConsumed?: () => void;
   /** Remove the saved monthly plan for this month. */
   onDelete?: () => Promise<unknown>;
+  /** Allows the lightweight page shell to mount this form only after intent. */
+  controlledOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function MonthlyPlanForm({
@@ -65,9 +68,16 @@ export function MonthlyPlanForm({
   appliedMethodId,
   onMethodConsumed,
   onDelete,
+  controlledOpen,
+  onOpenChange,
 }: MonthlyPlanFormProps) {
   const { locale, t } = useLocale();
   const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const resolvedOpen = isControlled ? controlledOpen : open;
+  const setResolvedOpen = isControlled
+    ? (value: boolean) => onOpenChange?.(value)
+    : setOpen;
   const [submitting, setSubmitting] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -83,7 +93,7 @@ export function MonthlyPlanForm({
 
   useEffect(() => {
     if (appliedMethod) {
-      setOpen(true);
+      setResolvedOpen(true);
       /* The total allocation % from the method serves as a suggested allocation */
       const totalAlloc = appliedMethod.slices.reduce((sum, s) => sum + s.percent, 0);
       form.setValue("allocation_percent", totalAlloc);
@@ -120,7 +130,7 @@ export function MonthlyPlanForm({
     setSubmitting(false);
 
     if (!error) {
-      setOpen(false);
+      setResolvedOpen(false);
     }
   }
 
@@ -131,21 +141,21 @@ export function MonthlyPlanForm({
     setDeleting(false);
     if (!error) {
       setConfirmDelete(false);
-      setOpen(false);
+      setResolvedOpen(false);
     }
   }
 
   return (
     <>
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={resolvedOpen} onOpenChange={setResolvedOpen}>
       {trigger ? (
         <SheetTrigger render={trigger as React.ReactElement} />
-      ) : (
+      ) : !isControlled ? (
         <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
           <CircleDollarSign className="h-4 w-4" />
           <span className="hidden md:inline">{t("Set monthly plan", "Definir plan mensual")}</span>
         </SheetTrigger>
-      )}
+      ) : null}
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}

@@ -60,6 +60,8 @@ interface TradeFormProps {
   }) => Promise<MarketPriceResponse | null>;
   defaultValues?: Partial<InvestmentTradeFormValues>;
   trigger?: React.ReactNode;
+  controlledOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 function getTradeDefaults(defaultValues?: Partial<InvestmentTradeFormValues>) {
@@ -101,9 +103,16 @@ export function TradeForm({
   lookupPrice,
   defaultValues,
   trigger,
+  controlledOpen,
+  onOpenChange,
 }: TradeFormProps) {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const resolvedOpen = isControlled ? controlledOpen : open;
+  const setResolvedOpen = isControlled
+    ? (value: boolean) => onOpenChange?.(value)
+    : setOpen;
   const [submitting, setSubmitting] = useState(false);
   const [quoteLoading, setQuoteLoading] = useState(false);
 
@@ -135,9 +144,9 @@ export function TradeForm({
   const asset = form.watch("asset");
 
   useEffect(() => {
-    if (!open) return;
+    if (!resolvedOpen) return;
     form.reset(getTradeDefaults(defaultValues));
-  }, [defaultValues, form, open]);
+  }, [defaultValues, form, resolvedOpen]);
 
   useEffect(() => {
     if (!selectedAccount) return;
@@ -163,7 +172,7 @@ export function TradeForm({
   }, [executionPrice, form, quantity, selectedAccount]);
 
   useEffect(() => {
-    if (!open || !asset?.symbol || !tradeDate) {
+    if (!resolvedOpen || !asset?.symbol || !tradeDate) {
       return;
     }
 
@@ -218,7 +227,7 @@ export function TradeForm({
       clearTimeout(timeout);
       setQuoteLoading(false);
     };
-  }, [asset, form, lookupPrice, open, tradeDate]);
+  }, [asset, form, lookupPrice, resolvedOpen, tradeDate]);
 
   async function handleSubmit(values: InvestmentTradeFormValues) {
     setSubmitting(true);
@@ -226,20 +235,20 @@ export function TradeForm({
     setSubmitting(false);
 
     if (!error) {
-      setOpen(false);
+      setResolvedOpen(false);
     }
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={resolvedOpen} onOpenChange={setResolvedOpen}>
       {trigger ? (
         <SheetTrigger render={trigger as React.ReactElement} />
-      ) : (
+      ) : !isControlled ? (
         <SheetTrigger render={<Button size="sm" className="gap-1.5" />}>
           <Plus className="h-4 w-4" />
           <span className="hidden md:inline">{t("Add position", "Agregar posición")}</span>
         </SheetTrigger>
-      )}
+      ) : null}
 
       <SheetContent className="w-full overflow-y-auto p-0 sm:max-w-[760px]">
         <form className="flex h-full flex-col" onSubmit={form.handleSubmit(handleSubmit)}>
@@ -491,7 +500,7 @@ export function TradeForm({
 
           <SheetFooter className="border-t border-border/60 px-5 py-4">
             <div className="flex w-full flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button type="button" variant="ghost" onClick={() => setOpen(false)}>
+              <Button type="button" variant="ghost" onClick={() => setResolvedOpen(false)}>
                 {t("Cancel", "Cancelar")}
               </Button>
               <Button type="submit" disabled={submitting}>

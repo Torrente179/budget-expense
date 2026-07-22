@@ -32,7 +32,7 @@ export function CaptureFab() {
           {t("Add movement", "Añadir movimiento")}
         </span>
       </button>
-      <CaptureSheet open={open} onOpenChange={setOpen} />
+      {open && <CaptureSheet open={open} onOpenChange={setOpen} />}
     </>
   );
 }

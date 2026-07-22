@@ -1,10 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useMemo } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   fetchInvestmentSnapshot,
   requestInvestmentMutation,
+  type InvestmentSnapshot,
 } from "@/lib/investments-api-client";
 import type {
   InvestmentSavingsAccountRow,
@@ -13,90 +14,52 @@ import type {
 import type { InvestmentSavingsTransferFormValues } from "@/lib/validations";
 import { queryKeys } from "@/lib/query/keys";
 
-interface UseInvestmentSavingsOptions {
-  month?: number;
-  year?: number;
-}
-
 function getMonthRange(month: number, year: number) {
   const startDate = `${year}-${String(month).padStart(2, "0")}-01`;
-  const endMonth = month === 12 ? 1 : month + 1;
-  const endYear = month === 12 ? year + 1 : year;
-  const endDate = `${endYear}-${String(endMonth).padStart(2, "0")}-01`;
-
-  return { startDate, endDate };
-}
-
-type SavingsTransferWithOptionalJoins = Omit<
-  InvestmentSavingsTransferWithJoins,
-  "investment_savings_accounts"
-> & {
-  investment_savings_accounts:
-    | InvestmentSavingsTransferWithJoins["investment_savings_accounts"]
-    | null;
-};
-
-function hasSavingsTransferJoins(
-  transfer: SavingsTransferWithOptionalJoins
-): transfer is InvestmentSavingsTransferWithJoins {
-  return Boolean(transfer.investment_savings_accounts);
+  const next = new Date(year, month, 1);
+  return {
+    startDate,
+    endDate: `${next.getFullYear()}-${String(next.getMonth() + 1).padStart(2, "0")}-01`,
+  };
 }
 
 export function useInvestmentSavings({
   month,
   year,
-}: UseInvestmentSavingsOptions = {}) {
+}: { month?: number; year?: number } = {}) {
   const queryClient = useQueryClient();
-  const [savingsAccounts, setSavingsAccounts] = useState<
-    InvestmentSavingsAccountRow[]
-  >([]);
-  const [savingsTransfers, setSavingsTransfers] = useState<
-    InvestmentSavingsTransferWithJoins[]
-  >([]);
-  const [loading, setLoading] = useState(true);
+  const query = useQuery({
+    queryKey: queryKeys.investmentSnapshot,
+    queryFn: ({ signal }) => fetchInvestmentSnapshot(signal),
+  });
+  const savingsAccounts = (query.data?.savingsAccounts ?? []) as InvestmentSavingsAccountRow[];
+  const savingsTransfers = useMemo(() => {
+    const rows = (query.data?.savingsTransfers ?? []).filter(
+      (transfer): transfer is InvestmentSavingsTransferWithJoins =>
+        Boolean(transfer.investment_savings_accounts)
+    );
+    if (month === undefined || year === undefined) return rows;
+    const { startDate, endDate } = getMonthRange(month, year);
+    return rows.filter(
+      (transfer) =>
+        transfer.transfer_date >= startDate && transfer.transfer_date < endDate
+    );
+  }, [month, query.data?.savingsTransfers, year]);
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const snapshot = await fetchInvestmentSnapshot();
-      const filteredTransfers =
-        month !== undefined && year !== undefined
-          ? (snapshot.savingsTransfers as SavingsTransferWithOptionalJoins[]).filter(
-              (transfer) => {
-                const { startDate, endDate } = getMonthRange(month, year);
-                return (
-                  transfer.transfer_date >= startDate &&
-                  transfer.transfer_date < endDate
-                );
-              }
-            )
-          : (snapshot.savingsTransfers as SavingsTransferWithOptionalJoins[]);
-
-      setSavingsAccounts(snapshot.savingsAccounts as InvestmentSavingsAccountRow[]);
-      setSavingsTransfers(filteredTransfers.filter(hasSavingsTransferJoins));
-    } catch (error) {
-      console.error("Failed to fetch investment savings data", error);
-      setSavingsAccounts([]);
-      setSavingsTransfers([]);
-    } finally {
-      setLoading(false);
+  function refresh(date?: string) {
+    void queryClient.invalidateQueries({ queryKey: queryKeys.investmentSnapshot });
+    if (date) {
+      const [targetYear, targetMonth] = date.split("-").map(Number);
+      void queryClient.invalidateQueries({
+        queryKey: ["month-snapshot", targetYear, targetMonth],
+      });
     }
-  }, [month, year]);
-
-  useEffect(() => {
-    void fetchData();
-  }, [fetchData]);
+  }
 
   async function addSavingsTransfer(values: InvestmentSavingsTransferFormValues) {
     try {
-      await requestInvestmentMutation("POST", {
-        resource: "savingsTransfer",
-        values,
-      });
-      await fetchData();
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.monthlySummaryAll,
-      });
+      await requestInvestmentMutation("POST", { resource: "savingsTransfer", values });
+      refresh(values.transfer_date);
       return null;
     } catch (error) {
       return error;
@@ -113,10 +76,7 @@ export function useInvestmentSavings({
         id,
         values,
       });
-      await fetchData();
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.monthlySummaryAll,
-      });
+      refresh(values.transfer_date);
       return null;
     } catch (error) {
       return error;
@@ -124,15 +84,13 @@ export function useInvestmentSavings({
   }
 
   async function deleteSavingsTransfer(id: string) {
+    const previousDate = (
+      queryClient.getQueryData<InvestmentSnapshot>(queryKeys.investmentSnapshot)
+        ?.savingsTransfers ?? []
+    ).find((transfer) => transfer.id === id)?.transfer_date;
     try {
-      await requestInvestmentMutation("DELETE", {
-        resource: "savingsTransfer",
-        id,
-      });
-      await fetchData();
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.monthlySummaryAll,
-      });
+      await requestInvestmentMutation("DELETE", { resource: "savingsTransfer", id });
+      refresh(previousDate);
       return null;
     } catch (error) {
       return error;
@@ -142,8 +100,8 @@ export function useInvestmentSavings({
   return {
     savingsAccounts,
     savingsTransfers,
-    loading,
-    refetch: fetchData,
+    loading: query.isPending,
+    refetch: query.refetch,
     addSavingsTransfer,
     updateSavingsTransfer,
     deleteSavingsTransfer,

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { createRequestClient } from "@/lib/supabase/request";
-import { createServiceRoleClient } from "@/lib/supabase/service-role";
 
 const paramsSchema = z.object({ id: z.string().uuid() });
 
@@ -15,15 +14,18 @@ const updateSchema = z.object({
 });
 
 /**
- * Categories are MIRRORED across the app and ledger projects with identical
- * UUIDs (the ledger's expenses.category_id FK depends on it). Updating only
- * the app copy silently desyncs the pair, so this route dual-writes: the app
- * project through the user client (RLS) and the ledger through service-role.
+ * Update a user-owned category through the authenticated RLS client. The
+ * retired cross-project mirror is intentionally not written by user traffic.
  */
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { supabase: appSupabase, user } = await createRequestClient(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsedParams = paramsSchema.safeParse(await params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: "Invalid category id" }, { status: 400 });
@@ -34,16 +36,8 @@ export async function PATCH(
     return NextResponse.json({ error: "Invalid category payload" }, { status: 400 });
   }
 
-  const { supabase: appSupabase, user } = await createRequestClient(request);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const categoryId = parsedParams.data.id;
 
-  // App project first — RLS restricts updates to the user's own categories.
-  // Default categories (user_id NULL) are updatable only via the ledger write
-  // below, so classification changes on defaults still propagate.
   const appResult = await appSupabase
     .from("categories")
     .update(parsedBody.data)
@@ -58,41 +52,11 @@ export async function PATCH(
     );
   }
 
-  // Mirror to the ledger project (service-role bypasses RLS)
-  let ledgerSynced = false;
-  const ledgerSupabase = createServiceRoleClient();
-  if (ledgerSupabase) {
-    const ledgerResult = await ledgerSupabase
-      .from("categories")
-      .update(parsedBody.data)
-      .eq("id", categoryId)
-      .select("id")
-      .maybeSingle();
-    if (ledgerResult.error) {
-      console.error(
-        "Category dual-write failed on ledger project",
-        ledgerResult.error
-      );
-    } else {
-      ledgerSynced = Boolean(ledgerResult.data);
-    }
-  }
-
-  const category =
-    appResult.data ??
-    (ledgerSupabase
-      ? (
-          await ledgerSupabase
-            .from("categories")
-            .select("*")
-            .eq("id", categoryId)
-            .maybeSingle()
-        ).data
-      : null);
+  const category = appResult.data;
 
   if (!category) {
     return NextResponse.json({ error: "Category not found" }, { status: 404 });
   }
 
-  return NextResponse.json({ category, ledgerSynced });
+  return NextResponse.json({ category, ledgerSynced: true });
 }

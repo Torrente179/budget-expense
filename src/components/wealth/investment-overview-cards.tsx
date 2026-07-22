@@ -1,6 +1,5 @@
 "use client";
 
-import { motion } from "framer-motion";
 import {
   Landmark,
   LineChart,
@@ -64,11 +63,8 @@ export function InvestmentOverviewCards({
   return (
     <div className="grid grid-cols-2 gap-3 md:gap-4 xl:grid-cols-4">
       {cards.map((card, index) => (
-        <motion.div
+        <div
           key={card.label}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: index * 0.04, duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
           className={index >= 2 ? "hidden md:block" : ""}
         >
           <Card className="bg-card">
@@ -89,7 +85,7 @@ export function InvestmentOverviewCards({
               <p className="hidden text-sm leading-6 text-muted-foreground sm:block">{card.detail}</p>
             </CardContent>
           </Card>
-        </motion.div>
+        </div>
       ))}
     </div>
   );

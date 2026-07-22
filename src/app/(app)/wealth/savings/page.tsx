@@ -1,25 +1,46 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { useState } from "react";
+import dynamic from "next/dynamic";
+import { Plus, Trash2 } from "lucide-react";
 import { useCurrency } from "@/providers/currency-provider";
 import { useInvestments } from "@/hooks/use-investments";
 import {
   buildSavingsAccountLabel,
+  type InvestmentSavingsAccountRow,
+  type InvestmentSavingsTransferWithJoins,
   type SavingsProductType,
 } from "@/lib/investments";
 import { formatCurrency } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
 import { WealthNav } from "@/components/wealth/wealth-nav";
-import { SavingsAccountForm } from "@/components/wealth/savings-account-form";
-import { SavingsTransferForm } from "@/components/wealth/savings-transfer-form";
 import { SavingsTransferTable } from "@/components/wealth/savings-transfer-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/providers/locale-provider";
 
+const SavingsAccountForm = dynamic(() =>
+  import("@/components/wealth/savings-account-form").then(
+    (module) => module.SavingsAccountForm
+  )
+);
+const SavingsTransferForm = dynamic(() =>
+  import("@/components/wealth/savings-transfer-form").then(
+    (module) => module.SavingsTransferForm
+  )
+);
+
 export default function InvestmentSavingsPage() {
   const { t } = useLocale();
   const { baseCurrency } = useCurrency();
+  const [accountFormMounted, setAccountFormMounted] = useState(false);
+  const [accountFormOpen, setAccountFormOpen] = useState(false);
+  const [editingAccount, setEditingAccount] =
+    useState<InvestmentSavingsAccountRow | null>(null);
+  const [transferFormMounted, setTransferFormMounted] = useState(false);
+  const [transferFormOpen, setTransferFormOpen] = useState(false);
+  const [editingTransfer, setEditingTransfer] =
+    useState<InvestmentSavingsTransferWithJoins | null>(null);
   const {
     savingsAccounts,
     savingsTransfers,
@@ -32,7 +53,15 @@ export default function InvestmentSavingsPage() {
     addSavingsTransfer,
     updateSavingsTransfer,
     deleteSavingsTransfer,
-  } = useInvestments();
+    hasMoreSavings,
+    loadMoreSavings,
+    loadingMoreSavings,
+  } = useInvestments({
+    includeTrades: false,
+    includeCash: false,
+    includeSavings: true,
+    includeWatchlist: false,
+  });
 
   async function handleDeleteSavingsAccount(id: string) {
     if (
@@ -49,17 +78,43 @@ export default function InvestmentSavingsPage() {
     await deleteSavingsAccount(id);
   }
 
+  function openAccountForm(account: InvestmentSavingsAccountRow | null = null) {
+    setEditingAccount(account);
+    setAccountFormMounted(true);
+    setAccountFormOpen(true);
+  }
+
+  function openTransferForm(
+    transfer: InvestmentSavingsTransferWithJoins | null = null
+  ) {
+    setEditingTransfer(transfer);
+    setTransferFormMounted(true);
+    setTransferFormOpen(true);
+  }
+
   return (
     <Screen
       title={t("Savings", "Ahorros")}
       backHref="/wealth"
       actions={
         <>
-          <SavingsAccountForm onSubmit={addSavingsAccount} />
-          <SavingsTransferForm
-            accounts={savingsAccounts}
-            onSubmit={addSavingsTransfer}
-          />
+          <Button size="sm" className="gap-1.5" onClick={() => openAccountForm()}>
+            <Plus className="h-4 w-4" />
+            <span className="hidden md:inline">
+              {t("Add account", "Agregar cuenta")}
+            </span>
+          </Button>
+          <Button
+            size="sm"
+            className="gap-1.5"
+            disabled={savingsAccounts.length === 0}
+            onClick={() => openTransferForm()}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden md:inline">
+              {t("Add movement", "Agregar movimiento")}
+            </span>
+          </Button>
         </>
       }
       subheader={<WealthNav />}
@@ -97,13 +152,27 @@ export default function InvestmentSavingsPage() {
       </div>
 
       <div className="xl:grid xl:grid-cols-[minmax(0,1.2fr)_420px] xl:gap-5">
-        <SavingsTransferTable
-          transfers={savingsTransfers}
-          accounts={savingsAccounts}
-          loading={loading}
-          onUpdate={updateSavingsTransfer}
-          onDelete={deleteSavingsTransfer}
-        />
+        <div>
+          <SavingsTransferTable
+            transfers={savingsTransfers}
+            loading={loading}
+            onEdit={openTransferForm}
+            onDelete={deleteSavingsTransfer}
+          />
+
+          {hasMoreSavings ? (
+            <Button
+              variant="outline"
+              className="mx-auto mt-4 flex"
+              disabled={loadingMoreSavings}
+              onClick={() => void loadMoreSavings()}
+            >
+              {loadingMoreSavings
+                ? t("Loading…", "Cargando…")
+                : t("Load more movements", "Cargar más movimientos")}
+            </Button>
+          ) : null}
+        </div>
 
         <Card className="hidden bg-card xl:block">
           <CardHeader className="border-b border-border/70">
@@ -137,25 +206,13 @@ export default function InvestmentSavingsPage() {
                       </p>
                     </div>
                     <div className="flex items-center gap-1">
-                      <SavingsAccountForm
-                        defaultValues={{
-                          country_code: account.country_code as "CO" | "ES",
-                          bank_code: account.bank_code,
-                          bank_name: account.bank_name,
-                          product_type: account.product_type as SavingsProductType,
-                          product_name: account.product_name,
-                          account_name: account.account_name,
-                          currency: account.currency,
-                        }}
-                        onSubmit={(values) =>
-                          updateSavingsAccount(account.id, values)
-                        }
-                        trigger={
-                          <Button variant="ghost" size="sm">
-                            {t("Edit", "Editar")}
-                          </Button>
-                        }
-                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openAccountForm(account)}
+                      >
+                        {t("Edit", "Editar")}
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -176,6 +233,66 @@ export default function InvestmentSavingsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {accountFormMounted ? (
+        <SavingsAccountForm
+          key={editingAccount?.id ?? "new"}
+          defaultValues={
+            editingAccount
+              ? {
+                  country_code: editingAccount.country_code as "CO" | "ES",
+                  bank_code: editingAccount.bank_code,
+                  bank_name: editingAccount.bank_name,
+                  product_type: editingAccount.product_type as SavingsProductType,
+                  product_name: editingAccount.product_name,
+                  account_name: editingAccount.account_name,
+                  currency: editingAccount.currency,
+                }
+              : undefined
+          }
+          onSubmit={(values) =>
+            editingAccount
+              ? updateSavingsAccount(editingAccount.id, values)
+              : addSavingsAccount(values)
+          }
+          controlledOpen={accountFormOpen}
+          onOpenChange={(open) => {
+            setAccountFormOpen(open);
+            if (!open) setEditingAccount(null);
+          }}
+        />
+      ) : null}
+
+      {transferFormMounted ? (
+        <SavingsTransferForm
+          key={editingTransfer?.id ?? "new"}
+          accounts={savingsAccounts}
+          defaultValues={
+            editingTransfer
+              ? {
+                  savings_account_id: editingTransfer.savings_account_id,
+                  transfer_date: editingTransfer.transfer_date,
+                  amount: Number(editingTransfer.amount),
+                  currency: editingTransfer.currency,
+                  notes: editingTransfer.notes ?? "",
+                  source_kind: editingTransfer.source_kind as
+                    | "manual"
+                    | "expense_flow",
+                }
+              : undefined
+          }
+          onSubmit={(values) =>
+            editingTransfer
+              ? updateSavingsTransfer(editingTransfer.id, values)
+              : addSavingsTransfer(values)
+          }
+          controlledOpen={transferFormOpen}
+          onOpenChange={(open) => {
+            setTransferFormOpen(open);
+            if (!open) setEditingTransfer(null);
+          }}
+        />
+      ) : null}
     </Screen>
   );
 }

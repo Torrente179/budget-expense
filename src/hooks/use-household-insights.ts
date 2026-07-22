@@ -2,42 +2,9 @@
 
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { authorizedFetch } from "@/lib/query/authorized-fetch";
+import { getHouseholdInsights } from "@/lib/data";
 import { useCurrency } from "@/providers/currency-provider";
-
-type Bucket = "giving" | "essential" | "discretionary" | "savings";
-
-interface HouseholdApiResponse {
-  startMonth: string;
-  expenses: {
-    month: string;
-    bucket: Bucket;
-    currency: string;
-    total: number;
-    count: number;
-  }[];
-  incomes: { month: string; currency: string; total: number }[];
-  categories: {
-    month: string;
-    categoryId: string;
-    categoryName: string;
-    currency: string;
-    total: number;
-    count: number;
-  }[];
-  liabilities: {
-    id: string;
-    name: string;
-    kind: string;
-    currency: string;
-    original_balance: number;
-    interest_rate_percent: number | null;
-    is_active: boolean;
-    paid_total: number;
-  }[];
-  titheTargetPercent: number;
-  settingsAvailable: boolean;
-}
+import { queryKeys } from "@/lib/query/keys";
 
 export interface HouseholdInsights {
   /** Trailing-12M totals in base currency */
@@ -85,10 +52,9 @@ export function useHouseholdInsights() {
   const { convert } = useCurrency();
 
   const { data, isPending, refetch } = useQuery({
-    queryKey: ["household-insights"],
+    queryKey: queryKeys.householdInsights,
     staleTime: 5 * 60 * 1000,
-    queryFn: () =>
-      authorizedFetch<HouseholdApiResponse>("/api/insights/household"),
+    queryFn: ({ signal }) => getHouseholdInsights(signal),
   });
 
   const insights = useMemo<HouseholdInsights | null>(() => {

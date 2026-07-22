@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 /**
  * Centralized Recharts theming so every chart shares one visual language.
@@ -56,11 +56,11 @@ export function ChartAreaGradient({
  * after mount to avoid SSR/hydration size glitches.
  */
 export function useChartMounted() {
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-  return mounted;
+  return useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false
+  );
 }
 
 /** Compact currency formatter for axis ticks. */

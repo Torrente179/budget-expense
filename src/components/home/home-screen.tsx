@@ -17,11 +17,9 @@ import {
   Wallet,
 } from "lucide-react";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
-import { useCustomBudgets } from "@/hooks/use-custom-budgets";
-import { useMonthlyBudgetPlan } from "@/hooks/use-monthly-budget-plan";
 import { useOnboarding } from "@/hooks/use-onboarding";
-import { usePrefetchMonths } from "@/hooks/use-prefetch-months";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
+import { useReviewCount } from "@/hooks/use-review-queue";
 import { buildPersonalization } from "@/lib/onboarding/personalize";
 import {
   resolveCustomBudgetAmount,
@@ -54,12 +52,21 @@ export function HomeScreen() {
   const { month, year, isCurrentMonth, setMonthYear } = useMonth();
   const router = useRouter();
 
-  const { summary, loading } = useMonthlySummary({ month, year });
-  const { customBudgets } = useCustomBudgets({ month, year });
-  const { plan } = useMonthlyBudgetPlan({ month, year });
+  const { summary, snapshot, loading } = useMonthlySummary({ month, year });
+  const customBudgets = useMemo(
+    () => snapshot?.customBudgets ?? [],
+    [snapshot]
+  );
+  const plan = snapshot?.monthlyPlan
+    ? {
+        income_amount: snapshot.monthlyPlan.incomeAmount,
+        income_currency: snapshot.monthlyPlan.incomeCurrency,
+        allocation_percent: snapshot.monthlyPlan.allocationPercent,
+      }
+    : null;
   const titheTarget = useTitheTarget();
   const { incomplete, profile } = useOnboarding();
-  usePrefetchMonths(month, year, loading, "summary");
+  const reviewCount = useReviewCount();
 
   const personalizedCtas = useMemo(() => {
     if (!profile) return [] as ReturnType<typeof buildPersonalization>["homeCtas"];
@@ -540,7 +547,13 @@ export function HomeScreen() {
             </div>
 
             <div className="min-w-0 space-y-4 lg:order-1 lg:col-span-3">
-              <AttentionFeed />
+              <AttentionFeed
+                incomplete={incomplete}
+                profile={profile}
+                reviewCount={reviewCount}
+                budgets={budgetsView}
+                recurringExpenses={snapshot?.recurringExpenses ?? []}
+              />
 
               {/* Recent movements */}
               <Card>

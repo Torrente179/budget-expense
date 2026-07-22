@@ -12,24 +12,16 @@ import {
   PiggyBank,
   Wallet,
 } from "lucide-react";
-import { addDays, differenceInCalendarDays, format } from "date-fns";
-import { useReviewCount } from "@/hooks/use-review-queue";
-import { useHouseholdInsights } from "@/hooks/use-household-insights";
-import { useRecurringExpenses } from "@/hooks/use-recurring-expenses";
-import { useCustomBudgets } from "@/hooks/use-custom-budgets";
-import { useExpenses } from "@/hooks/use-expenses";
-import { useMonthlyBudgetPlan } from "@/hooks/use-monthly-budget-plan";
-import { useOnboarding } from "@/hooks/use-onboarding";
-import { computeEnvelopeAlerts } from "@/lib/budgeting/envelope-alerts";
+import { addDays, differenceInCalendarDays } from "date-fns";
 import { buildPersonalization } from "@/lib/onboarding/personalize";
-import { detectAnomalies } from "@/lib/insights/anomalies";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
-import { useMonth } from "@/providers/month-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SectionHeader } from "@/components/patterns/section-header";
 import type { ReactNode } from "react";
+import type { OnboardingProfile } from "@/hooks/use-onboarding";
+import type { MonthSnapshot } from "@/lib/data";
 
 interface FeedItem {
   key: string;
@@ -55,17 +47,21 @@ function nextChargeDate(chargeDay: number, from: Date): Date {
  * "What needs me": review queue, spending anomalies, budgets near limits,
  * onboarding hints, and bills due in the next 7 days.
  */
-export function AttentionFeed() {
+export function AttentionFeed({
+  incomplete,
+  profile,
+  reviewCount,
+  budgets,
+  recurringExpenses,
+}: {
+  incomplete: boolean;
+  profile: OnboardingProfile | null;
+  reviewCount: number;
+  budgets: Array<{ id: string; name: string; ratio: number }>;
+  recurringExpenses: MonthSnapshot["recurringExpenses"];
+}) {
   const { t, tc } = useLocale();
   const { baseCurrency, convert } = useCurrency();
-  const { month, year } = useMonth();
-  const reviewCount = useReviewCount();
-  const { insights } = useHouseholdInsights();
-  const { recurringExpenses } = useRecurringExpenses();
-  const { customBudgets } = useCustomBudgets({ month, year });
-  const { expenses } = useExpenses({ month, year });
-  const { plan } = useMonthlyBudgetPlan({ month, year });
-  const { incomplete, profile } = useOnboarding();
 
   const items = useMemo<FeedItem[]>(() => {
     const result: FeedItem[] = [];
@@ -135,24 +131,20 @@ export function AttentionFeed() {
       });
     }
 
-    const incomeAmount = plan
-      ? convert(Number(plan.income_amount), plan.income_currency)
-      : null;
-    const envelopeAlerts = computeEnvelopeAlerts({
-      budgets: customBudgets,
-      expenses,
-      incomeAmount,
-      convert,
-    }).slice(0, 3);
+    const envelopeAlerts = budgets
+      .filter((budget) => Number.isFinite(budget.ratio) && budget.ratio >= 0.8)
+      .sort((a, b) => b.ratio - a.ratio)
+      .slice(0, 3);
 
     for (const alert of envelopeAlerts) {
-      const percent = Math.round(alert.percentUsed);
+      const percent = Math.round(alert.ratio * 100);
+      const threshold = percent >= 100 ? 100 : 80;
       result.push({
-        key: `envelope-${alert.budgetId}-${alert.threshold}`,
+        key: `envelope-${alert.id}-${threshold}`,
         href: "/budget",
         icon: <AlertTriangle className="h-4 w-4" />,
         title:
-          alert.threshold >= 100
+          threshold >= 100
             ? t(`${alert.name} is over budget`, `${alert.name} supera el presupuesto`)
             : t(
                 `${alert.name} is at ${percent}%`,
@@ -164,37 +156,6 @@ export function AttentionFeed() {
         ),
         tone: "warning",
       });
-    }
-
-    if (insights) {
-      const currentMonthKey = format(today, "yyyy-MM");
-      const anomalies = detectAnomalies(
-        insights.categoryMonthTotals,
-        currentMonthKey
-      ).slice(0, 2);
-      for (const anomaly of anomalies) {
-        result.push({
-          key: `anomaly-${anomaly.categoryId}`,
-          href: `/insights/categories/${anomaly.categoryId}`,
-          icon: <AlertTriangle className="h-4 w-4" />,
-          title: t(
-            `${tc(anomaly.categoryName)} is running high`,
-            `${tc(anomaly.categoryName)} va alto`
-          ),
-          caption: (
-            <>
-              <span className="font-mono tabular-nums text-negative">
-                {formatCurrency(anomaly.currentTotal, baseCurrency)}
-              </span>
-              {t(
-                ` vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} typical`,
-                ` vs ${formatCurrency(anomaly.historicalMean, baseCurrency)} habitual`
-              )}
-            </>
-          ),
-          tone: "warning",
-        });
-      }
     }
 
     const horizon = addDays(today, 7);
@@ -242,11 +203,8 @@ export function AttentionFeed() {
     incomplete,
     profile,
     reviewCount,
-    insights,
     recurringExpenses,
-    customBudgets,
-    expenses,
-    plan,
+    budgets,
     t,
     tc,
     baseCurrency,

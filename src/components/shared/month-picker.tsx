@@ -2,7 +2,10 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { getMonthName } from "@/lib/utils";
+import { getMonthName } from "@/lib/calendar";
+import { useQueryClient } from "@tanstack/react-query";
+import { getMonthSnapshot } from "@/lib/data";
+import { queryKeys } from "@/lib/query/keys";
 
 interface MonthPickerProps {
   month: number;
@@ -11,6 +14,23 @@ interface MonthPickerProps {
 }
 
 export function MonthPicker({ month, year, onChange }: MonthPickerProps) {
+  const queryClient = useQueryClient();
+
+  function adjacent(direction: -1 | 1) {
+    const date = new Date(year, month - 1 + direction, 1);
+    return { month: date.getMonth() + 1, year: date.getFullYear() };
+  }
+
+  function prefetch(direction: -1 | 1) {
+    const target = adjacent(direction);
+    const now = new Date();
+    const asOfDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    void queryClient.prefetchQuery({
+      queryKey: queryKeys.monthSnapshot(target.month, target.year, asOfDate),
+      queryFn: ({ signal }) => getMonthSnapshot({ ...target, asOfDate, signal }),
+    });
+  }
+
   function handlePrev() {
     if (month === 1) {
       onChange(12, year - 1);
@@ -34,6 +54,9 @@ export function MonthPicker({ month, year, onChange }: MonthPickerProps) {
         size="icon"
         className="h-8 w-8 rounded-xl"
         onClick={handlePrev}
+        onPointerEnter={() => prefetch(-1)}
+        onFocus={() => prefetch(-1)}
+        onTouchStart={() => prefetch(-1)}
       >
         <ChevronLeft className="h-4 w-4" />
       </Button>
@@ -45,6 +68,9 @@ export function MonthPicker({ month, year, onChange }: MonthPickerProps) {
         size="icon"
         className="h-8 w-8 rounded-xl"
         onClick={handleNext}
+        onPointerEnter={() => prefetch(1)}
+        onFocus={() => prefetch(1)}
+        onTouchStart={() => prefetch(1)}
       >
         <ChevronRight className="h-4 w-4" />
       </Button>

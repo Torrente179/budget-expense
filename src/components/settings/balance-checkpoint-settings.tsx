@@ -92,7 +92,7 @@ export function BalanceCheckpointSettings() {
       });
       setBalanceInput("");
       await queryClient.invalidateQueries({
-        queryKey: queryKeys.monthlySummaryAll,
+        queryKey: queryKeys.monthSnapshotAll,
       });
       toast.success(t("Balance reconciled", "Saldo conciliado"));
     } catch (error) {

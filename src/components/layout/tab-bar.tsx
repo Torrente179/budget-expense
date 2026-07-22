@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { useLocale } from "@/providers/locale-provider";
 import { PRIMARY_NAV, isNavItemActive } from "@/lib/navigation";
+import { NavigationPendingIndicator } from "./navigation-pending-indicator";
 
 /**
  * Mobile bottom tab bar: the five core sections, native-app style.
@@ -28,7 +29,7 @@ export function TabBar() {
               href={item.href}
               aria-current={active ? "page" : undefined}
               className={cn(
-                "flex flex-col items-center justify-center gap-1 transition-colors",
+                "relative flex flex-col items-center justify-center gap-1 transition-colors",
                 active
                   ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -45,6 +46,7 @@ export function TabBar() {
               >
                 {t(item.label.en, item.label.es)}
               </span>
+              <NavigationPendingIndicator />
             </Link>
           );
         })}

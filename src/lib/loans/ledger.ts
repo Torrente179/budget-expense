@@ -1,31 +1,27 @@
-import type { User } from "@supabase/supabase-js";
-import { createRequestClient } from "@/lib/supabase/request";
 import {
-  createServiceRoleClient,
-  resolveServiceRoleUserByEmail,
-} from "@/lib/supabase/service-role";
+  createRequestClient,
+  type AuthenticatedIdentity,
+} from "@/lib/supabase/request";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 import type { NextRequest } from "next/server";
 
 type RequestClients = Awaited<ReturnType<typeof createRequestClient>>;
 
 /** Resolve app RLS client + ledger client (same pattern as expenses/incomes). */
 export async function resolveLedgerWriteClient(
-  request: NextRequest
+  request: NextRequest,
+  authenticatedApp?: RequestClients
 ): Promise<{
   app: RequestClients;
-  ledger: NonNullable<ReturnType<typeof createServiceRoleClient>> | RequestClients["supabase"];
+  ledger: RequestClients["supabase"];
   ledgerUserId: string;
-  user: User;
+  user: AuthenticatedIdentity;
 } | null> {
-  const app = await createRequestClient(request);
+  const app = authenticatedApp ?? (await createRequestClient(request));
   if (!app.user) return null;
 
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(app.user.email)
-    : null;
-  const ledger = ledgerSupabase ?? app.supabase;
-  const ledgerUserId = ledgerUser?.id ?? app.user.id;
+  const { supabase: ledger, userId: ledgerUserId } =
+    await resolveUserDataClient({ supabase: app.supabase, user: app.user });
 
   return { app, ledger, ledgerUserId, user: app.user };
 }

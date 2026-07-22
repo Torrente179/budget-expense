@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { fetchExpenses } from "@/lib/query/fetchers";
+import {
+  createExpense,
+  deleteExpense as removeExpense,
+  updateExpense as patchExpense,
+} from "@/lib/data";
 import { queryKeys } from "@/lib/query/keys";
 import type { Database } from "@/types/database";
 
@@ -23,16 +27,28 @@ export function useExpenses({
   const queryClient = useQueryClient();
 
   const { data, isPending, refetch } = useQuery({
-    queryKey: queryKeys.expenses({ month, year, categoryId, search }),
-    queryFn: () => fetchExpenses({ month, year, categoryId, search }),
+    queryKey: queryKeys.expenses({ month, year, categoryId }),
+    queryFn: ({ signal }) =>
+      fetchExpenses({ month, year, categoryId }, signal),
   });
+  const expenses = useMemo(() => {
+    const normalized = search?.trim().toLocaleLowerCase();
+    if (!normalized) return data ?? [];
+    return (data ?? []).filter((row) =>
+      [row.description, row.categories?.name]
+        .filter(Boolean)
+        .some((value) => value!.toLocaleLowerCase().includes(normalized))
+    );
+  }, [data, search]);
 
   const invalidate = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
+      queryClient.invalidateQueries({ queryKey: ["expenses", year, month] }),
+      queryClient.invalidateQueries({
+        queryKey: ["month-snapshot", year, month],
+      }),
     ]);
-  }, [queryClient]);
+  }, [month, queryClient, year]);
 
   async function addExpense(expense: {
     amount: number;
@@ -42,10 +58,7 @@ export function useExpenses({
     description?: string;
   }) {
     try {
-      await authorizedFetch("/api/expenses", {
-        method: "POST",
-        body: JSON.stringify(expense),
-      });
+      await createExpense(expense);
       await invalidate();
       return null;
     } catch (error) {
@@ -60,10 +73,7 @@ export function useExpenses({
     updates: Database["public"]["Tables"]["expenses"]["Update"]
   ) {
     try {
-      await authorizedFetch(`/api/expenses/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(updates),
-      });
+      await patchExpense(id, updates);
       await invalidate();
       return null;
     } catch (error) {
@@ -75,7 +85,7 @@ export function useExpenses({
 
   async function deleteExpense(id: string) {
     try {
-      await authorizedFetch(`/api/expenses/${id}`, { method: "DELETE" });
+      await removeExpense(id);
       await invalidate();
       return null;
     } catch (error) {
@@ -86,7 +96,7 @@ export function useExpenses({
   }
 
   return {
-    expenses: data ?? [],
+    expenses,
     loading: isPending,
     addExpense,
     updateExpense,

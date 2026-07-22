@@ -5,10 +5,12 @@ import { Repeat } from "lucide-react";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
 import { useRecurringExpenses } from "@/hooks/use-recurring-expenses";
+import { useMonthSnapshot } from "@/hooks/use-month-snapshot";
 import { useMonth } from "@/providers/month-provider";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { cn, formatCurrency } from "@/lib/utils";
+import { getTodayIsoDate } from "@/lib/calendar";
 import { Screen } from "@/components/patterns/screen";
 import { TransactionRow } from "@/components/patterns/transaction-row";
 import { MonthPicker } from "@/components/shared/month-picker";
@@ -40,6 +42,7 @@ export function CalendarScreen() {
   const { t, tc, intlLocale } = useLocale();
   const { convert, baseCurrency } = useCurrency();
   const { month, year, setMonthYear } = useMonth();
+  useMonthSnapshot({ month, year, asOfDate: getTodayIsoDate() });
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
   const { expenses, loading: loadingExpenses } = useExpenses({ month, year });

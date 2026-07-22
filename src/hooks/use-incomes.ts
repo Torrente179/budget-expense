@@ -1,9 +1,13 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { fetchIncomes } from "@/lib/query/fetchers";
+import {
+  createIncome,
+  deleteIncome as removeIncome,
+  updateIncome as patchIncome,
+} from "@/lib/data";
 import { queryKeys } from "@/lib/query/keys";
 import type { Database } from "@/types/database";
 
@@ -17,16 +21,27 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
   const queryClient = useQueryClient();
 
   const { data, isPending, refetch } = useQuery({
-    queryKey: queryKeys.incomes({ month, year, search }),
-    queryFn: () => fetchIncomes({ month, year, search }),
+    queryKey: queryKeys.incomes({ month, year }),
+    queryFn: ({ signal }) => fetchIncomes({ month, year }, signal),
   });
+  const incomes = useMemo(() => {
+    const normalized = search?.trim().toLocaleLowerCase();
+    if (!normalized) return data ?? [];
+    return (data ?? []).filter((row) =>
+      [row.source, row.description]
+        .filter(Boolean)
+        .some((value) => value!.toLocaleLowerCase().includes(normalized))
+    );
+  }, [data, search]);
 
   const invalidate = useCallback(async () => {
     await Promise.all([
-      queryClient.invalidateQueries({ queryKey: queryKeys.incomesAll }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
+      queryClient.invalidateQueries({ queryKey: ["incomes", year, month] }),
+      queryClient.invalidateQueries({
+        queryKey: ["month-snapshot", year, month],
+      }),
     ]);
-  }, [queryClient]);
+  }, [month, queryClient, year]);
 
   async function addIncome(income: {
     amount: number;
@@ -36,10 +51,7 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
     description?: string;
   }) {
     try {
-      await authorizedFetch("/api/incomes", {
-        method: "POST",
-        body: JSON.stringify(income),
-      });
+      await createIncome(income);
       await invalidate();
       return null;
     } catch (error) {
@@ -52,10 +64,7 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
     updates: Database["public"]["Tables"]["income_entries"]["Update"]
   ) {
     try {
-      await authorizedFetch(`/api/incomes/${id}`, {
-        method: "PATCH",
-        body: JSON.stringify(updates),
-      });
+      await patchIncome(id, updates);
       await invalidate();
       return null;
     } catch (error) {
@@ -65,7 +74,7 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
 
   async function deleteIncome(id: string) {
     try {
-      await authorizedFetch(`/api/incomes/${id}`, { method: "DELETE" });
+      await removeIncome(id);
       await invalidate();
       return null;
     } catch (error) {
@@ -74,7 +83,7 @@ export function useIncomes({ month, year, search }: UseIncomesOptions) {
   }
 
   return {
-    incomes: data ?? [],
+    incomes,
     loading: isPending,
     addIncome,
     updateIncome,

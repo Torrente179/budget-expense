@@ -16,6 +16,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { supabase, user } = await createRequestClient(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsedParams = paramsSchema.safeParse(await params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: "Invalid liability id" }, { status: 400 });
@@ -24,11 +29,6 @@ export async function POST(
   const parsedBody = paymentSchema.safeParse(await request.json());
   if (!parsedBody.success) {
     return NextResponse.json({ error: "Invalid payment payload" }, { status: 400 });
-  }
-
-  const { supabase, user } = await createRequestClient(request);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { data, error } = await supabase
@@ -55,6 +55,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { supabase, user } = await createRequestClient(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsedParams = paramsSchema.safeParse(await params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: "Invalid liability id" }, { status: 400 });
@@ -63,11 +68,6 @@ export async function DELETE(
   const paymentId = request.nextUrl.searchParams.get("paymentId");
   if (!paymentId || !z.string().uuid().safeParse(paymentId).success) {
     return NextResponse.json({ error: "Invalid payment id" }, { status: 400 });
-  }
-
-  const { supabase, user } = await createRequestClient(request);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { error } = await supabase

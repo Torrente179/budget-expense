@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
@@ -28,11 +29,12 @@ import { StewardshipSettings } from "@/components/settings/stewardship-settings"
 import { BalanceCheckpointSettings } from "@/components/settings/balance-checkpoint-settings";
 import { CategoryClassification } from "@/components/settings/category-classification";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { useAppBootstrap } from "@/hooks/use-app-bootstrap";
+import { queryKeys } from "@/lib/query/keys";
 
 export default function SettingsPage() {
-  const [displayName, setDisplayName] = useState("");
+  const [displayName, setDisplayName] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
-  const [loading, setLoading] = useState(true);
   const {
     baseCurrency,
     currencyPreferenceReady,
@@ -41,41 +43,28 @@ export default function SettingsPage() {
   } = useCurrency();
   const { theme, setTheme } = useTheme();
   const supabase = createClient();
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { t } = useLocale();
   const { incomplete } = useOnboarding();
-
-  useEffect(() => {
-    async function loadProfile() {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("display_name")
-          .eq("id", user.id)
-          .single();
-        if (data?.display_name) setDisplayName(data.display_name);
-      }
-      setLoading(false);
-    }
-    loadProfile();
-  }, [supabase]);
+  const bootstrap = useAppBootstrap();
+  const userId = bootstrap.data?.identity.id;
+  const loading = bootstrap.isPending;
 
   async function handleSaveProfile() {
     setSaving(true);
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
+    if (userId) {
       const { error } = await supabase
         .from("profiles")
-        .update({ display_name: displayName })
-        .eq("id", user.id);
+        .update({
+          display_name:
+            displayName ?? bootstrap.data?.profile.displayName ?? "",
+        })
+        .eq("id", userId);
       if (error) {
         toast.error(t("Failed to update profile", "No se pudo actualizar el perfil"));
       } else {
+        void queryClient.invalidateQueries({ queryKey: queryKeys.appBootstrap });
         toast.success(t("Profile updated", "Perfil actualizado"));
       }
     }
@@ -102,22 +91,19 @@ export default function SettingsPage() {
     );
     if (!confirmed) return;
 
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-    if (user) {
+    if (userId) {
       // Delete user data (RLS will handle cascading)
-      await supabase.from("expenses").delete().eq("user_id", user.id);
-      await supabase.from("recurring_expenses").delete().eq("user_id", user.id);
-      await supabase.from("income_entries").delete().eq("user_id", user.id);
-      await supabase.from("budgets").delete().eq("user_id", user.id);
-      await supabase.from("monthly_budget_plans").delete().eq("user_id", user.id);
-      await supabase.from("investment_watchlist").delete().eq("user_id", user.id);
-      await supabase.from("investment_trades").delete().eq("user_id", user.id);
-      await supabase.from("investment_cash_movements").delete().eq("user_id", user.id);
-      await supabase.from("investment_assets").delete().eq("user_id", user.id);
-      await supabase.from("brokerage_accounts").delete().eq("user_id", user.id);
-      await supabase.from("profiles").delete().eq("id", user.id);
+      await supabase.from("expenses").delete().eq("user_id", userId);
+      await supabase.from("recurring_expenses").delete().eq("user_id", userId);
+      await supabase.from("income_entries").delete().eq("user_id", userId);
+      await supabase.from("budgets").delete().eq("user_id", userId);
+      await supabase.from("monthly_budget_plans").delete().eq("user_id", userId);
+      await supabase.from("investment_watchlist").delete().eq("user_id", userId);
+      await supabase.from("investment_trades").delete().eq("user_id", userId);
+      await supabase.from("investment_cash_movements").delete().eq("user_id", userId);
+      await supabase.from("investment_assets").delete().eq("user_id", userId);
+      await supabase.from("brokerage_accounts").delete().eq("user_id", userId);
+      await supabase.from("profiles").delete().eq("id", userId);
       await supabase.auth.signOut();
       router.push("/login");
       router.refresh();
@@ -189,7 +175,7 @@ export default function SettingsPage() {
             </Label>
             <Input
               id="display-name"
-              value={displayName}
+              value={displayName ?? bootstrap.data?.profile.displayName ?? ""}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder={t("Your name", "Tu nombre")}
               disabled={loading}

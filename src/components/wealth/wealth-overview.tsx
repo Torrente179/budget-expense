@@ -43,7 +43,12 @@ export function WealthOverview() {
     savingsTransfers,
     totalSavingsBalance,
     loading: investmentsLoading,
-  } = useInvestments();
+  } = useInvestments({
+    includeTrades: false,
+    includeCash: false,
+    includeSavings: true,
+    includeWatchlist: false,
+  });
 
   const { data: loansData, isPending: loansLoading } = useQuery({
     queryKey: ["loans"],

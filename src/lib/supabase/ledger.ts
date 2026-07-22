@@ -1,14 +1,11 @@
 import type { NextRequest } from "next/server";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { createRequestClient } from "@/lib/supabase/request";
-import {
-  createServiceRoleClient,
-  resolveServiceRoleUserByEmail,
-} from "@/lib/supabase/service-role";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 import type { Database } from "@/types/database";
 
 export interface LedgerContext {
-  /** Service-role ledger client when configured, else the app client. */
+  /** Authenticated RLS client; legacy bridge only when explicitly enabled. */
   supabase: SupabaseClient<Database>;
   /** Ledger-project user id when resolved, else the app user id. */
   userId: string;
@@ -17,9 +14,8 @@ export interface LedgerContext {
 }
 
 /**
- * The canonical auth + ledger-fallback resolution used by /api/expenses:
- * authenticate against the app project, then prefer the service-role ledger
- * client with the user resolved by email.
+ * Compatibility context for routes that have not moved to direct browser RLS
+ * access yet. Normal traffic stays in the single Supabase project.
  */
 export async function resolveLedgerContext(
   request: NextRequest
@@ -27,14 +23,11 @@ export async function resolveLedgerContext(
   const { supabase: appSupabase, user } = await createRequestClient(request);
   if (!user) return null;
 
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
+  const data = await resolveUserDataClient({ supabase: appSupabase, user });
 
   return {
-    supabase: (ledgerSupabase ?? appSupabase) as SupabaseClient<Database>,
-    userId: ledgerUser?.id ?? user.id,
+    supabase: data.supabase as SupabaseClient<Database>,
+    userId: data.userId,
     appUserId: user.id,
   };
 }

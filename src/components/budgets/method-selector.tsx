@@ -230,12 +230,25 @@ function MethodDetail({
 interface MethodSelectorProps {
   onApply?: (method: BudgetingMethod) => void | Promise<void>;
   trigger?: React.ReactNode;
+  /** Allows the route to defer this large sheet until the user asks for it. */
+  controlledOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
+export function MethodSelector({
+  onApply,
+  trigger,
+  controlledOpen,
+  onOpenChange,
+}: MethodSelectorProps) {
   const { locale, t } = useLocale();
   const isMobile = useMediaQuery("(max-width: 767px)");
   const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const resolvedOpen = isControlled ? controlledOpen : open;
+  const setResolvedOpen = isControlled
+    ? (value: boolean) => onOpenChange?.(value)
+    : setOpen;
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
 
   const content = useMemo(() => getBudgetingMethods(locale), [locale]);
@@ -246,16 +259,16 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
 
   function handleApply(method: BudgetingMethod) {
     void Promise.resolve(onApply?.(method)).finally(() => {
-      setOpen(false);
+      setResolvedOpen(false);
       setSelectedMethodId(null);
     });
   }
 
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Sheet open={resolvedOpen} onOpenChange={setResolvedOpen}>
       {trigger ? (
         <SheetTrigger render={trigger as React.ReactElement} />
-      ) : (
+      ) : !isControlled ? (
         <SheetTrigger
           render={
             <Button
@@ -270,7 +283,7 @@ export function MethodSelector({ onApply, trigger }: MethodSelectorProps) {
             {t("Budgeting methods", "Métodos de presupuesto")}
           </span>
         </SheetTrigger>
-      )}
+      ) : null}
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}

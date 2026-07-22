@@ -9,6 +9,7 @@ import { OnboardingGate } from "@/components/onboarding/onboarding-gate";
 import { CurrencyProvider } from "@/providers/currency-provider";
 import { MonthProvider } from "@/providers/month-provider";
 import { QueryProvider } from "@/providers/query-provider";
+import { ProfileSheetProvider } from "@/components/layout/profile-sheet";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,7 +19,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <QueryProvider>
       <CurrencyProvider>
         <MonthProvider>
-          <OnboardingGate>
+          <ProfileSheetProvider>
+            <OnboardingGate>
             <div className="flex min-h-dvh overflow-hidden">
               {!isOnboarding && <Sidebar />}
               <div className="flex flex-1 flex-col overflow-hidden">
@@ -38,7 +40,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                 {!isOnboarding && <CaptureFab />}
               </div>
             </div>
-          </OnboardingGate>
+            </OnboardingGate>
+          </ProfileSheetProvider>
         </MonthProvider>
       </CurrencyProvider>
     </QueryProvider>

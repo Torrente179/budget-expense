@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ChevronLeft } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { ProfileSheet } from "@/components/layout/profile-sheet";
 import type { ReactNode } from "react";
 

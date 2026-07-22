@@ -34,12 +34,11 @@ export async function updateSession(request: NextRequest) {
     },
   });
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const claims = claimsData?.claims ?? null;
 
   if (
-    !user &&
+    !claims &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/signup") &&
     !request.nextUrl.pathname.startsWith("/auth") &&
@@ -51,7 +50,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (
-    user &&
+    claims &&
     (request.nextUrl.pathname.startsWith("/login") ||
       request.nextUrl.pathname.startsWith("/signup"))
   ) {
@@ -60,7 +59,7 @@ export async function updateSession(request: NextRequest) {
     const { data: profile } = await supabase
       .from("profiles")
       .select("onboarding_completed_at, onboarding_skipped_at, created_at")
-      .eq("id", user.id)
+      .eq("id", claims.sub)
       .maybeSingle();
 
     // Only brand-new accounts (profile created on/after feature launch) get

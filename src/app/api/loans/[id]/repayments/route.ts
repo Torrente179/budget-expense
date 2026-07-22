@@ -20,6 +20,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const clients = await resolveLedgerWriteClient(request);
+  if (!clients) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsedParams = paramsSchema.safeParse(await params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: "Invalid loan id" }, { status: 400 });
@@ -31,11 +36,6 @@ export async function POST(
       { error: "Invalid repayment payload" },
       { status: 400 }
     );
-  }
-
-  const clients = await resolveLedgerWriteClient(request);
-  if (!clients) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { app, ledger, ledgerUserId, user } = clients;
@@ -162,6 +162,11 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
+  const { supabase, user } = await createRequestClient(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const parsedParams = paramsSchema.safeParse(await params);
   if (!parsedParams.success) {
     return NextResponse.json({ error: "Invalid loan id" }, { status: 400 });
@@ -170,11 +175,6 @@ export async function DELETE(
   const repaymentId = request.nextUrl.searchParams.get("repaymentId");
   if (!repaymentId || !z.string().uuid().safeParse(repaymentId).success) {
     return NextResponse.json({ error: "Invalid repayment id" }, { status: 400 });
-  }
-
-  const { supabase, user } = await createRequestClient(request);
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const { error } = await supabase

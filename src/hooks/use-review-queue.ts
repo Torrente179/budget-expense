@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import type { ExpenseWithCategory } from "@/lib/query/fetchers";
 import { queryKeys } from "@/lib/query/keys";
+import { useAppBootstrap } from "@/hooks/use-app-bootstrap";
 
 const reviewKey = ["review-queue"] as const;
-const reviewCountKey = ["review-count"] as const;
 
 export function useReviewQueue() {
   const queryClient = useQueryClient();
@@ -50,10 +50,10 @@ export function useReviewQueue() {
     onSuccess: () =>
       Promise.all([
         queryClient.invalidateQueries({ queryKey: reviewKey }),
-        queryClient.invalidateQueries({ queryKey: reviewCountKey }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.appBootstrap }),
         queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
-        queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
-        queryClient.invalidateQueries({ queryKey: ["household-insights"] }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.monthSnapshotAll }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.householdInsights }),
       ]),
   });
 
@@ -68,14 +68,6 @@ export function useReviewQueue() {
 
 /** Lightweight count for nav badges — does not load the full review queue. */
 export function useReviewCount() {
-  const { data, isPending } = useQuery({
-    queryKey: reviewCountKey,
-    staleTime: 60 * 1000,
-    queryFn: () =>
-      authorizedFetch<{ count: number; available: boolean }>(
-        "/api/insights/review/count"
-      ),
-  });
-
-  return isPending ? 0 : (data?.count ?? 0);
+  const { data, isPending } = useAppBootstrap();
+  return isPending ? 0 : (data?.reviewCount ?? 0);
 }

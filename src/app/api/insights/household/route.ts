@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createRequestClient } from "@/lib/supabase/request";
-import {
-  createServiceRoleClient,
-  resolveServiceRoleUserByEmail,
-} from "@/lib/supabase/service-role";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 
 /**
  * Trailing-12-month household aggregates for the stewardship metrics.
@@ -96,12 +93,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
-  const ledger = ledgerSupabase ?? appSupabase;
-  const ledgerUserId = ledgerUser?.id ?? user.id;
+  const { supabase: ledger, userId: ledgerUserId } =
+    await resolveUserDataClient({ supabase: appSupabase, user });
 
   const startDate = monthsAgoIso(11);
 

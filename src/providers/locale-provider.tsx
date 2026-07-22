@@ -14,7 +14,7 @@ import {
   getIntlLocale,
   localeFromDeviceLanguages,
   resolveAppLocale,
-} from "@/lib/utils";
+} from "@/lib/locale";
 import { translateCategoryName } from "@/lib/constants";
 
 const LOCALE_STORAGE_KEY = "be-locale";
@@ -81,7 +81,7 @@ function readDeviceLocale(fallback: AppLocale): AppLocale {
  * Preference order:
  * 1. Explicit user choice (Settings / language toggle)
  * 2. Phone / browser primary language (es → Spanish, else English)
- * 3. Server Accept-Language hint
+ * 3. Static English server fallback
  */
 function readInitialLocale(serverFallback: AppLocale = "en"): AppLocale {
   if (typeof window === "undefined") {
@@ -115,7 +115,7 @@ export function LocaleProvider({
   initialLocale,
 }: {
   children: ReactNode;
-  /** From Accept-Language on the server — used until the client reads the device. */
+    /** Static server fallback used until the client reads stored/browser locale. */
   initialLocale?: AppLocale;
 }) {
   const serverFallback = resolveAppLocale(initialLocale ?? "en");

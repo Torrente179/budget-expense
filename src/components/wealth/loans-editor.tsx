@@ -63,7 +63,7 @@ export function LoansEditor() {
       queryClient.invalidateQueries({ queryKey: loansKey }),
       queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
       queryClient.invalidateQueries({ queryKey: queryKeys.incomesAll }),
-      queryClient.invalidateQueries({ queryKey: queryKeys.monthlySummaryAll }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.monthSnapshotAll }),
       queryClient.invalidateQueries({ queryKey: ["household-insights"] }),
     ]);
 

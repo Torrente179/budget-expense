@@ -1,11 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
-import {
-  resolveOptionalTableResult,
-} from "@/lib/supabase/postgrest-errors";
-import type { Database } from "@/types/database";
+import { getCustomBudgets } from "@/lib/data";
+import { queryKeys } from "@/lib/query/keys";
+import type { Database, Json } from "@/types/database";
 
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
 
@@ -18,338 +17,166 @@ export type CustomBudget =
     }>;
   };
 
-type CustomBudgetWithOptionalRelations =
-  Database["public"]["Tables"]["custom_budgets"]["Row"] & {
-    custom_budget_categories:
-      | Array<{
-          id: string;
-          category_id: string;
-          categories: CategoryRow | null;
-        }>
-      | null;
-  };
+type BudgetInput = {
+  name: string;
+  amount_type: string;
+  amount_value: number;
+  currency: string;
+  category_ids: string[];
+};
 
-function normalizeCustomBudgets(
-  rows: CustomBudgetWithOptionalRelations[]
-): CustomBudget[] {
-  let droppedCategoryLinks = 0;
+async function authenticatedUserId() {
+  const { data, error } = await createClient().auth.getClaims();
+  if (error || !data?.claims.sub) throw error ?? new Error("Not signed in");
+  return data.claims.sub;
+}
 
-  const normalized = rows.map((budget) => {
-    const normalizedCategories = Array.isArray(budget.custom_budget_categories)
-      ? budget.custom_budget_categories
-          .filter((link) => {
-            const isValid = Boolean(link?.categories);
-            if (!isValid) {
-              droppedCategoryLinks += 1;
-            }
-            return isValid;
-          })
-          .map((link) => ({
-            id: link.id,
-            category_id: link.category_id,
-            categories: link.categories as CategoryRow,
-          }))
-      : [];
+function isMissingRpc(error: { code?: string; message?: string } | null) {
+  return (
+    error?.code === "PGRST202" ||
+    error?.code === "42883" ||
+    error?.message?.toLowerCase().includes("could not find the function")
+  );
+}
 
-    return {
-      ...budget,
-      custom_budget_categories: normalizedCategories,
-    };
+export function useCustomBudgets({ month, year }: { month: number; year: number }) {
+  const supabase = createClient();
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: queryKeys.customBudgets(month, year),
+    queryFn: ({ signal }) => getCustomBudgets(month, year, signal),
   });
 
-  if (droppedCategoryLinks > 0) {
-    console.warn(
-      `[useCustomBudgets] Ignored ${droppedCategoryLinks} category link${droppedCategoryLinks === 1 ? "" : "s"} with missing category rows`
-    );
+  async function refresh() {
+    await Promise.all([
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.customBudgets(month, year),
+      }),
+      queryClient.invalidateQueries({
+        queryKey: ["month-snapshot", year, month],
+      }),
+    ]);
   }
 
-  return normalized;
-}
+  async function replaceCategories(budgetId: string, categoryIds: string[]) {
+    const { error: deleteError } = await supabase
+      .from("custom_budget_categories")
+      .delete()
+      .eq("custom_budget_id", budgetId);
+    if (deleteError) return deleteError;
+    if (categoryIds.length === 0) return null;
+    const { error } = await supabase.from("custom_budget_categories").insert(
+      categoryIds.map((category_id) => ({
+        custom_budget_id: budgetId,
+        category_id,
+      }))
+    );
+    return error;
+  }
 
-interface UseCustomBudgetsOptions {
-  month: number;
-  year: number;
-}
-
-export function useCustomBudgets({ month, year }: UseCustomBudgetsOptions) {
-  const [customBudgets, setCustomBudgets] = useState<CustomBudget[]>([]);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
-
-  const fetchCustomBudgets = useCallback(async () => {
-    setLoading(true);
-    try {
-      const result = await supabase
-        .from("custom_budgets")
-        .select("*, custom_budget_categories(*, categories(*))")
-        .eq("month", month)
-        .eq("year", year)
-        .order("created_at");
-
-      const data = resolveOptionalTableResult(result, {
-        table: "custom_budgets",
-        context: "useCustomBudgets.fetch",
-        fallback: [] as CustomBudget[],
-      });
-
-      setCustomBudgets(
-        normalizeCustomBudgets(data as CustomBudgetWithOptionalRelations[])
-      );
-    } catch {
-      setCustomBudgets([]);
-    }
-    setLoading(false);
-  }, [supabase, month, year]);
-
-  useEffect(() => {
-    fetchCustomBudgets();
-  }, [fetchCustomBudgets]);
-
-  async function addCustomBudget(values: {
-    name: string;
-    amount_type: string;
-    amount_value: number;
-    currency: string;
-    category_ids: string[];
-    month: number;
-    year: number;
-  }) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return;
-
-    const { data: inserted, error } = await supabase
+  async function addCustomBudget(values: BudgetInput & { month: number; year: number }) {
+    const userId = await authenticatedUserId();
+    const { category_ids, ...budget } = values;
+    const { data, error } = await supabase
       .from("custom_budgets")
       .upsert(
-        {
-          user_id: userData.user.id,
-          name: values.name,
-          amount_type: values.amount_type,
-          amount_value: values.amount_value,
-          currency: values.currency,
-          month: values.month,
-          year: values.year,
-        },
+        { ...budget, user_id: userId },
         { onConflict: "user_id,name,month,year" }
       )
       .select("id")
       .single();
-
-    if (error || !inserted) return error;
-
-    // Replace junction rows
-    await supabase
-      .from("custom_budget_categories")
-      .delete()
-      .eq("custom_budget_id", inserted.id);
-
-    const junctionRows = values.category_ids.map((category_id) => ({
-      custom_budget_id: inserted.id,
-      category_id,
-    }));
-
-    const { error: junctionError } = await supabase
-      .from("custom_budget_categories")
-      .insert(junctionRows);
-
-    if (junctionError) return junctionError;
-
-    await fetchCustomBudgets();
-    return null;
+    if (error || !data) return error;
+    const categoryError = await replaceCategories(data.id, category_ids);
+    if (!categoryError) void refresh();
+    return categoryError;
   }
 
-  async function updateCustomBudget(
-    id: string,
-    values: {
-      name: string;
-      amount_type: string;
-      amount_value: number;
-      currency: string;
-      category_ids: string[];
-    }
-  ) {
-    const { error } = await supabase
-      .from("custom_budgets")
-      .update({
-        name: values.name,
-        amount_type: values.amount_type,
-        amount_value: values.amount_value,
-        currency: values.currency,
-      })
-      .eq("id", id);
-
+  async function updateCustomBudget(id: string, values: BudgetInput) {
+    const { category_ids, ...budget } = values;
+    const { error } = await supabase.from("custom_budgets").update(budget).eq("id", id);
     if (error) return error;
-
-    // Replace junction rows
-    await supabase
-      .from("custom_budget_categories")
-      .delete()
-      .eq("custom_budget_id", id);
-
-    const junctionRows = values.category_ids.map((category_id) => ({
-      custom_budget_id: id,
-      category_id,
-    }));
-
-    const { error: junctionError } = await supabase
-      .from("custom_budget_categories")
-      .insert(junctionRows);
-
-    if (junctionError) return junctionError;
-
-    await fetchCustomBudgets();
-    return null;
+    const categoryError = await replaceCategories(id, category_ids);
+    if (!categoryError) void refresh();
+    return categoryError;
   }
 
   async function deleteCustomBudget(id: string) {
-    const { error } = await supabase
-      .from("custom_budgets")
-      .delete()
-      .eq("id", id);
-    if (!error) await fetchCustomBudgets();
+    const { error } = await supabase.from("custom_budgets").delete().eq("id", id);
+    if (!error) void refresh();
     return error;
   }
 
-  /**
-   * Seed named budgets for the month from a method template.
-   * When `replaceExisting` is true, deletes this month's budgets first.
-   */
   async function seedBudgets(
-    budgets: Array<{
-      name: string;
-      amount_type: string;
-      amount_value: number;
-      currency: string;
-      category_ids: string[];
-    }>,
+    budgets: BudgetInput[],
     options?: { replaceExisting?: boolean }
   ) {
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return { error: new Error("Not signed in"), count: 0 };
-
-    if (options?.replaceExisting && customBudgets.length > 0) {
-      for (const budget of customBudgets) {
-        const { error } = await supabase
-          .from("custom_budgets")
-          .delete()
-          .eq("id", budget.id);
-        if (error) return { error, count: 0 };
-      }
+    const result = await supabase.rpc("replace_custom_budget_set", {
+      p_year: year,
+      p_month: month,
+      p_budgets: budgets as unknown as Json,
+      p_replace_existing: options?.replaceExisting ?? false,
+    });
+    if (!result.error) {
+      void refresh();
+      return { error: null, count: Number(result.data ?? 0) };
     }
+    if (!isMissingRpc(result.error)) return { error: result.error, count: 0 };
 
-    let count = 0;
-    for (const values of budgets) {
-      const { data: inserted, error } = await supabase
+    if (options?.replaceExisting) {
+      const { error } = await supabase
         .from("custom_budgets")
-        .upsert(
-          {
-            user_id: userData.user.id,
-            name: values.name,
-            amount_type: values.amount_type,
-            amount_value: values.amount_value,
-            currency: values.currency,
-            month,
-            year,
-          },
-          { onConflict: "user_id,name,month,year" }
-        )
-        .select("id")
-        .single();
-
-      if (error || !inserted) return { error: error ?? new Error("Insert failed"), count };
-
-      await supabase
-        .from("custom_budget_categories")
         .delete()
-        .eq("custom_budget_id", inserted.id);
-
-      if (values.category_ids.length > 0) {
-        const { error: junctionError } = await supabase
-          .from("custom_budget_categories")
-          .insert(
-            values.category_ids.map((category_id) => ({
-              custom_budget_id: inserted.id,
-              category_id,
-            }))
-          );
-        if (junctionError) return { error: junctionError, count };
-      }
-
+        .eq("month", month)
+        .eq("year", year);
+      if (error) return { error, count: 0 };
+    }
+    let count = 0;
+    for (const budget of budgets) {
+      const error = await addCustomBudget({ ...budget, month, year });
+      if (error) return { error, count };
       count += 1;
     }
-
-    await fetchCustomBudgets();
     return { error: null, count };
   }
 
   async function copyFromPreviousMonth() {
-    const prevMonth = month === 1 ? 12 : month - 1;
-    const prevYear = month === 1 ? year - 1 : year;
-
-    const { data: prevBudgets } = await supabase
-      .from("custom_budgets")
-      .select("*, custom_budget_categories(*, categories(*))")
-      .eq("month", prevMonth)
-      .eq("year", prevYear);
-
-    if (!prevBudgets || prevBudgets.length === 0) return 0;
-
-    const normalizedPreviousBudgets = normalizeCustomBudgets(
-      prevBudgets as CustomBudgetWithOptionalRelations[]
-    );
-
-    const { data: userData } = await supabase.auth.getUser();
-    if (!userData.user) return 0;
-
-    let copied = 0;
-    for (const budget of normalizedPreviousBudgets) {
-      const { data: inserted, error } = await supabase
-        .from("custom_budgets")
-        .upsert(
-          {
-            user_id: userData.user.id,
-            name: budget.name,
-            amount_type: budget.amount_type,
-            amount_value: budget.amount_value,
-            currency: budget.currency,
-            month,
-            year,
-          },
-          { onConflict: "user_id,name,month,year" }
-        )
-        .select("id")
-        .single();
-
-      if (error || !inserted) continue;
-
-      await supabase
-        .from("custom_budget_categories")
-        .delete()
-        .eq("custom_budget_id", inserted.id);
-
-      const junctionRows = budget.custom_budget_categories.map((c) => ({
-        custom_budget_id: inserted.id,
-        category_id: c.category_id,
-      }));
-
-      if (junctionRows.length > 0) {
-        await supabase.from("custom_budget_categories").insert(junctionRows);
-      }
-
-      copied++;
+    const result = await supabase.rpc("copy_custom_budgets_from_previous_month", {
+      p_year: year,
+      p_month: month,
+    });
+    if (!result.error) {
+      void refresh();
+      return Number(result.data ?? 0);
     }
+    if (!isMissingRpc(result.error)) return 0;
 
-    await fetchCustomBudgets();
-    return copied;
+    const previous = month === 1
+      ? { month: 12, year: year - 1 }
+      : { month: month - 1, year };
+    const rows = await getCustomBudgets(previous.month, previous.year);
+    if (rows.length === 0) return 0;
+    const seeded = await seedBudgets(
+      rows.map((budget) => ({
+        name: budget.name,
+        amount_type: budget.amount_type,
+        amount_value: Number(budget.amount_value),
+        currency: budget.currency,
+        category_ids: budget.custom_budget_categories.map(
+          (category) => category.category_id
+        ),
+      }))
+    );
+    return seeded.count;
   }
 
   return {
-    customBudgets,
-    loading,
+    customBudgets: (query.data ?? []) as CustomBudget[],
+    loading: query.isPending,
     addCustomBudget,
     updateCustomBudget,
     deleteCustomBudget,
     seedBudgets,
     copyFromPreviousMonth,
-    refetch: fetchCustomBudgets,
+    refetch: query.refetch,
   };
 }

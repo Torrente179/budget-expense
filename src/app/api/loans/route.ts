@@ -59,14 +59,14 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const parsed = loanSchema.safeParse(await request.json());
-  if (!parsed.success) {
-    return NextResponse.json({ error: "Invalid loan payload" }, { status: 400 });
-  }
-
   const clients = await resolveLedgerWriteClient(request);
   if (!clients) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const parsed = loanSchema.safeParse(await request.json());
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Invalid loan payload" }, { status: 400 });
   }
 
   const { app, ledger, ledgerUserId, user } = clients;

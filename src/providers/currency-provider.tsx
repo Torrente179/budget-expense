@@ -10,9 +10,15 @@ import {
   type ReactNode,
 } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { DEFAULT_CURRENCY, type CurrencyCode } from "@/lib/constants";
+import { useAppBootstrap } from "@/hooks/use-app-bootstrap";
+import { queryKeys } from "@/lib/query/keys";
+import type { AppBootstrap } from "@/lib/data";
 
 export type RateSource = "ecb" | "open-er-api" | "manual" | "fallback";
+const EMPTY_RATES: Record<string, number> = {};
+const EMPTY_SOURCES: Record<string, RateSource> = {};
 
 interface CurrencyContextValue {
   baseCurrency: CurrencyCode;
@@ -31,74 +37,42 @@ const CurrencyContext = createContext<CurrencyContextValue | null>(null);
 export function CurrencyProvider({ children }: { children: ReactNode }) {
   const [baseCurrency, setBaseCurrencyState] =
     useState<CurrencyCode>(DEFAULT_CURRENCY);
-  const [rates, setRates] = useState<Record<string, number>>({});
-  const [rateSources, setRateSources] = useState<Record<string, RateSource>>(
-    {}
-  );
   const [manualRates, setManualRates] = useState<Record<string, number>>({});
-  const [profileLoading, setProfileLoading] = useState(true);
   const [currencyPreferenceReady, setCurrencyPreferenceReady] =
     useState(false);
   const [currencyPreferenceUpdating, setCurrencyPreferenceUpdating] =
     useState(false);
-  const [ratesLoading, setRatesLoading] = useState(true);
   const supabase = createClient();
+  const queryClient = useQueryClient();
+  const bootstrap = useAppBootstrap();
+  const ratesQuery = useQuery({
+    queryKey: queryKeys.exchangeRates,
+    staleTime: 60 * 60 * 1000,
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/exchange-rates", { signal });
+      if (!response.ok) throw new Error("Exchange rates unavailable");
+      return response.json() as Promise<{
+        rates: Record<string, number>;
+        sources: Record<string, RateSource>;
+      }>;
+    },
+  });
+  const rates = ratesQuery.data?.rates ?? EMPTY_RATES;
+  const rateSources = ratesQuery.data?.sources ?? EMPTY_SOURCES;
 
   useEffect(() => {
-    async function loadCurrencyPreference() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("base_currency, manual_fx_rates")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (error || !data?.base_currency) return;
-
-        if (data.base_currency) {
-          setBaseCurrencyState(data.base_currency as CurrencyCode);
-          setCurrencyPreferenceReady(true);
-        }
-        if (data?.manual_fx_rates && typeof data.manual_fx_rates === "object") {
-          const manual: Record<string, number> = {};
-          for (const [code, rate] of Object.entries(
-            data.manual_fx_rates as Record<string, unknown>
-          )) {
-            if (typeof rate === "number" && rate > 0) manual[code] = rate;
-          }
-          setManualRates(manual);
-        }
-      } finally {
-        setProfileLoading(false);
+    const profile = bootstrap.data?.profile;
+    if (!profile) return;
+    setBaseCurrencyState(profile.baseCurrency as CurrencyCode);
+    setCurrencyPreferenceReady(true);
+    const manual: Record<string, number> = {};
+    if (profile.manualFxRates && typeof profile.manualFxRates === "object") {
+      for (const [code, rate] of Object.entries(profile.manualFxRates)) {
+        if (typeof rate === "number" && rate > 0) manual[code] = rate;
       }
     }
-    loadCurrencyPreference().catch(() => {
-      // manual_fx_rates column may not exist yet (migration pending)
-    });
-  }, [supabase]);
-
-  useEffect(() => {
-    async function fetchRates() {
-      try {
-        const res = await fetch("/api/exchange-rates");
-        if (res.ok) {
-          const data = await res.json();
-          setRates(data.rates ?? {});
-          setRateSources(data.sources ?? {});
-        }
-      } catch {
-        // Rates unavailable — conversion will return original amounts
-      } finally {
-        setRatesLoading(false);
-      }
-    }
-    fetchRates();
-  }, []);
+    setManualRates(manual);
+  }, [bootstrap.data]);
 
   const effectiveRates = useMemo(
     () => ({ ...rates, ...manualRates }),
@@ -130,15 +104,13 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
       setCurrencyPreferenceUpdating(true);
       try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (!user) throw new Error("No authenticated user");
+        const userId = bootstrap.data?.identity.id;
+        if (!userId) throw new Error("No authenticated user");
 
         const { data, error } = await supabase
           .from("profiles")
           .update({ base_currency: code })
-          .eq("id", user.id)
+          .eq("id", userId)
           .select("id")
           .maybeSingle();
 
@@ -148,11 +120,21 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
 
         setBaseCurrencyState(code);
         setCurrencyPreferenceReady(true);
+        queryClient.setQueryData<AppBootstrap>(
+          queryKeys.appBootstrap,
+          (previous) =>
+            previous
+              ? {
+                  ...previous,
+                  profile: { ...previous.profile, baseCurrency: code },
+                }
+              : previous
+        );
       } finally {
         setCurrencyPreferenceUpdating(false);
       }
     },
-    [baseCurrency, supabase]
+    [baseCurrency, bootstrap.data?.identity.id, queryClient, supabase]
   );
 
   const value = useMemo(
@@ -161,7 +143,7 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       rates: effectiveRates,
       rateSources: effectiveSources,
       isLoading:
-        profileLoading || ratesLoading || currencyPreferenceUpdating,
+        bootstrap.isPending || ratesQuery.isPending || currencyPreferenceUpdating,
       currencyPreferenceReady,
       currencyPreferenceUpdating,
       convert,
@@ -171,8 +153,8 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
       baseCurrency,
       effectiveRates,
       effectiveSources,
-      profileLoading,
-      ratesLoading,
+      bootstrap.isPending,
+      ratesQuery.isPending,
       currencyPreferenceReady,
       currencyPreferenceUpdating,
       convert,

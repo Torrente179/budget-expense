@@ -5,10 +5,7 @@ import {
   normalizeInvestmentAsset,
 } from "@/lib/investments";
 import { createRequestClient } from "@/lib/supabase/request";
-import {
-  createServiceRoleClient,
-  resolveServiceRoleUserByEmail,
-} from "@/lib/supabase/service-role";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 import type { Database } from "@/types/database";
 import {
   brokerageAccountSchema,
@@ -116,15 +113,7 @@ async function resolveInvestmentContext(request: NextRequest) {
     return null;
   }
 
-  const ledgerSupabase = createServiceRoleClient();
-  const ledgerUser = ledgerSupabase
-    ? await resolveServiceRoleUserByEmail(user.email)
-    : null;
-
-  return {
-    supabase: ledgerSupabase ?? appSupabase,
-    userId: ledgerUser?.id ?? user.id,
-  };
+  return resolveUserDataClient({ supabase: appSupabase, user });
 }
 
 function requireData<T>(
@@ -214,6 +203,190 @@ async function fetchInvestmentSnapshot(supabase: SupabaseClient, userId: string)
       "Failed to fetch investment savings transfers"
     ),
     watchlist: requireData(watchlistResult, "Failed to fetch investment watchlist"),
+  };
+}
+
+function readPage(request: NextRequest) {
+  const requestedLimit = Number(request.nextUrl.searchParams.get("limit") ?? 75);
+  const requestedOffset = Number(request.nextUrl.searchParams.get("offset") ?? 0);
+  return {
+    limit: Number.isInteger(requestedLimit)
+      ? Math.min(Math.max(requestedLimit, 1), 200)
+      : 75,
+    offset: Number.isInteger(requestedOffset)
+      ? Math.max(requestedOffset, 0)
+      : 0,
+  };
+}
+
+async function fetchAllPositionRows(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const rows: unknown[] = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const result = await supabase
+      .from("investment_trades")
+      .select(
+        "id, account_id, asset_id, side, trade_date, quantity, execution_price, execution_currency, fee_amount, fee_currency, created_at, brokerage_accounts(id, name, broker_kind), investment_assets(id, asset_key, symbol, display_name, asset_type, market_code, exchange_code, quote_currency)"
+      )
+      .eq("user_id", userId)
+      .order("trade_date", { ascending: true })
+      .order("created_at", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (result.error) throw result.error;
+    rows.push(...(result.data ?? []));
+    if ((result.data?.length ?? 0) < pageSize) return rows;
+  }
+}
+
+async function fetchAllCashRows(supabase: SupabaseClient, userId: string) {
+  const rows: unknown[] = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const result = await supabase
+      .from("investment_cash_movements")
+      .select(
+        "id, account_id, movement_type, movement_date, amount, currency, fee_amount, fee_currency, created_at, brokerage_accounts(id, name, broker_kind)"
+      )
+      .eq("user_id", userId)
+      .order("movement_date", { ascending: true })
+      .order("created_at", { ascending: true })
+      .range(offset, offset + pageSize - 1);
+    if (result.error) throw result.error;
+    rows.push(...(result.data ?? []));
+    if ((result.data?.length ?? 0) < pageSize) return rows;
+  }
+}
+
+async function fetchAllSavingsBalanceRows(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const rows: Array<{
+    savings_account_id: string;
+    amount: number;
+    currency: string;
+  }> = [];
+  const pageSize = 1000;
+  for (let offset = 0; ; offset += pageSize) {
+    const result = await supabase
+      .from("investment_savings_transfers")
+      .select("savings_account_id, amount, currency")
+      .eq("user_id", userId)
+      .range(offset, offset + pageSize - 1);
+    if (result.error) throw result.error;
+    rows.push(...(result.data ?? []));
+    if ((result.data?.length ?? 0) < pageSize) return rows;
+  }
+}
+
+async function fetchInvestmentOverview(
+  supabase: SupabaseClient,
+  userId: string
+) {
+  const [accountsResult, assetsResult, tradesResult, cashResult, watchlistResult] =
+    await Promise.all([
+      supabase
+        .from("brokerage_accounts")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true }),
+      supabase
+        .from("investment_assets")
+        .select("*")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: true }),
+      fetchAllPositionRows(supabase, userId),
+      fetchAllCashRows(supabase, userId),
+      supabase
+        .from("investment_watchlist")
+        .select("*, investment_assets(*)")
+        .eq("user_id", userId)
+        .order("created_at", { ascending: false }),
+    ]);
+
+  return {
+    accounts: requireData(accountsResult, "Failed to fetch brokerage accounts"),
+    assets: requireData(assetsResult, "Failed to fetch investment assets"),
+    positionTrades: tradesResult,
+    cashLedger: cashResult,
+    watchlist: requireData(watchlistResult, "Failed to fetch investment watchlist"),
+  };
+}
+
+async function fetchInvestmentPage(
+  supabase: SupabaseClient,
+  userId: string,
+  resource: "trades" | "cash",
+  offset: number,
+  limit: number
+) {
+  const query =
+    resource === "trades"
+      ? supabase
+          .from("investment_trades")
+          .select("*, brokerage_accounts(*), investment_assets(*)", {
+            count: "exact",
+          })
+          .eq("user_id", userId)
+          .order("trade_date", { ascending: false })
+          .order("created_at", { ascending: false })
+          .range(offset, offset + limit - 1)
+      : supabase
+          .from("investment_cash_movements")
+          .select("*, brokerage_accounts(*)", { count: "exact" })
+          .eq("user_id", userId)
+          .order("movement_date", { ascending: false })
+          .order("created_at", { ascending: false })
+          .range(offset, offset + limit - 1);
+  const result = await query;
+  if (result.error) throw result.error;
+  const total = result.count ?? 0;
+  return {
+    items: result.data ?? [],
+    page: { offset, limit, total, hasMore: offset + limit < total },
+  };
+}
+
+async function fetchSavingsPage(
+  supabase: SupabaseClient,
+  userId: string,
+  offset: number,
+  limit: number
+) {
+  const [accountsResult, transfersResult, balanceRowsResult] = await Promise.all([
+    supabase
+      .from("investment_savings_accounts")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: true }),
+    supabase
+      .from("investment_savings_transfers")
+      .select("*, investment_savings_accounts(*)", { count: "exact" })
+      .eq("user_id", userId)
+      .order("transfer_date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1),
+    fetchAllSavingsBalanceRows(supabase, userId),
+  ]);
+  if (transfersResult.error) throw transfersResult.error;
+
+  const groupedBalances = new Map<string, number>();
+  for (const row of balanceRowsResult) {
+    const key = `${row.savings_account_id}|${row.currency}`;
+    groupedBalances.set(key, (groupedBalances.get(key) ?? 0) + Number(row.amount));
+  }
+  const total = transfersResult.count ?? 0;
+  return {
+    accounts: requireData(accountsResult, "Failed to fetch savings accounts"),
+    transfers: transfersResult.data ?? [],
+    balanceTotals: Array.from(groupedBalances.entries()).map(([key, amount]) => {
+      const [accountId, currency] = key.split("|");
+      return { accountId, currency, amount };
+    }),
+    page: { offset, limit, total, hasMore: offset + limit < total },
   };
 }
 
@@ -556,6 +729,42 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const resource = request.nextUrl.searchParams.get("resource") ?? "snapshot";
+    const { offset, limit } = readPage(request);
+    if (resource === "overview") {
+      return NextResponse.json(
+        await fetchInvestmentOverview(context.supabase, context.userId)
+      );
+    }
+    if (resource === "trades" || resource === "cash") {
+      return NextResponse.json(
+        await fetchInvestmentPage(
+          context.supabase,
+          context.userId,
+          resource,
+          offset,
+          limit
+        )
+      );
+    }
+    if (resource === "savings") {
+      return NextResponse.json(
+        await fetchSavingsPage(context.supabase, context.userId, offset, limit)
+      );
+    }
+    if (resource === "watchlist") {
+      const result = await context.supabase
+        .from("investment_watchlist")
+        .select("*, investment_assets(*)")
+        .eq("user_id", context.userId)
+        .order("created_at", { ascending: false });
+      return NextResponse.json({
+        items: requireData(result, "Failed to fetch investment watchlist"),
+      });
+    }
+    if (resource !== "snapshot") {
+      return jsonError("Unknown investment resource", 400);
+    }
     const snapshot = await fetchInvestmentSnapshot(
       context.supabase,
       context.userId
@@ -568,16 +777,16 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const parsed = createMutationSchema.safeParse(await request.json());
-
-  if (!parsed.success) {
-    return jsonError("Invalid investment payload", 400);
-  }
-
   const context = await resolveInvestmentContext(request);
 
   if (!context) {
     return jsonError("Unauthorized", 401);
+  }
+
+  const parsed = createMutationSchema.safeParse(await request.json());
+
+  if (!parsed.success) {
+    return jsonError("Invalid investment payload", 400);
   }
 
   try {
@@ -654,16 +863,16 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PATCH(request: NextRequest) {
-  const parsed = updateMutationSchema.safeParse(await request.json());
-
-  if (!parsed.success) {
-    return jsonError("Invalid investment update", 400);
-  }
-
   const context = await resolveInvestmentContext(request);
 
   if (!context) {
     return jsonError("Unauthorized", 401);
+  }
+
+  const parsed = updateMutationSchema.safeParse(await request.json());
+
+  if (!parsed.success) {
+    return jsonError("Invalid investment update", 400);
   }
 
   try {
@@ -740,16 +949,16 @@ export async function PATCH(request: NextRequest) {
 }
 
 export async function DELETE(request: NextRequest) {
-  const parsed = deleteMutationSchema.safeParse(await request.json());
-
-  if (!parsed.success) {
-    return jsonError("Invalid investment delete payload", 400);
-  }
-
   const context = await resolveInvestmentContext(request);
 
   if (!context) {
     return jsonError("Unauthorized", 401);
+  }
+
+  const parsed = deleteMutationSchema.safeParse(await request.json());
+
+  if (!parsed.success) {
+    return jsonError("Invalid investment delete payload", 400);
   }
 
   try {

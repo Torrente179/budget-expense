@@ -1,6 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
+import {
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useCurrency } from "@/providers/currency-provider";
 import {
@@ -16,7 +21,11 @@ import {
   type LatestQuote,
 } from "@/lib/investments";
 import {
-  fetchInvestmentSnapshot,
+  fetchInvestmentCashPage,
+  fetchInvestmentOverview,
+  fetchInvestmentSavingsPage,
+  fetchInvestmentTradesPage,
+  fetchInvestmentWatchlist,
   requestInvestmentMutation,
 } from "@/lib/investments-api-client";
 import type {
@@ -28,6 +37,7 @@ import type {
   InvestmentTradeFormValues,
   InvestmentWatchlistFormValues,
 } from "@/lib/validations";
+import { queryKeys } from "@/lib/query/keys";
 
 type TradeWithOptionalJoins = Omit<
   InvestmentTradeWithJoins,
@@ -82,17 +92,6 @@ function hasSavingsTransferJoins(
   return Boolean(transfer.investment_savings_accounts);
 }
 
-function logDroppedRows(label: string, before: number, after: number) {
-  if (after >= before) {
-    return;
-  }
-
-  const dropped = before - after;
-  console.warn(
-    `[useInvestments] Ignored ${dropped} ${label} row${dropped === 1 ? "" : "s"} with missing related records`
-  );
-}
-
 function buildLatestQuoteMap(quotes: LatestQuote[]) {
   return quotes.reduce<Record<string, LatestQuote>>((accumulator, quote) => {
     accumulator[quote.assetKey] = quote;
@@ -100,39 +99,153 @@ function buildLatestQuoteMap(quotes: LatestQuote[]) {
   }, {});
 }
 
-export function useInvestments() {
-  const [accounts, setAccounts] = useState<BrokerageAccountRow[]>([]);
-  const [assets, setAssets] = useState<InvestmentAssetRow[]>([]);
-  const [trades, setTrades] = useState<InvestmentTradeWithJoins[]>([]);
-  const [cashMovements, setCashMovements] = useState<
-    InvestmentCashMovementWithJoins[]
-  >([]);
-  const [savingsAccounts, setSavingsAccounts] = useState<
-    InvestmentSavingsAccountRow[]
-  >([]);
-  const [savingsTransfers, setSavingsTransfers] = useState<
-    InvestmentSavingsTransferWithJoins[]
-  >([]);
-  const [watchlist, setWatchlist] = useState<InvestmentWatchlistWithJoins[]>([]);
-  const [latestQuotes, setLatestQuotes] = useState<Record<string, LatestQuote>>({});
-  const [loading, setLoading] = useState(true);
-  const [quoteLoading, setQuoteLoading] = useState(false);
+interface UseInvestmentsOptions {
+  includeTrades?: boolean;
+  includeCash?: boolean;
+  includeSavings?: boolean;
+  includeWatchlist?: boolean;
+}
+
+export function useInvestments(options: UseInvestmentsOptions = {}) {
+  const {
+    includeTrades = true,
+    includeCash = true,
+    includeSavings = true,
+    includeWatchlist = true,
+  } = options;
   const { convert } = useCurrency();
+  const queryClient = useQueryClient();
+  const overviewQuery = useQuery({
+    queryKey: queryKeys.investmentOverview,
+    queryFn: ({ signal }) => fetchInvestmentOverview(signal),
+  });
+  const tradesQuery = useInfiniteQuery({
+    queryKey: queryKeys.investmentTrades,
+    queryFn: ({ pageParam, signal }) =>
+      fetchInvestmentTradesPage(pageParam, signal),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.page.hasMore
+        ? lastPage.page.offset + lastPage.page.limit
+        : undefined,
+    enabled: includeTrades,
+  });
+  const cashQuery = useInfiniteQuery({
+    queryKey: queryKeys.investmentCash,
+    queryFn: ({ pageParam, signal }) =>
+      fetchInvestmentCashPage(pageParam, signal),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.page.hasMore
+        ? lastPage.page.offset + lastPage.page.limit
+        : undefined,
+    enabled: includeCash,
+  });
+  const savingsQuery = useInfiniteQuery({
+    queryKey: queryKeys.investmentSavings,
+    queryFn: ({ pageParam, signal }) =>
+      fetchInvestmentSavingsPage(pageParam, signal),
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) =>
+      lastPage.page.hasMore
+        ? lastPage.page.offset + lastPage.page.limit
+        : undefined,
+    enabled: includeSavings,
+  });
+  const watchlistQuery = useQuery({
+    queryKey: queryKeys.investmentWatchlist,
+    queryFn: ({ signal }) => fetchInvestmentWatchlist(signal),
+    enabled: includeWatchlist,
+  });
+
+  const overviewResource = overviewQuery.data;
+  const accounts = (overviewResource?.accounts ?? []) as BrokerageAccountRow[];
+  const assets = (overviewResource?.assets ?? []) as InvestmentAssetRow[];
+  const positionTrades = (
+    (overviewResource?.positionTrades ?? []) as TradeWithOptionalJoins[]
+  ).filter(hasTradeJoins);
+  const overviewCash = (
+    (overviewResource?.cashLedger ?? []) as CashMovementWithOptionalJoins[]
+  ).filter(hasCashMovementJoins);
+  const overviewWatchlist = (
+    (overviewResource?.watchlist ?? []) as WatchlistWithOptionalJoins[]
+  ).filter(hasWatchlistJoins);
+  const trades = (tradesQuery.data?.pages ?? [])
+    .flatMap((page) => page.items as TradeWithOptionalJoins[])
+    .filter(hasTradeJoins);
+  const cashMovements = (cashQuery.data?.pages ?? [])
+    .flatMap((page) => page.items as CashMovementWithOptionalJoins[])
+    .filter(hasCashMovementJoins);
+  const savingsAccounts = (savingsQuery.data?.pages[0]?.accounts ??
+    []) as InvestmentSavingsAccountRow[];
+  const savingsTransfers = (savingsQuery.data?.pages ?? [])
+    .flatMap((page) => page.transfers as SavingsTransferWithOptionalJoins[])
+    .filter(hasSavingsTransferJoins);
+  const savingsBalanceTotals = savingsQuery.data?.pages[0]?.balanceTotals ?? [];
+  const watchlistSource = includeWatchlist
+    ? watchlistQuery.data ?? []
+    : overviewWatchlist;
+  const watchlist = (watchlistSource as WatchlistWithOptionalJoins[]).filter(
+    hasWatchlistJoins
+  );
+  const targetAssetMap = new Map<string, InvestmentAssetRow>();
+  assets.forEach((asset) => targetAssetMap.set(asset.id, asset));
+  watchlist.forEach((item) =>
+    targetAssetMap.set(item.investment_assets.id, item.investment_assets)
+  );
+  positionTrades.forEach((trade) =>
+    targetAssetMap.set(trade.investment_assets.id, trade.investment_assets)
+  );
+  const targetAssets = Array.from(targetAssetMap.values());
+  const quotesQuery = useQuery({
+    queryKey: queryKeys.marketQuotes(targetAssets.map((asset) => asset.asset_key)),
+    enabled: targetAssets.length > 0,
+    staleTime: 15 * 60 * 1000,
+    queryFn: async ({ signal }) => {
+      const response = await fetch("/api/market-prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          assets: targetAssets.map((asset) => ({
+            assetKey: asset.asset_key,
+            symbol: asset.symbol,
+            assetType: asset.asset_type,
+            marketCode: asset.market_code,
+            exchangeCode: asset.exchange_code ?? undefined,
+            providerSymbolTwelve: asset.provider_symbol_twelve ?? undefined,
+            providerSymbolEodhd: asset.provider_symbol_eodhd ?? undefined,
+          })),
+        }),
+        signal,
+      });
+      if (!response.ok) throw new Error("Market quotes unavailable");
+      const data = (await response.json()) as { quotes?: LatestQuote[] };
+      return buildLatestQuoteMap(data.quotes ?? []);
+    },
+  });
+  const latestQuotes = quotesQuery.data ?? {};
+  const loading =
+    overviewQuery.isPending ||
+    (includeTrades && tradesQuery.isPending) ||
+    (includeCash && cashQuery.isPending) ||
+    (includeSavings && savingsQuery.isPending) ||
+    (includeWatchlist && watchlistQuery.isPending);
+  const quoteLoading = quotesQuery.isPending;
 
   const overview = buildInvestmentOverview({
-    trades,
-    cashMovements,
-    watchlist,
+    trades: positionTrades,
+    cashMovements: overviewCash,
+    watchlist: overviewWatchlist,
     latestQuotes,
     convert,
   });
   const savingsAccountSummaries = savingsAccounts
     .map((account) => {
-      const balance = savingsTransfers
-        .filter((transfer) => transfer.savings_account_id === account.id)
+      const balance = savingsBalanceTotals
+        .filter((total) => total.accountId === account.id)
         .reduce(
-          (sum, transfer) =>
-            sum + convert(Number(transfer.amount), transfer.currency),
+          (sum, total) =>
+            sum + convert(Number(total.amount), total.currency),
           0
         );
 
@@ -147,132 +260,6 @@ export function useInvestments() {
     (sum, account) => sum + account.balance,
     0
   );
-
-  const fetchMarketPrices = useCallback(
-    async (targetAssets: InvestmentAssetRow[]) => {
-      if (targetAssets.length === 0) {
-        setLatestQuotes({});
-        return;
-      }
-
-      setQuoteLoading(true);
-      try {
-        const response = await fetch("/api/market-prices", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            assets: targetAssets.map((asset) => ({
-              assetKey: asset.asset_key,
-              symbol: asset.symbol,
-              assetType: asset.asset_type,
-              marketCode: asset.market_code,
-              exchangeCode: asset.exchange_code ?? undefined,
-              providerSymbolTwelve: asset.provider_symbol_twelve ?? undefined,
-              providerSymbolEodhd: asset.provider_symbol_eodhd ?? undefined,
-            })),
-          }),
-        });
-
-        if (!response.ok) {
-          setLatestQuotes({});
-          return;
-        }
-
-        const data = (await response.json()) as { quotes?: LatestQuote[] };
-        setLatestQuotes(buildLatestQuoteMap(data.quotes ?? []));
-      } catch {
-        setLatestQuotes({});
-      } finally {
-        setQuoteLoading(false);
-      }
-    },
-    []
-  );
-
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const snapshot = await fetchInvestmentSnapshot();
-      const {
-        accounts,
-        assets,
-        trades,
-        cashMovements,
-        savingsAccounts,
-        savingsTransfers,
-        watchlist,
-      } = snapshot;
-
-      const normalizedTrades = (trades as TradeWithOptionalJoins[]).filter(hasTradeJoins);
-      const normalizedCashMovements = (cashMovements as CashMovementWithOptionalJoins[])
-        .filter(hasCashMovementJoins);
-      const normalizedSavingsTransfers = (
-        savingsTransfers as SavingsTransferWithOptionalJoins[]
-      ).filter(hasSavingsTransferJoins);
-      const normalizedWatchlist = (watchlist as WatchlistWithOptionalJoins[]).filter(
-        hasWatchlistJoins
-      );
-
-      logDroppedRows(
-        "trade",
-        (trades as TradeWithOptionalJoins[]).length,
-        normalizedTrades.length
-      );
-      logDroppedRows(
-        "cash movement",
-        (cashMovements as CashMovementWithOptionalJoins[]).length,
-        normalizedCashMovements.length
-      );
-      logDroppedRows(
-        "savings transfer",
-        (savingsTransfers as SavingsTransferWithOptionalJoins[]).length,
-        normalizedSavingsTransfers.length
-      );
-      logDroppedRows(
-        "watchlist",
-        (watchlist as WatchlistWithOptionalJoins[]).length,
-        normalizedWatchlist.length
-      );
-
-      setAccounts(accounts as BrokerageAccountRow[]);
-      setAssets(assets as InvestmentAssetRow[]);
-      setTrades(normalizedTrades);
-      setCashMovements(normalizedCashMovements);
-      setSavingsAccounts(savingsAccounts as InvestmentSavingsAccountRow[]);
-      setSavingsTransfers(normalizedSavingsTransfers);
-      setWatchlist(normalizedWatchlist);
-    } catch (error) {
-      console.error("Failed to fetch investments data", error);
-      setAccounts([]);
-      setAssets([]);
-      setTrades([]);
-      setCashMovements([]);
-      setSavingsAccounts([]);
-      setSavingsTransfers([]);
-      setWatchlist([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
-  useEffect(() => {
-    const assetMap = new Map<string, InvestmentAssetRow>();
-    assets.forEach((asset) => {
-      assetMap.set(asset.id, asset);
-    });
-    watchlist.forEach((item) => {
-      assetMap.set(item.investment_assets.id, item.investment_assets);
-    });
-    trades.forEach((trade) => {
-      assetMap.set(trade.investment_assets.id, trade.investment_assets);
-    });
-
-    void fetchMarketPrices(Array.from(assetMap.values()));
-  }, [assets, trades, watchlist, fetchMarketPrices]);
 
   const lookupMarketPrice = useCallback(
     async ({
@@ -320,7 +307,9 @@ export function useInvestments() {
   ) {
     try {
       await requestInvestmentMutation(method, body);
-      await fetchData();
+      void queryClient.invalidateQueries({
+        queryKey: queryKeys.investmentsAll,
+      });
       return null;
     } catch (error) {
       toast.error(
@@ -486,7 +475,17 @@ export function useInvestments() {
     overview,
     loading,
     quoteLoading,
-    refetch: fetchData,
+    refetch: () =>
+      queryClient.invalidateQueries({ queryKey: queryKeys.investmentsAll }),
+    hasMoreTrades: Boolean(tradesQuery.hasNextPage),
+    loadMoreTrades: tradesQuery.fetchNextPage,
+    loadingMoreTrades: tradesQuery.isFetchingNextPage,
+    hasMoreCash: Boolean(cashQuery.hasNextPage),
+    loadMoreCash: cashQuery.fetchNextPage,
+    loadingMoreCash: cashQuery.isFetchingNextPage,
+    hasMoreSavings: Boolean(savingsQuery.hasNextPage),
+    loadMoreSavings: savingsQuery.fetchNextPage,
+    loadingMoreSavings: savingsQuery.isFetchingNextPage,
     lookupMarketPrice,
     addBrokerageAccount,
     updateBrokerageAccount,

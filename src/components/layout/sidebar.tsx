@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/cn";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/providers/locale-provider";
@@ -14,6 +14,7 @@ import {
   type NavItem,
 } from "@/lib/navigation";
 import { SiteBrand } from "./site-brand";
+import { NavigationPendingIndicator } from "./navigation-pending-indicator";
 
 function SidebarLink({
   item,
@@ -31,7 +32,7 @@ function SidebarLink({
       href={item.href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all duration-200",
+        "relative flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-all duration-200",
         active
           ? "bg-secondary text-foreground ring-1 ring-border"
           : "text-muted-foreground hover:bg-sidebar-accent hover:text-foreground"
@@ -39,6 +40,7 @@ function SidebarLink({
     >
       <item.icon className="h-4 w-4" />
       {label}
+      <NavigationPendingIndicator />
       {badge !== undefined && badge > 0 && (
         <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-warning-subtle px-1.5 font-mono text-label tabular-nums text-warning ring-1 ring-warning/25">
           {badge}
