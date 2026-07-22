@@ -28,6 +28,7 @@ DEFAULT_CATEGORIES = [
     ("Subscriptions", "repeat", "#f43f5e", True),
     ("Groceries", "shopping-cart", "#22c55e", True),
     ("Other", "more-horizontal", "#64748b", True),
+    ("Loan", "banknote", "#0f766e", True),
 ]
 
 CUSTOM_CATEGORIES = [

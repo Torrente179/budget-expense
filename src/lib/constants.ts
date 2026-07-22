@@ -38,6 +38,7 @@ export const DEFAULT_CATEGORIES = [
   { name: "Subscriptions", icon: "repeat", color: "#f43f5e" },
   { name: "Groceries", icon: "shopping-cart", color: "#22c55e" },
   { name: "Other", icon: "more-horizontal", color: "#64748b" },
+  { name: "Loan", icon: "banknote", color: "#0f766e" },
 ] as const;
 
 const CATEGORY_LOCALIZATIONS = [
@@ -53,6 +54,7 @@ const CATEGORY_LOCALIZATIONS = [
   { en: "Subscriptions", es: "Suscripciones" },
   { en: "Groceries", es: "Supermercado" },
   { en: "Other", es: "Otros" },
+  { en: "Loan", es: "Préstamo" },
   { en: "Taxes", es: "Impuestos" },
   { en: "Professional Services", es: "Servicios Profesionales" },
   { en: "Donations", es: "Donaciones" },

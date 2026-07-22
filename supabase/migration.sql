@@ -330,7 +330,8 @@ INSERT INTO public.categories (user_id, name, icon, color, is_default) VALUES
     (NULL, 'Travel',            'plane',          '#14b8a6', true),
     (NULL, 'Subscriptions',     'repeat',         '#f43f5e', true),
     (NULL, 'Groceries',         'shopping-cart',  '#22c55e', true),
-    (NULL, 'Other',             'more-horizontal','#64748b', true);
+    (NULL, 'Other',             'more-horizontal','#64748b', true),
+    (NULL, 'Loan',              'banknote',       '#0f766e', true);
 
 -- 7. Auto-update updated_at timestamps
 CREATE OR REPLACE FUNCTION public.update_updated_at()
@@ -740,6 +741,14 @@ WHERE classification = 'discretionary'
     OR name ILIKE '%offering%' OR name ILIKE '%ofrenda%'
     OR name ILIKE '%charity%' OR name ILIKE '%caridad%'
     OR name ILIKE '%church%' OR name ILIKE '%iglesia%'
+  );
+
+UPDATE public.categories SET classification = 'savings'
+WHERE classification = 'discretionary'
+  AND (
+    lower(btrim(name)) = 'loan'
+    OR lower(btrim(name)) = 'prestamo'
+    OR lower(btrim(name)) = 'préstamo'
   );
 
 -- ============================================
