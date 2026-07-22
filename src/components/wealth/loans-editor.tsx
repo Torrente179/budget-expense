@@ -1,6 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { es as esLocale, enUS } from "date-fns/locale";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Banknote, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -29,6 +31,16 @@ type LoanRepayment = Database["public"]["Tables"]["loan_repayments"]["Row"];
 type LoanPerson = Database["public"]["Tables"]["loan_people"]["Row"];
 
 const loansKey = ["loans"] as const;
+
+function formatLoanDate(isoDate: string, locale: string) {
+  try {
+    return format(parseISO(isoDate), "d MMM yyyy", {
+      locale: locale === "es" ? esLocale : enUS,
+    });
+  } catch {
+    return isoDate;
+  }
+}
 
 /** Money you lent — repayments reduce outstanding; dual-writes movements. */
 export function LoansEditor() {
@@ -296,7 +308,7 @@ function LoanRow({
   repayments: LoanRepayment[];
   onChanged: () => Promise<unknown>;
 }) {
-  const { t } = useLocale();
+  const { t, locale } = useLocale();
   const [repaymentAmount, setRepaymentAmount] = useState("");
   const [repaymentDate, setRepaymentDate] = useState(() =>
     new Date().toISOString().slice(0, 10)
@@ -308,6 +320,20 @@ function LoanRow({
     0
   );
   const outstanding = Math.max(Number(loan.principal) - repaidTotal, 0);
+
+  const sortedRepayments = useMemo(
+    () =>
+      [...repayments].sort((a, b) =>
+        a.repayment_date < b.repayment_date
+          ? 1
+          : a.repayment_date > b.repayment_date
+            ? -1
+            : 0
+      ),
+    [repayments]
+  );
+
+  const lastPaidDate = sortedRepayments[0]?.repayment_date ?? null;
 
   async function addRepayment() {
     const parsed = parseDecimalInput(repaymentAmount);
@@ -378,12 +404,18 @@ function LoanRow({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{loan.borrower_name}</p>
           <p className="text-xs text-muted-foreground">
-            {loan.lent_date}
-            {` · ${formatCurrency(Number(loan.principal), loan.currency)} `}
-            {t("lent", "prestados")}
-            {` · ${repayments.length} ${t("repayments", "cobros")}`}
+            {t("Lent", "Prestado")}: {formatLoanDate(loan.lent_date, locale)}
+            {` · ${formatCurrency(Number(loan.principal), loan.currency)}`}
             {!loan.is_active && ` · ${t("closed", "cerrado")}`}
           </p>
+          {lastPaidDate && (
+            <p className="text-xs text-muted-foreground">
+              {loan.is_active
+                ? t("Last paid", "Último cobro")
+                : t("Paid off", "Saldado")}
+              : {formatLoanDate(lastPaidDate, locale)}
+            </p>
+          )}
         </div>
         <span className="font-mono text-sm tabular-nums">
           {formatCurrency(outstanding, loan.currency)}
@@ -398,10 +430,33 @@ function LoanRow({
           <Trash2 className="h-3.5 w-3.5 text-destructive" />
         </Button>
       </div>
+
+      {sortedRepayments.length > 0 && (
+        <ul className="space-y-1 rounded-md bg-secondary/40 px-2.5 py-2">
+          <li className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+            {t("Payments", "Cobros")}
+          </li>
+          {sortedRepayments.map((repayment) => (
+            <li
+              key={repayment.id}
+              className="flex items-center justify-between gap-2 text-xs"
+            >
+              <span className="text-muted-foreground">
+                {formatLoanDate(repayment.repayment_date, locale)}
+              </span>
+              <span className="font-mono tabular-nums text-positive">
+                {formatCurrency(Number(repayment.amount), repayment.currency)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+
       {loan.is_active && outstanding > 0 && (
         <div className="flex flex-wrap gap-2">
           <Input
             type="date"
+            aria-label={t("Payment date", "Fecha del cobro")}
             value={repaymentDate}
             onChange={(event) => setRepaymentDate(event.target.value)}
             className="h-8 w-[150px] text-sm"
