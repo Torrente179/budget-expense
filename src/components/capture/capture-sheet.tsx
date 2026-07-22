@@ -32,6 +32,7 @@ import {
   writeCaptureDefaults,
 } from "@/lib/capture/defaults";
 import { CURRENCIES } from "@/lib/constants";
+import { isLoanCategoryName } from "@/lib/loans/is-loan-category";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { cn, normalizeDecimalInput, parseDecimalInput } from "@/lib/utils";
 import { useCurrency } from "@/providers/currency-provider";
@@ -83,7 +84,7 @@ export function CaptureSheet({
   const { t, tc } = useLocale();
   const { baseCurrency } = useCurrency();
   const { categories } = useCategories();
-  const { addExpense, addIncome, updateExpense, updateIncome, saving } =
+  const { addExpense, addLoan, addIncome, updateExpense, updateIncome, saving } =
     useCapture();
   const isMobile = useMediaQuery("(max-width: 767px)");
   const isEdit = mode === "edit";
@@ -94,6 +95,7 @@ export function CaptureSheet({
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
   const [source, setSource] = useState("");
+  const [borrowerName, setBorrowerName] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
   const [categoryTouched, setCategoryTouched] = useState(false);
   const [currency, setCurrency] = useState<string>(baseCurrency);
@@ -110,6 +112,7 @@ export function CaptureSheet({
     );
     setDescription(initialValues?.description ?? "");
     setSource(initialValues?.source ?? "");
+    setBorrowerName("");
     setCategoryId(initialValues?.categoryId ?? defaults.categoryId ?? "");
     setCurrency(initialValues?.currency ?? defaults.currency ?? baseCurrency);
     setDate(initialValues?.date ?? format(new Date(), "yyyy-MM-dd"));
@@ -157,6 +160,11 @@ export function CaptureSheet({
     [categories, categoryId]
   );
 
+  const isLoanExpense =
+    kind === "expense" &&
+    selectedCategory !== null &&
+    isLoanCategoryName(selectedCategory.name);
+
   // Base UI Select renders the raw value unless items (or a Value children
   // formatter) supplies labels — without this the trigger shows a UUID.
   const categoryItems = useMemo(
@@ -182,7 +190,8 @@ export function CaptureSheet({
     amountValid &&
     !saving &&
     (kind === "expense"
-      ? Boolean(selectedCategory)
+      ? Boolean(selectedCategory) &&
+        (!isLoanExpense || isEdit || borrowerName.trim().length > 0)
       : source.trim().length > 0);
 
   async function persistMovement() {
@@ -203,6 +212,32 @@ export function CaptureSheet({
           category_id: selectedCategory.id,
           date,
           description: trimmedDescription || null,
+        });
+        if (isLoanExpense && borrowerName.trim()) {
+          try {
+            await authorizedFetch("/api/loans", {
+              method: "POST",
+              body: JSON.stringify({
+                borrower_name: borrowerName.trim(),
+                principal: numericAmount,
+                currency: movementCurrency,
+                lent_date: date,
+                notes: trimmedDescription || null,
+                create_movement: false,
+                expense_id: initialValues.id,
+              }),
+            });
+          } catch {
+            // 409 = already linked; ignore. Other errors still leave the expense saved.
+          }
+        }
+      } else if (isLoanExpense) {
+        await addLoan({
+          borrower_name: borrowerName.trim(),
+          amount: numericAmount,
+          currency: movementCurrency,
+          date,
+          description: trimmedDescription || undefined,
         });
       } else {
         await addExpense(
@@ -263,6 +298,7 @@ export function CaptureSheet({
       // Keep kind + currency; clear amount/description for the next entry.
       setAmount("");
       setDescription("");
+      setBorrowerName("");
       setSuggestion(null);
       if (kind === "income") {
         // Keep source — same paycheck often repeats.
@@ -463,6 +499,31 @@ export function CaptureSheet({
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+            )}
+
+            {isLoanExpense && (
+              <div className="space-y-1.5">
+                <Label htmlFor="capture-borrower">
+                  {t("Borrower", "Persona")}
+                  {!isEdit && (
+                    <span className="text-muted-foreground"> *</span>
+                  )}
+                </Label>
+                <Input
+                  id="capture-borrower"
+                  autoComplete="off"
+                  placeholder={t("e.g. Ana", "p. ej. Ana")}
+                  value={borrowerName}
+                  onChange={(event) => setBorrowerName(event.target.value)}
+                  className="h-11"
+                />
+                <p className="text-caption text-muted-foreground">
+                  {t(
+                    "Also tracked under Wealth → Loans.",
+                    "También se registra en Patrimonio → Préstamos."
+                  )}
+                </p>
               </div>
             )}
 

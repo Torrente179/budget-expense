@@ -2,11 +2,20 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowRight, Landmark, PiggyBank, Timer, TrendingUp } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  Banknote,
+  Landmark,
+  PiggyBank,
+  Timer,
+  TrendingUp,
+} from "lucide-react";
 import { useHouseholdInsights } from "@/hooks/use-household-insights";
 import { useInvestments } from "@/hooks/use-investments";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
+import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { cn, formatCurrency } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
@@ -15,6 +24,10 @@ import { WealthNav } from "@/components/wealth/wealth-nav";
 import { FxExposureCard } from "@/components/wealth/fx-exposure-card";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import type { Database } from "@/types/database";
+
+type Loan = Database["public"]["Tables"]["loans"]["Row"];
+type LoanRepayment = Database["public"]["Tables"]["loan_repayments"]["Row"];
 
 /**
  * Wealth overview: what you own and owe, in one glance — net worth,
@@ -22,7 +35,7 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export function WealthOverview() {
   const { t } = useLocale();
-  const { baseCurrency } = useCurrency();
+  const { baseCurrency, convert } = useCurrency();
   const { insights, loading: insightsLoading } = useHouseholdInsights();
   const {
     overview,
@@ -32,6 +45,27 @@ export function WealthOverview() {
     loading: investmentsLoading,
   } = useInvestments();
 
+  const { data: loansData, isPending: loansLoading } = useQuery({
+    queryKey: ["loans"],
+    queryFn: () =>
+      authorizedFetch<{ loans: Loan[]; repayments: LoanRepayment[] }>(
+        "/api/loans"
+      ),
+  });
+
+  const loansOutstandingBase = useMemo(() => {
+    if (!loansData) return 0;
+    return loansData.loans
+      .filter((loan) => loan.is_active)
+      .reduce((sum, loan) => {
+        const repaid = loansData.repayments
+          .filter((repayment) => repayment.loan_id === loan.id)
+          .reduce((paid, repayment) => paid + Number(repayment.amount), 0);
+        const outstanding = Math.max(Number(loan.principal) - repaid, 0);
+        return sum + convert(outstanding, loan.currency);
+      }, 0);
+  }, [loansData, convert]);
+
   const accountCurrencies = useMemo(
     () =>
       Object.fromEntries(
@@ -40,12 +74,15 @@ export function WealthOverview() {
     [accounts]
   );
 
-  const loading = insightsLoading || investmentsLoading;
+  const loading = insightsLoading || investmentsLoading || loansLoading;
 
   const liabilitiesTotal = insights?.totalLiabilitiesBase ?? 0;
   const liquidReserves = totalSavingsBalance + overview.estimatedCash;
   const totalAssets =
-    overview.totalMarketValue + overview.estimatedCash + totalSavingsBalance;
+    overview.totalMarketValue +
+    overview.estimatedCash +
+    totalSavingsBalance +
+    loansOutstandingBase;
   const netWorth = totalAssets - liabilitiesTotal;
 
   const runwayMonths =
@@ -54,10 +91,6 @@ export function WealthOverview() {
     insights.essentialMonthlyAvg > 0
       ? liquidReserves / insights.essentialMonthlyAvg
       : null;
-
-  const keptIn12M = insights
-    ? Math.max(insights.income12M - insights.expenses12M, 0)
-    : 0;
 
   const allocation: DonutSlice[] = [
     {
@@ -77,6 +110,12 @@ export function WealthOverview() {
       name: t("Broker cash", "Caja de broker"),
       value: overview.estimatedCash,
       color: "var(--chart-3)",
+    },
+    {
+      id: "loans",
+      name: t("Loans lent", "Préstamos"),
+      value: loansOutstandingBase,
+      color: "var(--chart-4)",
     },
   ].filter((slice) => slice.value > 0);
 
@@ -100,12 +139,12 @@ export function WealthOverview() {
       tone: "default" as "default" | "negative",
     },
     {
-      key: "kept",
-      label: t("Kept over 12 mo", "Guardado en 12 meses"),
-      icon: PiggyBank,
-      value: formatCurrency(keptIn12M, baseCurrency),
-      detail: t("Income − spending", "Ingresos − gastos"),
-      href: undefined,
+      key: "loans",
+      label: t("Loans lent", "Préstamos"),
+      icon: Banknote,
+      value: formatCurrency(loansOutstandingBase, baseCurrency),
+      detail: t("Money others owe you", "Lo que te deben"),
+      href: "/wealth/loans",
       tone: "default" as const,
     },
     {
@@ -213,7 +252,7 @@ export function WealthOverview() {
           </div>
 
           {/* Jump-in links to the sub-sections */}
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {(
               [
                 {
@@ -227,6 +266,12 @@ export function WealthOverview() {
                   label: t("Savings", "Ahorros"),
                   value: formatCurrency(totalSavingsBalance, baseCurrency),
                   icon: PiggyBank,
+                },
+                {
+                  href: "/wealth/loans",
+                  label: t("Loans", "Préstamos"),
+                  value: formatCurrency(loansOutstandingBase, baseCurrency),
+                  icon: Banknote,
                 },
                 {
                   href: "/wealth/liabilities",

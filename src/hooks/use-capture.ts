@@ -21,6 +21,14 @@ export interface ExpenseCaptureValues {
   description?: string;
 }
 
+export interface LoanCaptureValues {
+  borrower_name: string;
+  amount: number;
+  currency: string;
+  date: string;
+  description?: string;
+}
+
 export interface IncomeCaptureValues {
   amount: number;
   currency: string;
@@ -195,6 +203,63 @@ export function useCapture() {
     },
   });
 
+  const addLoanMutation = useMutation({
+    mutationFn: async (values: LoanCaptureValues) =>
+      authorizedFetch<{ loan: { id: string; expense_id: string | null } }>(
+        "/api/loans",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            borrower_name: values.borrower_name.trim(),
+            principal: values.amount,
+            currency: values.currency,
+            lent_date: values.date,
+            notes: values.description?.trim() || null,
+            create_movement: true,
+          }),
+        }
+      ),
+    onError: () => {
+      toast.error(
+        t("Could not save the loan", "No se pudo guardar el préstamo")
+      );
+    },
+    onSuccess: async (result) => {
+      await Promise.all([
+        invalidateExpenses(),
+        queryClient.invalidateQueries({ queryKey: ["loans"] }),
+      ]);
+      const loanId = result.loan.id;
+      toast.success(
+        t(
+          "Loan added in Movements and Wealth",
+          "Préstamo añadido en Movimientos y Patrimonio"
+        ),
+        {
+          duration: 5000,
+          action: {
+            label: t("Undo", "Deshacer"),
+            onClick: () => {
+              void authorizedFetch(
+                `/api/loans/${loanId}?delete_expense=1`,
+                { method: "DELETE" }
+              )
+                .then(() =>
+                  Promise.all([
+                    invalidateExpenses(),
+                    queryClient.invalidateQueries({ queryKey: ["loans"] }),
+                  ])
+                )
+                .catch(() =>
+                  toast.error(t("Could not undo", "No se pudo deshacer"))
+                );
+            },
+          },
+        }
+      );
+    },
+  });
+
   const updateExpenseMutation = useMutation({
     mutationFn: async (input: {
       id: string;
@@ -234,6 +299,8 @@ export function useCapture() {
   return {
     addExpense: (values: ExpenseCaptureValues, category: Category) =>
       addExpenseMutation.mutateAsync({ values, category }),
+    addLoan: (values: LoanCaptureValues) =>
+      addLoanMutation.mutateAsync(values),
     addIncome: (values: IncomeCaptureValues) =>
       addIncomeMutation.mutateAsync(values),
     updateExpense: (
@@ -246,6 +313,7 @@ export function useCapture() {
     ) => updateIncomeMutation.mutateAsync({ id, updates }),
     saving:
       addExpenseMutation.isPending ||
+      addLoanMutation.isPending ||
       addIncomeMutation.isPending ||
       updateExpenseMutation.isPending ||
       updateIncomeMutation.isPending,

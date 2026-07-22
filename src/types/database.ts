@@ -465,6 +465,107 @@ export interface Database {
           },
         ];
       };
+      loans: {
+        Row: {
+          id: string;
+          user_id: string;
+          borrower_name: string;
+          principal: number;
+          currency: string;
+          lent_date: string;
+          notes: string | null;
+          is_active: boolean;
+          expense_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          borrower_name: string;
+          principal: number;
+          currency?: string;
+          lent_date?: string;
+          notes?: string | null;
+          is_active?: boolean;
+          expense_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          borrower_name?: string;
+          principal?: number;
+          currency?: string;
+          lent_date?: string;
+          notes?: string | null;
+          is_active?: boolean;
+          expense_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "loans_expense_id_fkey";
+            columns: ["expense_id"];
+            isOneToOne: false;
+            referencedRelation: "expenses";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      loan_repayments: {
+        Row: {
+          id: string;
+          loan_id: string;
+          user_id: string;
+          repayment_date: string;
+          amount: number;
+          currency: string;
+          note: string | null;
+          income_entry_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          loan_id: string;
+          user_id: string;
+          repayment_date?: string;
+          amount: number;
+          currency?: string;
+          note?: string | null;
+          income_entry_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          loan_id?: string;
+          user_id?: string;
+          repayment_date?: string;
+          amount?: number;
+          currency?: string;
+          note?: string | null;
+          income_entry_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "loan_repayments_loan_id_fkey";
+            columns: ["loan_id"];
+            isOneToOne: false;
+            referencedRelation: "loans";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "loan_repayments_income_entry_id_fkey";
+            columns: ["income_entry_id"];
+            isOneToOne: false;
+            referencedRelation: "income_entries";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       budgets: {
         Row: {
           id: string;

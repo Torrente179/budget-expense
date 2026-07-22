@@ -16,6 +16,7 @@ const SECTION_ITEMS = [
     label: { en: "Investments", es: "Inversiones" },
   },
   { href: "/wealth/savings", label: { en: "Savings", es: "Ahorros" } },
+  { href: "/wealth/loans", label: { en: "Loans", es: "Préstamos" } },
   { href: "/wealth/liabilities", label: { en: "Debts", es: "Deudas" } },
 ] as const;
 
