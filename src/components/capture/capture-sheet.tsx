@@ -108,7 +108,6 @@ export function CaptureSheet({
   const [kind, setKind] = useState<CaptureKind>(initialKind);
   const [amount, setAmount] = useState("");
   const [description, setDescription] = useState("");
-  const [source, setSource] = useState("");
   const [borrowerName, setBorrowerName] = useState("");
   const [loanId, setLoanId] = useState("");
   const [categoryId, setCategoryId] = useState<string>("");
@@ -137,7 +136,6 @@ export function CaptureSheet({
       initialValues?.amount !== undefined ? String(initialValues.amount) : ""
     );
     setDescription(initialValues?.description ?? "");
-    setSource(initialValues?.source ?? "");
     setBorrowerName("");
     setLoanId("");
     setCategoryId(initialValues?.categoryId ?? defaults.categoryId ?? "");
@@ -264,7 +262,7 @@ export function CaptureSheet({
         (!isLoanExpense || isEdit || borrowerName.trim().length > 0)
       : isLoanIncome
         ? Boolean(selectedCategory) && Boolean(loanId)
-        : Boolean(selectedCategory) && source.trim().length > 0);
+        : Boolean(selectedCategory));
 
   async function persistMovement() {
     const numericAmount = parsedAmount as number;
@@ -336,7 +334,7 @@ export function CaptureSheet({
             `Loan repayment — ${loanBorrower}`,
             `Cobro de préstamo — ${loanBorrower}`
           )
-        : source.trim();
+        : tc(selectedCategory.name);
 
       if (isEdit && initialValues?.id) {
         await updateIncome(initialValues.id, {
@@ -386,11 +384,7 @@ export function CaptureSheet({
       setBorrowerName("");
       setLoanId("");
       setSuggestion(null);
-      if (kind === "income") {
-        // Keep source — same paycheck often repeats.
-      } else {
-        // Keep category from last expense (already in defaults).
-      }
+      // Keep category from last entry (already in defaults for expenses).
       setTimeout(() => amountRef.current?.focus(), 50);
     } catch {
       // Keep sheet open with current values.
@@ -500,20 +494,6 @@ export function CaptureSheet({
                 </Select>
               </div>
             </div>
-
-            {kind === "income" && !isLoanIncome && (
-              <div className="space-y-1.5">
-                <Label htmlFor="capture-source">{t("Source", "Fuente")}</Label>
-                <Input
-                  id="capture-source"
-                  autoComplete="off"
-                  placeholder={t("e.g. Salary", "p. ej. Nómina")}
-                  value={source}
-                  onChange={(event) => setSource(event.target.value)}
-                  className="h-11"
-                />
-              </div>
-            )}
 
             <div className="space-y-1.5">
               <Label htmlFor="capture-description">

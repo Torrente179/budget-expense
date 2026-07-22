@@ -50,9 +50,9 @@ const iconMap: Record<string, LucideIcon> = {
   "circle-dollar-sign": CircleDollarSign,
 };
 
-/** Elevated surface for category menus nested inside sheets/dialogs. */
+/** Elevated, high-contrast surface for category menus nested inside sheets. */
 export const CATEGORY_SELECT_CONTENT_CLASS =
-  "border border-border bg-card shadow-3 ring-1 ring-foreground/8";
+  "border-2 border-foreground/20 bg-card shadow-3 ring-1 ring-foreground/10";
 
 interface CategoryBadgeProps {
   name: string;
