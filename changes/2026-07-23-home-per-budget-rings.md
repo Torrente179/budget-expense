@@ -9,10 +9,11 @@ Home “Monthly budgets” shows one pace ring per budget (spent ÷ limit) inste
 - One ring per budget with name and spent/limit.
 - Ring size ladder: 1 → 88px, 2 → 76px, 3 → 64px (and smaller only if a page somehow has 4+).
 - Max 3 rings per page; swipe or tap dots for more.
+- Rings distribute evenly across the card width (`repeat(n, 1fr)` grid) so 2–3 don’t cluster left.
 - Pace colors (green / amber / red) and month-progress mark kept; category coloring deferred.
 
 ## Validation
 
-- 1–3 budgets: single page, no dots.
+- 1–3 budgets: single page, no dots; 2–3 fill the card evenly.
 - 4+ budgets: snap pages + active page indicator.
 - Last page with 1–2 leftover budgets uses the larger size for that count.

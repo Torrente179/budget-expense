@@ -66,14 +66,12 @@ function resolveRingLayout(count: number): {
   size: number;
   strokeWidth: number;
   percentClass: string;
-  maxWidth: string;
 } {
   if (count <= 1) {
     return {
       size: 88,
       strokeWidth: 8,
       percentClass: "text-lg",
-      maxWidth: "w-[6.5rem]",
     };
   }
   if (count === 2) {
@@ -81,7 +79,6 @@ function resolveRingLayout(count: number): {
       size: 76,
       strokeWidth: 7,
       percentClass: "text-base",
-      maxWidth: "w-[6rem]",
     };
   }
   if (count === 3) {
@@ -89,14 +86,12 @@ function resolveRingLayout(count: number): {
       size: 64,
       strokeWidth: 6,
       percentClass: "text-sm",
-      maxWidth: "w-[5.25rem]",
     };
   }
   return {
     size: 56,
     strokeWidth: 5,
     percentClass: "text-xs",
-    maxWidth: "w-[4.75rem]",
   };
 }
 
@@ -201,10 +196,7 @@ function BudgetRing({
     <Link
       href="/budget"
       role="listitem"
-      className={cn(
-        "flex flex-col items-center gap-1.5 rounded-xl px-1 py-1 transition-colors hover:bg-accent/50 active:bg-accent/70",
-        layout.maxWidth
-      )}
+      className="flex min-w-0 w-full flex-col items-center gap-1.5 rounded-xl px-1 py-1 transition-colors hover:bg-accent/50 active:bg-accent/70"
       aria-label={t(
         `${budget.name}: ${pct}% used`,
         `${budget.name}: ${pct}% usado`
@@ -259,10 +251,19 @@ function BudgetPage({
   isCurrentMonth: boolean;
 }) {
   const layout = resolveRingLayout(budgets.length);
+  const count = budgets.length;
 
   return (
     <div
-      className="flex flex-wrap justify-center gap-x-3 gap-y-4 sm:justify-start"
+      className={cn(
+        "grid w-full gap-y-3",
+        count === 1 && "place-items-center"
+      )}
+      style={
+        count > 1
+          ? { gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }
+          : undefined
+      }
       role="list"
     >
       {budgets.map((budget) => (
