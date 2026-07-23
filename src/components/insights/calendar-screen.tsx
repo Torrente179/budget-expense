@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { Repeat } from "lucide-react";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
@@ -46,6 +47,7 @@ export function CalendarScreen() {
   const { t, tc, intlLocale, locale } = useLocale();
   const { convert, baseCurrency } = useCurrency();
   const { month, year, setMonthYear } = useMonth();
+  const searchParams = useSearchParams();
   useMonthSnapshot({ month, year, asOfDate: getTodayIsoDate() });
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
 
@@ -60,6 +62,14 @@ export function CalendarScreen() {
   const todayDay = today.getDate();
   const daysInMonth = new Date(year, month, 0).getDate();
   const firstDay = new Date(year, month - 1, 1).getDay();
+  const dayFromQuery = Number(searchParams.get("day"));
+
+  useEffect(() => {
+    if (!Number.isFinite(dayFromQuery)) return;
+    if (dayFromQuery >= 1 && dayFromQuery <= daysInMonth) {
+      setSelectedDay(dayFromQuery);
+    }
+  }, [dayFromQuery, daysInMonth]);
 
   const dayEntries = useMemo(() => {
     const map = new Map<number, DayEntry[]>();

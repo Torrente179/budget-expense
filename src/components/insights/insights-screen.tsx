@@ -66,6 +66,23 @@ export function InsightsScreen() {
     [router, month, year]
   );
 
+  const handleDayClick = useCallback(
+    (day: number) => {
+      router.push(`/insights/calendar?day=${day}`);
+    },
+    [router]
+  );
+
+  const handleMonthClick = useCallback(
+    (monthKey: string) => {
+      const [nextYear, nextMonth] = monthKey.split("-").map(Number);
+      if (!nextYear || !nextMonth) return;
+      setMonthYear(nextMonth, nextYear);
+      router.push("/movements?tab=expenses");
+    },
+    [router, setMonthYear]
+  );
+
   /* Key ratios */
   const savingsRate =
     summary.totalIncome > 0
@@ -110,6 +127,7 @@ export function InsightsScreen() {
     return Array.from({ length: endDay }, (_, i) => i + 1).map((day) => {
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
       return {
+        day,
         label: new Intl.DateTimeFormat(intlLocale, {
           day: "numeric",
         }).format(parseISO(dateStr)),
@@ -337,6 +355,8 @@ export function InsightsScreen() {
             dailySpendData={dailySpendData}
             intlLocale={intlLocale}
             baseCurrency={baseCurrency}
+            onMonthClick={handleMonthClick}
+            onDayClick={handleDayClick}
           />
 
           {/* Budget utilization */}

@@ -22,9 +22,11 @@ import { useLocale } from "@/providers/locale-provider";
 
 export interface InsightsTrendChartsProps {
   trendData: Array<{ month: string; label: string; total: number }>;
-  dailySpendData: Array<{ label: string; total: number }>;
+  dailySpendData: Array<{ day: number; label: string; total: number }>;
   intlLocale: string;
   baseCurrency: string;
+  onMonthClick?: (monthKey: string) => void;
+  onDayClick?: (day: number) => void;
 }
 
 export function InsightsTrendCharts({
@@ -32,6 +34,8 @@ export function InsightsTrendCharts({
   dailySpendData,
   intlLocale,
   baseCurrency,
+  onMonthClick,
+  onDayClick,
 }: InsightsTrendChartsProps) {
   const { t } = useLocale();
   const tooltipFormatter = currencyTooltipFormatter(intlLocale, baseCurrency);
@@ -43,7 +47,16 @@ export function InsightsTrendCharts({
         title={t("Monthly spending, 12 months", "Gasto mensual, 12 meses")}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <BarChart data={trendData}>
+          <BarChart
+            data={trendData}
+            className={onMonthClick ? "cursor-pointer" : undefined}
+            onClick={(state) => {
+              const monthKey = state?.activePayload?.[0]?.payload?.month as
+                | string
+                | undefined;
+              if (monthKey) onMonthClick?.(monthKey);
+            }}
+          >
             <CartesianGrid {...chartGridProps} />
             <XAxis dataKey="label" {...chartAxisProps} />
             <YAxis
@@ -75,7 +88,16 @@ export function InsightsTrendCharts({
         title={t("Daily spending", "Gasto diario")}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <BarChart data={dailySpendData}>
+          <BarChart
+            data={dailySpendData}
+            className={onDayClick ? "cursor-pointer" : undefined}
+            onClick={(state) => {
+              const day = state?.activePayload?.[0]?.payload?.day as
+                | number
+                | undefined;
+              if (typeof day === "number") onDayClick?.(day);
+            }}
+          >
             <CartesianGrid {...chartGridProps} />
             <XAxis
               dataKey="label"
@@ -100,6 +122,7 @@ export function InsightsTrendCharts({
               fill={SPEND_CHART_COLOR}
               radius={[3, 3, 0, 0]}
               maxBarSize={18}
+              minPointSize={2}
               isAnimationActive={false}
             />
           </BarChart>
