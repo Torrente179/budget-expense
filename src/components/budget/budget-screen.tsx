@@ -32,6 +32,7 @@ import type { BudgetingMethod } from "@/lib/budgeting-methods";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
+import { BudgetPaceChart } from "@/components/home/budget-pace-chart";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -403,6 +404,27 @@ export function BudgetScreen() {
     );
   }
 
+  const budgetsView = useMemo(
+    () =>
+      customBudgets
+        .map((budget) => {
+          const metrics = budgetMetrics.find((m) => m.id === budget.id);
+          return {
+            id: budget.id,
+            name: budget.name,
+            limit: metrics?.resolved ?? 0,
+            spent: metrics?.spent ?? 0,
+            ratio: metrics?.ratio ?? 0,
+          };
+        })
+        .sort((a, b) => {
+          const ar = Number.isFinite(a.ratio) ? a.ratio : Number.MAX_VALUE;
+          const br = Number.isFinite(b.ratio) ? b.ratio : Number.MAX_VALUE;
+          return br - ar;
+        }),
+    [customBudgets, budgetMetrics]
+  );
+
   const isLoading = loading || planLoading;
 
   const buildBudgetsActions = (
@@ -519,336 +541,346 @@ export function BudgetScreen() {
               </CardContent>
             </Card>
           ) : (
-            <Card>
-              <CardHeader>
-                <SectionHeader
-                  eyebrow={t("This month", "Este mes")}
-                  title={t("Your plan", "Tu plan")}
-                  action={
-                    <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-fit gap-1.5"
-                        disabled={seeding}
-                        onClick={openMethodSheet}
-                      >
-                        {seeding ? (
-                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                        ) : (
-                          <BookOpen className="h-3.5 w-3.5" />
-                        )}
-                        <span className="hidden sm:inline">
-                          {t("Methods", "Métodos")}
-                        </span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={openPlanSheet}
-                      >
-                        <CircleDollarSign className="h-4 w-4" />
-                        <span className="hidden md:inline">
-                          {t("Set monthly plan", "Definir plan mensual")}
-                        </span>
-                      </Button>
-                    </div>
-                  }
-                />
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {hasBudgets ? (
-                  <div className="space-y-1.5">
-                    <div className="flex items-baseline justify-between gap-3">
-                      <span
-                        className={cn(
-                          "font-mono text-display tabular-nums",
-                          totalRemaining >= 0
-                            ? "text-foreground"
-                            : "text-expense"
-                        )}
-                      >
-                        {formatCurrency(totalRemaining, baseCurrency)}
-                      </span>
-                      <span className="text-caption text-muted-foreground">
-                        {totalRemaining >= 0
-                          ? t("left to spend", "restante para gastar")
-                          : t("over budget", "sobre el presupuesto")}
-                      </span>
-                    </div>
-                    <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
-                      <div
-                        className="h-full rounded-full transition-[width] duration-500 ease-out"
-                        style={{
-                          width: `${Math.min(
-                            Number.isFinite(consumedRatio) ? consumedRatio : 1,
-                            1
-                          ) * 100}%`,
-                          backgroundColor: overviewColor,
-                        }}
-                      />
-                      {isCurrentMonth && (
-                        <div
-                          aria-hidden
-                          className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/60"
-                          style={{ left: `${monthProgress * 100}%` }}
-                        />
-                      )}
-                    </div>
-                    <p className="text-caption text-muted-foreground">
-                      <span className="font-mono tabular-nums text-expense">
-                        {formatCurrency(totalConsumed, baseCurrency)}
-                      </span>{" "}
-                      {t("spent of", "gastado de")}{" "}
-                      <span className="font-mono tabular-nums">
-                        {formatCurrency(totalBudgeted, baseCurrency)}
-                      </span>{" "}
-                      {t("budgeted", "presupuestado")}
-                      {isCurrentMonth &&
-                        ` · ${t(`day ${dayOfMonth} of ${daysInMonth}`, `día ${dayOfMonth} de ${daysInMonth}`)}`}
-                    </p>
-                  </div>
-                ) : needsBudgets ? (
-                  <div className="space-y-3">
-                    <p className="text-body text-muted-foreground">
-                      {t(
-                        "Income is set. Create budgets with a method, or build them yourself.",
-                        "El ingreso está listo. Crea presupuestos con un método, o ármalos tú."
-                      )}
-                    </p>
-                    {buildBudgetsActions}
-                  </div>
-                ) : null}
-
-                {hasPlan && (
-                  <p className="text-caption text-muted-foreground">
-                    {t(
-                      `Plan: ${formatCurrency(incomeAmount ?? 0, baseCurrency)} income · ${plan?.allocation_percent}% allocated to budgets`,
-                      `Plan: ${formatCurrency(incomeAmount ?? 0, baseCurrency)} de ingreso · ${plan?.allocation_percent}% asignado a presupuestos`
-                    )}
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          {!needsSetup && (
-            <Card>
-              <CardHeader>
-                <SectionHeader
-                  eyebrow={t("Budgets", "Presupuestos")}
-                  title={t("Your budgets", "Tus presupuestos")}
-                  description={t(
-                    "Each one groups categories and warns you before it runs out.",
-                    "Cada uno agrupa categorías y te avisa antes de agotarse."
-                  )}
-                  action={
-                    <div className="flex items-center gap-1.5">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="gap-1.5"
-                        onClick={handleCopy}
-                        disabled={copying}
-                        aria-label={t(
-                          "Copy budgets from last month",
-                          "Copiar presupuestos del mes anterior"
-                        )}
-                      >
-                        {copying ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Copy className="h-4 w-4" />
-                        )}
-                        <span className="hidden md:inline">
-                          {t("Copy last month", "Copiar mes anterior")}
-                        </span>
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="w-fit gap-1.5"
-                        onClick={() => openBudgetSheet()}
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span className="hidden sm:inline">
-                          {t("New budget", "Nuevo presupuesto")}
-                        </span>
-                        <span className="sm:hidden">{t("New", "Nuevo")}</span>
-                      </Button>
-                    </div>
-                  }
-                />
-              </CardHeader>
-              <CardContent className="space-y-1">
-                {customBudgets.length === 0 ? (
-                  <div className="space-y-3 py-2">
-                    <p className="text-body text-muted-foreground">
-                      {t(
-                        'Nothing yet. Use a method like 50/30/20, or create "Essentials" for housing and groceries.',
-                        'Aún nada. Usa un método como 50/30/20, o crea "Esenciales" con vivienda y mercado.'
-                      )}
-                    </p>
-                    {buildBudgetsActions}
-                  </div>
-                ) : (
-                  <>
-                    {customBudgets.map((budget) => {
-                      const metrics = budgetMetrics.find(
-                        (m) => m.id === budget.id
-                      );
-                      const spent = metrics?.spent ?? 0;
-                      const limit = metrics?.resolved ?? 0;
-                      const ratio = metrics?.ratio ?? 0;
-                      const remaining = limit - spent;
-                      const usageColor = budgetUsageColorForRatio(ratio);
-                      return (
-                        <div
-                          key={budget.id}
-                          className="group flex items-center gap-2"
-                        >
-                          <button
-                            type="button"
-                            onClick={() => openBudgetSheet(budget)}
-                            className="min-w-0 flex-1 space-y-1.5 rounded-lg px-2 py-2.5 text-left transition-colors hover:bg-accent/50"
+            <div className="grid gap-4 lg:grid-cols-5 lg:grid-flow-dense">
+              {/* Plan — first on mobile; top-right on desktop */}
+              <div className="order-1 min-w-0 lg:order-2 lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <SectionHeader
+                      eyebrow={t("This month", "Este mes")}
+                      title={t("Your plan", "Tu plan")}
+                      action={
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-fit gap-1.5"
+                            disabled={seeding}
+                            onClick={openMethodSheet}
                           >
-                            <div className="flex items-center justify-between gap-3">
-                              <span className="min-w-0 truncate text-body font-medium">
-                                {budget.name}
-                                <span className="ml-2 text-caption font-normal text-muted-foreground">
-                                  {t(
-                                    `${budget.custom_budget_categories.length} ${budget.custom_budget_categories.length === 1 ? "category" : "categories"}`,
-                                    `${budget.custom_budget_categories.length} ${budget.custom_budget_categories.length === 1 ? "categoría" : "categorías"}`
-                                  )}
-                                </span>
-                              </span>
-                              <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                                <span className="text-expense">
-                                  {formatCurrency(spent, baseCurrency)}
-                                </span>
-                                {" / "}
-                                {formatCurrency(limit, baseCurrency)}
-                              </span>
-                            </div>
-                            <ProgressMeter ratio={ratio} className="h-1.5" />
-                            <p
-                              className={cn(
-                                "text-caption",
-                                remaining >= 0 && "text-muted-foreground"
-                              )}
-                              style={
-                                remaining < 0
-                                  ? { color: usageColor }
-                                  : undefined
-                              }
-                            >
-                              {remaining >= 0
-                                ? t(
-                                    `${formatCurrency(remaining, baseCurrency)} left`,
-                                    `${formatCurrency(remaining, baseCurrency)} restante`
-                                  )
-                                : t(
-                                    `${formatCurrency(Math.abs(remaining), baseCurrency)} over`,
-                                    `${formatCurrency(Math.abs(remaining), baseCurrency)} excedido`
-                                  )}
-                            </p>
-                          </button>
-                          <button
-                            type="button"
-                            aria-label={t(
-                              "Delete budget",
-                              "Eliminar presupuesto"
+                            {seeding ? (
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                            ) : (
+                              <BookOpen className="h-3.5 w-3.5" />
                             )}
-                            onClick={() => setDeleteId(budget.id)}
-                            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-danger-subtle hover:text-danger"
+                            <span className="hidden sm:inline">
+                              {t("Methods", "Métodos")}
+                            </span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={openPlanSheet}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                            <CircleDollarSign className="h-4 w-4" />
+                            <span className="hidden lg:inline">
+                              {t("Plan", "Plan")}
+                            </span>
+                          </Button>
                         </div>
-                      );
-                    })}
-                    {unallocatedSpent > 0 && (
-                      <p className="px-2 pt-2 text-caption text-muted-foreground">
-                        +{" "}
-                        <span className="font-mono tabular-nums text-expense">
-                          {formatCurrency(unallocatedSpent, baseCurrency)}
-                        </span>{" "}
+                      }
+                    />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {hasBudgets ? (
+                      <div className="space-y-1.5">
+                        <div className="flex flex-col gap-1">
+                          <span
+                            className={cn(
+                              "font-mono text-title font-semibold tabular-nums tracking-tight",
+                              totalRemaining >= 0
+                                ? "text-foreground"
+                                : "text-expense"
+                            )}
+                          >
+                            {formatCurrency(totalRemaining, baseCurrency)}
+                          </span>
+                          <span className="text-caption text-muted-foreground">
+                            {totalRemaining >= 0
+                              ? t("left to spend", "restante para gastar")
+                              : t("over budget", "sobre el presupuesto")}
+                          </span>
+                        </div>
+                        <div className="relative h-2 max-w-xs overflow-hidden rounded-full bg-secondary">
+                          <div
+                            className="h-full rounded-full transition-[width] duration-500 ease-out"
+                            style={{
+                              width: `${
+                                Math.min(
+                                  Number.isFinite(consumedRatio)
+                                    ? consumedRatio
+                                    : 1,
+                                  1
+                                ) * 100
+                              }%`,
+                              backgroundColor: overviewColor,
+                            }}
+                          />
+                          {isCurrentMonth && (
+                            <div
+                              aria-hidden
+                              className="absolute inset-y-0 w-0.5 rounded-full bg-foreground/60"
+                              style={{ left: `${monthProgress * 100}%` }}
+                            />
+                          )}
+                        </div>
+                        <p className="text-caption text-muted-foreground">
+                          <span className="font-mono tabular-nums text-expense">
+                            {formatCurrency(totalConsumed, baseCurrency)}
+                          </span>{" "}
+                          {t("spent of", "gastado de")}{" "}
+                          <span className="font-mono tabular-nums">
+                            {formatCurrency(totalBudgeted, baseCurrency)}
+                          </span>
+                          {isCurrentMonth &&
+                            ` · ${t(`day ${dayOfMonth}/${daysInMonth}`, `día ${dayOfMonth}/${daysInMonth}`)}`}
+                        </p>
+                      </div>
+                    ) : needsBudgets ? (
+                      <div className="space-y-3">
+                        <p className="text-body text-muted-foreground">
+                          {t(
+                            "Income is set. Create budgets with a method, or build them yourself.",
+                            "El ingreso está listo. Crea presupuestos con un método, o ármalos tú."
+                          )}
+                        </p>
+                        {buildBudgetsActions}
+                      </div>
+                    ) : null}
+
+                    {hasPlan && (
+                      <p className="text-caption text-muted-foreground">
                         {t(
-                          "spent outside these budgets (includes Generosidad below)",
-                          "gastado fuera de estos presupuestos (incluye Generosidad abajo)"
+                          `Plan: ${formatCurrency(incomeAmount ?? 0, baseCurrency)} income · ${plan?.allocation_percent}% to budgets`,
+                          `Plan: ${formatCurrency(incomeAmount ?? 0, baseCurrency)} de ingreso · ${plan?.allocation_percent}% a presupuestos`
                         )}
                       </p>
                     )}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-          )}
-
-          <Card>
-            <CardHeader>
-              <SectionHeader
-                eyebrow={t("First fruits", "Primicias")}
-                title={t("Giving", "Generosidad")}
-                action={
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-success-subtle text-success">
-                    <HandHeart className="h-4.5 w-4.5" />
-                  </div>
-                }
-              />
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-baseline justify-between gap-3">
-                <p className="font-mono text-title font-semibold tabular-nums">
-                  {givingTarget > 0
-                    ? formatCurrency(givingTarget, baseCurrency)
-                    : "—"}
-                </p>
-                <p className="text-caption text-muted-foreground">
-                  {t(
-                    `${titheTarget}% of income`,
-                    `${titheTarget}% del ingreso`
-                  )}
-                </p>
+                  </CardContent>
+                </Card>
               </div>
-              {givingRatio !== null ? (
-                <>
-                  <ProgressMeter
-                    ratio={givingRatio}
-                    tone={givingRatio >= 1 ? "success" : "neutral"}
-                  />
-                  <p className="text-caption text-muted-foreground">
-                    {givingRatio >= 1 ? (
-                      <>
-                        {t("Target reached —", "Meta alcanzada —")}{" "}
-                        <span className="font-mono tabular-nums text-negative">
-                          {formatCurrency(givingSpent, baseCurrency)}
-                        </span>{" "}
-                        {t("given.", "dado.")}
-                      </>
+
+              {/* Budgets — main column */}
+              <div className="order-2 min-w-0 lg:order-1 lg:col-span-3 lg:row-span-2">
+                <Card className="h-full">
+                  <CardHeader>
+                    <SectionHeader
+                      eyebrow={t("Budgets", "Presupuestos")}
+                      title={t("Your budgets", "Tus presupuestos")}
+                      description={t(
+                        "Tap a ring to edit. Each groups categories and warns before it runs out.",
+                        "Toca un anillo para editar. Cada uno agrupa categorías y avisa antes de agotarse."
+                      )}
+                      action={
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={handleCopy}
+                            disabled={copying}
+                            aria-label={t(
+                              "Copy budgets from last month",
+                              "Copiar presupuestos del mes anterior"
+                            )}
+                          >
+                            {copying ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Copy className="h-4 w-4" />
+                            )}
+                            <span className="hidden md:inline">
+                              {t("Copy last month", "Copiar mes anterior")}
+                            </span>
+                          </Button>
+                          <Button
+                            size="sm"
+                            className="w-fit gap-1.5"
+                            onClick={() => openBudgetSheet()}
+                          >
+                            <Plus className="h-4 w-4" />
+                            <span className="hidden sm:inline">
+                              {t("New budget", "Nuevo presupuesto")}
+                            </span>
+                            <span className="sm:hidden">
+                              {t("New", "Nuevo")}
+                            </span>
+                          </Button>
+                        </div>
+                      }
+                    />
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {customBudgets.length === 0 ? (
+                      <div className="space-y-3 py-2">
+                        <p className="text-body text-muted-foreground">
+                          {t(
+                            'Nothing yet. Use a method like 50/30/20, or create "Essentials" for housing and groceries.',
+                            'Aún nada. Usa un método como 50/30/20, o crea "Esenciales" con vivienda y mercado.'
+                          )}
+                        </p>
+                        {buildBudgetsActions}
+                      </div>
                     ) : (
                       <>
-                        <span className="font-mono tabular-nums text-negative">
-                          {formatCurrency(givingSpent, baseCurrency)}
-                        </span>{" "}
-                        {t("given ·", "dado ·")}{" "}
-                        {t(
-                          `${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)} left`,
-                          `faltan ${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)}`
+                        <BudgetPaceChart
+                          budgets={budgetsView}
+                          monthProgress={monthProgress}
+                          isCurrentMonth={isCurrentMonth}
+                          onSelect={(id) => {
+                            const budget = customBudgets.find((b) => b.id === id);
+                            if (budget) openBudgetSheet(budget);
+                          }}
+                        />
+                        <div className="divide-y divide-border/40 border-t border-border/40 pt-1">
+                          {customBudgets.map((budget) => {
+                            const metrics = budgetMetrics.find(
+                              (m) => m.id === budget.id
+                            );
+                            const spent = metrics?.spent ?? 0;
+                            const limit = metrics?.resolved ?? 0;
+                            const remaining = limit - spent;
+                            const usageColor = budgetUsageColorForRatio(
+                              metrics?.ratio ?? 0
+                            );
+                            return (
+                              <div
+                                key={budget.id}
+                                className="flex items-center gap-2 py-2"
+                              >
+                                <button
+                                  type="button"
+                                  onClick={() => openBudgetSheet(budget)}
+                                  className="min-w-0 flex-1 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/50"
+                                >
+                                  <div className="flex items-baseline justify-between gap-3">
+                                    <span className="truncate text-body font-medium">
+                                      {budget.name}
+                                    </span>
+                                    <span
+                                      className="shrink-0 font-mono text-caption tabular-nums"
+                                      style={
+                                        remaining < 0
+                                          ? { color: usageColor }
+                                          : undefined
+                                      }
+                                    >
+                                      {remaining >= 0
+                                        ? t(
+                                            `${formatCurrency(remaining, baseCurrency)} left`,
+                                            `${formatCurrency(remaining, baseCurrency)} restante`
+                                          )
+                                        : t(
+                                            `${formatCurrency(Math.abs(remaining), baseCurrency)} over`,
+                                            `${formatCurrency(Math.abs(remaining), baseCurrency)} excedido`
+                                          )}
+                                    </span>
+                                  </div>
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label={t(
+                                    "Delete budget",
+                                    "Eliminar presupuesto"
+                                  )}
+                                  onClick={() => setDeleteId(budget.id)}
+                                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-danger-subtle hover:text-danger"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {unallocatedSpent > 0 && (
+                          <p className="px-2 text-caption text-muted-foreground">
+                            +{" "}
+                            <span className="font-mono tabular-nums text-expense">
+                              {formatCurrency(unallocatedSpent, baseCurrency)}
+                            </span>{" "}
+                            {t(
+                              "spent outside these budgets (includes Generosidad)",
+                              "gastado fuera de estos presupuestos (incluye Generosidad)"
+                            )}
+                          </p>
                         )}
                       </>
                     )}
-                  </p>
-                </>
-              ) : (
-                <p className="text-caption text-muted-foreground">
-                  {t(
-                    "Set monthly income in your plan — Generosidad is a share of income, not of expenses.",
-                    "Define el ingreso en tu plan — Generosidad es un porcentaje del ingreso, no de los gastos."
-                  )}
-                </p>
-              )}
-            </CardContent>
-          </Card>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Giving — after budgets on mobile; under plan on desktop */}
+              <div className="order-3 min-w-0 lg:order-3 lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <SectionHeader
+                      eyebrow={t("First fruits", "Primicias")}
+                      title={t("Giving", "Generosidad")}
+                      action={
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-success-subtle text-success">
+                          <HandHeart className="h-4.5 w-4.5" />
+                        </div>
+                      }
+                    />
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex flex-col gap-1">
+                      <p className="font-mono text-title font-semibold tabular-nums tracking-tight">
+                        {givingTarget > 0
+                          ? formatCurrency(givingTarget, baseCurrency)
+                          : "—"}
+                      </p>
+                      <p className="text-caption text-muted-foreground">
+                        {t(
+                          `${titheTarget}% of income`,
+                          `${titheTarget}% del ingreso`
+                        )}
+                      </p>
+                    </div>
+                    {givingRatio !== null ? (
+                      <>
+                        <ProgressMeter
+                          ratio={givingRatio}
+                          tone={givingRatio >= 1 ? "success" : "neutral"}
+                          className="max-w-xs"
+                        />
+                        <p className="text-caption text-muted-foreground">
+                          {givingRatio >= 1 ? (
+                            <>
+                              {t("Target reached —", "Meta alcanzada —")}{" "}
+                              <span className="font-mono tabular-nums text-expense">
+                                {formatCurrency(givingSpent, baseCurrency)}
+                              </span>{" "}
+                              {t("given.", "dado.")}
+                            </>
+                          ) : (
+                            <>
+                              <span className="font-mono tabular-nums text-expense">
+                                {formatCurrency(givingSpent, baseCurrency)}
+                              </span>{" "}
+                              {t("given ·", "dado ·")}{" "}
+                              {t(
+                                `${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)} left`,
+                                `faltan ${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)}`
+                              )}
+                            </>
+                          )}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="text-caption text-muted-foreground">
+                        {t(
+                          "Set monthly income in your plan — Generosidad is a share of income, not of expenses.",
+                          "Define el ingreso en tu plan — Generosidad es un porcentaje del ingreso, no de los gastos."
+                        )}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
         </>
       )}
 

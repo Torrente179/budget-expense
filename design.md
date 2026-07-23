@@ -31,9 +31,9 @@ of truth for every nav surface is
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — stat row (Income · Spent · Current · Giving as income-based target), monthly-budgets area with calendar-pace bar, category donut ("Where it went"), attention feed, recent movements, desktop-only shortcuts. Current month only, everything actionable. |
+| **Home** | `/home` | "How am I doing right now" — cashflow stats (Income · Spent · Available · Giving) with matching label swatches; one usage-band ring per budget (swipe when &gt;3); category donut ("Where it went"); attention feed; recent movements; desktop-only shortcuts. Desktop: movements left, budgets+donut stacked right. Current month primary, everything actionable. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
-| **Budget** | `/budget` | Guided 3-step setup on first run (income plan → method → objectives); then "Your plan" overview with paced remaining, an objectives list (tap to edit; always-visible delete), and the standing Giving card. Monthly plan is deletable from the plan sheet. |
+| **Budget** | `/budget` | Guided 3-step setup on first run; then desktop two-column (budgets+rings left; plan + Giving stacked right). Same usage bands as Home. Mobile: Plan → Budgets → Giving. |
 | **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts. If it's a balance, it lives here. |
 | **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, 12-month trend, pillars, category breakdown, envelope utilization, anomalies, monthly report, calendar. No data-entry CTAs. |
 
@@ -58,9 +58,12 @@ live in more than one section.
 All tokens live in [`src/app/globals.css`](src/app/globals.css): raw values on
 `:root` (light) and `.dark`, exposed to Tailwind through `@theme inline`.
 **Both themes must define every token. Never hard-code hex, shadow, radius, or
-font-size values in components.** The one sanctioned exception is dynamic,
-data-driven **category color** (stored per category in the DB, applied via
-inline `style`, flowing through `CategoryBadge`/`CategoryIcon`).
+font-size values in components** except:
+
+1. Dynamic **category color** (DB hex via `CategoryBadge` / donut inline style).
+2. **Budget usage-band** hex from [`src/lib/palette.ts`](src/lib/palette.ts)
+   (Home rings / Budget meters). Cashflow amounts use CSS vars
+   (`income` / `available` / `expense`).
 
 ### 2.1 Color
 
@@ -69,16 +72,50 @@ inline `style`, flowing through `CategoryBadge`/`CategoryIcon`).
   `sidebar-*` group. Near-monochrome; color is reserved for meaning.
 - **Semantic status tokens**, each with `-foreground` (text on solid) and
   `-subtle` (translucent tint background):
-  - `success` — positive confirmation, on-target giving, healthy budgets
-  - `warning` — needs attention, approaching limits, review queue
-  - `danger` — over budget, destructive intent (hue-aligned with `destructive`)
+  - `success` — positive confirmation, on-target giving
+  - `warning` — needs attention, review queue
+  - `danger` — destructive intent (hue-aligned with `destructive`)
   - `info` — neutral information, upcoming bills
-  - `positive` / `negative` — **amount semantics only** (income vs
-    loss/over-budget); aliases of success/danger so money color can diverge
-    later without a refactor.
+- **Cashflow tokens** (Home stats; also aliased into amount semantics):
+  - `income` — `#059669` (Emerald) — money in
+  - `available` — `#06B6D4` (Cyan) — checkpoint balance
+  - `expense` — `#E11D48` (Raspberry) — money out
+  - `positive` → `var(--income)`; `negative` → `var(--expense)`
+  - Utilities: `text-income`, `text-available`, `text-expense`, `bg-income`, etc.
+  - OG cashflow values are documented in `src/lib/palette.ts` (`PALETTE_OG`)
+    and comments in `globals.css` for a one-flip revert.
+- **Budget usage bands** (Home rings + Budget tab meters; source of truth
+  `src/lib/palette.ts`, not month-pace):
+
+  | Band | Ratio | Hex |
+  |---|---|---|
+  | Safe | 0–69% | `#22C55E` |
+  | Watch | 70–84% | `#F59E0B` |
+  | Near limit | 85–99% | `#F97316` |
+  | Exceeded | 100–119% | `#EF4444` |
+  | Critical | 120%+ | `#BE123C` |
+
+  Flip `ACTIVE_PALETTE` to `"og"` to restore the previous three-tone mapping.
+  Ring **fill** still clamps at 100%; the **% numeral** and band color show
+  overspend. Category-colored rings were considered and rejected (pace/usage
+  signal would be lost).
+- **Category colors:** data-driven hex on `categories.color` (inline style via
+  `CategoryBadge` / donut). Clarity defaults live in `PALETTE.categories` /
+  `DEFAULT_CATEGORIES`; Housing is yellow `#EAB308`. Migration
+  `2026-07-24-palette-v2-category-colors.sql` updates known EN/ES names on
+  live rows.
 - **Charts:** `chart-1..5` for series, `chart-grid` / `chart-axis` for
   recessive plumbing. Category charts use per-category DB hex.
-- Usage: `text-success`, `bg-warning-subtle`, `ring-danger/25`, etc.
+- Usage: `text-success`, `bg-warning-subtle`, `ring-danger/25`, `text-income`,
+  etc.
+
+### 2.1.1 Home budget rings (composition)
+
+- Component: `src/components/home/budget-pace-chart.tsx`.
+- One ring per `custom_budget`; max **3 per swipe page**; even
+  `repeat(n, 1fr)` distribution; size ladder 88 / 76 / 64 px by count on the
+  page.
+- Month-progress mark (black dot) remains; color is **usage band only**.
 
 ### 2.2 Typography
 
@@ -276,7 +313,9 @@ error states. No blank areas while fetching.
 | Money | `<AmountText amount currency tone signed>` |
 | Ledger row | `<TransactionRow>` |
 | Stat tile | `<StatCard label value detail href?>` |
-| Budget/tithe progress | `<ProgressMeter ratio>` |
+| Budget/tithe progress | `<ProgressMeter ratio>` — default colors = usage bands; pass `tone` to override (Giving) |
+| Home budget rings | `BudgetPaceChart` — one ring per envelope, swipe pages |
+| Stat tile swatch | `<StatCard swatchClassName="bg-income" …>` |
 | Add/edit a movement | `<CaptureSheet>` (await save before close; Save & add another) |
 | First-run setup | `/onboarding` + `useOnboarding` / `OnboardingGate` |
 | Goal → UI mapping | `lib/onboarding/personalize.ts` (optional `methodId` override) |

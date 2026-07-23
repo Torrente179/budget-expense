@@ -24,7 +24,7 @@ only):
 
 | Section | Route | Job |
 |---|---|---|
-| Home | `/home` | Now + actionable: Income · Spent · Current · Giving; plan pace + top objectives; “Where it went” donut; Attention; recent movements |
+| Home | `/home` | Now + actionable: Income · Spent · Available · Giving (colored swatches); per-budget usage rings (swipe pages); “Where it went” donut; Attention; recent movements |
 | Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
 | Budget | `/budget` | Guided setup when empty; else plan overview + objectives list + Giving card |
 | Wealth | `/wealth` (+ investments / savings / liabilities) | Balances: owned and owed |
@@ -253,15 +253,61 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 ## 8. Home (current composition)
 
-- Stat row: **Income** (positive) · **Spent** · **Current** (income − spent −
-  transfers) · **Giving** (income-based **target** as the hero number; given
-  shown in the detail line) — Spent/Income link into Movements tabs.
-- Budgets area: paced remaining + top objectives, or empty CTA into `/budget`.
-- “Where it went” category donut (top categories + Other).
+Desktop layout (`lg+`): two columns after the stat row —
+
+- **Left (`lg:col-span-3`):** recent movements (starts at the top of this block)
+  + desktop-only quick shortcuts.
+- **Right (`lg:col-span-2`):** monthly budgets card stacked above the
+  “Where it went” donut (same narrow width).
+
+Mobile order: budgets → donut → movements (unchanged).
+
+### Stat row
+
+**Income** · **Spent** · **Available** (checkpoint balance) · **Giving**
+(income-based **target** as the hero number; given in the detail line).
+
+- Cashflow tones: Income `text-income` / `#059669`, Spent `text-expense` /
+  `#E11D48`, Available `text-available` / `#06B6D4` (expense red if balance &lt; 0).
+- Matching **color swatch** beside each of those three labels
+  (`StatCard` `swatchClassName`).
+- Spent / Income link into Movements tabs; Available → Settings
+  (`#available-balance`) to reconcile the bank balance.
+
+### Monthly budgets card
+
+- **One ring per custom budget** (spent ÷ limit). No aggregate “all budgets”
+  ring and no redundant per-budget bars.
+- Ring **fill clamps at 100%**; the **% label can exceed 100%** (and tone
+  changes). Black pace mark still shows month progress when viewing the
+  current month.
+- **Usage-band colors** (shared with `/budget`, see §9 and `src/lib/palette.ts`):
+
+  | Band | Ratio | Color |
+  |---|---|---|
+  | Safe | 0–69% | `#22C55E` |
+  | Watch | 70–84% | `#F59E0B` |
+  | Near limit | 85–99% | `#F97316` |
+  | Exceeded | 100–119% | `#EF4444` |
+  | Critical | 120%+ | `#BE123C` |
+
+- Ring size by count on the page: 1 → 88px, 2 → 76px, 3 → 64px.
+- **Max 3 rings per page**; more budgets swipe to the next page (snap + dots).
+  Each page sizes rings by how many sit on that page.
+- Rings distribute evenly across the card (`repeat(n, 1fr)` grid).
+- Empty state: CTA into `/budget`.
+
+### Rest of Home
+
+- “Where it went” category donut (DB category colors).
 - Attention feed (review, envelopes, anomalies, bills, onboarding hints).
-- Recent movements.
 - Personalized shortcuts + Import/Review — **desktop-only** (mobile uses tabs + FAB).
 - Finish-setup banner when a new user skipped / never completed onboarding.
+
+Change notes: `changes/2026-07-23-home-desktop-two-column-layout.md`,
+`changes/2026-07-23-home-per-budget-rings.md`,
+`changes/2026-07-24-clarity-palette-v2.md`,
+`changes/2026-07-24-stat-card-color-swatch.md`.
 
 ---
 
@@ -269,12 +315,20 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 - **Empty (no plan, no objectives):** 3-step guided setup — income → optional
   method → create objectives (plain-language copy; profile-aware when
-  `wants_budget_help`).
-- **Otherwise:** “Your plan” overview (remaining, pace bar) + objectives list
-  (tap to edit; always-visible delete) + standing Giving card (income-based
-  target as primary). Monthly plan can be deleted from the plan sheet
-  (confirm); expenses and objectives are kept.
+  `wants_budget_help`). Full-width card.
+- **Otherwise (desktop `lg+`):** two-column layout matching Home —
+  - **Left (`lg:col-span-3`):** “Your budgets” with the same usage-band
+    **rings** as Home (`BudgetPaceChart`, swipe when &gt;3); tap ring to edit;
+    compact manage list with delete (no full-bleed bars).
+  - **Right (`lg:col-span-2`):** “Your plan” (remaining + short usage-band
+    bar) stacked above Giving.
+- **Mobile order:** Plan → Budgets → Giving.
+- Giving meter still uses success/neutral (not usage bands). Monthly plan
+  can be deleted from the plan sheet (confirm); expenses and objectives
+  are kept.
 
+Change notes: `changes/2026-07-24-budget-tab-usage-band-colors.md`,
+`changes/2026-07-24-budget-two-column-layout.md`.
 
 ---
 
@@ -286,8 +340,42 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
   delete control in a stable trailing column (hover + keyboard focus).
 - Amounts show converted base value plus original currency when different
   (`showOriginal` on `TransactionRow` → `AmountText`).
+- Balance-reconciliation surplus/deficit rows use standard bilingual names
+  and localize in the active language (same helper as Calendar).
 
-Change note: `changes/2026-07-18-fix-desktop-movements-alignment.md`.
+Change notes: `changes/2026-07-18-fix-desktop-movements-alignment.md`,
+`changes/2026-07-24-balance-adjustment-movements.md`.
+
+---
+
+## 10b. Settings — Available balance reconciliation
+
+Settings → **Available balance** (`BalanceCheckpointSettings`):
+
+1. User enters the bank’s available balance for today (after posting today’s
+   existing movements). Localized decimal parsing is supported.
+2. The UI previews the delta vs tracked balance (or month-to-date net flow on
+   the first reconciliation).
+3. On save, `POST /api/balance-checkpoints`:
+   - stores the checkpoint + audit `reconciliation_delta`;
+   - if the delta ≠ 0, books a ledger movement on that date:
+     - **surplus** → income (`Other Income` when available);
+     - **deficit** → expense (`Other` category);
+   - standard names (EN stored / ES localized in UI):
+
+| Basis | Surplus | Deficit |
+|---|---|---|
+| Opening (`monthly_net`) | Opening balance surplus / Superávit del saldo inicial | Opening balance deficit / Déficit del saldo inicial |
+| Tracked (`tracked_balance`) | Reconciliation surplus / Superávit de conciliación | Reconciliation deficit / Déficit de conciliación |
+
+4. The movement is created **before** the checkpoint so tracked Available does
+   not double-count the adjustment. Checkpoint failure rolls the movement back.
+5. Home / Movements / income-expense queries are invalidated after a successful
+   reconcile.
+
+Change note: `changes/2026-07-24-balance-adjustment-movements.md`.
+Architecture: `Architecture/06-domain-logic.md` §6.4, AD-8 in
+`Architecture/10-architectural-decisions.md`.
 
 ---
 
@@ -359,19 +447,21 @@ The authoritative baseline, implementation, rollout, and rebuild record is
 
 ## 14. Supabase schema status (live)
 
-Project `awpygbfocmynxpadpsji`. As of 2026-07-18 **all of these are applied**:
+Project `awpygbfocmynxpadpsji`. As of 2026-07-24 **all of these are applied**:
 
 | Migration | What |
 |---|---|
 | `2026-07-18-onboarding-goals.sql` | Profile onboarding/goals columns |
 | `2026-07-18-household-insights-aggregates-app.sql` | `liability_payment_totals` + index |
 | `2026-07-18-household-insights-aggregates-ledger.sql` | `household_expense_category_aggregates`, `household_income_aggregates` (on app — single project) |
+| `2026-07-24-palette-v2-category-colors.sql` | Clarity category hex update by known EN/ES names (Housing kept/restored yellow `#EAB308`) |
 
 Verify:
 
 ```bash
 node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND (column_name LIKE 'onboarding%' OR column_name IN ('wants_budget_help','primary_goals'))"
 node scripts/apply-sql.mjs --project app --query "SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND (proname LIKE 'household%' OR proname='liability_payment_totals') ORDER BY 1"
+node scripts/apply-sql.mjs --project app --query "SELECT name, color FROM public.categories WHERE lower(btrim(name)) IN ('housing','food & dining','salary','groceries') ORDER BY 1"
 ```
 
 Primary data owner: `pablopablo179@gmail.com`
@@ -399,9 +489,15 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Capture UI | `src/components/capture/capture-sheet.tsx`, `capture-fab.tsx` |
 | Capture writes | `src/hooks/use-capture.ts` |
 | Capture defaults | `src/lib/capture/defaults.ts` |
+| Balance checkpoints (math + bilingual labels) | `src/lib/balance-checkpoint.ts` |
+| Balance checkpoint API | `src/app/api/balance-checkpoints/route.ts` |
+| Available balance settings UI | `src/components/settings/balance-checkpoint-settings.tsx` |
 | Giving helpers | `src/lib/giving.ts` (`resolveGivingTarget`, `isGivingExpense`) |
 | Envelope alerts | `src/lib/budgeting/envelope-alerts.ts` |
-| Home | `src/components/home/home-screen.tsx`, `attention-feed.tsx` |
+| Clarity palette (usage bands + cashflow + category defaults) | `src/lib/palette.ts` (`ACTIVE_PALETTE`) |
+| Home | `src/components/home/home-screen.tsx`, `budget-pace-chart.tsx`, `attention-feed.tsx` |
+| Stat tiles | `src/components/patterns/stat-card.tsx` |
+| Progress meters | `src/components/patterns/progress-meter.tsx` (default = usage bands) |
 | Budget | `src/components/budget/budget-screen.tsx` |
 | Movements | `src/components/movements/movements-screen.tsx`, `virtualized-ledger.tsx` |
 | Wealth | `src/components/wealth/wealth-overview.tsx`, `wealth-nav.tsx` |
@@ -453,6 +549,23 @@ production, not localhost). Built-in SMTP is rate-limited.
 - `2026-07-18-app-handbook-documentation.md`
 - `2026-07-18-sync-app-handbook-wealth-insights.md`
 - `2026-07-18-document-session-product-rules.md` (this sync)
+
+## 17. Related change notes (2026-07-23 / 07-24 — Home layout & clarity palette)
+
+- `2026-07-23-home-desktop-two-column-layout.md` — movements left; budgets + donut stacked right
+- `2026-07-23-home-per-budget-rings.md` — one ring per budget + swipe pages + even grid
+- `2026-07-24-clarity-palette-v2.md` — usage bands, cashflow tokens, category colors, OG switch
+- `2026-07-24-budget-tab-usage-band-colors.md` — `/budget` meters share Home bands
+- `2026-07-24-stat-card-color-swatch.md` — Income / Spent / Available label dots
+- `2026-07-24-document-home-budget-palette-session.md` — handbook / design / architecture sync
+- `2026-07-24-budget-two-column-layout.md` — Budget tab two-column + rings
+
+## 18. Related change notes (2026-07-24 — balance adjustment movements)
+
+- `2026-07-24-balance-adjustment-movements.md` — surplus/deficit booked as
+  income/expense with standard EN/ES names on reconcile
+- `2026-07-24-document-balance-adjustment-movements.md` — architecture + APP
+  handbook sync for that behavior
 
 ---
 

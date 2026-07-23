@@ -166,11 +166,13 @@ function BudgetRing({
   monthProgress,
   isCurrentMonth,
   layout,
+  onSelect,
 }: {
   budget: BudgetPaceItem;
   monthProgress: number;
   isCurrentMonth: boolean;
   layout: ReturnType<typeof resolveRingLayout>;
+  onSelect?: (budgetId: string) => void;
 }) {
   const { t } = useLocale();
   const { baseCurrency } = useCurrency();
@@ -179,16 +181,15 @@ function BudgetRing({
   const remaining = budget.limit - budget.spent;
   const toneColor = budgetUsageColor(tone);
 
-  return (
-    <Link
-      href="/budget"
-      role="listitem"
-      className="flex min-w-0 w-full flex-col items-center gap-1.5 rounded-xl px-1 py-1 transition-colors hover:bg-accent/50 active:bg-accent/70"
-      aria-label={t(
-        `${budget.name}: ${pct}% used`,
-        `${budget.name}: ${pct}% usado`
-      )}
-    >
+  const className =
+    "flex min-w-0 w-full flex-col items-center gap-1.5 rounded-xl px-1 py-1 transition-colors hover:bg-accent/50 active:bg-accent/70";
+  const ariaLabel = t(
+    `${budget.name}: ${pct}% used`,
+    `${budget.name}: ${pct}% usado`
+  );
+
+  const content = (
+    <>
       <CircularMeter
         ratio={budget.ratio}
         monthProgress={monthProgress}
@@ -224,6 +225,26 @@ function BudgetRing({
         {" / "}
         {formatCurrencyWithBreaks(budget.limit, baseCurrency)}
       </p>
+    </>
+  );
+
+  if (onSelect) {
+    return (
+      <button
+        type="button"
+        role="listitem"
+        className={className}
+        aria-label={ariaLabel}
+        onClick={() => onSelect(budget.id)}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  return (
+    <Link href="/budget" role="listitem" className={className} aria-label={ariaLabel}>
+      {content}
     </Link>
   );
 }
@@ -232,10 +253,12 @@ function BudgetPage({
   budgets,
   monthProgress,
   isCurrentMonth,
+  onSelect,
 }: {
   budgets: BudgetPaceItem[];
   monthProgress: number;
   isCurrentMonth: boolean;
+  onSelect?: (budgetId: string) => void;
 }) {
   const layout = resolveRingLayout(budgets.length);
   const count = budgets.length;
@@ -260,6 +283,7 @@ function BudgetPage({
           monthProgress={monthProgress}
           isCurrentMonth={isCurrentMonth}
           layout={layout}
+          onSelect={onSelect}
         />
       ))}
     </div>
@@ -270,6 +294,8 @@ interface BudgetPaceChartProps {
   budgets: BudgetPaceItem[];
   monthProgress: number;
   isCurrentMonth: boolean;
+  /** When set, rings act as buttons instead of linking to `/budget`. */
+  onSelect?: (budgetId: string) => void;
 }
 
 /**
@@ -282,6 +308,7 @@ export function BudgetPaceChart({
   budgets,
   monthProgress,
   isCurrentMonth,
+  onSelect,
 }: BudgetPaceChartProps) {
   const { t } = useLocale();
   const pages = chunkBudgets(budgets, MAX_PER_PAGE);
@@ -318,6 +345,7 @@ export function BudgetPaceChart({
           budgets={pages[0]}
           monthProgress={monthProgress}
           isCurrentMonth={isCurrentMonth}
+          onSelect={onSelect}
         />
       </div>
     );
@@ -342,6 +370,7 @@ export function BudgetPaceChart({
               budgets={page}
               monthProgress={monthProgress}
               isCurrentMonth={isCurrentMonth}
+              onSelect={onSelect}
             />
           </div>
         ))}

@@ -66,24 +66,28 @@ As of 2026-07-17 (post data reconciliation, see
 | `2026-07-18-onboarding-goals.sql` | Profile columns for skippable onboarding + goals (`onboarding_completed_at`, `onboarding_skipped_at`, `wants_budget_help`, `primary_goals`) | ✅ Applied 2026-07-18 on `awpygbfocmynxpadpsji` |
 | `2026-07-18-household-insights-aggregates-app.sql` | `liability_payment_totals` RPC + index | ✅ Applied 2026-07-18 on `awpygbfocmynxpadpsji` |
 | `2026-07-18-household-insights-aggregates-ledger.sql` | Household expense/income aggregate RPCs (applied on app — single project) | ✅ Applied 2026-07-18 on `awpygbfocmynxpadpsji` |
+| `2026-07-24-palette-v2-category-colors.sql` | Clarity palette category colors (EN/ES name match; Housing `#EAB308`) | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
 
 ```bash
 # Re-apply is safe (IF NOT EXISTS / CREATE OR REPLACE)
 node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-onboarding-goals.sql
 node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-household-insights-aggregates-app.sql
 node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-household-insights-aggregates-ledger.sql
+node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-24-palette-v2-category-colors.sql
 
 node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND (column_name LIKE 'onboarding%' OR column_name IN ('wants_budget_help','primary_goals'))"
 node scripts/apply-sql.mjs --project app --query "SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND (proname LIKE 'household%' OR proname='liability_payment_totals') ORDER BY 1"
+node scripts/apply-sql.mjs --project app --query "SELECT name, color FROM public.categories WHERE lower(btrim(name)) IN ('housing','food & dining','salary') ORDER BY 1"
 ```
 
-Product behavior: [`docs/APP.md`](./APP.md) §2–§3 and `design.md` §8–§9.
+Product behavior: [`docs/APP.md`](./APP.md) §2–§3, §8–§9, §14 and `design.md` §2 / §8–§9.
 Change notes: `changes/2026-07-18-onboarding-goals-budget-alerts.md`,
 `changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md`,
-`changes/2026-07-18-expense-path-performance.md`.
+`changes/2026-07-18-expense-path-performance.md`,
+`changes/2026-07-24-clarity-palette-v2.md`.
 
-**Status:** no pending migrations for the 2026-07-18 cluster on live
-`awpygbfocmynxpadpsji` (all three rows above ✅).
+**Status:** no pending migrations for the listed clusters on live
+`awpygbfocmynxpadpsji` (all rows above ✅).
 
 ## If the project won't connect at all
 Before assuming a migration or schema problem, check whether the project is
