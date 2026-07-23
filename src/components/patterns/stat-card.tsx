@@ -13,6 +13,11 @@ interface StatCardProps {
   /** Small line under the value: delta chip, context, progress. */
   detail?: ReactNode;
   icon?: ReactNode;
+  /**
+   * Colored swatch beside the label (same tone as the value).
+   * Pass a Tailwind bg utility, e.g. `bg-income`.
+   */
+  swatchClassName?: string;
   href?: string;
   className?: string;
 }
@@ -23,6 +28,7 @@ export function StatCard({
   value,
   detail,
   icon,
+  swatchClassName,
   href,
   className,
 }: StatCardProps) {
@@ -37,7 +43,18 @@ export function StatCard({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <p className="label-caps truncate">{label}</p>
+        <p className="label-caps flex min-w-0 items-center gap-1.5">
+          <span className="truncate">{label}</span>
+          {swatchClassName && (
+            <span
+              aria-hidden
+              className={cn(
+                "h-1.5 w-1.5 shrink-0 rounded-full",
+                swatchClassName
+              )}
+            />
+          )}
+        </p>
         {icon && <span className="shrink-0 text-muted-foreground">{icon}</span>}
       </div>
       <div className="min-w-0">

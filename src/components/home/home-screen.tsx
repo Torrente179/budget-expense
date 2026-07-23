@@ -337,6 +337,7 @@ export function HomeScreen() {
               <StatCard
                 label={t("Income", "Ingresos")}
                 href="/movements?tab=income"
+                swatchClassName="bg-income"
                 value={
                   <span className={cn(SUMMARY_AMOUNT_CLASS, "text-income")}>
                     {formatCurrencyWithBreaks(
@@ -352,6 +353,7 @@ export function HomeScreen() {
               <StatCard
                 label={t("Spent", "Gastado")}
                 href="/movements?tab=expenses"
+                swatchClassName="bg-expense"
                 value={
                   <span className={cn(SUMMARY_AMOUNT_CLASS, "text-expense")}>
                     {formatCurrencyWithBreaks(
@@ -383,6 +385,11 @@ export function HomeScreen() {
               <StatCard
                 label={t("Available", "Disponible")}
                 href="/settings#available-balance"
+                swatchClassName={
+                  currentBalance !== null && currentBalance < 0
+                    ? "bg-expense"
+                    : "bg-available"
+                }
                 value={
                   <span
                     className={cn(
