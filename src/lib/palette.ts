@@ -130,8 +130,12 @@ export const PALETTE_V2: Palette = {
   },
 };
 
-export const PALETTE: Palette =
-  ACTIVE_PALETTE === "og" ? PALETTE_OG : PALETTE_V2;
+export const PALETTE: Palette = (
+  {
+    og: PALETTE_OG,
+    v2: PALETTE_V2,
+  } as const satisfies Record<PaletteId, Palette>
+)[ACTIVE_PALETTE];
 
 /** Ordered bands for legends / docs (highest threshold first for resolve). */
 export const BUDGET_USAGE_BANDS: BudgetUsageBand[] = [
