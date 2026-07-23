@@ -27,10 +27,8 @@ interface BreakdownDonutProps {
   onSelect?: (id: string) => void;
   /** Ids that should not be clickable (e.g. an aggregated "Other"). */
   nonInteractiveIds?: string[];
-  /** Number of leading slices to label around the ring with name and share. */
+  /** Labels the largest slices around the ring while keeping every legend row. */
   calloutCount?: number;
-  /** Keeps the compact list below/beside the chart when enabled. */
-  showLegend?: boolean;
   size?: number;
   className?: string;
 }
@@ -152,19 +150,25 @@ function distributeCallouts(callouts: SliceCallout[]) {
 }
 
 function buildSliceCallouts(
-  slices: DonutSlice[],
+  chartSlices: DonutSlice[],
   total: number,
   calloutCount: number
 ) {
   if (total <= 0 || calloutCount <= 0) return [] as SliceCallout[];
 
+  const calloutIds = new Set(
+    [...chartSlices]
+      .sort((a, b) => b.value - a.value)
+      .slice(0, calloutCount)
+      .map((slice) => slice.id)
+  );
   let preceding = 0;
-  const callouts = slices.flatMap((slice, index) => {
+  const callouts = chartSlices.flatMap((slice) => {
     const midpoint =
       -Math.PI / 2 +
       ((preceding + slice.value / 2) / total) * Math.PI * 2;
     preceding += slice.value;
-    if (index >= calloutCount) return [];
+    if (!calloutIds.has(slice.id)) return [];
 
     const cosine = Math.cos(midpoint);
     const sine = Math.sin(midpoint);
@@ -201,9 +205,9 @@ function buildSliceCallouts(
 }
 
 /**
- * The app's one donut: a thin ring with a center total plus optional callouts
- * and a compact legend. Colors come from the caller (category hex or chart
- * tokens). Used by Home and Wealth for a single visual language.
+ * The app's one donut: a thin ring with a center total and a live legend
+ * showing share % and amount. Colors come from the caller (category hex or
+ * chart tokens). Used by Home and Wealth for a single visual language.
  */
 export function BreakdownDonut({
   slices,
@@ -213,7 +217,6 @@ export function BreakdownDonut({
   onSelect,
   nonInteractiveIds = [],
   calloutCount = 0,
-  showLegend = true,
   size = 160,
   className,
 }: BreakdownDonutProps) {
@@ -222,6 +225,9 @@ export function BreakdownDonut({
   const { baseCurrency } = useCurrency();
   const [activeSliceId, setActiveSliceId] = useState<string | null>(null);
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
+  const hasCallouts = calloutCount > 0;
+  const chartSlices = slices;
+  const callouts = buildSliceCallouts(chartSlices, total, calloutCount);
   const displayTotal = centerValue ?? total;
   const activeSlice =
     slices.find((slice) => slice.id === activeSliceId) ?? null;
@@ -229,14 +235,12 @@ export function BreakdownDonut({
     activeSlice?.value ?? displayTotal,
     baseCurrency
   );
-  const hasCallouts = calloutCount > 0;
-  const callouts = buildSliceCallouts(slices, total, calloutCount);
 
   const canSelect = (id: string) =>
     Boolean(onSelect) && !nonInteractiveIds.includes(id);
 
   function handleSliceKeyDown(
-    event: KeyboardEvent<SVGPathElement>,
+    event: KeyboardEvent<SVGCircleElement | SVGPathElement>,
     sliceId: string
   ) {
     if (!canSelect(sliceId)) return;
@@ -245,17 +249,8 @@ export function BreakdownDonut({
     onSelect?.(sliceId);
   }
 
-  function renderSlicePath(
-    slice: DonutSlice,
-    index: number,
-    geometry: {
-      centerX: number;
-      centerY: number;
-      radius: number;
-      strokeWidth: number;
-    }
-  ) {
-    const preceding = slices
+  function renderCalloutSlicePath(slice: DonutSlice, index: number) {
+    const preceding = chartSlices
       .slice(0, index)
       .reduce((sum, item) => sum + item.value, 0);
     const sweepAngle = (slice.value / total) * 360;
@@ -271,22 +266,26 @@ export function BreakdownDonut({
       <path
         key={slice.id}
         d={describeArc(
-          geometry.centerX,
-          geometry.centerY,
-          geometry.radius,
+          CALLOUT_CHART.centerX,
+          CALLOUT_CHART.centerY,
+          CALLOUT_CHART.radius,
           startAngle,
           endAngle
         )}
         fill="none"
         stroke={slice.color}
-        strokeWidth={active ? geometry.strokeWidth + 2 : geometry.strokeWidth}
+        strokeWidth={
+          active
+            ? CALLOUT_CHART.strokeWidth + 2
+            : CALLOUT_CHART.strokeWidth
+        }
         strokeLinecap="round"
         opacity={dimmed ? 0.45 : 1}
         role={interactive ? "button" : undefined}
         tabIndex={interactive ? 0 : undefined}
         aria-label={interactive ? slice.name : undefined}
         className={cn(
-          "origin-center transition-[opacity,stroke-width] duration-150 outline-none",
+          "transition-[opacity,stroke-width] duration-150 outline-none",
           interactive && "cursor-pointer"
         )}
         onPointerEnter={() => setActiveSliceId(slice.id)}
@@ -311,7 +310,7 @@ export function BreakdownDonut({
     <div
       className={cn(
         hasCallouts
-          ? "flex flex-col items-center gap-4"
+          ? "flex flex-col items-center gap-5"
           : "flex flex-col items-center gap-5 sm:flex-row lg:flex-col xl:flex-row",
         className
       )}
@@ -342,13 +341,8 @@ export function BreakdownDonut({
             }
             aria-hidden={onSelect ? undefined : true}
           >
-            {slices.map((slice, index) =>
-              renderSlicePath(slice, index, {
-                centerX: CALLOUT_CHART.centerX,
-                centerY: CALLOUT_CHART.centerY,
-                radius: CALLOUT_CHART.radius,
-                strokeWidth: CALLOUT_CHART.strokeWidth,
-              })
+            {chartSlices.map((slice, index) =>
+              renderCalloutSlicePath(slice, index)
             )}
             <g aria-hidden className="pointer-events-none">
               {callouts.map((callout) => {
@@ -421,6 +415,7 @@ export function BreakdownDonut({
             viewBox="0 0 100 100"
             width={size}
             height={size}
+            className="-rotate-90"
             aria-hidden={onSelect ? undefined : true}
             role={onSelect ? "group" : undefined}
             aria-label={
@@ -429,14 +424,60 @@ export function BreakdownDonut({
                 : undefined
             }
           >
-            {slices.map((slice, index) =>
-              renderSlicePath(slice, index, {
-                centerX: 50,
-                centerY: 50,
-                radius: 42,
-                strokeWidth: 11,
-              })
-            )}
+            {slices.map((slice, index) => {
+              const circumference = 2 * Math.PI * 42;
+              const preceding = slices
+                .slice(0, index)
+                .reduce((sum, item) => sum + item.value, 0);
+              const length = Math.max(
+                (slice.value / total) * circumference - 1.5,
+                0
+              );
+              const interactive = canSelect(slice.id);
+              const active = activeSliceId === slice.id;
+              const dimmed =
+                activeSliceId !== null && activeSliceId !== slice.id;
+              return (
+                <circle
+                  key={slice.id}
+                  cx="50"
+                  cy="50"
+                  r="42"
+                  fill="none"
+                  stroke={slice.color}
+                  strokeWidth={active ? "13" : "11"}
+                  strokeLinecap="round"
+                  strokeDasharray={`${length} ${circumference - length}`}
+                  strokeDashoffset={-(preceding / total) * circumference}
+                  opacity={dimmed ? 0.45 : 1}
+                  role={interactive ? "button" : undefined}
+                  tabIndex={interactive ? 0 : undefined}
+                  aria-label={interactive ? slice.name : undefined}
+                  className={cn(
+                    "origin-center transition-[opacity,stroke-width] duration-150 outline-none",
+                    interactive && "cursor-pointer"
+                  )}
+                  onPointerEnter={() => setActiveSliceId(slice.id)}
+                  onPointerLeave={() =>
+                    setActiveSliceId((current) =>
+                      current === slice.id ? null : current
+                    )
+                  }
+                  onFocus={() => setActiveSliceId(slice.id)}
+                  onBlur={() =>
+                    setActiveSliceId((current) =>
+                      current === slice.id ? null : current
+                    )
+                  }
+                  onClick={
+                    interactive ? () => onSelect?.(slice.id) : undefined
+                  }
+                  onKeyDown={(event) =>
+                    handleSliceKeyDown(event, slice.id)
+                  }
+                />
+              );
+            })}
           </svg>
         )}
         <div
@@ -470,53 +511,51 @@ export function BreakdownDonut({
         </div>
       </div>
 
-      {showLegend && (
-        <div className="w-full min-w-0 flex-1 space-y-0.5">
-          {slices.map((slice) => {
-            const interactive = canSelect(slice.id);
-            const row = (
-              <>
-                <span
-                  aria-hidden
-                  className="h-2.5 w-2.5 shrink-0 rounded-full"
-                  style={{ backgroundColor: slice.color }}
-                />
-                <span className="min-w-0 flex-1 truncate text-body">
-                  {slice.name}
-                </span>
-                <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                  {total > 0 ? Math.round((slice.value / total) * 100) : 0}%
-                </span>
-                <span
-                  className={cn(
-                    "max-w-28 shrink text-right font-mono text-[0.6875rem] leading-tight tabular-nums",
-                    amountClass
-                  )}
-                >
-                  {formatCurrencyWithBreaks(slice.value, baseCurrency)}
-                </span>
-              </>
-            );
-            return interactive ? (
-              <button
-                key={slice.id}
-                type="button"
-                onClick={() => onSelect?.(slice.id)}
-                className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/50"
+      <div className="w-full min-w-0 flex-1 space-y-0.5">
+        {slices.map((slice) => {
+          const interactive = canSelect(slice.id);
+          const row = (
+            <>
+              <span
+                aria-hidden
+                className="h-2.5 w-2.5 shrink-0 rounded-full"
+                style={{ backgroundColor: slice.color }}
+              />
+              <span className="min-w-0 flex-1 truncate text-body">
+                {slice.name}
+              </span>
+              <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
+                {total > 0 ? Math.round((slice.value / total) * 100) : 0}%
+              </span>
+              <span
+                className={cn(
+                  "max-w-28 shrink text-right font-mono text-[0.6875rem] leading-tight tabular-nums",
+                  amountClass
+                )}
               >
-                {row}
-              </button>
-            ) : (
-              <div
-                key={slice.id}
-                className="flex w-full items-center gap-2.5 px-2 py-1.5 text-left"
-              >
-                {row}
-              </div>
-            );
-          })}
-        </div>
-      )}
+                {formatCurrencyWithBreaks(slice.value, baseCurrency)}
+              </span>
+            </>
+          );
+          return interactive ? (
+            <button
+              key={slice.id}
+              type="button"
+              onClick={() => onSelect?.(slice.id)}
+              className="flex w-full items-center gap-2.5 rounded-lg px-2 py-1.5 text-left transition-colors hover:bg-accent/50"
+            >
+              {row}
+            </button>
+          ) : (
+            <div
+              key={slice.id}
+              className="flex w-full items-center gap-2.5 px-2 py-1.5 text-left"
+            >
+              {row}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

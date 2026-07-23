@@ -43,9 +43,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 const SUMMARY_AMOUNT_CLASS =
   "block max-w-full whitespace-normal font-mono text-[clamp(0.6875rem,5.5cqw,1.0625rem)] font-semibold leading-tight tracking-[-0.025em] tabular-nums";
-const TOP_SPENDING_CATEGORY_COUNT = 5;
-const OTHER_CATEGORIES_SLICE_ID = "__other-categories__";
-const NON_INTERACTIVE_DONUT_IDS = [OTHER_CATEGORIES_SLICE_ID];
 
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
@@ -170,42 +167,19 @@ export function HomeScreen() {
   const budgetsSpent = budgetsView.reduce((sum, b) => sum + b.spent, 0);
   const budgetConsumedRatio = budgetUsageRatio(budgetsSpent, totalBudgeted);
 
-  /* Keep the five biggest categories legible while retaining the full total. */
+  /* Category donut: every spent category, colored by DB category color. */
   const donut = useMemo(() => {
-    const rows = [...summary.categoryBreakdown]
-      .filter((row) => row.total_amount > 0)
-      .sort((a, b) => b.total_amount - a.total_amount);
+    const rows = summary.categoryBreakdown;
     const total = rows.reduce((sum, row) => sum + row.total_amount, 0);
-    if (total <= 0) {
-      return {
-        total: 0,
-        slices: [] as DonutSlice[],
-        calloutCount: 0,
-      };
-    }
-
-    const topRows = rows.slice(0, TOP_SPENDING_CATEGORY_COUNT);
-    const remainingTotal = rows
-      .slice(TOP_SPENDING_CATEGORY_COUNT)
-      .reduce((sum, row) => sum + row.total_amount, 0);
-    const slices: DonutSlice[] = topRows.map((row) => ({
+    if (total <= 0) return { total: 0, slices: [] as DonutSlice[] };
+    const slices: DonutSlice[] = rows.map((row) => ({
       id: row.category_id,
       name: tc(row.category_name),
       value: row.total_amount,
       color: row.category_color,
     }));
-
-    if (remainingTotal > 0) {
-      slices.push({
-        id: OTHER_CATEGORIES_SLICE_ID,
-        name: t("Other categories", "Otras categorías"),
-        value: remainingTotal,
-        color: "var(--chart-5)",
-      });
-    }
-
-    return { total, slices, calloutCount: topRows.length };
-  }, [summary.categoryBreakdown, t, tc]);
+    return { total, slices };
+  }, [summary.categoryBreakdown, tc]);
 
   function openCategory(categoryId: string) {
     router.push(
@@ -563,9 +537,7 @@ export function HomeScreen() {
                       centerValue={donut.total}
                       amountTone="negative"
                       onSelect={openCategory}
-                      nonInteractiveIds={NON_INTERACTIVE_DONUT_IDS}
-                      calloutCount={donut.calloutCount}
-                      showLegend={false}
+                      calloutCount={5}
                     />
                   </CardContent>
                 </Card>
