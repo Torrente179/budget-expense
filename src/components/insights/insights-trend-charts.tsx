@@ -29,6 +29,14 @@ export interface InsightsTrendChartsProps {
   onDayClick?: (day: number) => void;
 }
 
+function activeChartIndex(
+  activeIndex: number | string | undefined
+): number | null {
+  const index =
+    typeof activeIndex === "number" ? activeIndex : Number(activeIndex);
+  return Number.isInteger(index) && index >= 0 ? index : null;
+}
+
 export function InsightsTrendCharts({
   trendData,
   dailySpendData,
@@ -51,9 +59,11 @@ export function InsightsTrendCharts({
             data={trendData}
             className={onMonthClick ? "cursor-pointer" : undefined}
             onClick={(state) => {
-              const monthKey = state?.activePayload?.[0]?.payload?.month as
-                | string
-                | undefined;
+              const index = activeChartIndex(
+                state?.activeIndex as number | string | undefined
+              );
+              if (index === null) return;
+              const monthKey = trendData[index]?.month;
               if (monthKey) onMonthClick?.(monthKey);
             }}
           >
@@ -92,9 +102,11 @@ export function InsightsTrendCharts({
             data={dailySpendData}
             className={onDayClick ? "cursor-pointer" : undefined}
             onClick={(state) => {
-              const day = state?.activePayload?.[0]?.payload?.day as
-                | number
-                | undefined;
+              const index = activeChartIndex(
+                state?.activeIndex as number | string | undefined
+              );
+              if (index === null) return;
+              const day = dailySpendData[index]?.day;
               if (typeof day === "number") onDayClick?.(day);
             }}
           >

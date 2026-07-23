@@ -15,3 +15,4 @@ Insights spending bar charts are now clickable: a day opens that day’s movemen
 - On Insights, click a tall daily bar → calendar opens with that day’s expenses.
 - Click a month bar → Movements shows expenses for that month.
 - Zero-spend days still open calendar with the empty-day state when the bar column is targeted.
+- Typecheck uses Recharts `activeIndex` (not removed `activePayload`) so `next build` passes.
