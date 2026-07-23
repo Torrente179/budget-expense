@@ -1,8 +1,14 @@
 "use client";
 
-import type { ReactNode } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import Link from "next/link";
-import { cn, formatCurrency, formatCurrencyWithBreaks } from "@/lib/utils";
+import { cn, formatCurrencyWithBreaks } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
 
@@ -28,11 +34,8 @@ const TONE_TEXT: Record<PaceTone, string> = {
   danger: "text-danger",
 };
 
-const TONE_SUBTLE: Record<PaceTone, string> = {
-  success: "bg-success-subtle",
-  warning: "bg-warning-subtle",
-  danger: "bg-danger-subtle",
-};
+/** How many rings fit comfortably in the home budgets card. */
+const MAX_PER_PAGE = 3;
 
 function resolveTone(ratio: number, monthProgress: number): PaceTone {
   if (!Number.isFinite(ratio) || ratio >= 1) return "danger";
@@ -44,6 +47,57 @@ function formatUsagePercent(ratio: number): string {
   if (!Number.isFinite(ratio)) return "∞";
   const pct = Math.round(Math.min(ratio, 9.99) * 100);
   return pct > 999 ? "999+" : String(pct);
+}
+
+function chunkBudgets(
+  budgets: BudgetPaceItem[],
+  size: number
+): BudgetPaceItem[][] {
+  if (budgets.length === 0) return [];
+  const pages: BudgetPaceItem[][] = [];
+  for (let i = 0; i < budgets.length; i += size) {
+    pages.push(budgets.slice(i, i + size));
+  }
+  return pages;
+}
+
+/** Ring size shrinks as more budgets share a page. */
+function resolveRingLayout(count: number): {
+  size: number;
+  strokeWidth: number;
+  percentClass: string;
+  maxWidth: string;
+} {
+  if (count <= 1) {
+    return {
+      size: 88,
+      strokeWidth: 8,
+      percentClass: "text-lg",
+      maxWidth: "w-[6.5rem]",
+    };
+  }
+  if (count === 2) {
+    return {
+      size: 76,
+      strokeWidth: 7,
+      percentClass: "text-base",
+      maxWidth: "w-[6rem]",
+    };
+  }
+  if (count === 3) {
+    return {
+      size: 64,
+      strokeWidth: 6,
+      percentClass: "text-sm",
+      maxWidth: "w-[5.25rem]",
+    };
+  }
+  return {
+    size: 56,
+    strokeWidth: 5,
+    percentClass: "text-xs",
+    maxWidth: "w-[4.75rem]",
+  };
 }
 
 function CircularMeter({
@@ -73,6 +127,7 @@ function CircularMeter({
   const paceRad = (paceAngle * Math.PI) / 180;
   const paceX = size / 2 + radius * Math.cos(paceRad);
   const paceY = size / 2 + radius * Math.sin(paceRad);
+  const markSize = size >= 72 ? 8 : 6;
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
@@ -107,8 +162,13 @@ function CircularMeter({
       {showPaceMark && (
         <span
           aria-hidden
-          className="absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-1 ring-2 ring-card"
-          style={{ left: paceX, top: paceY }}
+          className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-1 ring-2 ring-card"
+          style={{
+            left: paceX,
+            top: paceY,
+            width: markSize,
+            height: markSize,
+          }}
         />
       )}
       {children && (
@@ -120,158 +180,212 @@ function CircularMeter({
   );
 }
 
+function BudgetRing({
+  budget,
+  monthProgress,
+  isCurrentMonth,
+  layout,
+}: {
+  budget: BudgetPaceItem;
+  monthProgress: number;
+  isCurrentMonth: boolean;
+  layout: ReturnType<typeof resolveRingLayout>;
+}) {
+  const { t } = useLocale();
+  const { baseCurrency } = useCurrency();
+  const tone = resolveTone(budget.ratio, monthProgress);
+  const pct = formatUsagePercent(budget.ratio);
+  const remaining = budget.limit - budget.spent;
+
+  return (
+    <Link
+      href="/budget"
+      role="listitem"
+      className={cn(
+        "flex flex-col items-center gap-1.5 rounded-xl px-1 py-1 transition-colors hover:bg-accent/50 active:bg-accent/70",
+        layout.maxWidth
+      )}
+      aria-label={t(
+        `${budget.name}: ${pct}% used`,
+        `${budget.name}: ${pct}% usado`
+      )}
+    >
+      <CircularMeter
+        ratio={budget.ratio}
+        monthProgress={monthProgress}
+        showPaceMark={isCurrentMonth}
+        size={layout.size}
+        strokeWidth={layout.strokeWidth}
+        tone={tone}
+      >
+        <span
+          className={cn(
+            "font-mono font-semibold leading-none tracking-[-0.03em] tabular-nums",
+            layout.percentClass,
+            TONE_TEXT[tone]
+          )}
+        >
+          {pct}
+          {pct !== "∞" && <span className="text-[0.55em]">%</span>}
+        </span>
+      </CircularMeter>
+
+      <p className="w-full truncate text-center text-caption font-medium leading-tight">
+        {budget.name}
+      </p>
+      <p
+        className={cn(
+          "w-full text-center font-mono text-[0.6875rem] leading-tight tabular-nums",
+          remaining >= 0 ? "text-muted-foreground" : "text-negative"
+        )}
+      >
+        <span className="text-negative">
+          {formatCurrencyWithBreaks(budget.spent, baseCurrency)}
+        </span>
+        {" / "}
+        {formatCurrencyWithBreaks(budget.limit, baseCurrency)}
+      </p>
+    </Link>
+  );
+}
+
+function BudgetPage({
+  budgets,
+  monthProgress,
+  isCurrentMonth,
+}: {
+  budgets: BudgetPaceItem[];
+  monthProgress: number;
+  isCurrentMonth: boolean;
+}) {
+  const layout = resolveRingLayout(budgets.length);
+
+  return (
+    <div
+      className="flex flex-wrap justify-center gap-x-3 gap-y-4 sm:justify-start"
+      role="list"
+    >
+      {budgets.map((budget) => (
+        <BudgetRing
+          key={budget.id}
+          budget={budget}
+          monthProgress={monthProgress}
+          isCurrentMonth={isCurrentMonth}
+          layout={layout}
+        />
+      ))}
+    </div>
+  );
+}
+
 interface BudgetPaceChartProps {
   budgets: BudgetPaceItem[];
-  totalBudgeted: number;
-  totalSpent: number;
-  consumedRatio: number;
   monthProgress: number;
-  dayOfMonth: number;
-  daysInMonth: number;
   isCurrentMonth: boolean;
 }
 
 /**
- * Compact home budget overview: small % ring + per-budget bars.
- * Always ring-beside-list so it stays short on mobile.
+ * Home budget overview: one ring per budget (spent / limit).
+ * More than 3 budgets spill into swipeable pages; each page sizes
+ * rings by how many budgets are on that page.
  */
 export function BudgetPaceChart({
   budgets,
-  totalBudgeted,
-  totalSpent,
-  consumedRatio,
   monthProgress,
-  dayOfMonth,
-  daysInMonth,
   isCurrentMonth,
 }: BudgetPaceChartProps) {
   const { t } = useLocale();
-  const { baseCurrency } = useCurrency();
+  const pages = chunkBudgets(budgets, MAX_PER_PAGE);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const [activePage, setActivePage] = useState(0);
 
-  const remaining = totalBudgeted - totalSpent;
-  const usedLabel = formatUsagePercent(consumedRatio);
-  const tone = resolveTone(consumedRatio, monthProgress);
-  const overBudget = !Number.isFinite(consumedRatio) || consumedRatio >= 1;
+  const syncActivePage = useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el || pages.length <= 1) return;
+    const width = el.clientWidth;
+    if (width <= 0) return;
+    const index = Math.round(el.scrollLeft / width);
+    setActivePage(Math.min(Math.max(index, 0), pages.length - 1));
+  }, [pages.length]);
 
-  const statusLabel = overBudget
-    ? t("Over budget", "Sobre presupuesto")
-    : consumedRatio > monthProgress + 0.02
-      ? t("Ahead of pace", "Por delante del ritmo")
-      : consumedRatio < monthProgress - 0.08
-        ? t("Under pace", "Por debajo del ritmo")
-        : t("On pace", "Al ritmo");
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el || pages.length <= 1) return;
+    el.addEventListener("scroll", syncActivePage, { passive: true });
+    return () => el.removeEventListener("scroll", syncActivePage);
+  }, [pages.length, syncActivePage]);
+
+  useEffect(() => {
+    setActivePage(0);
+    scrollerRef.current?.scrollTo({ left: 0 });
+  }, [budgets.length]);
+
+  if (pages.length === 0) return null;
+
+  if (pages.length === 1) {
+    return (
+      <div aria-label={t("Monthly budgets", "Presupuestos del mes")}>
+        <BudgetPage
+          budgets={pages[0]}
+          monthProgress={monthProgress}
+          isCurrentMonth={isCurrentMonth}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
-      className="flex items-start gap-3 sm:gap-4"
-      role="group"
-      aria-label={t(
-        `Budget ${usedLabel}% used, ${statusLabel}`,
-        `Presupuesto ${usedLabel}% usado, ${statusLabel}`
-      )}
+      className="space-y-3"
+      aria-label={t("Monthly budgets", "Presupuestos del mes")}
     >
-      <div className="flex w-[5.75rem] shrink-0 flex-col items-center gap-1.5 sm:w-[6.5rem]">
-        <CircularMeter
-          ratio={consumedRatio}
-          monthProgress={monthProgress}
-          showPaceMark={isCurrentMonth}
-          size={88}
-          strokeWidth={8}
-          tone={tone}
-        >
-          <span
-            className={cn(
-              "font-mono text-base font-semibold leading-none tracking-[-0.03em] tabular-nums sm:text-lg",
-              TONE_TEXT[tone]
-            )}
+      <div
+        ref={scrollerRef}
+        className="-mx-1 flex snap-x snap-mandatory overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
+        {pages.map((page, pageIndex) => (
+          <div
+            key={`budget-page-${pageIndex}`}
+            className="w-full shrink-0 snap-center px-0.5"
+            aria-hidden={pageIndex !== activePage}
           >
-            {usedLabel}
-            {usedLabel !== "∞" && (
-              <span className="text-[0.625rem]">%</span>
-            )}
-          </span>
-        </CircularMeter>
-        <p
-          className={cn(
-            "rounded-full px-2 py-0.5 text-center text-[0.625rem] font-medium leading-tight",
-            TONE_SUBTLE[tone],
-            TONE_TEXT[tone]
-          )}
-        >
-          {statusLabel}
-        </p>
-        <p
-          className={cn(
-            "text-center font-mono text-caption tabular-nums",
-            remaining >= 0 ? "text-foreground" : "text-negative"
-          )}
-        >
-          {formatCurrency(remaining, baseCurrency)}
-        </p>
-        <p className="text-center text-[0.625rem] leading-tight text-muted-foreground">
-          {t(
-            `of ${formatCurrency(totalBudgeted, baseCurrency)}`,
-            `de ${formatCurrency(totalBudgeted, baseCurrency)}`
-          )}
-        </p>
-        {isCurrentMonth && (
-          <p className="text-center text-[0.5625rem] leading-tight text-muted-foreground">
-            {t(
-              `Day ${dayOfMonth}/${daysInMonth}`,
-              `Día ${dayOfMonth}/${daysInMonth}`
-            )}
-          </p>
-        )}
+            <BudgetPage
+              budgets={page}
+              monthProgress={monthProgress}
+              isCurrentMonth={isCurrentMonth}
+            />
+          </div>
+        ))}
       </div>
 
-      <div className="min-w-0 flex-1 space-y-0.5">
-        {budgets.map((budget) => {
-          const itemTone = resolveTone(budget.ratio, monthProgress);
-          const pct = formatUsagePercent(budget.ratio);
-          const barWidth = Number.isFinite(budget.ratio)
-            ? Math.min(Math.max(budget.ratio, 0), 1) * 100
-            : 100;
-          return (
-            <Link
-              key={budget.id}
-              href="/budget"
-              className="flex items-center gap-2.5 rounded-lg px-1.5 py-1.5 transition-colors hover:bg-accent/50 active:bg-accent/70"
-            >
-              <div className="min-w-0 flex-1 space-y-1">
-                <div className="flex items-baseline justify-between gap-2">
-                  <span className="min-w-0 truncate text-body font-medium">
-                    {budget.name}
-                  </span>
-                  <span
-                    className={cn(
-                      "shrink-0 font-mono text-caption tabular-nums",
-                      TONE_TEXT[itemTone]
-                    )}
-                  >
-                    {pct}
-                    {pct !== "∞" ? "%" : ""}
-                  </span>
-                </div>
-                <div className="h-1.5 overflow-hidden rounded-full bg-secondary">
-                  <div
-                    className="h-full rounded-full transition-[width] duration-500 ease-out"
-                    style={{
-                      width: `${barWidth}%`,
-                      backgroundColor: TONE_STROKE[itemTone],
-                    }}
-                  />
-                </div>
-                <p className="font-mono text-[0.6875rem] leading-tight tabular-nums text-muted-foreground">
-                  <span className="text-negative">
-                    {formatCurrencyWithBreaks(budget.spent, baseCurrency)}
-                  </span>
-                  {" / "}
-                  {formatCurrencyWithBreaks(budget.limit, baseCurrency)}
-                </p>
-              </div>
-            </Link>
-          );
-        })}
+      <div className="flex items-center justify-center gap-1.5" role="tablist">
+        {pages.map((_, pageIndex) => (
+          <button
+            key={`budget-dot-${pageIndex}`}
+            type="button"
+            role="tab"
+            aria-selected={pageIndex === activePage}
+            aria-label={t(
+              `Budgets page ${pageIndex + 1} of ${pages.length}`,
+              `Presupuestos página ${pageIndex + 1} de ${pages.length}`
+            )}
+            className={cn(
+              "h-1.5 rounded-full transition-all",
+              pageIndex === activePage
+                ? "w-4 bg-foreground"
+                : "w-1.5 bg-border hover:bg-muted-foreground/50"
+            )}
+            onClick={() => {
+              const el = scrollerRef.current;
+              if (!el) return;
+              el.scrollTo({
+                left: pageIndex * el.clientWidth,
+                behavior: "smooth",
+              });
+              setActivePage(pageIndex);
+            }}
+          />
+        ))}
       </div>
     </div>
   );

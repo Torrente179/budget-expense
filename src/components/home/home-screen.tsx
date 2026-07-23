@@ -160,13 +160,6 @@ export function HomeScreen() {
       });
   }, [customBudgets, summary.categoryBreakdown, incomeAmount, convert]);
 
-  const totalBudgeted = budgetsView.reduce((sum, b) => sum + b.limit, 0);
-  /* Only spending inside a budget's categories counts against the plan —
-     otherwise this number disagrees with the per-budget rows below it
-     (e.g. Generosidad isn't in any budget, so it must not eat the plan). */
-  const budgetsSpent = budgetsView.reduce((sum, b) => sum + b.spent, 0);
-  const budgetConsumedRatio = budgetUsageRatio(budgetsSpent, totalBudgeted);
-
   /* Category donut: every spent category, colored by DB category color. */
   const donut = useMemo(() => {
     const rows = summary.categoryBreakdown;
@@ -503,12 +496,7 @@ export function HomeScreen() {
                   ) : (
                     <BudgetPaceChart
                       budgets={budgetsView}
-                      totalBudgeted={totalBudgeted}
-                      totalSpent={budgetsSpent}
-                      consumedRatio={budgetConsumedRatio}
                       monthProgress={monthProgress}
-                      dayOfMonth={dayOfMonth}
-                      daysInMonth={daysInMonth}
                       isCurrentMonth={isCurrentMonth}
                     />
                   )}
