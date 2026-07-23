@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { addDays, format, isValid, parseISO } from "date-fns";
 import { z } from "zod";
+import { getBalanceAdjustmentLabel } from "@/lib/balance-checkpoint";
 import { createRequestClient } from "@/lib/supabase/request";
 import { isMissingTableError } from "@/lib/supabase/postgrest-errors";
+import { resolveUserDataClient } from "@/lib/supabase/user-data";
 
 const isoDateSchema = z
   .string()
@@ -43,8 +45,26 @@ function roundToCents(value: number) {
   return Math.round((value + Number.EPSILON) * 100) / 100;
 }
 
+async function resolveDefaultCategoryId(
+  supabase: Awaited<ReturnType<typeof createRequestClient>>["supabase"],
+  name: string
+) {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("id, name, user_id")
+    .ilike("name", name);
+
+  if (error || !data?.length) return null;
+
+  const normalized = data.filter(
+    (row) => row.name.trim().toLowerCase() === name.toLowerCase()
+  );
+  const global = normalized.find((row) => row.user_id === null);
+  return (global ?? normalized[0])?.id ?? null;
+}
+
 export async function POST(request: NextRequest) {
-  const { supabase, user } = await createRequestClient(request);
+  const { supabase: appSupabase, user } = await createRequestClient(request);
 
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -75,7 +95,7 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  const { data: profile, error: profileError } = await supabase
+  const { data: profile, error: profileError } = await appSupabase
     .from("profiles")
     .select("base_currency")
     .eq("id", user.id)
@@ -99,6 +119,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
+  const { supabase, userId: effectiveUserId } = await resolveUserDataClient({
+    supabase: appSupabase,
+    user,
+  });
+
   const balance = roundToCents(parsed.data.balance);
   const calculatedBalanceBefore =
     parsed.data.calculatedBalanceBefore === null
@@ -109,10 +134,95 @@ export async function POST(request: NextRequest) {
       ? null
       : roundToCents(balance - calculatedBalanceBefore);
 
+  // Book the delta as a ledger movement before the checkpoint so same-day
+  // ordering keeps it inside the checkpoint baseline (not double-counted).
+  // Canonical English labels are stored; the UI translates to Spanish.
+  let adjustmentMovement:
+    | { kind: "income" | "expense"; id: string }
+    | null = null;
+
+  const adjustmentLabel =
+    reconciliationDelta === null
+      ? null
+      : getBalanceAdjustmentLabel({
+          delta: reconciliationDelta,
+          calculationBasis: parsed.data.calculationBasis,
+        });
+
+  if (adjustmentLabel && reconciliationDelta !== null) {
+    const amount = Math.abs(reconciliationDelta);
+
+    if (reconciliationDelta > 0) {
+      const categoryId = await resolveDefaultCategoryId(
+        supabase,
+        "Other Income"
+      );
+      const { data: income, error: incomeError } = await supabase
+        .from("income_entries")
+        .insert({
+          user_id: effectiveUserId,
+          amount,
+          currency: profileCurrency,
+          date: parsed.data.asOfDate,
+          source: adjustmentLabel.en,
+          description: adjustmentLabel.es,
+          category_id: categoryId,
+          source_kind: "manual",
+          needs_review: false,
+        })
+        .select("id")
+        .single();
+
+      if (incomeError || !income) {
+        console.error("Failed to book reconciliation surplus", incomeError);
+        return NextResponse.json(
+          { error: "Unable to record reconciliation surplus" },
+          { status: 500 }
+        );
+      }
+      adjustmentMovement = { kind: "income", id: income.id };
+    } else {
+      const categoryId = await resolveDefaultCategoryId(supabase, "Other");
+      if (!categoryId) {
+        return NextResponse.json(
+          { error: "Unable to resolve expense category for deficit" },
+          { status: 500 }
+        );
+      }
+
+      // Expenses have a single description field: store "EN / ES" so both
+      // languages are present in the ledger row and either side can translate.
+      const description = `${adjustmentLabel.en} / ${adjustmentLabel.es}`;
+      const { data: expense, error: expenseError } = await supabase
+        .from("expenses")
+        .insert({
+          user_id: effectiveUserId,
+          amount,
+          currency: profileCurrency,
+          date: parsed.data.asOfDate,
+          description,
+          category_id: categoryId,
+          source_kind: "manual",
+          needs_review: false,
+        })
+        .select("id")
+        .single();
+
+      if (expenseError || !expense) {
+        console.error("Failed to book reconciliation deficit", expenseError);
+        return NextResponse.json(
+          { error: "Unable to record reconciliation deficit" },
+          { status: 500 }
+        );
+      }
+      adjustmentMovement = { kind: "expense", id: expense.id };
+    }
+  }
+
   const { data, error } = await supabase
     .from("balance_checkpoints")
     .insert({
-      user_id: user.id,
+      user_id: effectiveUserId,
       balance,
       currency: profileCurrency,
       as_of_date: parsed.data.asOfDate,
@@ -127,6 +237,22 @@ export async function POST(request: NextRequest) {
     .single();
 
   if (error) {
+    if (adjustmentMovement) {
+      if (adjustmentMovement.kind === "income") {
+        await supabase
+          .from("income_entries")
+          .delete()
+          .eq("id", adjustmentMovement.id)
+          .eq("user_id", effectiveUserId);
+      } else {
+        await supabase
+          .from("expenses")
+          .delete()
+          .eq("id", adjustmentMovement.id)
+          .eq("user_id", effectiveUserId);
+      }
+    }
+
     if (isMissingTableError(error, "balance_checkpoints")) {
       return NextResponse.json(
         { error: "Balance tracking is not available yet" },
@@ -140,5 +266,11 @@ export async function POST(request: NextRequest) {
     );
   }
 
-  return NextResponse.json({ checkpoint: data }, { status: 201 });
+  return NextResponse.json(
+    {
+      checkpoint: data,
+      adjustmentMovement,
+    },
+    { status: 201 }
+  );
 }

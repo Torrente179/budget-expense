@@ -2,8 +2,11 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   aggregateBalanceMovements,
+  BALANCE_ADJUSTMENT_LABELS,
   calculateTrackedBalance,
+  getBalanceAdjustmentLabel,
   isMovementAfterCheckpoint,
+  translateBalanceAdjustmentName,
   type BalanceCheckpointRecord,
   type BalanceMovement,
 } from "./balance-checkpoint";
@@ -116,4 +119,55 @@ test("localized currency parsing preserves grouped COP amounts", () => {
     7_025_963.5
   );
   assert.ok(Number.isNaN(parseLocalizedCurrencyInput("7.0250", "es-CO")));
+});
+
+test("balance adjustment labels pick surplus or deficit by basis", () => {
+  assert.equal(getBalanceAdjustmentLabel({ delta: 0, calculationBasis: "monthly_net" }), null);
+  assert.deepEqual(
+    getBalanceAdjustmentLabel({ delta: 100, calculationBasis: "monthly_net" }),
+    BALANCE_ADJUSTMENT_LABELS.openingSurplus
+  );
+  assert.deepEqual(
+    getBalanceAdjustmentLabel({ delta: -50, calculationBasis: "monthly_net" }),
+    BALANCE_ADJUSTMENT_LABELS.openingDeficit
+  );
+  assert.deepEqual(
+    getBalanceAdjustmentLabel({
+      delta: 25,
+      calculationBasis: "tracked_balance",
+    }),
+    BALANCE_ADJUSTMENT_LABELS.reconciliationSurplus
+  );
+  assert.deepEqual(
+    getBalanceAdjustmentLabel({
+      delta: -25,
+      calculationBasis: "tracked_balance",
+    }),
+    BALANCE_ADJUSTMENT_LABELS.reconciliationDeficit
+  );
+});
+
+test("balance adjustment names translate both stored languages", () => {
+  assert.equal(
+    translateBalanceAdjustmentName(
+      BALANCE_ADJUSTMENT_LABELS.reconciliationSurplus.en,
+      "es"
+    ),
+    BALANCE_ADJUSTMENT_LABELS.reconciliationSurplus.es
+  );
+  assert.equal(
+    translateBalanceAdjustmentName(
+      BALANCE_ADJUSTMENT_LABELS.openingDeficit.es,
+      "en"
+    ),
+    BALANCE_ADJUSTMENT_LABELS.openingDeficit.en
+  );
+  assert.equal(
+    translateBalanceAdjustmentName(
+      `${BALANCE_ADJUSTMENT_LABELS.reconciliationDeficit.en} / ${BALANCE_ADJUSTMENT_LABELS.reconciliationDeficit.es}`,
+      "es"
+    ),
+    BALANCE_ADJUSTMENT_LABELS.reconciliationDeficit.es
+  );
+  assert.equal(translateBalanceAdjustmentName("Coffee", "es"), "Coffee");
 });

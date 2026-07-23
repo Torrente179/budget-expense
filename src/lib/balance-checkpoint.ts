@@ -9,6 +9,92 @@ export interface BalanceCheckpointRecord {
   calculation_basis: "monthly_net" | "tracked_balance" | null;
 }
 
+/** Canonical English labels stored on ledger rows for balance adjustments. */
+export const BALANCE_ADJUSTMENT_LABELS = {
+  openingSurplus: {
+    en: "Opening balance surplus",
+    es: "Superávit del saldo inicial",
+  },
+  openingDeficit: {
+    en: "Opening balance deficit",
+    es: "Déficit del saldo inicial",
+  },
+  reconciliationSurplus: {
+    en: "Reconciliation surplus",
+    es: "Superávit de conciliación",
+  },
+  reconciliationDeficit: {
+    en: "Reconciliation deficit",
+    es: "Déficit de conciliación",
+  },
+} as const;
+
+export type BalanceAdjustmentLabel =
+  (typeof BALANCE_ADJUSTMENT_LABELS)[keyof typeof BALANCE_ADJUSTMENT_LABELS];
+
+/**
+ * Standard bilingual name for the ledger movement that books a non-zero
+ * reconciliation delta. Surplus → income label; deficit → expense label.
+ */
+export function getBalanceAdjustmentLabel({
+  delta,
+  calculationBasis,
+}: {
+  delta: number;
+  calculationBasis: "monthly_net" | "tracked_balance" | null;
+}): BalanceAdjustmentLabel | null {
+  if (!Number.isFinite(delta) || delta === 0) return null;
+
+  const isOpening = calculationBasis === "monthly_net";
+  if (delta > 0) {
+    return isOpening
+      ? BALANCE_ADJUSTMENT_LABELS.openingSurplus
+      : BALANCE_ADJUSTMENT_LABELS.reconciliationSurplus;
+  }
+  return isOpening
+    ? BALANCE_ADJUSTMENT_LABELS.openingDeficit
+    : BALANCE_ADJUSTMENT_LABELS.reconciliationDeficit;
+}
+
+function matchBalanceAdjustmentLabel(
+  name: string | null | undefined
+): BalanceAdjustmentLabel | null {
+  if (!name) return null;
+  const trimmed = name.trim();
+  const bilingualMatch = trimmed.match(/^(.+?)\s*\/\s*(.+)$/);
+  const candidates = bilingualMatch
+    ? [bilingualMatch[1].trim(), bilingualMatch[2].trim(), trimmed]
+    : [trimmed];
+
+  for (const candidate of candidates) {
+    const normalized = candidate.toLowerCase();
+    for (const label of Object.values(BALANCE_ADJUSTMENT_LABELS)) {
+      if (
+        label.en.toLowerCase() === normalized ||
+        label.es.toLowerCase() === normalized
+      ) {
+        return label;
+      }
+    }
+  }
+  return null;
+}
+
+export function isBalanceAdjustmentName(name: string | null | undefined) {
+  return matchBalanceAdjustmentLabel(name) !== null;
+}
+
+/** Translate a stored balance-adjustment label to the active locale. */
+export function translateBalanceAdjustmentName(
+  name: string | null | undefined,
+  locale: string
+): string {
+  if (!name) return name ?? "";
+  const label = matchBalanceAdjustmentLabel(name);
+  if (!label) return name;
+  return locale.startsWith("es") ? label.es : label.en;
+}
+
 export interface BalanceMovement {
   amount: unknown;
   currency: string;

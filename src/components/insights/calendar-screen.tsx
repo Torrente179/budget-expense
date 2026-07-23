@@ -9,6 +9,10 @@ import { useMonthSnapshot } from "@/hooks/use-month-snapshot";
 import { useMonth } from "@/providers/month-provider";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
+import {
+  isBalanceAdjustmentName,
+  translateBalanceAdjustmentName,
+} from "@/lib/balance-checkpoint";
 import { cn, formatCurrency } from "@/lib/utils";
 import { getTodayIsoDate } from "@/lib/calendar";
 import { Screen } from "@/components/patterns/screen";
@@ -39,7 +43,7 @@ interface DayEntry {
 
 /** Month calendar of income, expenses, and upcoming recurring bills. */
 export function CalendarScreen() {
-  const { t, tc, intlLocale } = useLocale();
+  const { t, tc, intlLocale, locale } = useLocale();
   const { convert, baseCurrency } = useCurrency();
   const { month, year, setMonthYear } = useMonth();
   useMonthSnapshot({ month, year, asOfDate: getTodayIsoDate() });
@@ -70,8 +74,10 @@ export function CalendarScreen() {
       push(day, {
         id: income.id,
         kind: "income",
-        title: income.source,
-        subtitle: income.description || t("Income", "Ingreso"),
+        title: translateBalanceAdjustmentName(income.source, locale),
+        subtitle: isBalanceAdjustmentName(income.source)
+          ? t("Income", "Ingreso")
+          : income.description || t("Income", "Ingreso"),
         amount: income.amount,
         currency: income.currency,
         category: null,
@@ -83,7 +89,9 @@ export function CalendarScreen() {
       push(day, {
         id: expense.id,
         kind: "expense",
-        title: expense.description || tc(expense.categories?.name ?? "—"),
+        title:
+          translateBalanceAdjustmentName(expense.description, locale) ||
+          tc(expense.categories?.name ?? "—"),
         subtitle: tc(expense.categories?.name ?? "—"),
         amount: expense.amount,
         currency: expense.currency,
@@ -120,7 +128,7 @@ export function CalendarScreen() {
     }
 
     return map;
-  }, [incomes, expenses, recurringExpenses, daysInMonth, t, tc]);
+  }, [incomes, expenses, recurringExpenses, daysInMonth, t, tc, locale]);
 
   const weekdayLabels = useMemo(() => {
     const formatter = new Intl.DateTimeFormat(intlLocale, {

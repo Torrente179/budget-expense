@@ -20,6 +20,10 @@ import { useMonthSnapshot } from "@/hooks/use-month-snapshot";
 import { useMonth } from "@/providers/month-provider";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
+import {
+  isBalanceAdjustmentName,
+  translateBalanceAdjustmentName,
+} from "@/lib/balance-checkpoint";
 import { cn } from "@/lib/utils";
 import { getTodayIsoDate } from "@/lib/calendar";
 import { Screen } from "@/components/patterns/screen";
@@ -98,7 +102,7 @@ const CaptureSheet = dynamic(
 );
 
 export function MovementsScreen() {
-  const { t, tc } = useLocale();
+  const { t, tc, locale } = useLocale();
   const { convert, baseCurrency } = useCurrency();
   const { month, year, setMonthYear } = useMonth();
   useMonthSnapshot({ month, year, asOfDate: getTodayIsoDate() });
@@ -243,7 +247,9 @@ export function MovementsScreen() {
     const expenseItems: Movement[] = expenses.map((expense) => ({
       id: expense.id,
       kind: "expense",
-      title: expense.description || tc(expense.categories?.name || "—"),
+      title:
+        translateBalanceAdjustmentName(expense.description, locale) ||
+        tc(expense.categories?.name || "—"),
       subtitle: tc(expense.categories?.name || "—"),
       categoryIcon: expense.categories
         ? {
@@ -261,8 +267,10 @@ export function MovementsScreen() {
     const incomeItems: Movement[] = incomes.map((income) => ({
       id: income.id,
       kind: "income",
-      title: income.source,
-      subtitle: income.description || t("Income", "Ingreso"),
+      title: translateBalanceAdjustmentName(income.source, locale),
+      subtitle: isBalanceAdjustmentName(income.source)
+        ? t("Income", "Ingreso")
+        : income.description || t("Income", "Ingreso"),
       amount: income.amount,
       currency: income.currency,
       date: income.date,
@@ -279,7 +287,7 @@ export function MovementsScreen() {
     all = all.filter((m) => !pendingDeletes.has(m.id));
 
     return all.sort((a, b) => b.date.localeCompare(a.date));
-  }, [expenses, incomes, tab, categoryId, t, tc, pendingDeletes]);
+  }, [expenses, incomes, tab, categoryId, t, tc, locale, pendingDeletes]);
 
   const totalIncome = useMemo(
     () =>

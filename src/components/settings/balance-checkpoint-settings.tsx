@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { queryKeys } from "@/lib/query/keys";
+import { getBalanceAdjustmentLabel } from "@/lib/balance-checkpoint";
 import {
   formatCurrency,
   parseLocalizedCurrencyInput,
@@ -20,7 +21,7 @@ import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 
 export function BalanceCheckpointSettings() {
-  const { t, intlLocale } = useLocale();
+  const { t, intlLocale, locale } = useLocale();
   const {
     baseCurrency,
     isLoading: currencyLoading,
@@ -91,9 +92,13 @@ export function BalanceCheckpointSettings() {
         }),
       });
       setBalanceInput("");
-      await queryClient.invalidateQueries({
-        queryKey: queryKeys.monthSnapshotAll,
-      });
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.monthSnapshotAll,
+        }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.incomesAll }),
+      ]);
       toast.success(t("Balance reconciled", "Saldo conciliado"));
     } catch (error) {
       console.error("Failed to reconcile available balance", error);
@@ -134,8 +139,8 @@ export function BalanceCheckpointSettings() {
       <CardContent className="space-y-4">
         <p className="text-sm text-muted-foreground">
           {t(
-            "Enter what your bank shows after recording today's existing movements. This creates a reconciled starting point—not income—and carries forward with new movements.",
-            "Ingresa lo que muestra tu banco después de registrar los movimientos existentes de hoy. Esto crea un saldo inicial conciliado —no un ingreso— y continúa con los movimientos nuevos."
+            "Enter what your bank shows after recording today's existing movements. Any surplus or deficit is recorded as a movement with today's date, then the reconciled balance carries forward.",
+            "Ingresa lo que muestra tu banco después de registrar los movimientos existentes de hoy. Cualquier superávit o déficit se registra como movimiento con la fecha de hoy, y el saldo conciliado continúa desde ahí."
           )}
         </p>
 
@@ -157,15 +162,19 @@ export function BalanceCheckpointSettings() {
             {lastCheckpoint.reconciliation_delta !== null && (
               <div className="mt-1 flex flex-wrap items-baseline justify-between gap-2 text-muted-foreground">
                 <span>
-                  {lastCheckpoint.calculation_basis === "monthly_net"
-                    ? t(
-                        "Opening balance adjustment",
-                        "Ajuste del saldo inicial"
-                      )
-                    : t(
+                  {(() => {
+                    const label = getBalanceAdjustmentLabel({
+                      delta: Number(lastCheckpoint.reconciliation_delta),
+                      calculationBasis: lastCheckpoint.calculation_basis,
+                    });
+                    if (!label) {
+                      return t(
                         "Reconciliation adjustment",
                         "Ajuste de conciliación"
-                      )}
+                      );
+                    }
+                    return locale === "es" ? label.es : label.en;
+                  })()}
                 </span>
                 <span className="font-mono tabular-nums">
                   {formatSignedAmount(
@@ -241,15 +250,21 @@ export function BalanceCheckpointSettings() {
             <div className="rounded-lg bg-secondary/50 px-3 py-2 text-caption text-muted-foreground">
               <div>
                 <span>
-                  {hasTrackedBalance
-                    ? t(
+                  {(() => {
+                    const label = getBalanceAdjustmentLabel({
+                      delta: reconciliationDelta,
+                      calculationBasis: hasTrackedBalance
+                        ? "tracked_balance"
+                        : "monthly_net",
+                    });
+                    if (!label) {
+                      return t(
                         "Reconciliation adjustment",
                         "Ajuste de conciliación"
-                      )
-                    : t(
-                        "Opening balance adjustment",
-                        "Ajuste del saldo inicial"
-                      )}
+                      );
+                    }
+                    return locale === "es" ? label.es : label.en;
+                  })()}
                   {": "}
                 </span>
                 <span className="font-mono font-medium tabular-nums text-foreground">
@@ -267,8 +282,8 @@ export function BalanceCheckpointSettings() {
                       "Saldo disponible del banco − flujo neto del mes hasta hoy."
                     )}{" "}
                 {t(
-                  "This does not change income or expense reports.",
-                  "Esto no cambia los reportes de ingresos ni gastos."
+                  "A surplus is recorded as income; a deficit as an expense.",
+                  "Un superávit se registra como ingreso; un déficit como gasto."
                 )}
               </p>
             </div>
