@@ -111,7 +111,7 @@ export const PALETTE_V2: Palette = {
     critical: "#BE123C",
   },
   categories: {
-    housing: "#6366F1",
+    housing: "#EAB308",
     titheCharity: "#14B8A6",
     restaurants: "#F43F5E",
     groceries: "#22C55E",

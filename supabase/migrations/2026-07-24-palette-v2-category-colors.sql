@@ -4,8 +4,8 @@
 
 update public.categories
 set color = case lower(btrim(name))
-  when 'housing' then '#6366F1'
-  when 'vivienda' then '#6366F1'
+  when 'housing' then '#EAB308'
+  when 'vivienda' then '#EAB308'
   when 'tithe' then '#14B8A6'
   when 'tithe / diezmo' then '#14B8A6'
   when 'diezmo' then '#14B8A6'

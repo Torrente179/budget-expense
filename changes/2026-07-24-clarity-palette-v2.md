@@ -13,7 +13,7 @@ Introduces a switchable color palette for budget usage bands, cashflow stats (in
   - 100–119% Exceeded `#EF4444`
   - 120%+ Critical `#BE123C`
 - Home Ingresos → `#059669`; Disponible → `#06B6D4`; Gastado → `#E11D48`.
-- Default / known category colors updated to the clarity map (Housing indigo, Tithe turquoise, Restaurants coral, etc.).
+- Default / known category colors updated to the clarity map (Housing yellow `#EAB308`, Tithe turquoise, Restaurants coral, etc.).
 - Month-progress mark on rings is unchanged.
 
 ## Data Model
