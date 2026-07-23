@@ -205,8 +205,8 @@ function MethodDetail({
         <div className="space-y-2.5 rounded-xl border border-info/25 bg-info-subtle p-4">
           <p className="text-sm leading-6 text-foreground/90">
             {t(
-              "Applying this creates named budgets from the slices above (% of income). Generosidad / giving stays on its own Primicias card — not duplicated here.",
-              "Aplicarlo crea presupuestos con las franjas de arriba (% del ingreso). Generosidad sigue en su tarjeta de Primicias — no se duplica aquí."
+              "Applying this creates named budgets from the slices above (% of income). Giving slices are skipped so you can track them as a normal budget if you want.",
+              "Aplicarlo crea presupuestos con las franjas de arriba (% del ingreso). Las franjas de generosidad se omiten; puedes rastrearlas como un presupuesto normal si quieres."
             )}
           </p>
           <Button className="w-full gap-2" onClick={() => onApply(method)}>

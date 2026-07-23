@@ -5,21 +5,16 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDaysInMonth } from "date-fns";
 import {
-  ClipboardCheck,
   Compass,
-  FileUp,
   HandHeart,
-  LineChart,
   Target,
   TrendingDown,
   TrendingUp,
   ArrowUpDown,
-  Wallet,
 } from "lucide-react";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
-import { buildPersonalization } from "@/lib/onboarding/personalize";
 import {
   resolveCustomBudgetAmount,
   budgetUsageRatio,
@@ -62,16 +57,7 @@ export function HomeScreen() {
       }
     : null;
   const titheTarget = useTitheTarget();
-  const { incomplete, profile } = useOnboarding();
-
-  const personalizedCtas = useMemo(() => {
-    if (!profile) return [] as ReturnType<typeof buildPersonalization>["homeCtas"];
-    return buildPersonalization({
-      wantsBudgetHelp: profile.wants_budget_help === true,
-      goals: profile.primary_goals,
-      hasDebts: profile.primary_goals.includes("pay_debt"),
-    }).homeCtas;
-  }, [profile]);
+  const { incomplete } = useOnboarding();
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -217,71 +203,6 @@ export function HomeScreen() {
     month: "long",
     year: "numeric",
   }).format(new Date(year, month - 1));
-
-  const goalQuickActions = personalizedCtas
-    .map((cta) => {
-      switch (cta) {
-        case "budget":
-          return {
-            key: "budget",
-            label: t("Budget", "Presupuesto"),
-            icon: Wallet,
-            href: "/budget",
-          };
-        case "movements":
-          return {
-            key: "movements",
-            label: t("Movements", "Movimientos"),
-            icon: ArrowUpDown,
-            href: "/movements",
-          };
-        case "wealth":
-        case "liabilities":
-          return {
-            key: cta,
-            label:
-              cta === "liabilities"
-                ? t("Debts", "Deudas")
-                : t("Wealth", "Patrimonio"),
-            icon: TrendingUp,
-            href: cta === "liabilities" ? "/wealth/liabilities" : "/wealth",
-          };
-        case "insights":
-          return {
-            key: "insights",
-            label: t("Insights", "Insights"),
-            icon: LineChart,
-            href: "/insights",
-          };
-        default:
-          return null;
-      }
-    })
-    .filter((action): action is NonNullable<typeof action> => action !== null);
-
-  /* Adding movements is the FAB's job; these are personalized shortcuts
-     plus the two flows without a primary-nav home (import, review). */
-  const fallbackQuickActions = [
-    {
-      key: "import",
-      label: t("Import CSV", "Importar CSV"),
-      icon: FileUp,
-      href: "/import",
-    },
-    {
-      key: "review",
-      label: t("Start review", "Iniciar revisión"),
-      icon: ClipboardCheck,
-      href: "/review",
-    },
-  ];
-
-  const quickActions = [...goalQuickActions, ...fallbackQuickActions]
-    .filter(
-      (action, index, list) =>
-        list.findIndex((item) => item.key === action.key) === index
-    )
-    .slice(0, 4);
 
   return (
     <Screen
@@ -589,22 +510,6 @@ export function HomeScreen() {
                   )}
                 </CardContent>
               </Card>
-
-              {/* Quick shortcuts — desktop only; mobile has the tab bar + FAB */}
-              {quickActions.length > 0 && (
-                <div className="hidden gap-3 sm:grid sm:grid-cols-2 lg:grid-cols-4">
-                  {quickActions.map((action) => (
-                    <Link
-                      key={action.key}
-                      href={action.href}
-                      className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 text-body font-medium transition-colors hover:bg-secondary"
-                    >
-                      <action.icon className="h-4 w-4 text-muted-foreground" />
-                      {action.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </>

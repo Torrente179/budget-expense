@@ -41,7 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CircleDollarSign, Layers, Loader2, Sparkles } from "lucide-react";
+import { CircleDollarSign, Layers, Loader2, Sparkles, Trash2 } from "lucide-react";
 import { useLocale } from "@/providers/locale-provider";
 
 interface MonthlyPlanFormProps {
@@ -112,6 +112,26 @@ export function MonthlyPlanForm({
       year,
     },
   });
+
+  /* Keep fields in sync when reopening the sheet after create/edit/delete. */
+  useEffect(() => {
+    if (!resolvedOpen) return;
+    form.reset({
+      income_amount:
+        defaultValues?.income_amount ?? (undefined as unknown as number),
+      income_currency: defaultValues?.income_currency ?? baseCurrency,
+      month,
+      year,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    resolvedOpen,
+    defaultValues?.income_amount,
+    defaultValues?.income_currency,
+    month,
+    year,
+    baseCurrency,
+  ]);
 
   const incomeAmount = Number(form.watch("income_amount")) || 0;
   const incomeCurrency = form.watch("income_currency");
@@ -295,31 +315,33 @@ export function MonthlyPlanForm({
 
             <div className="rounded-xl border border-border/70 bg-secondary/60 p-4 text-sm text-muted-foreground">
               {t(
-                "Named budgets on the Budget tab track groups of categories against this month's income. Generosidad stays on its own Primicias card.",
-                "Los presupuestos con nombre en la pestaña Presupuesto siguen grupos de categorías frente al ingreso del mes. Generosidad sigue en su tarjeta de Primicias."
+                "Named budgets on the Budget tab track groups of categories against this month's income.",
+                "Los presupuestos con nombre en la pestaña Presupuesto siguen grupos de categorías frente al ingreso del mes."
               )}
             </div>
           </div>
 
-          <SheetFooter className="border-t border-border/70 bg-background/92 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
-            {hasExistingPlan && onDelete ? (
+          {hasExistingPlan && onDelete ? (
+            <div className="border-t border-border/70 px-5 py-4">
               <Button
                 type="button"
-                variant="ghost"
-                className="justify-self-start text-danger hover:bg-danger-subtle hover:text-danger"
+                variant="outline"
+                className="w-full gap-2 border-danger/30 text-danger hover:bg-danger-subtle hover:text-danger"
                 onClick={() => setConfirmDelete(true)}
                 disabled={submitting || deleting}
               >
-                {t("Delete plan", "Eliminar plan")}
+                <Trash2 className="h-4 w-4" />
+                {t("Delete this month's income", "Eliminar ingreso de este mes")}
               </Button>
-            ) : (
-              <span />
-            )}
+            </div>
+          ) : null}
+
+          <SheetFooter className="border-t border-border/70 bg-background/92 px-5 py-4 sm:flex-row sm:justify-end">
             <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row">
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => setOpen(false)}
+                onClick={() => setResolvedOpen(false)}
               >
                 {t("Cancel", "Cancelar")}
               </Button>

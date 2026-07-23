@@ -106,22 +106,10 @@ export function useCustomBudgets({ month, year }: { month: number; year: number 
     return error;
   }
 
-  async function seedBudgets(
+  async function seedBudgetsClient(
     budgets: BudgetInput[],
     options?: { replaceExisting?: boolean }
   ) {
-    const result = await supabase.rpc("replace_custom_budget_set", {
-      p_year: year,
-      p_month: month,
-      p_budgets: budgets as unknown as Json,
-      p_replace_existing: options?.replaceExisting ?? false,
-    });
-    if (!result.error) {
-      void refresh();
-      return { error: null, count: Number(result.data ?? 0) };
-    }
-    if (!isMissingRpc(result.error)) return { error: result.error, count: 0 };
-
     if (options?.replaceExisting) {
       const { error } = await supabase
         .from("custom_budgets")
@@ -137,6 +125,28 @@ export function useCustomBudgets({ month, year }: { month: number; year: number 
       count += 1;
     }
     return { error: null, count };
+  }
+
+  async function seedBudgets(
+    budgets: BudgetInput[],
+    options?: { replaceExisting?: boolean }
+  ) {
+    const result = await supabase.rpc("replace_custom_budget_set", {
+      p_year: year,
+      p_month: month,
+      p_budgets: budgets as unknown as Json,
+      p_replace_existing: options?.replaceExisting ?? false,
+    });
+    if (!result.error) {
+      void refresh();
+      return { error: null, count: Number(result.data ?? 0) };
+    }
+
+    /* Missing RPC, or broken category_ids cast in older SQL — use client path. */
+    if (!isMissingRpc(result.error)) {
+      console.warn("replace_custom_budget_set failed; falling back", result.error);
+    }
+    return seedBudgetsClient(budgets, options);
   }
 
   async function copyFromPreviousMonth() {

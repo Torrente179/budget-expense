@@ -12,7 +12,6 @@ import { useExpenses } from "@/hooks/use-expenses";
 import { useMonthlyBudgetPlan } from "@/hooks/use-monthly-budget-plan";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useOnboarding } from "@/hooks/use-onboarding";
-import { useTitheTarget } from "@/hooks/use-tithe-target";
 import { useMonth } from "@/providers/month-provider";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -29,7 +28,6 @@ import { cn, formatCurrency } from "@/lib/utils";
 import type { BudgetingMethod } from "@/lib/budgeting-methods";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
-import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { BudgetPaceChart } from "@/components/home/budget-pace-chart";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -47,13 +45,12 @@ import {
   BookOpen,
   CircleDollarSign,
   Copy,
-  HandHeart,
   Loader2,
+  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { isGivingExpense, resolveGivingTarget } from "@/lib/giving";
 
 const CustomBudgetForm = dynamic(() =>
   import("@/components/budgets/custom-budget-form").then(
@@ -85,8 +82,13 @@ export function BudgetScreen() {
   const [budgetSheetOpen, setBudgetSheetOpen] = useState(false);
   const [planSheetMounted, setPlanSheetMounted] = useState(false);
   const [planSheetOpen, setPlanSheetOpen] = useState(false);
+  const [confirmDeletePlan, setConfirmDeletePlan] = useState(false);
+  const [deletingPlan, setDeletingPlan] = useState(false);
   const [methodSheetMounted, setMethodSheetMounted] = useState(false);
   const [methodSheetOpen, setMethodSheetOpen] = useState(false);
+  const [pendingMethod, setPendingMethod] = useState<BudgetingMethod | null>(
+    null
+  );
 
   const {
     customBudgets,
@@ -107,7 +109,6 @@ export function BudgetScreen() {
     deletePlan,
     copyPlanFromPreviousMonth,
   } = useMonthlyBudgetPlan({ month, year });
-  const titheTarget = useTitheTarget();
   const { profile } = useOnboarding();
 
   const planIncome = plan
@@ -162,22 +163,6 @@ export function BudgetScreen() {
   const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
   const consumedRatio = budgetUsageRatio(totalConsumed, totalBudgeted);
   const overviewColor = budgetUsageColorForRatio(consumedRatio);
-
-  const givingSpent = useMemo(
-    () =>
-      expenses.reduce((sum, expense) => {
-        return isGivingExpense(expense)
-          ? sum + convert(expense.amount, expense.currency)
-          : sum;
-      }, 0),
-    [expenses, convert]
-  );
-  const givingTarget = resolveGivingTarget({
-    tithePercent: titheTarget,
-    planIncome: planIncome,
-    recordedIncome: summary.totalIncome,
-  });
-  const givingRatio = givingTarget > 0 ? givingSpent / givingTarget : null;
 
   async function handleDelete() {
     if (!deleteId) return;
@@ -254,17 +239,21 @@ export function BudgetScreen() {
 
   async function handleDeletePlan() {
     if (!plan) return;
+    setDeletingPlan(true);
     const error = await deletePlan(plan.id);
+    setDeletingPlan(false);
     if (error) {
       toast.error(
         t(
-          "Could not delete the monthly plan",
-          "No se pudo eliminar el plan mensual"
+          "Could not delete the monthly income",
+          "No se pudo eliminar el ingreso mensual"
         )
       );
       return error;
     }
-    toast.success(t("Monthly plan removed", "Plan mensual eliminado"));
+    setConfirmDeletePlan(false);
+    setPlanSheetOpen(false);
+    toast.success(t("Monthly income removed", "Ingreso mensual eliminado"));
     return null;
   }
 
@@ -330,9 +319,29 @@ export function BudgetScreen() {
     setMethodSheetOpen(true);
   }
 
-  async function handleApplyMethod(method: BudgetingMethod) {
+  function handleApplyMethod(method: BudgetingMethod) {
     const seeds = buildMethodBudgetSeeds(method, categories);
+    if (seeds.length === 0) {
+      toast.error(
+        t(
+          "This method could not create budgets",
+          "Este método no pudo crear presupuestos"
+        )
+      );
+      return;
+    }
+    if (customBudgets.length > 0) {
+      setPendingMethod(method);
+      return;
+    }
+    void applyMethodBudgets(method, false);
+  }
 
+  async function applyMethodBudgets(
+    method: BudgetingMethod,
+    replaceExisting: boolean
+  ) {
+    const seeds = buildMethodBudgetSeeds(method, categories);
     if (seeds.length === 0) {
       toast.error(
         t(
@@ -343,19 +352,8 @@ export function BudgetScreen() {
       return;
     }
 
-    let replaceExisting = false;
-    if (customBudgets.length > 0) {
-      const confirmed = window.confirm(
-        t(
-          `Replace your ${customBudgets.length} existing budget${customBudgets.length !== 1 ? "s" : ""} with ${method.name}?`,
-          `¿Reemplazar tus ${customBudgets.length} presupuesto${customBudgets.length !== 1 ? "s" : ""} con ${method.name}?`
-        )
-      );
-      if (!confirmed) return;
-      replaceExisting = true;
-    }
-
     setSeeding(true);
+    setMethodSheetOpen(false);
 
     const { error, count } = await seedBudgets(
       seeds.map((seed) => ({
@@ -369,8 +367,10 @@ export function BudgetScreen() {
     );
 
     setSeeding(false);
+    setPendingMethod(null);
 
     if (error) {
+      console.error("seedBudgets failed", error);
       toast.error(
         t(
           "Could not create budgets from this method",
@@ -383,8 +383,8 @@ export function BudgetScreen() {
     toast.success(
       plan
         ? t(
-            `${method.name}: created ${count} budget${count !== 1 ? "s" : ""}. Generosidad stays on its own card.`,
-            `${method.name}: se crearon ${count} presupuesto${count !== 1 ? "s" : ""}. Generosidad sigue en su propia tarjeta.`
+            `${method.name}: created ${count} budget${count !== 1 ? "s" : ""}.`,
+            `${method.name}: se crearon ${count} presupuesto${count !== 1 ? "s" : ""}.`
           )
         : t(
             `${method.name}: created ${count} budget${count !== 1 ? "s" : ""}. Set your income so percentages resolve to amounts.`,
@@ -562,11 +562,32 @@ export function BudgetScreen() {
                             className="gap-1.5"
                             onClick={openPlanSheet}
                           >
-                            <CircleDollarSign className="h-4 w-4" />
+                            {hasPlan ? (
+                              <Pencil className="h-4 w-4" />
+                            ) : (
+                              <CircleDollarSign className="h-4 w-4" />
+                            )}
                             <span className="hidden lg:inline">
-                              {t("Plan", "Plan")}
+                              {hasPlan
+                                ? t("Edit", "Editar")
+                                : t("Income", "Ingreso")}
                             </span>
                           </Button>
+                          {hasPlan ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-danger hover:bg-danger-subtle hover:text-danger"
+                              onClick={() => setConfirmDeletePlan(true)}
+                              disabled={deletingPlan}
+                              aria-label={t(
+                                "Delete monthly income",
+                                "Eliminar ingreso mensual"
+                              )}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : null}
                         </div>
                       }
                     />
@@ -789,82 +810,12 @@ export function BudgetScreen() {
                               {formatCurrency(unallocatedSpent, baseCurrency)}
                             </span>{" "}
                             {t(
-                              "spent outside these budgets (includes Generosidad)",
-                              "gastado fuera de estos presupuestos (incluye Generosidad)"
+                              "spent outside these budgets",
+                              "gastado fuera de estos presupuestos"
                             )}
                           </p>
                         )}
                       </>
-                    )}
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Giving — after budgets on mobile; under plan on desktop */}
-              <div className="order-3 min-w-0 lg:order-3 lg:col-span-2">
-                <Card>
-                  <CardHeader>
-                    <SectionHeader
-                      eyebrow={t("First fruits", "Primicias")}
-                      title={t("Giving", "Generosidad")}
-                      action={
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-success-subtle text-success">
-                          <HandHeart className="h-4.5 w-4.5" />
-                        </div>
-                      }
-                    />
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <div className="flex flex-col gap-1">
-                      <p className="font-mono text-title font-semibold tabular-nums tracking-tight">
-                        {givingTarget > 0
-                          ? formatCurrency(givingTarget, baseCurrency)
-                          : "—"}
-                      </p>
-                      <p className="text-caption text-muted-foreground">
-                        {t(
-                          `${titheTarget}% of income`,
-                          `${titheTarget}% del ingreso`
-                        )}
-                      </p>
-                    </div>
-                    {givingRatio !== null ? (
-                      <>
-                        <ProgressMeter
-                          ratio={givingRatio}
-                          tone={givingRatio >= 1 ? "success" : "neutral"}
-                          className="max-w-xs"
-                        />
-                        <p className="text-caption text-muted-foreground">
-                          {givingRatio >= 1 ? (
-                            <>
-                              {t("Target reached —", "Meta alcanzada —")}{" "}
-                              <span className="font-mono tabular-nums text-expense">
-                                {formatCurrency(givingSpent, baseCurrency)}
-                              </span>{" "}
-                              {t("given.", "dado.")}
-                            </>
-                          ) : (
-                            <>
-                              <span className="font-mono tabular-nums text-expense">
-                                {formatCurrency(givingSpent, baseCurrency)}
-                              </span>{" "}
-                              {t("given ·", "dado ·")}{" "}
-                              {t(
-                                `${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)} left`,
-                                `faltan ${formatCurrency(Math.max(givingTarget - givingSpent, 0), baseCurrency)}`
-                              )}
-                            </>
-                          )}
-                        </p>
-                      </>
-                    ) : (
-                      <p className="text-caption text-muted-foreground">
-                        {t(
-                          "Set monthly income in your plan — Generosidad is a share of income, not of expenses.",
-                          "Define el ingreso en tu plan — Generosidad es un porcentaje del ingreso, no de los gastos."
-                        )}
-                      </p>
                     )}
                   </CardContent>
                 </Card>
@@ -955,6 +906,88 @@ export function BudgetScreen() {
               disabled={deleting}
             >
               {deleting && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              {t("Delete", "Eliminar")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={pendingMethod !== null}
+        onOpenChange={(open) => {
+          if (!open && !seeding) setPendingMethod(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>
+              {t("Replace existing budgets?", "¿Reemplazar presupuestos?")}
+            </DialogTitle>
+            <DialogDescription>
+              {pendingMethod
+                ? t(
+                    `This replaces your ${customBudgets.length} existing budget${customBudgets.length !== 1 ? "s" : ""} with ${pendingMethod.name}.`,
+                    `Esto reemplaza tus ${customBudgets.length} presupuesto${customBudgets.length !== 1 ? "s" : ""} con ${pendingMethod.name}.`
+                  )
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setPendingMethod(null)}
+              disabled={seeding}
+            >
+              {t("Cancel", "Cancelar")}
+            </Button>
+            <Button
+              onClick={() => {
+                if (!pendingMethod) return;
+                void applyMethodBudgets(pendingMethod, true);
+              }}
+              disabled={seeding || !pendingMethod}
+            >
+              {seeding && <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />}
+              {t("Replace budgets", "Reemplazar presupuestos")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={confirmDeletePlan}
+        onOpenChange={(open) => {
+          if (!deletingPlan) setConfirmDeletePlan(open);
+        }}
+      >
+        <DialogContent className="sm:max-w-[380px]">
+          <DialogHeader>
+            <DialogTitle>
+              {t("Delete monthly income?", "¿Eliminar ingreso mensual?")}
+            </DialogTitle>
+            <DialogDescription>
+              {t(
+                "This removes this month’s planned income. Your expenses and budgets stay — you can set a new income anytime.",
+                "Esto quita el ingreso previsto de este mes. Tus gastos y presupuestos se quedan — puedes definir un ingreso nuevo cuando quieras."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setConfirmDeletePlan(false)}
+              disabled={deletingPlan}
+            >
+              {t("Cancel", "Cancelar")}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => void handleDeletePlan()}
+              disabled={deletingPlan}
+            >
+              {deletingPlan && (
+                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
+              )}
               {t("Delete", "Eliminar")}
             </Button>
           </DialogFooter>
