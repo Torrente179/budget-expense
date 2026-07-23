@@ -15,7 +15,6 @@ interface BudgetPoolMetricsArgs {
 
 export interface BudgetPoolMetrics {
   incomeAmount: number | null;
-  allocationPercent: number | null;
   poolAmount: number;
   consumedAmount: number;
   remainingAmount: number;
@@ -45,16 +44,14 @@ export function calculateBudgetPoolMetrics({
   const incomeAmount = plan
     ? convert(plan.income_amount, plan.income_currency)
     : null;
-  const poolAmount = plan
-    ? incomeAmount! * (plan.allocation_percent / 100)
-    : assignedCategoryBudgetTotal;
+  /* Pool is planned income when a plan exists; otherwise the assigned budgets. */
+  const poolAmount = plan ? incomeAmount! : assignedCategoryBudgetTotal;
   const remainingAmount = poolAmount - consumedAmount;
   const consumedPercent = poolAmount > 0 ? (consumedAmount / poolAmount) * 100 : 0;
   const unassignedAmount = poolAmount - assignedCategoryBudgetTotal;
 
   return {
     incomeAmount,
-    allocationPercent: plan?.allocation_percent ?? null,
     poolAmount,
     consumedAmount,
     remainingAmount,

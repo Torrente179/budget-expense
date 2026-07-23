@@ -59,7 +59,6 @@ export function HomeScreen() {
     ? {
         income_amount: snapshot.monthlyPlan.incomeAmount,
         income_currency: snapshot.monthlyPlan.incomeCurrency,
-        allocation_percent: snapshot.monthlyPlan.allocationPercent,
       }
     : null;
   const titheTarget = useTitheTarget();

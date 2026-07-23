@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
+  MONTHLY_PLAN_FULL_ALLOCATION,
   monthlyBudgetPlanSchema,
   type MonthlyBudgetPlanFormValues,
 } from "@/lib/validations";
@@ -46,7 +47,9 @@ import { useLocale } from "@/providers/locale-provider";
 interface MonthlyPlanFormProps {
   month: number;
   year: number;
-  onSubmit: (values: MonthlyBudgetPlanFormValues) => Promise<unknown>;
+  onSubmit: (
+    values: MonthlyBudgetPlanFormValues & { allocation_percent: number }
+  ) => Promise<unknown>;
   defaultValues?: Partial<MonthlyBudgetPlanFormValues>;
   trigger?: React.ReactNode;
   /** When a budgeting method is applied, auto-open and show the method info */
@@ -85,7 +88,6 @@ export function MonthlyPlanForm({
   const { baseCurrency } = useCurrency();
   const hasExistingPlan = Boolean(defaultValues?.income_amount);
 
-  /* When a budgeting method is applied externally, auto-open the form */
   const appliedMethod = useMemo(
     () => (appliedMethodId ? getBudgetingMethodById(locale, appliedMethodId) : null),
     [appliedMethodId, locale]
@@ -94,9 +96,6 @@ export function MonthlyPlanForm({
   useEffect(() => {
     if (appliedMethod) {
       setResolvedOpen(true);
-      /* The total allocation % from the method serves as a suggested allocation */
-      const totalAlloc = appliedMethod.slices.reduce((sum, s) => sum + s.percent, 0);
-      form.setValue("allocation_percent", totalAlloc);
       onMethodConsumed?.();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -109,24 +108,22 @@ export function MonthlyPlanForm({
       income_amount:
         defaultValues?.income_amount ?? (undefined as unknown as number),
       income_currency: defaultValues?.income_currency ?? baseCurrency,
-      allocation_percent: defaultValues?.allocation_percent ?? 20,
       month,
       year,
     },
   });
 
   const incomeAmount = Number(form.watch("income_amount")) || 0;
-  const allocationPercent = Number(form.watch("allocation_percent")) || 0;
   const incomeCurrency = form.watch("income_currency");
-
-  const poolPreview = useMemo(
-    () => incomeAmount * (allocationPercent / 100),
-    [incomeAmount, allocationPercent]
-  );
 
   async function handleSubmit(values: MonthlyBudgetPlanFormValues) {
     setSubmitting(true);
-    const error = await onSubmit({ ...values, month, year });
+    const error = await onSubmit({
+      ...values,
+      month,
+      year,
+      allocation_percent: MONTHLY_PLAN_FULL_ALLOCATION,
+    });
     setSubmitting(false);
 
     if (!error) {
@@ -173,13 +170,13 @@ export function MonthlyPlanForm({
               <div className="space-y-1">
                 <SheetTitle>
                   {defaultValues?.income_amount
-                    ? t("Refine monthly plan", "Refinar plan mensual")
-                    : t("Set monthly plan", "Definir plan mensual")}
+                    ? t("Refine monthly income", "Refinar ingreso mensual")
+                    : t("Set monthly income", "Definir ingreso mensual")}
                 </SheetTitle>
                 <SheetDescription>
                   {t(
-                    "Start with your monthly income and define the stewardship pool you want to protect first.",
-                    "Comienza con tu ingreso mensual y define primero el fondo de mayordomía que deseas proteger."
+                    "Set the income you expect this month. Budgets and methods use this amount to resolve percentages.",
+                    "Define el ingreso que esperas este mes. Los presupuestos y métodos usan este monto para calcular los porcentajes."
                   )}
                 </SheetDescription>
               </div>
@@ -189,20 +186,20 @@ export function MonthlyPlanForm({
           <div className="flex-1 space-y-5 overflow-y-auto px-5 py-5">
             <div className="rounded-xl border border-border/70 bg-card/90 p-4">
               <p className="text-label font-medium uppercase tracking-widest text-muted-foreground">
-                {t("Monthly pool preview", "Vista previa del fondo mensual")}
+                {t("Monthly income", "Ingreso mensual")}
               </p>
               <div className="mt-3 flex items-end justify-between gap-3">
                 <div>
                   <p className="font-heading text-display font-semibold leading-none tracking-tight text-foreground">
-                    {poolPreview > 0
-                      ? formatCurrency(poolPreview, incomeCurrency)
+                    {incomeAmount > 0
+                      ? formatCurrency(incomeAmount, incomeCurrency)
                       : "--"}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
-                    {allocationPercent || 0}% of{" "}
-                    {incomeAmount > 0
-                      ? formatCurrency(incomeAmount, incomeCurrency)
-                      : t("your income", "tu ingreso")}
+                    {t(
+                      "Base for percentage budgets this month",
+                      "Base de los presupuestos en % este mes"
+                    )}
                   </p>
                 </div>
                 <div className="rounded-2xl border border-border/70 bg-secondary/70 px-3 py-2 text-right">
@@ -219,7 +216,7 @@ export function MonthlyPlanForm({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="income-amount">
-                  {t("Monthly income", "Ingreso mensual")}
+                  {t("Amount", "Monto")}
                 </Label>
                 <Input
                   id="income-amount"
@@ -238,7 +235,7 @@ export function MonthlyPlanForm({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="income-currency">
-                  {t("Income currency", "Moneda del ingreso")}
+                  {t("Currency", "Moneda")}
                 </Label>
                 <Select
                   value={form.watch("income_currency")}
@@ -265,33 +262,6 @@ export function MonthlyPlanForm({
                   </SelectContent>
                 </Select>
               </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="allocation-percent">
-                {t("Protected budget %", "% de presupuesto protegido")}
-              </Label>
-              <Input
-                id="allocation-percent"
-                type="number"
-                step="1"
-                min="1"
-                max="100"
-                placeholder="20"
-                className="font-mono"
-                {...form.register("allocation_percent")}
-              />
-              <p className="text-sm text-muted-foreground">
-                {t(
-                  "Use 20% as the default target, then adjust the percentage when you need a tighter or wider pool for the month.",
-                  "Usa 20% como objetivo inicial y luego ajusta el porcentaje cuando el mes necesite un fondo más ajustado o más amplio."
-                )}
-              </p>
-              {form.formState.errors.allocation_percent && (
-                <p className="text-xs text-destructive">
-                  {form.formState.errors.allocation_percent.message}
-                </p>
-              )}
             </div>
 
             {appliedMethod && (
@@ -355,9 +325,7 @@ export function MonthlyPlanForm({
               </Button>
               <Button type="submit" disabled={submitting || deleting}>
                 {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {hasExistingPlan
-                  ? t("Save plan", "Guardar plan")
-                  : t("Create plan", "Crear plan")}
+                {t("Save income", "Guardar ingreso")}
               </Button>
             </div>
           </SheetFooter>
@@ -369,12 +337,12 @@ export function MonthlyPlanForm({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {t("Delete monthly plan?", "¿Eliminar plan mensual?")}
+            {t("Delete monthly income?", "¿Eliminar ingreso mensual?")}
           </DialogTitle>
           <DialogDescription>
             {t(
-              "This removes this month’s income and allocation. Your expenses and budgets stay — you can set a new plan anytime.",
-              "Esto quita el ingreso y la asignación de este mes. Tus gastos y presupuestos se quedan — puedes definir un plan nuevo cuando quieras."
+              "This removes this month’s planned income. Your expenses and budgets stay — you can set a new income anytime.",
+              "Esto quita el ingreso previsto de este mes. Tus gastos y presupuestos se quedan — puedes definir un ingreso nuevo cuando quieras."
             )}
           </DialogDescription>
         </DialogHeader>

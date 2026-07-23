@@ -23,10 +23,8 @@ import {
   budgetUsageRatio,
 } from "@/lib/budgeting";
 import { budgetUsageColorForRatio } from "@/lib/palette";
-import {
-  buildMethodBudgetSeeds,
-  methodAllocationPercent,
-} from "@/lib/budgeting/method-seed";
+import { buildMethodBudgetSeeds } from "@/lib/budgeting/method-seed";
+import { MONTHLY_PLAN_FULL_ALLOCATION } from "@/lib/validations";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { BudgetingMethod } from "@/lib/budgeting-methods";
 import { Screen } from "@/components/patterns/screen";
@@ -233,11 +231,14 @@ export function BudgetScreen() {
   async function handleSavePlan(values: {
     income_amount: number;
     income_currency: string;
-    allocation_percent: number;
+    allocation_percent?: number;
     month: number;
     year: number;
   }) {
-    const error = await upsertPlan(values);
+    const error = await upsertPlan({
+      ...values,
+      allocation_percent: MONTHLY_PLAN_FULL_ALLOCATION,
+    });
     if (error) {
       toast.error(
         t(
@@ -330,7 +331,6 @@ export function BudgetScreen() {
   }
 
   async function handleApplyMethod(method: BudgetingMethod) {
-    const allocation = methodAllocationPercent(method);
     const seeds = buildMethodBudgetSeeds(method, categories);
 
     if (seeds.length === 0) {
@@ -356,16 +356,6 @@ export function BudgetScreen() {
     }
 
     setSeeding(true);
-
-    if (plan) {
-      await upsertPlan({
-        income_amount: plan.income_amount,
-        income_currency: plan.income_currency,
-        allocation_percent: Math.min(100, Math.max(1, allocation)),
-        month,
-        year,
-      });
-    }
 
     const { error, count } = await seedBudgets(
       seeds.map((seed) => ({
@@ -651,8 +641,8 @@ export function BudgetScreen() {
                     {hasPlan && (
                       <p className="text-caption text-muted-foreground">
                         {t(
-                          `Plan: ${formatCurrency(incomeAmount ?? 0, baseCurrency)} income · ${plan?.allocation_percent}% to budgets`,
-                          `Plan: ${formatCurrency(incomeAmount ?? 0, baseCurrency)} de ingreso · ${plan?.allocation_percent}% a presupuestos`
+                          `Income: ${formatCurrency(incomeAmount ?? 0, baseCurrency)}`,
+                          `Ingreso: ${formatCurrency(incomeAmount ?? 0, baseCurrency)}`
                         )}
                       </p>
                     )}
@@ -926,7 +916,6 @@ export function BudgetScreen() {
               ? {
                   income_amount: plan.income_amount,
                   income_currency: plan.income_currency,
-                  allocation_percent: plan.allocation_percent,
                 }
               : undefined
           }

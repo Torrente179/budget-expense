@@ -102,7 +102,6 @@ function MethodDetail({
   onApply?: (method: BudgetingMethod) => void;
 }) {
   const { t } = useLocale();
-  const totalAllocation = method.slices.reduce((sum, s) => sum + s.percent, 0);
 
   return (
     <div className="space-y-5">
@@ -206,8 +205,8 @@ function MethodDetail({
         <div className="space-y-2.5 rounded-xl border border-info/25 bg-info-subtle p-4">
           <p className="text-sm leading-6 text-foreground/90">
             {t(
-              `Applying this creates named budgets from the slices above (% of income) and sets your plan allocation to ${totalAllocation}%. Generosidad / giving stays on its own Primicias card — not duplicated here.`,
-              `Aplicarlo crea presupuestos con las franjas de arriba (% del ingreso) y fija la asignación del plan al ${totalAllocation}%. Generosidad sigue en su tarjeta de Primicias — no se duplica aquí.`
+              "Applying this creates named budgets from the slices above (% of income). Generosidad / giving stays on its own Primicias card — not duplicated here.",
+              "Aplicarlo crea presupuestos con las franjas de arriba (% del ingreso). Generosidad sigue en su tarjeta de Primicias — no se duplica aquí."
             )}
           </p>
           <Button className="w-full gap-2" onClick={() => onApply(method)}>
@@ -400,8 +399,8 @@ export function MethodSelector({
                 <div className="rounded-xl border border-border/70 bg-secondary/40 p-4">
                   <p className="text-sm leading-6 text-muted-foreground">
                     {t(
-                      "These are starting frameworks. Adjust percentages in your monthly plan to fit your cost of living, obligations, and generosity goals.",
-                      "Estos son marcos iniciales. Ajusta los porcentajes en tu plan mensual para adaptarlos a tu costo de vida, obligaciones y metas de generosidad."
+                      "These are starting frameworks. Adjust each budget's percentage to fit your cost of living, obligations, and generosity goals.",
+                      "Estos son marcos iniciales. Ajusta el porcentaje de cada presupuesto para adaptarlo a tu costo de vida, obligaciones y metas de generosidad."
                     )}
                   </p>
                 </div>

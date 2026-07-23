@@ -77,13 +77,12 @@ export const customBudgetSchema = z
 
 export type CustomBudgetFormValues = z.output<typeof customBudgetSchema>;
 
+/** DB column is NOT NULL; product no longer exposes a protected allocation %. */
+export const MONTHLY_PLAN_FULL_ALLOCATION = 100;
+
 export const monthlyBudgetPlanSchema = z.object({
   income_amount: z.coerce.number().positive("Income must be greater than 0"),
   income_currency: z.string().min(3).max(3),
-  allocation_percent: z.coerce
-    .number()
-    .min(1, "Percentage must be at least 1")
-    .max(100, "Percentage cannot exceed 100"),
   month: z.coerce.number().int().min(1).max(12),
   year: z.coerce.number().int().min(2020).max(2100),
 });

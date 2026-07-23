@@ -3,6 +3,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createClient } from "@/lib/supabase/client";
 import { queryKeys } from "@/lib/query/keys";
+import { MONTHLY_PLAN_FULL_ALLOCATION } from "@/lib/validations";
 import type { Database } from "@/types/database";
 
 type MonthlyBudgetPlan =
@@ -36,13 +37,17 @@ export function useMonthlyBudgetPlan({ month, year }: { month: number; year: num
   async function upsertPlan(
     values: Omit<
       Database["public"]["Tables"]["monthly_budget_plans"]["Insert"],
-      "user_id"
-    >
+      "user_id" | "allocation_percent"
+    > & { allocation_percent?: number }
   ) {
     const { data: claims, error: claimsError } = await supabase.auth.getClaims();
     if (claimsError || !claims?.claims.sub) return claimsError;
     const { error } = await supabase.from("monthly_budget_plans").upsert(
-      { ...values, user_id: claims.claims.sub },
+      {
+        ...values,
+        allocation_percent: MONTHLY_PLAN_FULL_ALLOCATION,
+        user_id: claims.claims.sub,
+      },
       { onConflict: "user_id,month,year" }
     );
     if (!error) void refresh();
@@ -70,7 +75,7 @@ export function useMonthlyBudgetPlan({ month, year }: { month: number; year: num
     const error = await upsertPlan({
       income_amount: previousPlan.income_amount,
       income_currency: previousPlan.income_currency,
-      allocation_percent: previousPlan.allocation_percent,
+      allocation_percent: MONTHLY_PLAN_FULL_ALLOCATION,
       month,
       year,
     });

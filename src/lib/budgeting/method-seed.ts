@@ -96,7 +96,3 @@ export function buildMethodBudgetSeeds(
   // even with zero categories so the plan structure stays visible.
   return seeds;
 }
-
-export function methodAllocationPercent(method: BudgetingMethod): number {
-  return method.slices.reduce((sum, slice) => sum + slice.percent, 0);
-}

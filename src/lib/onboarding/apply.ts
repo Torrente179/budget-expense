@@ -1,8 +1,8 @@
 import { createClient } from "@/lib/supabase/client";
-import { getBudgetingMethodById } from "@/lib/budgeting-methods";
 import { isGivingName } from "@/lib/giving";
 import { buildPersonalization } from "@/lib/onboarding/personalize";
 import type { PrimaryGoal } from "@/lib/onboarding/goals";
+import { MONTHLY_PLAN_FULL_ALLOCATION } from "@/lib/validations";
 import { getCurrentMonth, getCurrentYear, type AppLocale } from "@/lib/utils";
 
 /**
@@ -33,13 +33,6 @@ export async function applyOnboardingPersonalization(input: {
     methodId: input.methodId,
   });
 
-  const method = plan.methodId
-    ? getBudgetingMethodById(input.locale, plan.methodId)
-    : null;
-  const allocationPercent = method
-    ? method.slices.reduce((sum, slice) => sum + slice.percent, 0)
-    : plan.allocationPercent;
-
   await supabase.from("monthly_budget_plans").upsert(
     {
       user_id: userId,
@@ -47,7 +40,7 @@ export async function applyOnboardingPersonalization(input: {
       year,
       income_amount: input.incomeAmount,
       income_currency: input.incomeCurrency,
-      allocation_percent: allocationPercent,
+      allocation_percent: MONTHLY_PLAN_FULL_ALLOCATION,
     },
     { onConflict: "user_id,month,year" }
   );

@@ -2,6 +2,7 @@
 
 import { useMemo } from "react";
 import { calculateTrackedBalance } from "@/lib/balance-checkpoint";
+import { resolveCustomBudgetAmount } from "@/lib/budgeting";
 import type { MonthSnapshot } from "@/lib/data";
 import type { RecentMovement } from "@/lib/query/fetchers";
 import { useCurrency } from "@/providers/currency-provider";
@@ -21,7 +22,6 @@ export interface MonthlySummary {
   balanceAsOfDate: string | null;
   totalBudget: number;
   assignedCategoryBudgetTotal: number;
-  allocationPercent: number | null;
   incomeAmount: number | null;
   expenseCount: number;
   givingSpent: number;
@@ -51,7 +51,6 @@ const emptySummary: MonthlySummary = {
   balanceAsOfDate: null,
   totalBudget: 0,
   assignedCategoryBudgetTotal: 0,
-  allocationPercent: null,
   incomeAmount: null,
   expenseCount: 0,
   givingSpent: 0,
@@ -95,10 +94,17 @@ export function useMonthlySummary({ month, year }: { month: number; year: number
           snapshot.monthlyPlan.incomeCurrency
         )
       : null;
-    const totalBudget = snapshot.monthlyPlan
-      ? (incomeAmount ?? 0) *
-        (Number(snapshot.monthlyPlan.allocationPercent) / 100)
-      : assignedCategoryBudgetTotal;
+    const customBudgetTotal = snapshot.customBudgets.reduce(
+      (sum, budget) =>
+        sum + resolveCustomBudgetAmount(budget, incomeAmount, convert),
+      0
+    );
+    const totalBudget =
+      customBudgetTotal > 0
+        ? customBudgetTotal
+        : incomeAmount != null && incomeAmount > 0
+          ? incomeAmount
+          : assignedCategoryBudgetTotal;
 
     const categories = new Map<
       string,
@@ -171,9 +177,6 @@ export function useMonthlySummary({ month, year }: { month: number; year: number
       balanceAsOfDate: snapshot.balance.asOfDate,
       totalBudget,
       assignedCategoryBudgetTotal,
-      allocationPercent: snapshot.monthlyPlan
-        ? Number(snapshot.monthlyPlan.allocationPercent)
-        : null,
       incomeAmount,
       expenseCount: snapshot.expenseCount,
       givingSpent: convertTotal("givingSpent"),

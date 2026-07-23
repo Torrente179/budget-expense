@@ -2,7 +2,6 @@ import type { PrimaryGoal } from "@/lib/onboarding/goals";
 
 export interface PersonalizationPlan {
   methodId: string | null;
-  allocationPercent: number;
   seedEnvelopes: Array<{
     name: string;
     nameEs: string;
@@ -47,17 +46,6 @@ export function buildPersonalization(input: {
       methodId = "50-30-20";
     }
   }
-
-  const allocationPercent =
-    methodId === "60-30-10"
-      ? 100
-      : methodId === "5-jars"
-        ? 100
-        : methodId === "pay-yourself-first"
-          ? 100
-          : methodId === "50-30-20"
-            ? 100
-            : 70;
 
   const seedEnvelopes: PersonalizationPlan["seedEnvelopes"] = [];
   if (input.wantsBudgetHelp) {
@@ -111,7 +99,6 @@ export function buildPersonalization(input: {
 
   return {
     methodId,
-    allocationPercent,
     seedEnvelopes,
     homeCtas: [...new Set(homeCtas)],
     attentionHints,
