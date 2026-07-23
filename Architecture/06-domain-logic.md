@@ -60,8 +60,8 @@ sorts to the top of alert lists and renders as over rather than silently as 0%.
 
 ### UI usage bands (Home rings + Budget meters)
 
-Visual progress on Home and `/budget` uses a **five-band palette** driven by
-`spent / limit` alone (not calendar pace), defined in
+Visual progress on Home rings and the Budget plan/list uses a **five-band
+palette** driven by `spent / limit` alone (not calendar pace), defined in
 [`palette.ts`](../src/lib/palette.ts) (`resolveBudgetUsageTone`):
 
 | Band | Ratio |

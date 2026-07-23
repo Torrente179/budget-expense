@@ -135,12 +135,20 @@ components/
 │                  progress-meter · status-tag · underline-tabs
 │                  breakdown-donut · section-header
 │
-├── charts/     2  chart-theme (shared Recharts config) + chart-card
+├── charts/     2  chart-theme (shared Recharts config, SPEND_CHART_COLOR) +
+│                  chart-card
 │
 └── feature/   64  capture · home · budget · budgets · movements · wealth
                    insights · onboarding · review · import · settings
                    auth · shared (incl. empty-state) · wisdom · layout
 ```
+
+**Insights spend charts** (`insights-trend-charts.tsx`, deferred near-viewport
+load): daily bars from `summary.dailySpending` (current month truncated to
+today); 12-month bars from household aggregates. Clicks use Recharts
+`activeIndex` to resolve the datum — day → `/insights/calendar?day=N`, month →
+`MonthProvider.setMonthYear` + `/movements?tab=expenses`. Category spend bars
+live only in `monthly-report.tsx`, not a second Insights list.
 
 ### The patterns tier
 
@@ -200,7 +208,7 @@ exposure through `@theme inline`. Both themes must define every token.
 | Sidebar | `sidebar`, `sidebar-accent`, `sidebar-border`, `sidebar-primary`, `sidebar-ring` (+ foregrounds) |
 | Semantic status | `success`, `warning`, `danger`, `info` — each with `-foreground` and `-subtle` |
 | Cashflow | `income`, `available`, `expense` — Home stats; `positive`/`negative` alias income/expense |
-| Charts | `chart-1..5`, `chart-grid`, `chart-axis` |
+| Charts | `chart-1..5`, `chart-grid`, `chart-axis`; Insights spend bars also use `SPEND_CHART_COLOR` (`#EC4899`) from `chart-theme.tsx` |
 
 Budget **usage-band** hexes (safe → critical) and category default map live in
 [`src/lib/palette.ts`](../src/lib/palette.ts) with `ACTIVE_PALETTE` (`"v2"` |
@@ -210,6 +218,11 @@ mirrored when flipping.
 Home composition (desktop): movements column left; budgets + spending donut
 stacked in the right `lg:col-span-2` column. Budget rings:
 `src/components/home/budget-pace-chart.tsx`.
+
+Budget screen composition (desktop): budgets + rings left
+(`lg:col-span-3`); “Your plan” right (`lg:col-span-2`). No Giving card on
+`/budget`. Rings reuse `BudgetPaceChart` with `onSelect` for edit.
+`src/components/budget/budget-screen.tsx`.
 
 ### Typography
 

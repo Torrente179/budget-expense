@@ -26,9 +26,9 @@ only):
 |---|---|---|
 | Home | `/home` | Now + actionable: Income · Spent · Available · Giving (colored swatches); per-budget usage rings (swipe pages); “Where it went” donut; Attention; recent movements |
 | Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
-| Budget | `/budget` | Guided setup when empty; else plan overview + objectives list + Giving card |
+| Budget | `/budget` | Guided setup when empty; else two-column: budgets+rings left, plan right (no Giving card) |
 | Wealth | `/wealth` (+ investments / savings / liabilities) | Balances: owned and owed |
-| Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — no data-entry CTAs |
+| Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — ratios, clickable spend charts, monthly report, calendar; no data-entry CTAs |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings`, `/onboarding` (first-run).
 
@@ -133,8 +133,10 @@ looked “pending” and redirected back. Fix:
   (`buildPersonalization` without override).
 - Until the user taps another method, the suggestion stays selected; after they
   pick, that choice is sticky even if they go back and change goals.
-- Finish passes `methodId` into `applyOnboardingPersonalization` → plan
-  `allocation_percent` from the chosen method’s slices.
+- Finish passes `methodId` into `applyOnboardingPersonalization` → seeds
+  starter envelopes from the method; the monthly plan stores **income only**
+  (`allocation_percent` is always persisted as `100` for the NOT NULL column —
+  not a user-facing “protected %”).
 
 ### Profile columns (applied)
 
@@ -155,7 +157,7 @@ overrides the goal-based suggestion. Applied at finish via
 
 | Signal | Effect |
 |---|---|
-| `wants_budget_help` | Method % + 2–4 starter envelopes |
+| `wants_budget_help` | 2–4 starter envelopes from the chosen/suggested method |
 | User-picked `methodId` | Wins over goal-based method suggestion |
 | `budget_tracking` | Budget + Movements shortcuts |
 | `decrease_expenses` | Attention → Insights |
@@ -210,12 +212,14 @@ Giving is a **share of income**, never a mirror of total expenses.
 |---|---|
 | Target | `resolveGivingTarget` in `src/lib/giving.ts`: `tithe_target_percent` × (**plan income** first, else recorded income) |
 | Given | Sum of expenses classified / named as giving (Tithe, Diezmo, Donaciones, etc.) |
-| Home + Budget cards | **Primary number = target**; detail = amount given toward it |
-| Onboarding `give_generously` | Sets profile `tithe_target_percent` to 10%; seeds Generosidad envelope; creates Tithe/Diezmo category if missing so the envelope never binds to essentials/lifestyle |
+| Home | **Primary number = target**; detail = amount given toward it |
+| Budget | No dedicated Primicias card (removed 2026-07-24). Methods may seed **Donations / Tithe** envelopes via `budget_role` |
+| Onboarding `give_generously` | Sets profile `tithe_target_percent` to 10%; seeds Generosidad envelope; creates Tithe/Diezmo category if missing |
 
 Settings → Stewardship still edits the giving % of income.
 
-Change note: `changes/2026-07-18-fix-giving-income-based.md`.
+Change notes: `changes/2026-07-18-fix-giving-income-based.md`,
+`changes/2026-07-24-remove-primicias-card-from-budget.md`.
 
 ---
 
@@ -255,12 +259,14 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 Desktop layout (`lg+`): two columns after the stat row —
 
-- **Left (`lg:col-span-3`):** recent movements (starts at the top of this block)
-  + desktop-only quick shortcuts.
+- **Left (`lg:col-span-3`):** recent movements (starts at the top of this block).
 - **Right (`lg:col-span-2`):** monthly budgets card stacked above the
   “Where it went” donut (same narrow width).
 
 Mobile order: budgets → donut → movements (unchanged).
+
+Desktop quick-action shortcuts (Movements / Budget / Import / Review and
+personalized CTAs) were **removed** 2026-07-24 — navigation is primary nav + FAB.
 
 ### Stat row
 
@@ -313,22 +319,24 @@ Change notes: `changes/2026-07-23-home-desktop-two-column-layout.md`,
 
 ## 9. Budget (current composition)
 
-- **Empty (no plan, no objectives):** 3-step guided setup — income → optional
-  method → create objectives (plain-language copy; profile-aware when
+- **Empty (no plan, no objectives):** guided setup — income → optional method →
+  create objectives (plain-language copy; profile-aware when
   `wants_budget_help`). Full-width card.
-- **Otherwise (desktop `lg+`):** two-column layout matching Home —
+- **Otherwise (desktop `lg+`):** two-column layout matching Home density —
   - **Left (`lg:col-span-3`):** “Your budgets” with the same usage-band
-    **rings** as Home (`BudgetPaceChart`, swipe when &gt;3); tap ring to edit;
-    compact manage list with delete (no full-bleed bars).
-  - **Right (`lg:col-span-2`):** “Your plan” (remaining + short usage-band
-    bar) stacked above Giving.
-- **Mobile order:** Plan → Budgets → Giving.
-- Giving meter still uses success/neutral (not usage bands). Monthly plan
-  can be deleted from the plan sheet (confirm); expenses and objectives
-  are kept.
+    **rings** as Home (`BudgetPaceChart`, swipe when &gt;3); tap ring to edit
+    (`onSelect`); compact manage list with delete (no full-bleed bars).
+  - **Right (`lg:col-span-2`):** “Your plan” — remaining, short usage-band
+    bar (`max-w-xs`), plan summary; actions for Methods / Edit income /
+    Delete income (visible trash when a plan exists).
+- **Mobile order:** Plan → Budgets.
+- **No Primicias / Generosidad card** on this screen (giving stays on Home /
+  Insights). Monthly plan delete confirms and keeps expenses + objectives.
 
 Change notes: `changes/2026-07-24-budget-tab-usage-band-colors.md`,
-`changes/2026-07-24-budget-two-column-layout.md`.
+`changes/2026-07-24-budget-two-column-layout.md`,
+`changes/2026-07-24-remove-primicias-card-from-budget.md`,
+`changes/2026-07-24-visible-delete-monthly-income.md`.
 
 ---
 
@@ -407,14 +415,33 @@ Past + patterns only — no data-entry CTAs (see the editorial rule in
 
 - Ratio stat row (savings rate, expense ratio, budget usage, transactions).
 - Last-12-month pillars (Giving · Spending · Saving) when income data exists.
-- 12-month spending trend + this-month cumulative-spend charts
-  (`ChartCard`).
-- Category breakdown, budget use against plan (rows; over-budget uses
-  `StatusTag`), anomalies (“Heads up”), monthly report, giving insights,
-  income sources (“Where it came from”).
+- **Spend trend charts** (`DeferredInsightsTrendCharts` → `InsightsTrendCharts`,
+  `ChartCard`):
+  - **Monthly spending, 12 months** — bar per month.
+  - **Daily spending** — bar per day for the selected month; **current month
+    stops at today** (no flat future tail). Empty days keep a tiny
+    `minPointSize` so columns stay clickable.
+  - Series fill: soft magenta `SPEND_CHART_COLOR` (`#EC4899` in
+    `charts/chart-theme.tsx`) — expense-adjacent, not success green and not
+    alarm raspberry. Amount text elsewhere still uses `--expense`.
+  - **Drilldown:** click a day bar → `/insights/calendar?day=N` (calendar
+    opens that day’s sheet). Click a month bar → `setMonthYear` +
+    `/movements?tab=expenses`. Chart clicks resolve the bar via Recharts
+    `activeIndex` (not legacy `activePayload`).
+- **Budget use** against plan (rows; over-budget uses `StatusTag`), anomalies
+  (“Heads up”), **monthly report** (“Spending analysis” — includes the
+  category spend bars), giving insights, income sources (“Where it came
+  from”).
+- There is **no** separate Insights card for “Where it went / Spending by
+  category”; that list duplicated the monthly report and was removed.
+- Calendar (`/insights/calendar`) reads `?day=` and auto-opens the day
+  detail sheet (page wrapped in `Suspense` for `useSearchParams`).
 - Footer link to `/wisdom`.
 
-Change note: `changes/2026-07-18-premium-sweep-wealth-insights.md`.
+Change notes: `changes/2026-07-18-premium-sweep-wealth-insights.md`,
+`2026-07-24-remove-duplicate-insights-category-chart.md`,
+`2026-07-24-insights-daily-spend-chart.md`,
+`2026-07-24-insights-chart-day-month-drilldown.md`.
 
 ---
 
@@ -496,12 +523,13 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Envelope alerts | `src/lib/budgeting/envelope-alerts.ts` |
 | Clarity palette (usage bands + cashflow + category defaults) | `src/lib/palette.ts` (`ACTIVE_PALETTE`) |
 | Home | `src/components/home/home-screen.tsx`, `budget-pace-chart.tsx`, `attention-feed.tsx` |
-| Stat tiles | `src/components/patterns/stat-card.tsx` |
+| Stat tiles | `src/components/patterns/stat-card.tsx` (`swatchClassName`) |
 | Progress meters | `src/components/patterns/progress-meter.tsx` (default = usage bands) |
-| Budget | `src/components/budget/budget-screen.tsx` |
+| Budget | `src/components/budget/budget-screen.tsx` (reuses `BudgetPaceChart`) |
 | Movements | `src/components/movements/movements-screen.tsx`, `virtualized-ledger.tsx` |
 | Wealth | `src/components/wealth/wealth-overview.tsx`, `wealth-nav.tsx` |
-| Insights | `src/components/insights/insights-screen.tsx` |
+| Insights | `src/components/insights/insights-screen.tsx`, `insights-trend-charts.tsx`, `deferred-insights-trend-charts.tsx`, `monthly-report.tsx`, `calendar-screen.tsx` |
+| Chart theme (incl. spend series color) | `src/components/charts/chart-theme.tsx` (`SPEND_CHART_COLOR`) |
 | Wisdom content | `src/lib/financial-wisdom.ts`, `src/lib/budgeting-methods.ts` |
 | Query keys | `src/lib/query/keys.ts` |
 | Auth middleware | `src/lib/supabase/middleware.ts` |
@@ -552,13 +580,18 @@ production, not localhost). Built-in SMTP is rate-limited.
 
 ## 17. Related change notes (2026-07-23 / 07-24 — Home layout & clarity palette)
 
+Full session record: `changes/2026-07-24-document-home-budget-ui-session.md`.
+
 - `2026-07-23-home-desktop-two-column-layout.md` — movements left; budgets + donut stacked right
 - `2026-07-23-home-per-budget-rings.md` — one ring per budget + swipe pages + even grid
 - `2026-07-24-clarity-palette-v2.md` — usage bands, cashflow tokens, category colors, OG switch
 - `2026-07-24-budget-tab-usage-band-colors.md` — `/budget` meters share Home bands
 - `2026-07-24-stat-card-color-swatch.md` — Income / Spent / Available label dots
-- `2026-07-24-document-home-budget-palette-session.md` — handbook / design / architecture sync
 - `2026-07-24-budget-two-column-layout.md` — Budget tab two-column + rings
+- `2026-07-24-remove-primicias-card-from-budget.md` — Giving card removed from Budget
+- `2026-07-24-visible-delete-monthly-income.md` — delete income control on plan card
+- `2026-07-24-document-home-budget-palette-session.md` — earlier handbook sync
+- `2026-07-24-document-home-budget-ui-session.md` — this chat’s full doc sync
 
 ## 18. Related change notes (2026-07-24 — balance adjustment movements)
 
@@ -566,6 +599,17 @@ production, not localhost). Built-in SMTP is rate-limited.
   income/expense with standard EN/ES names on reconcile
 - `2026-07-24-document-balance-adjustment-movements.md` — architecture + APP
   handbook sync for that behavior
+
+## 19. Related change notes (2026-07-24 — Insights charts)
+
+- `2026-07-24-remove-duplicate-insights-category-chart.md` — drop standalone
+  category bars; keep breakdown inside monthly report
+- `2026-07-24-insights-daily-spend-chart.md` — daily bars (cut at today) +
+  magenta spend series color on both trend charts
+- `2026-07-24-insights-chart-day-month-drilldown.md` — day → calendar sheet;
+  month → Movements expenses; Recharts `activeIndex` typing
+- `2026-07-24-document-insights-charts-session.md` — handbook / design /
+  architecture sync for this session
 
 ---
 

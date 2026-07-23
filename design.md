@@ -33,9 +33,9 @@ of truth for every nav surface is
 |---|---|---|
 | **Home** | `/home` | "How am I doing right now" — cashflow stats (Income · Spent · Available · Giving) with matching label swatches; one usage-band ring per budget (swipe when &gt;3); category donut ("Where it went"); attention feed; recent movements; desktop-only shortcuts. Desktop: movements left, budgets+donut stacked right. Current month primary, everything actionable. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
-| **Budget** | `/budget` | Guided 3-step setup on first run; then desktop two-column (budgets+rings left; plan + Giving stacked right). Same usage bands as Home. Mobile: Plan → Budgets → Giving. |
+| **Budget** | `/budget` | Guided setup on first run; then desktop two-column (budgets+rings left; plan right). Same usage bands as Home. No Primicias card. Mobile: Plan → Budgets. |
 | **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts. If it's a balance, it lives here. |
-| **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, 12-month trend, pillars, category breakdown, envelope utilization, anomalies, monthly report, calendar. No data-entry CTAs. |
+| **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, pillars, clickable 12-month + daily spend bars (magenta series), envelope utilization, anomalies, monthly report (owns category spend bars), calendar day drilldown. No data-entry CTAs. No duplicate standalone “Where it went” list. |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings` — reachable from the
 sidebar (desktop), the profile sheet (mobile), and the command menu (⌘K).
@@ -64,6 +64,10 @@ font-size values in components** except:
 2. **Budget usage-band** hex from [`src/lib/palette.ts`](src/lib/palette.ts)
    (Home rings / Budget meters). Cashflow amounts use CSS vars
    (`income` / `available` / `expense`).
+3. **Insights spend series** `SPEND_CHART_COLOR` (`#EC4899`) in
+   [`src/components/charts/chart-theme.tsx`](src/components/charts/chart-theme.tsx)
+   — soft magenta for bar fills (matches clarity Health); not `--expense`
+   alarm red and not success green.
 
 ### 2.1 Color
 
@@ -104,18 +108,27 @@ font-size values in components** except:
   `DEFAULT_CATEGORIES`; Housing is yellow `#EAB308`. Migration
   `2026-07-24-palette-v2-category-colors.sql` updates known EN/ES names on
   live rows.
-- **Charts:** `chart-1..5` for series, `chart-grid` / `chart-axis` for
-  recessive plumbing. Category charts use per-category DB hex.
+- **Charts:** `chart-1..5` for generic series, `chart-grid` / `chart-axis` for
+  recessive plumbing. Category charts use per-category DB hex. Insights
+  **spending** trend bars use `SPEND_CHART_COLOR` (`#EC4899`) — daily bars show
+  spend peaks (selected month; current month ends at today); both the 12-month
+  and daily charts are clickable (day → calendar sheet, month → Movements
+  expenses). Category spend breakdown on Insights lives only inside the
+  monthly report, not a second list.
 - Usage: `text-success`, `bg-warning-subtle`, `ring-danger/25`, `text-income`,
   etc.
 
-### 2.1.1 Home budget rings (composition)
+### 2.1.1 Home & Budget rings (composition)
 
-- Component: `src/components/home/budget-pace-chart.tsx`.
+- Component: `src/components/home/budget-pace-chart.tsx` (shared).
 - One ring per `custom_budget`; max **3 per swipe page**; even
   `repeat(n, 1fr)` distribution; size ladder 88 / 76 / 64 px by count on the
   page.
 - Month-progress mark (black dot) remains; color is **usage band only**.
+- Home: rings link to `/budget`. Budget tab: pass `onSelect` to open the
+  edit sheet; a compact manage list below carries delete.
+- Budget desktop layout: budgets column left (`lg:col-span-3`); plan column
+  right (`lg:col-span-2`). Plan meters use `max-w-xs` — never full-bleed.
 
 ### 2.2 Typography
 
@@ -220,9 +233,9 @@ src/components/
               breakdown-donut.tsx shared thin donut with center total + legend
                                   (share % + amount); used by Home & Wealth.
   charts/     chart-theme.tsx (shared Recharts tooltip style, axis/grid
-              presets, gradient def, useChartMounted, currency formatters) +
-              chart-card.tsx. Every chart imports from here; inline tooltip
-              styles are banned.
+              presets, gradient def, useChartMounted, currency formatters,
+              SPEND_CHART_COLOR) + chart-card.tsx. Every chart imports from
+              here; inline tooltip styles are banned.
   capture/    The unified add/edit system: capture-sheet.tsx (Expense|Income
               segmented, create+edit modes, amount-first, as-you-type category
               suggestion) + capture-fab.tsx + hooks/use-capture.ts (optimistic
@@ -314,7 +327,7 @@ error states. No blank areas while fetching.
 | Ledger row | `<TransactionRow>` |
 | Stat tile | `<StatCard label value detail href?>` |
 | Budget/tithe progress | `<ProgressMeter ratio>` — default colors = usage bands; pass `tone` to override (Giving) |
-| Home budget rings | `BudgetPaceChart` — one ring per envelope, swipe pages |
+| Home budget rings | `BudgetPaceChart` — one ring per envelope, swipe pages; optional `onSelect` |
 | Stat tile swatch | `<StatCard swatchClassName="bg-income" …>` |
 | Add/edit a movement | `<CaptureSheet>` (await save before close; Save & add another) |
 | First-run setup | `/onboarding` + `useOnboarding` / `OnboardingGate` |
@@ -324,6 +337,7 @@ error states. No blank areas while fetching.
 | Positive / negative amount | `text-positive` / `text-negative` |
 | Status chip | `bg-success-subtle text-success` (or warning/danger/info) |
 | Chart wrapper | `<ChartCard>` + presets from `charts/chart-theme` |
+| Insights spend series | `SPEND_CHART_COLOR` (`#EC4899`) — daily + 12-month bars |
 | Zero data | `<EmptyState>` with an action |
 | Async result | Sonner toast (destructive ops offer Undo) |
 | New string | `t("English", "Español")` |
