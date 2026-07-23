@@ -452,68 +452,69 @@ export function HomeScreen() {
             </div>
           </div>
 
-          {/* Monthly budgets — pace at a glance */}
-          <Card>
-            <CardHeader>
-              <SectionHeader
-                eyebrow={t("Budgets", "Presupuestos")}
-                title={t("Monthly budgets", "Presupuestos del mes")}
-                action={
-                  budgetsView.length > 0 ? (
-                    <Link
-                      href="/budget"
-                      className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
-                    >
-                      {t("Manage", "Gestionar")}
-                    </Link>
-                  ) : undefined
-                }
-              />
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {budgetsView.length === 0 ? (
-                <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
-                      <Target className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-body font-medium">
-                        {t("No budgets yet", "Aún sin presupuestos")}
-                      </p>
-                      <p className="text-caption text-muted-foreground">
-                      {t(
-                        "Group categories into budgets and we'll track spending against them.",
-                        "Agrupa categorías en presupuestos y seguiremos el gasto frente a ellos."
-                      )}
-                      </p>
-                    </div>
-                  </div>
-                  <Link
-                    href="/budget"
-                    className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-primary px-3.5 text-caption font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                  >
-                    {t("Set up budgets", "Configurar presupuestos")}
-                  </Link>
-                </div>
-              ) : (
-                <BudgetPaceChart
-                  budgets={budgetsView}
-                  totalBudgeted={totalBudgeted}
-                  totalSpent={budgetsSpent}
-                  consumedRatio={budgetConsumedRatio}
-                  monthProgress={monthProgress}
-                  dayOfMonth={dayOfMonth}
-                  daysInMonth={daysInMonth}
-                  isCurrentMonth={isCurrentMonth}
-                />
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Desktop: recents left, donut right. Mobile: donut first. */}
+          {/* Desktop: movements left; budgets + donut stacked right (same width).
+              Mobile: budgets → donut → movements. */}
           <div className="grid gap-4 lg:grid-cols-5">
             <div className="min-w-0 space-y-4 lg:order-2 lg:col-span-2">
+              {/* Monthly budgets — pace at a glance */}
+              <Card>
+                <CardHeader>
+                  <SectionHeader
+                    eyebrow={t("Budgets", "Presupuestos")}
+                    title={t("Monthly budgets", "Presupuestos del mes")}
+                    action={
+                      budgetsView.length > 0 ? (
+                        <Link
+                          href="/budget"
+                          className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
+                        >
+                          {t("Manage", "Gestionar")}
+                        </Link>
+                      ) : undefined
+                    }
+                  />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {budgetsView.length === 0 ? (
+                    <div className="flex flex-col items-start gap-4">
+                      <div className="flex min-w-0 items-start gap-3">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
+                          <Target className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-body font-medium">
+                            {t("No budgets yet", "Aún sin presupuestos")}
+                          </p>
+                          <p className="text-caption text-muted-foreground">
+                            {t(
+                              "Group categories into budgets and we'll track spending against them.",
+                              "Agrupa categorías en presupuestos y seguiremos el gasto frente a ellos."
+                            )}
+                          </p>
+                        </div>
+                      </div>
+                      <Link
+                        href="/budget"
+                        className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-primary px-3.5 text-caption font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                      >
+                        {t("Set up budgets", "Configurar presupuestos")}
+                      </Link>
+                    </div>
+                  ) : (
+                    <BudgetPaceChart
+                      budgets={budgetsView}
+                      totalBudgeted={totalBudgeted}
+                      totalSpent={budgetsSpent}
+                      consumedRatio={budgetConsumedRatio}
+                      monthProgress={monthProgress}
+                      dayOfMonth={dayOfMonth}
+                      daysInMonth={daysInMonth}
+                      isCurrentMonth={isCurrentMonth}
+                    />
+                  )}
+                </CardContent>
+              </Card>
+
               {donut.slices.length > 0 && (
                 <Card>
                   <CardHeader>
