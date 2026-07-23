@@ -117,12 +117,6 @@ export function InsightsScreen() {
     });
   }, [summary.dailySpending, month, year, intlLocale]);
 
-  /* Category breakdown with proportions */
-  const categoryTotal = summary.categoryBreakdown.reduce(
-    (sum, row) => sum + row.total_amount,
-    0
-  );
-
   /* Custom budget utilization (same model as Budget tab / Home) */
   const budgetUtilization = useMemo(() => {
     if (customBudgets.length === 0) return [];
@@ -343,57 +337,6 @@ export function InsightsScreen() {
             intlLocale={intlLocale}
             baseCurrency={baseCurrency}
           />
-
-          {/* Category breakdown */}
-          <Card>
-            <CardHeader>
-              <SectionHeader
-                eyebrow={t("Where it went", "A dónde fue")}
-                title={t("Spending by category", "Gasto por categoría")}
-              />
-            </CardHeader>
-            <CardContent className="space-y-1">
-              {summary.categoryBreakdown.length === 0 ? (
-                <p className="text-body text-muted-foreground">
-                  {t("No expenses this month.", "Sin gastos este mes.")}
-                </p>
-              ) : (
-                summary.categoryBreakdown.map((row) => (
-                  <button
-                    key={row.category_id}
-                    type="button"
-                    onClick={() => handleCategoryClick(row.category_id)}
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/50"
-                  >
-                    <CategoryIcon
-                      icon={row.category_icon}
-                      color={row.category_color}
-                      className="h-8 w-8 shrink-0"
-                    />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <p className="truncate text-body font-medium">
-                          {tc(row.category_name)}
-                        </p>
-                        <span className="shrink-0 font-mono text-body tabular-nums text-negative">
-                          {formatCurrency(row.total_amount, baseCurrency)}
-                        </span>
-                      </div>
-                      <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-secondary">
-                        <div
-                          className="h-full rounded-full"
-                          style={{
-                            width: `${categoryTotal > 0 ? (row.total_amount / categoryTotal) * 100 : 0}%`,
-                            backgroundColor: row.category_color,
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </button>
-                ))
-              )}
-            </CardContent>
-          </Card>
 
           {/* Budget utilization */}
           {budgetUtilization.length > 0 && (
