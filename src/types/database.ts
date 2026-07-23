@@ -106,6 +106,31 @@ export interface Database {
           is_default: boolean;
           classification: "essential" | "discretionary" | "giving" | "savings";
           applies_to: "expense" | "income" | "both";
+          budget_role:
+            | "housing"
+            | "utilities"
+            | "groceries"
+            | "transport"
+            | "healthcare"
+            | "insurance"
+            | "taxes"
+            | "dining"
+            | "shopping"
+            | "subscriptions"
+            | "entertainment"
+            | "travel"
+            | "personal_care"
+            | "education"
+            | "professional"
+            | "cash"
+            | "other"
+            | "tithe"
+            | "donations"
+            | "savings"
+            | "investments"
+            | "loan_lent"
+            | "income"
+            | "debt_payment";
           created_at: string;
         };
         Insert: {
@@ -117,6 +142,31 @@ export interface Database {
           is_default?: boolean;
           classification?: "essential" | "discretionary" | "giving" | "savings";
           applies_to?: "expense" | "income" | "both";
+          budget_role?:
+            | "housing"
+            | "utilities"
+            | "groceries"
+            | "transport"
+            | "healthcare"
+            | "insurance"
+            | "taxes"
+            | "dining"
+            | "shopping"
+            | "subscriptions"
+            | "entertainment"
+            | "travel"
+            | "personal_care"
+            | "education"
+            | "professional"
+            | "cash"
+            | "other"
+            | "tithe"
+            | "donations"
+            | "savings"
+            | "investments"
+            | "loan_lent"
+            | "income"
+            | "debt_payment";
           created_at?: string;
         };
         Update: {
@@ -128,6 +178,31 @@ export interface Database {
           is_default?: boolean;
           classification?: "essential" | "discretionary" | "giving" | "savings";
           applies_to?: "expense" | "income" | "both";
+          budget_role?:
+            | "housing"
+            | "utilities"
+            | "groceries"
+            | "transport"
+            | "healthcare"
+            | "insurance"
+            | "taxes"
+            | "dining"
+            | "shopping"
+            | "subscriptions"
+            | "entertainment"
+            | "travel"
+            | "personal_care"
+            | "education"
+            | "professional"
+            | "cash"
+            | "other"
+            | "tithe"
+            | "donations"
+            | "savings"
+            | "investments"
+            | "loan_lent"
+            | "income"
+            | "debt_payment";
           created_at?: string;
         };
         Relationships: [];

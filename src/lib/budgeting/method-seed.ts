@@ -1,36 +1,146 @@
 import type { BudgetingMethod } from "@/lib/budgeting-methods";
+import type { BudgetRole } from "@/lib/budgeting/budget-roles";
 import type { Database } from "@/types/database";
 
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
-type Classification = NonNullable<CategoryRow["classification"]>;
 
-/** Slice keys whose money stays on the Generosidad / Primicias card. */
-const SKIP_SLICE_KEYS = new Set([
-  "tithe",
-  "blessing",
-  "giving",
-  "generosity",
-]);
+/** Roles that never seed into spending envelopes. */
+const EXCLUDED_ROLES = new Set<BudgetRole>(["income", "loan_lent"]);
 
-const SLICE_CLASSIFICATIONS: Record<string, Classification[]> = {
-  needs: ["essential"],
-  essentials: ["essential"],
-  necessities: ["essential"],
-  housing: ["essential"],
-  wants: ["discretionary"],
-  flexible: ["discretionary"],
-  lifestyle: ["discretionary"],
-  spending: ["essential", "discretionary"],
-  living: ["essential", "discretionary"],
-  "core-values": ["essential", "discretionary"],
+/**
+ * Slice key → budget roles. Order of slices in the method still matters for
+ * first-wins assignment when roles could overlap (they mostly don't).
+ */
+const SLICE_ROLES: Record<string, BudgetRole[]> = {
+  housing: ["housing"],
+  needs: [
+    "housing",
+    "utilities",
+    "groceries",
+    "transport",
+    "healthcare",
+    "insurance",
+    "taxes",
+  ],
+  essentials: [
+    "housing",
+    "utilities",
+    "groceries",
+    "transport",
+    "healthcare",
+    "insurance",
+    "taxes",
+  ],
+  necessities: [
+    "housing",
+    "utilities",
+    "groceries",
+    "transport",
+    "healthcare",
+    "insurance",
+    "taxes",
+  ],
+  debt: ["debt_payment"],
+  wants: [
+    "dining",
+    "shopping",
+    "subscriptions",
+    "entertainment",
+    "travel",
+    "personal_care",
+    "education",
+    "professional",
+    "cash",
+    "other",
+  ],
+  flexible: [
+    "dining",
+    "shopping",
+    "subscriptions",
+    "entertainment",
+    "travel",
+    "personal_care",
+    "education",
+    "professional",
+    "cash",
+    "other",
+  ],
+  lifestyle: [
+    "dining",
+    "shopping",
+    "subscriptions",
+    "entertainment",
+    "travel",
+    "personal_care",
+    "education",
+    "professional",
+    "cash",
+    "other",
+  ],
+  spending: [
+    "housing",
+    "utilities",
+    "groceries",
+    "transport",
+    "healthcare",
+    "insurance",
+    "taxes",
+    "dining",
+    "shopping",
+    "subscriptions",
+    "entertainment",
+    "travel",
+    "personal_care",
+    "education",
+    "professional",
+    "cash",
+    "other",
+  ],
+  living: [
+    "housing",
+    "utilities",
+    "groceries",
+    "transport",
+    "healthcare",
+    "insurance",
+    "taxes",
+    "dining",
+    "shopping",
+    "subscriptions",
+    "entertainment",
+    "travel",
+    "personal_care",
+    "education",
+    "professional",
+    "cash",
+    "other",
+  ],
+  "core-values": [
+    "tithe",
+    "donations",
+    "education",
+    "healthcare",
+    "personal_care",
+  ],
   savings: ["savings"],
-  growth: ["savings"],
-  investing: ["savings"],
   saving: ["savings"],
-  "savings-investing": ["savings"],
+  growth: ["savings"],
   future: ["savings"],
-  debt: ["essential"],
+  investing: ["investments", "savings"],
+  "savings-investing": ["investments", "savings"],
+  tithe: ["tithe"],
+  blessing: ["donations"],
+  giving: ["donations", "tithe"],
+  generosity: ["donations", "tithe"],
 };
+
+const LIFESTYLE_SLICE_KEYS = new Set([
+  "wants",
+  "flexible",
+  "lifestyle",
+  "spending",
+  "living",
+]);
 
 export interface MethodBudgetSeed {
   name: string;
@@ -40,26 +150,67 @@ export interface MethodBudgetSeed {
   sliceKey: string;
 }
 
+type SeedCategory = Pick<
+  CategoryRow,
+  "id" | "classification" | "name" | "budget_role" | "applies_to"
+>;
+
+function categoryRole(category: SeedCategory): BudgetRole {
+  return (category.budget_role ?? "other") as BudgetRole;
+}
+
+function isSeedableExpense(category: SeedCategory): boolean {
+  if (category.applies_to === "income") return false;
+  const role = categoryRole(category);
+  if (EXCLUDED_ROLES.has(role)) return false;
+  return true;
+}
+
 /**
- * Turn a budgeting method into concrete custom-budget rows: % of income
- * per slice, categories matched by classification. Giving/tithe slices are
- * omitted — Generosidad stays on its own Primicias card.
+ * Turn a budgeting method into concrete custom-budget rows using each
+ * category's budget_role. Giving slices create envelopes. Loan-lent and
+ * income categories are excluded.
  */
 export function buildMethodBudgetSeeds(
   method: BudgetingMethod,
-  categories: Pick<CategoryRow, "id" | "classification" | "name">[]
+  categories: SeedCategory[]
 ): MethodBudgetSeed[] {
+  const pool = categories.filter(isSeedableExpense);
   const assigned = new Set<string>();
   const seeds: MethodBudgetSeed[] = [];
+  const sliceKeys = new Set(method.slices.map((slice) => slice.key));
+  const hasTitheSlice = sliceKeys.has("tithe");
 
   for (const slice of method.slices) {
-    if (SKIP_SLICE_KEYS.has(slice.key)) continue;
+    let roles = SLICE_ROLES[slice.key] ?? ["other"];
 
-    const hints = SLICE_CLASSIFICATIONS[slice.key] ?? ["discretionary"];
-    const matched = categories.filter((category) => {
+    // If tithe has its own slice, giving/blessing/generosity keep donations only.
+    if (
+      hasTitheSlice &&
+      (slice.key === "giving" ||
+        slice.key === "blessing" ||
+        slice.key === "generosity")
+    ) {
+      roles = ["donations"];
+    }
+
+    // After a housing slice, "essentials" must not reclaim housing.
+    if (slice.key === "essentials" && sliceKeys.has("housing")) {
+      roles = roles.filter((role) => role !== "housing");
+    }
+
+    // Investing prefers investments; fall back to savings only if none exist.
+    if (slice.key === "investing" || slice.key === "savings-investing") {
+      const hasInvestments = pool.some(
+        (category) =>
+          !assigned.has(category.id) && categoryRole(category) === "investments"
+      );
+      roles = hasInvestments ? ["investments"] : ["investments", "savings"];
+    }
+
+    const matched = pool.filter((category) => {
       if (assigned.has(category.id)) return false;
-      const classification = category.classification ?? "discretionary";
-      return hints.includes(classification);
+      return roles.includes(categoryRole(category));
     });
 
     for (const category of matched) {
@@ -75,15 +226,10 @@ export function buildMethodBudgetSeeds(
     });
   }
 
-  // Leftover categories → largest discretionary-ish seed so nothing is orphaned.
-  const leftovers = categories.filter((category) => !assigned.has(category.id));
+  const leftovers = pool.filter((category) => !assigned.has(category.id));
   if (leftovers.length > 0 && seeds.length > 0) {
     const preferred =
-      seeds.find((seed) =>
-        ["wants", "flexible", "lifestyle", "spending", "living"].includes(
-          seed.sliceKey
-        )
-      ) ??
+      seeds.find((seed) => LIFESTYLE_SLICE_KEYS.has(seed.sliceKey)) ??
       [...seeds].sort((a, b) => b.amount_value - a.amount_value)[0];
 
     preferred.category_ids = [
@@ -92,7 +238,5 @@ export function buildMethodBudgetSeeds(
     ];
   }
 
-  // Drop empty seeds only if another seed absorbed categories; keep % buckets
-  // even with zero categories so the plan structure stays visible.
   return seeds;
 }

@@ -80,6 +80,8 @@ interface Suggestion {
   name: string;
   icon: string;
   color: string;
+  source?: "rule" | "history";
+  confidence?: number;
 }
 
 /**
@@ -115,6 +117,8 @@ export function CaptureSheet({
   const [currency, setCurrency] = useState<string>(baseCurrency);
   const [date, setDate] = useState(() => format(new Date(), "yyyy-MM-dd"));
   const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+  const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const learnedForRef = useRef<string | null>(null);
 
   const { data: loansData } = useQuery({
     queryKey: ["loans"],
@@ -131,6 +135,8 @@ export function CaptureSheet({
     const defaults = readCaptureDefaults();
     setKind(initialKind);
     setSuggestion(null);
+    setSuggestions([]);
+    learnedForRef.current = null;
     setCategoryTouched(isEdit);
     setAmount(
       initialValues?.amount !== undefined ? String(initialValues.amount) : ""
@@ -162,16 +168,26 @@ export function CaptureSheet({
   useEffect(() => {
     if (!open || kind !== "expense" || description.trim().length < 3) {
       setSuggestion(null);
+      setSuggestions([]);
       return;
     }
     const timer = setTimeout(async () => {
       try {
-        const result = await authorizedFetch<{ suggestion: Suggestion | null }>(
+        const result = await authorizedFetch<{
+          suggestion: Suggestion | null;
+          suggestions?: Suggestion[];
+        }>(
           `/api/categorization/suggest?q=${encodeURIComponent(description.trim())}`
         );
-        setSuggestion(result.suggestion);
-        if (result.suggestion && !categoryTouched) {
-          setCategoryId(result.suggestion.categoryId);
+        const next = result.suggestions?.length
+          ? result.suggestions
+          : result.suggestion
+            ? [result.suggestion]
+            : [];
+        setSuggestions(next);
+        setSuggestion(next[0] ?? null);
+        if (next[0] && !categoryTouched) {
+          setCategoryId(next[0].categoryId);
         }
       } catch {
         // Suggestions are best-effort
@@ -179,6 +195,25 @@ export function CaptureSheet({
     }, 300);
     return () => clearTimeout(timer);
   }, [description, open, kind, categoryTouched]);
+
+  function rememberCategory(categoryIdValue: string) {
+    const trimmed = description.trim();
+    if (kind !== "expense" || trimmed.length < 3 || !categoryIdValue) return;
+    const learnKey = `${trimmed.toLowerCase()}::${categoryIdValue}`;
+    if (learnedForRef.current === learnKey) return;
+    // Only learn when the user picks something other than the top suggestion.
+    if (suggestion && suggestion.categoryId === categoryIdValue) return;
+    learnedForRef.current = learnKey;
+    void authorizedFetch("/api/categorization/rules", {
+      method: "POST",
+      body: JSON.stringify({
+        pattern: trimmed,
+        categoryId: categoryIdValue,
+      }),
+    }).catch(() => {
+      // Learning is best-effort
+    });
+  }
 
   const selectedCategory = useMemo(
     () => categories.find((category) => category.id === categoryId) ?? null,
@@ -514,18 +549,40 @@ export function CaptureSheet({
                 onChange={(event) => setDescription(event.target.value)}
                 className="h-11"
               />
-              {kind === "expense" &&
-                suggestion &&
-                suggestion.categoryId === categoryId && (
-                  <p className="flex items-center gap-1.5 text-caption text-muted-foreground">
+              {kind === "expense" && suggestions.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                  <span className="text-caption text-muted-foreground">
                     {t("Suggested:", "Sugerido:")}
-                    <CategoryBadge
-                      name={tc(suggestion.name)}
-                      icon={suggestion.icon}
-                      color={suggestion.color}
-                    />
-                  </p>
-                )}
+                  </span>
+                  {suggestions.map((item, index) => {
+                    const selected = item.categoryId === categoryId;
+                    return (
+                      <button
+                        key={`${item.categoryId}-${index}`}
+                        type="button"
+                        onClick={() => {
+                          setCategoryId(item.categoryId);
+                          setCategoryTouched(true);
+                          setLoanId("");
+                          if (index > 0) rememberCategory(item.categoryId);
+                        }}
+                        className={cn(
+                          "rounded-full border px-2 py-0.5 transition-colors",
+                          selected
+                            ? "border-foreground/30 bg-secondary"
+                            : "border-border/70 bg-background hover:bg-secondary/70"
+                        )}
+                      >
+                        <CategoryBadge
+                          name={tc(item.name)}
+                          icon={item.icon}
+                          color={item.color}
+                        />
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -535,9 +592,11 @@ export function CaptureSheet({
               <Select
                 value={categoryId || null}
                 onValueChange={(value) => {
-                  setCategoryId(value ?? "");
+                  const next = value ?? "";
+                  setCategoryId(next);
                   setCategoryTouched(true);
                   setLoanId("");
+                  rememberCategory(next);
                 }}
                 items={categoryItems}
               >

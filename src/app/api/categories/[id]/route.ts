@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { BUDGET_ROLES } from "@/lib/budgeting/budget-roles";
 import { createRequestClient } from "@/lib/supabase/request";
 
 const paramsSchema = z.object({ id: z.string().uuid() });
@@ -11,6 +12,7 @@ const updateSchema = z.object({
   classification: z
     .enum(["essential", "discretionary", "giving", "savings"])
     .optional(),
+  budget_role: z.enum(BUDGET_ROLES).optional(),
 });
 
 /**

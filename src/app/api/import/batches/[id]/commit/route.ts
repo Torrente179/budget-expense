@@ -4,6 +4,7 @@ import {
   buildExpenseDedupeKey,
   buildIncomeDedupeKey,
 } from "@/lib/ledger/dedupe";
+import { extractMerchantPattern } from "@/lib/ledger/merchant-pattern";
 import { normalizeForMatch } from "@/lib/ledger/normalize";
 import type { ProposedRow } from "@/lib/import/types";
 import { resolveLedgerContext } from "@/lib/supabase/ledger";
@@ -215,7 +216,9 @@ export async function POST(
   if (rememberRows.length > 0) {
     const uniqueRules = new Map<string, { pattern: string; categoryId: string }>();
     for (const row of rememberRows) {
-      const pattern = normalizeForMatch(row.description);
+      const pattern =
+        extractMerchantPattern(row.description) ??
+        normalizeForMatch(row.description);
       if (pattern) uniqueRules.set(pattern, { pattern, categoryId: row.categoryId! });
     }
     const { error } = await supabase.from("categorization_rules").upsert(

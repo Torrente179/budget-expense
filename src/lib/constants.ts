@@ -64,6 +64,10 @@ const CATEGORY_LOCALIZATIONS = [
   { en: "Donations", es: "Donaciones" },
   { en: "Personal Care", es: "Cuidado Personal" },
   { en: "Tithe", es: "Diezmo", aliases: ["Tithe / Diezmo"] },
+  { en: "Insurance", es: "Seguros" },
+  { en: "Cash", es: "Efectivo" },
+  { en: "Savings", es: "Ahorro" },
+  { en: "Investments", es: "Inversiones" },
 ] as const satisfies ReadonlyArray<{
   en: string;
   es: string;

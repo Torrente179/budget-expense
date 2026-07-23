@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { extractMerchantPattern } from "@/lib/ledger/merchant-pattern";
 import { normalizeForMatch } from "@/lib/ledger/normalize";
 import { resolveLedgerContext } from "@/lib/supabase/ledger";
 
 const ruleSchema = z.object({
-  /** Raw merchant text — normalized server-side before storing */
+  /** Raw merchant text — merchant token extracted server-side before storing */
   pattern: z.string().trim().min(3).max(160),
   categoryId: z.string().uuid(),
 });
 
 /**
- * "Remember this" from the review ritual: persist a merchant → category rule.
+ * "Remember this" from capture/review: persist a merchant → category rule.
  * User rules use priority 5 so they win over the seeded script rules.
  */
 export async function POST(request: NextRequest) {
@@ -24,8 +25,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const pattern = normalizeForMatch(parsed.data.pattern);
-  if (!pattern) {
+  const pattern =
+    extractMerchantPattern(parsed.data.pattern) ??
+    normalizeForMatch(parsed.data.pattern);
+  if (!pattern || pattern.length < 3) {
     return NextResponse.json({ error: "Empty pattern" }, { status: 400 });
   }
 

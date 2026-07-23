@@ -68,6 +68,8 @@ As of 2026-07-17 (post data reconciliation, see
 | `2026-07-18-household-insights-aggregates-ledger.sql` | Household expense/income aggregate RPCs (applied on app — single project) | ✅ Applied 2026-07-18 on `awpygbfocmynxpadpsji` |
 | `2026-07-24-palette-v2-category-colors.sql` | Clarity palette category colors (EN/ES name match; Housing `#EAB308`) | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
 | `2026-07-24-fix-replace-custom-budget-set-category-ids.sql` | Fix `replace_custom_budget_set` category_ids UUID cast (`jsonb_array_elements_text`) | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
+| `2026-07-24-category-budget-roles.sql` | `categories.budget_role` + Insurance/Cash/Savings/Investments defaults | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
+| `2026-07-24-reclassify-insurance-cash.sql` | Generali/Mutua → Insurance; ATM → Cash | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
 
 ```bash
 # Re-apply is safe (IF NOT EXISTS / CREATE OR REPLACE)
