@@ -124,7 +124,7 @@
   /* Cashflow tokens — mirrored from src/lib/palette.ts (ACTIVE_PALETTE).
      OG: income #0e8a63 · available ink · expense #b13a58 */
   --income: #059669;
-  --available: #2563eb;
+  --available: #06b6d4;
   --expense: #e11d48;
   --positive: var(--income);
   --negative: var(--expense);
@@ -182,7 +182,7 @@
   --info-foreground: #081426;
   --info-subtle: rgba(122, 165, 232, 0.13);
   --income: #34d399;
-  --available: #60a5fa;
+  --available: #22d3ee;
   --expense: #fb7185;
   --positive: var(--income);
   --negative: var(--expense);

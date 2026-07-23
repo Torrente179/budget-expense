@@ -100,7 +100,7 @@ export const PALETTE_V2: Palette = {
   id: "v2",
   cashflow: {
     income: "#059669",
-    available: "#2563EB",
+    available: "#06B6D4",
     expense: "#E11D48",
   },
   budgetUsage: {
