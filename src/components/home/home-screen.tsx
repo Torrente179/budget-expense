@@ -19,7 +19,6 @@ import {
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
-import { useReviewCount } from "@/hooks/use-review-queue";
 import { buildPersonalization } from "@/lib/onboarding/personalize";
 import {
   resolveCustomBudgetAmount,
@@ -35,7 +34,6 @@ import { SectionHeader } from "@/components/patterns/section-header";
 import { StatCard } from "@/components/patterns/stat-card";
 import { TransactionRow } from "@/components/patterns/transaction-row";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
-import { AttentionFeed } from "@/components/home/attention-feed";
 import { BudgetPaceChart } from "@/components/home/budget-pace-chart";
 import { BreakdownDonut, type DonutSlice } from "@/components/patterns/breakdown-donut";
 import { MonthPicker } from "@/components/shared/month-picker";
@@ -69,7 +67,6 @@ export function HomeScreen() {
     : null;
   const titheTarget = useTitheTarget();
   const { incomplete, profile } = useOnboarding();
-  const reviewCount = useReviewCount();
 
   const personalizedCtas = useMemo(() => {
     if (!profile) return [] as ReturnType<typeof buildPersonalization>["homeCtas"];
@@ -540,7 +537,7 @@ export function HomeScreen() {
             </CardContent>
           </Card>
 
-          {/* Desktop: attention + recents left, donut right. Mobile: donut first. */}
+          {/* Desktop: recents left, donut right. Mobile: donut first. */}
           <div className="grid gap-4 lg:grid-cols-5">
             <div className="min-w-0 space-y-4 lg:order-2 lg:col-span-2">
               {donut.slices.length > 0 && (
@@ -576,14 +573,6 @@ export function HomeScreen() {
             </div>
 
             <div className="min-w-0 space-y-4 lg:order-1 lg:col-span-3">
-              <AttentionFeed
-                incomplete={incomplete}
-                profile={profile}
-                reviewCount={reviewCount}
-                budgets={budgetsView}
-                recurringExpenses={snapshot?.recurringExpenses ?? []}
-              />
-
               {/* Recent movements */}
               <Card>
                 <CardHeader>

@@ -58,6 +58,36 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function pointOnCircle(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  angle: number
+) {
+  const radians = (angle * Math.PI) / 180;
+  return {
+    x: centerX + radius * Math.cos(radians),
+    y: centerY + radius * Math.sin(radians),
+  };
+}
+
+function describeArc(
+  centerX: number,
+  centerY: number,
+  radius: number,
+  startAngle: number,
+  endAngle: number
+) {
+  const start = pointOnCircle(centerX, centerY, radius, startAngle);
+  const end = pointOnCircle(centerX, centerY, radius, endAngle);
+  const largeArc = endAngle - startAngle > 180 ? 1 : 0;
+
+  return [
+    `M ${start.x} ${start.y}`,
+    `A ${radius} ${radius} 0 ${largeArc} 1 ${end.x} ${end.y}`,
+  ].join(" ");
+}
+
 function wrapCalloutLabel(label: string) {
   const maxCharacters = 15;
   const normalized = label.trim();
@@ -206,7 +236,7 @@ export function BreakdownDonut({
     Boolean(onSelect) && !nonInteractiveIds.includes(id);
 
   function handleSliceKeyDown(
-    event: KeyboardEvent<SVGCircleElement>,
+    event: KeyboardEvent<SVGPathElement>,
     sliceId: string
   ) {
     if (!canSelect(sliceId)) return;
@@ -215,7 +245,7 @@ export function BreakdownDonut({
     onSelect?.(sliceId);
   }
 
-  function renderSlice(
+  function renderSlicePath(
     slice: DonutSlice,
     index: number,
     geometry: {
@@ -223,33 +253,34 @@ export function BreakdownDonut({
       centerY: number;
       radius: number;
       strokeWidth: number;
-      rotate?: boolean;
     }
   ) {
-    const circumference = 2 * Math.PI * geometry.radius;
     const preceding = slices
       .slice(0, index)
       .reduce((sum, item) => sum + item.value, 0);
-    const length = Math.max(
-      (slice.value / total) * circumference - 1.5,
-      0
-    );
+    const sweepAngle = (slice.value / total) * 360;
+    const gapAngle = Math.min(1.5, sweepAngle * 0.2);
+    const startAngle =
+      -90 + (preceding / total) * 360 + gapAngle / 2;
+    const endAngle = startAngle + sweepAngle - gapAngle;
     const interactive = canSelect(slice.id);
     const active = activeSliceId === slice.id;
     const dimmed = activeSliceId !== null && activeSliceId !== slice.id;
 
     return (
-      <circle
+      <path
         key={slice.id}
-        cx={geometry.centerX}
-        cy={geometry.centerY}
-        r={geometry.radius}
+        d={describeArc(
+          geometry.centerX,
+          geometry.centerY,
+          geometry.radius,
+          startAngle,
+          endAngle
+        )}
         fill="none"
         stroke={slice.color}
         strokeWidth={active ? geometry.strokeWidth + 2 : geometry.strokeWidth}
         strokeLinecap="round"
-        strokeDasharray={`${length} ${circumference - length}`}
-        strokeDashoffset={-(preceding / total) * circumference}
         opacity={dimmed ? 0.45 : 1}
         role={interactive ? "button" : undefined}
         tabIndex={interactive ? 0 : undefined}
@@ -258,11 +289,6 @@ export function BreakdownDonut({
           "origin-center transition-[opacity,stroke-width] duration-150 outline-none",
           interactive && "cursor-pointer"
         )}
-        transform={
-          geometry.rotate
-            ? `rotate(-90 ${geometry.centerX} ${geometry.centerY})`
-            : undefined
-        }
         onPointerEnter={() => setActiveSliceId(slice.id)}
         onPointerLeave={() =>
           setActiveSliceId((current) =>
@@ -317,12 +343,11 @@ export function BreakdownDonut({
             aria-hidden={onSelect ? undefined : true}
           >
             {slices.map((slice, index) =>
-              renderSlice(slice, index, {
+              renderSlicePath(slice, index, {
                 centerX: CALLOUT_CHART.centerX,
                 centerY: CALLOUT_CHART.centerY,
                 radius: CALLOUT_CHART.radius,
                 strokeWidth: CALLOUT_CHART.strokeWidth,
-                rotate: true,
               })
             )}
             <g aria-hidden className="pointer-events-none">
@@ -396,7 +421,6 @@ export function BreakdownDonut({
             viewBox="0 0 100 100"
             width={size}
             height={size}
-            className="-rotate-90"
             aria-hidden={onSelect ? undefined : true}
             role={onSelect ? "group" : undefined}
             aria-label={
@@ -406,7 +430,7 @@ export function BreakdownDonut({
             }
           >
             {slices.map((slice, index) =>
-              renderSlice(slice, index, {
+              renderSlicePath(slice, index, {
                 centerX: 50,
                 centerY: 50,
                 radius: 42,
