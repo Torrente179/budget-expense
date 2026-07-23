@@ -1,8 +1,6 @@
 "use client";
 
 import {
-  Area,
-  AreaChart,
   Bar,
   BarChart,
   CartesianGrid,
@@ -13,7 +11,7 @@ import {
 } from "recharts";
 import { ChartCard } from "@/components/charts/chart-card";
 import {
-  ChartAreaGradient,
+  SPEND_CHART_COLOR,
   chartAxisProps,
   chartGridProps,
   chartTooltipStyle,
@@ -24,14 +22,14 @@ import { useLocale } from "@/providers/locale-provider";
 
 export interface InsightsTrendChartsProps {
   trendData: Array<{ month: string; label: string; total: number }>;
-  cumulativeData: Array<{ label: string; total: number }>;
+  dailySpendData: Array<{ label: string; total: number }>;
   intlLocale: string;
   baseCurrency: string;
 }
 
 export function InsightsTrendCharts({
   trendData,
-  cumulativeData,
+  dailySpendData,
   intlLocale,
   baseCurrency,
 }: InsightsTrendChartsProps) {
@@ -63,7 +61,7 @@ export function InsightsTrendCharts({
             />
             <Bar
               dataKey="total"
-              fill="var(--chart-1)"
+              fill={SPEND_CHART_COLOR}
               radius={[4, 4, 0, 0]}
               maxBarSize={28}
               isAnimationActive={false}
@@ -74,11 +72,10 @@ export function InsightsTrendCharts({
 
       <ChartCard
         eyebrow={t("This month", "Este mes")}
-        title={t("Cumulative spending", "Gasto acumulado")}
+        title={t("Daily spending", "Gasto diario")}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
-          <AreaChart data={cumulativeData}>
-            <ChartAreaGradient id="insightsCumulative" />
+          <BarChart data={dailySpendData}>
             <CartesianGrid {...chartGridProps} />
             <XAxis
               dataKey="label"
@@ -92,20 +89,20 @@ export function InsightsTrendCharts({
             />
             <Tooltip
               contentStyle={chartTooltipStyle}
+              cursor={{ fill: "var(--chart-grid)" }}
               formatter={(value) => [
                 tooltipFormatter(Number(value)),
-                t("Total", "Total"),
+                t("Spent", "Gastado"),
               ]}
             />
-            <Area
-              type="monotone"
+            <Bar
               dataKey="total"
-              stroke="var(--chart-1)"
-              strokeWidth={2}
-              fill="url(#insightsCumulative)"
+              fill={SPEND_CHART_COLOR}
+              radius={[3, 3, 0, 0]}
+              maxBarSize={18}
               isAnimationActive={false}
             />
-          </AreaChart>
+          </BarChart>
         </ResponsiveContainer>
       </ChartCard>
     </div>

@@ -8,6 +8,12 @@ import { useSyncExternalStore } from "react";
  * surface, and gradients derive from the series color.
  */
 
+/**
+ * Soft magenta for spending series — expense-adjacent without alarm red.
+ * Matches clarity palette Health (`#EC4899`).
+ */
+export const SPEND_CHART_COLOR = "#EC4899";
+
 /** Shared Tooltip contentStyle — spread into <Tooltip contentStyle={…}>. */
 export const chartTooltipStyle: React.CSSProperties = {
   backgroundColor: "var(--popover)",

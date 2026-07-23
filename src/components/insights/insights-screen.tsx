@@ -43,7 +43,7 @@ import { getDaysInMonth, parseISO } from "date-fns";
 export function InsightsScreen() {
   const { t, tc, intlLocale } = useLocale();
   const { baseCurrency, convert } = useCurrency();
-  const { month, year, setMonthYear } = useMonth();
+  const { month, year, isCurrentMonth, setMonthYear } = useMonth();
   const router = useRouter();
 
   const { summary, loading } = useMonthlySummary({ month, year });
@@ -98,24 +98,25 @@ export function InsightsScreen() {
       }));
   }, [insights, intlLocale]);
 
-  /* Cumulative daily spend for the selected month */
-  const cumulativeData = useMemo(() => {
+  /* Daily spend for the selected month (current month stops at today) */
+  const dailySpendData = useMemo(() => {
     const daysInMonth = getDaysInMonth(new Date(year, month - 1));
+    const endDay = isCurrentMonth
+      ? Math.min(new Date().getDate(), daysInMonth)
+      : daysInMonth;
     const spentByDate = new Map(
       summary.dailySpending.map((day) => [day.date, day.amount])
     );
-    let cumulative = 0;
-    return Array.from({ length: daysInMonth }, (_, i) => i + 1).map((day) => {
+    return Array.from({ length: endDay }, (_, i) => i + 1).map((day) => {
       const dateStr = `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-      cumulative += spentByDate.get(dateStr) ?? 0;
       return {
         label: new Intl.DateTimeFormat(intlLocale, {
           day: "numeric",
         }).format(parseISO(dateStr)),
-        total: cumulative,
+        total: spentByDate.get(dateStr) ?? 0,
       };
     });
-  }, [summary.dailySpending, month, year, intlLocale]);
+  }, [summary.dailySpending, month, year, isCurrentMonth, intlLocale]);
 
   /* Custom budget utilization (same model as Budget tab / Home) */
   const budgetUtilization = useMemo(() => {
@@ -333,7 +334,7 @@ export function InsightsScreen() {
           {/* Trends */}
           <DeferredInsightsTrendCharts
             trendData={trendData}
-            cumulativeData={cumulativeData}
+            dailySpendData={dailySpendData}
             intlLocale={intlLocale}
             baseCurrency={baseCurrency}
           />
