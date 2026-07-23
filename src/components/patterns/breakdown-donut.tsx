@@ -47,9 +47,30 @@ interface SliceCallout {
   side: "left" | "right";
   startX: number;
   startY: number;
-  bendX: number;
-  bendY: number;
   labelY: number;
+}
+
+/** Short approach into a horizontal run — avoids the old kinked radial elbows. */
+function calloutConnectorPath(callout: SliceCallout, lineEndX: number) {
+  const elbowGutter = 26;
+  const elbowX =
+    callout.side === "right"
+      ? lineEndX - elbowGutter
+      : lineEndX + elbowGutter;
+  const elbowPastStart =
+    callout.side === "right"
+      ? callout.startX >= elbowX
+      : callout.startX <= elbowX;
+
+  if (elbowPastStart) {
+    return `M ${callout.startX} ${callout.startY} L ${lineEndX} ${callout.labelY}`;
+  }
+
+  return [
+    `M ${callout.startX} ${callout.startY}`,
+    `L ${elbowX} ${callout.labelY}`,
+    `L ${lineEndX} ${callout.labelY}`,
+  ].join(" ");
 }
 
 function clamp(value: number, min: number, max: number) {
@@ -175,7 +196,7 @@ function buildSliceCallouts(
     const side = cosine >= 0 ? "right" : "left";
     const ringEdge =
       CALLOUT_CHART.radius + CALLOUT_CHART.strokeWidth / 2 + 2;
-    const bendRadius = ringEdge + 13;
+    const labelRadius = ringEdge + 28;
 
     return [
       {
@@ -183,10 +204,8 @@ function buildSliceCallouts(
         side,
         startX: CALLOUT_CHART.centerX + cosine * ringEdge,
         startY: CALLOUT_CHART.centerY + sine * ringEdge,
-        bendX: CALLOUT_CHART.centerX + cosine * bendRadius,
-        bendY: CALLOUT_CHART.centerY + sine * bendRadius,
         labelY: clamp(
-          CALLOUT_CHART.centerY + sine * (bendRadius + 18),
+          CALLOUT_CHART.centerY + sine * labelRadius,
           28,
           CALLOUT_CHART.height - 30
         ),
@@ -350,20 +369,10 @@ export function BreakdownDonut({
                 const textX = callout.side === "right" ? 258 : 82;
                 const textAnchor =
                   callout.side === "right" ? "start" : "end";
-                const bendOvershootsEnd =
-                  callout.side === "left"
-                    ? callout.bendX < lineEndX
-                    : callout.bendX > lineEndX;
-                const connectorPath = bendOvershootsEnd
-                  ? [
-                      `M ${callout.startX} ${callout.startY}`,
-                      `L ${lineEndX} ${callout.labelY}`,
-                    ]
-                  : [
-                      `M ${callout.startX} ${callout.startY}`,
-                      `L ${callout.bendX} ${callout.bendY}`,
-                      `L ${lineEndX} ${callout.labelY}`,
-                    ];
+                const connectorPath = calloutConnectorPath(
+                  callout,
+                  lineEndX
+                );
                 const labelLines = wrapCalloutLabel(callout.slice.name);
                 const active = activeSliceId === callout.slice.id;
                 const dimmed =
@@ -379,7 +388,7 @@ export function BreakdownDonut({
                     className="transition-opacity duration-150"
                   >
                     <path
-                      d={connectorPath.join(" ")}
+                      d={connectorPath}
                       fill="none"
                       stroke={callout.slice.color}
                       strokeWidth={active ? 2 : 1.25}
