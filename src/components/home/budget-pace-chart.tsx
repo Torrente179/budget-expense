@@ -9,6 +9,11 @@ import {
 } from "react";
 import Link from "next/link";
 import { cn, formatCurrencyWithBreaks } from "@/lib/utils";
+import {
+  budgetUsageColor,
+  resolveBudgetUsageTone,
+  type BudgetUsageTone,
+} from "@/lib/palette";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
 
@@ -18,29 +23,6 @@ export interface BudgetPaceItem {
   limit: number;
   spent: number;
   ratio: number;
-}
-
-type PaceTone = "success" | "warning" | "danger";
-
-const TONE_STROKE: Record<PaceTone, string> = {
-  success: "var(--success)",
-  warning: "var(--warning)",
-  danger: "var(--danger)",
-};
-
-const TONE_TEXT: Record<PaceTone, string> = {
-  success: "text-success",
-  warning: "text-warning",
-  danger: "text-danger",
-};
-
-/** How many rings fit comfortably in the home budgets card. */
-const MAX_PER_PAGE = 3;
-
-function resolveTone(ratio: number, monthProgress: number): PaceTone {
-  if (!Number.isFinite(ratio) || ratio >= 1) return "danger";
-  if (ratio > monthProgress + 0.02) return "warning";
-  return "success";
 }
 
 function formatUsagePercent(ratio: number): string {
@@ -60,6 +42,9 @@ function chunkBudgets(
   }
   return pages;
 }
+
+/** How many rings fit comfortably in the home budgets card. */
+const MAX_PER_PAGE = 3;
 
 /** Ring size shrinks as more budgets share a page. */
 function resolveRingLayout(count: number): {
@@ -109,7 +94,7 @@ function CircularMeter({
   showPaceMark: boolean;
   size: number;
   strokeWidth: number;
-  tone: PaceTone;
+  tone: BudgetUsageTone;
   children?: ReactNode;
 }) {
   const radius = (size - strokeWidth) / 2;
@@ -123,6 +108,7 @@ function CircularMeter({
   const paceX = size / 2 + radius * Math.cos(paceRad);
   const paceY = size / 2 + radius * Math.sin(paceRad);
   const markSize = size >= 72 ? 8 : 6;
+  const stroke = budgetUsageColor(tone);
 
   return (
     <div className="relative shrink-0" style={{ width: size, height: size }}>
@@ -146,7 +132,7 @@ function CircularMeter({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke={TONE_STROKE[tone]}
+          stroke={stroke}
           strokeWidth={strokeWidth}
           strokeLinecap="round"
           strokeDasharray={circumference}
@@ -188,9 +174,10 @@ function BudgetRing({
 }) {
   const { t } = useLocale();
   const { baseCurrency } = useCurrency();
-  const tone = resolveTone(budget.ratio, monthProgress);
+  const tone = resolveBudgetUsageTone(budget.ratio);
   const pct = formatUsagePercent(budget.ratio);
   const remaining = budget.limit - budget.spent;
+  const toneColor = budgetUsageColor(tone);
 
   return (
     <Link
@@ -213,9 +200,9 @@ function BudgetRing({
         <span
           className={cn(
             "font-mono font-semibold leading-none tracking-[-0.03em] tabular-nums",
-            layout.percentClass,
-            TONE_TEXT[tone]
+            layout.percentClass
           )}
+          style={{ color: toneColor }}
         >
           {pct}
           {pct !== "∞" && <span className="text-[0.55em]">%</span>}
@@ -228,10 +215,10 @@ function BudgetRing({
       <p
         className={cn(
           "w-full text-center font-mono text-[0.6875rem] leading-tight tabular-nums",
-          remaining >= 0 ? "text-muted-foreground" : "text-negative"
+          remaining >= 0 ? "text-muted-foreground" : "text-expense"
         )}
       >
-        <span className="text-negative">
+        <span className="text-expense">
           {formatCurrencyWithBreaks(budget.spent, baseCurrency)}
         </span>
         {" / "}
@@ -289,6 +276,7 @@ interface BudgetPaceChartProps {
  * Home budget overview: one ring per budget (spent / limit).
  * More than 3 budgets spill into swipeable pages; each page sizes
  * rings by how many budgets are on that page.
+ * Ring color follows usage bands (safe → critical), not month pace.
  */
 export function BudgetPaceChart({
   budgets,

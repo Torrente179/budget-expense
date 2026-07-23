@@ -53,6 +53,9 @@
   --color-info-subtle: var(--info-subtle);
   --color-positive: var(--positive);
   --color-negative: var(--negative);
+  --color-income: var(--income);
+  --color-available: var(--available);
+  --color-expense: var(--expense);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -118,8 +121,13 @@
   --info: #33619e;
   --info-foreground: #ffffff;
   --info-subtle: rgba(76, 128, 197, 0.12);
-  --positive: var(--success);
-  --negative: var(--danger);
+  /* Cashflow tokens — mirrored from src/lib/palette.ts (ACTIVE_PALETTE).
+     OG: income #0e8a63 · available ink · expense #b13a58 */
+  --income: #059669;
+  --available: #2563eb;
+  --expense: #e11d48;
+  --positive: var(--income);
+  --negative: var(--expense);
   --elevation-1: 0 1px 2px rgba(16, 20, 26, 0.04), 0 12px 32px -20px rgba(16, 20, 26, 0.16);
   --elevation-2: 0 2px 6px rgba(16, 20, 26, 0.05), 0 16px 44px -20px rgba(16, 20, 26, 0.2);
   --elevation-3: 0 8px 16px -8px rgba(16, 20, 26, 0.14), 0 32px 80px -32px rgba(16, 20, 26, 0.28);
@@ -173,8 +181,11 @@
   --info: #82aae4;
   --info-foreground: #081426;
   --info-subtle: rgba(122, 165, 232, 0.13);
-  --positive: var(--success);
-  --negative: var(--danger);
+  --income: #34d399;
+  --available: #60a5fa;
+  --expense: #fb7185;
+  --positive: var(--income);
+  --negative: var(--expense);
   --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px -28px rgba(0, 0, 0, 0.7);
   --elevation-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 20px 52px -28px rgba(0, 0, 0, 0.75);
   --elevation-3: 0 8px 20px -10px rgba(0, 0, 0, 0.6), 0 36px 90px -36px rgba(0, 0, 0, 0.85);

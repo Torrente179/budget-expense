@@ -338,7 +338,7 @@ export function HomeScreen() {
                 label={t("Income", "Ingresos")}
                 href="/movements?tab=income"
                 value={
-                  <span className={cn(SUMMARY_AMOUNT_CLASS, "text-positive")}>
+                  <span className={cn(SUMMARY_AMOUNT_CLASS, "text-income")}>
                     {formatCurrencyWithBreaks(
                       summary.totalIncome,
                       baseCurrency
@@ -353,7 +353,7 @@ export function HomeScreen() {
                 label={t("Spent", "Gastado")}
                 href="/movements?tab=expenses"
                 value={
-                  <span className={cn(SUMMARY_AMOUNT_CLASS, "text-negative")}>
+                  <span className={cn(SUMMARY_AMOUNT_CLASS, "text-expense")}>
                     {formatCurrencyWithBreaks(
                       summary.totalSpent,
                       baseCurrency
@@ -388,8 +388,8 @@ export function HomeScreen() {
                     className={cn(
                       SUMMARY_AMOUNT_CLASS,
                       currentBalance !== null && currentBalance < 0
-                        ? "text-negative"
-                        : "text-foreground"
+                        ? "text-expense"
+                        : "text-available"
                     )}
                   >
                     {currentBalance === null

@@ -1,3 +1,5 @@
+import { PALETTE } from "@/lib/palette";
+
 export const CURRENCIES = [
   { code: "EUR", name: "Euro", symbol: "\u20ac", flag: "\ud83c\uddea\ud83c\uddfa" },
   { code: "USD", name: "US Dollar", symbol: "$", flag: "\ud83c\uddfa\ud83c\uddf8" },
@@ -26,19 +28,19 @@ export type CurrencyCode = (typeof CURRENCIES)[number]["code"];
 export const DEFAULT_CURRENCY: CurrencyCode = "EUR";
 
 export const DEFAULT_CATEGORIES = [
-  { name: "Food & Dining", icon: "utensils", color: "#ef4444" },
-  { name: "Transportation", icon: "car", color: "#f97316" },
-  { name: "Housing", icon: "home", color: "#eab308" },
-  { name: "Utilities", icon: "zap", color: "#84cc16" },
-  { name: "Entertainment", icon: "film", color: "#06b6d4" },
-  { name: "Shopping", icon: "shopping-bag", color: "#8b5cf6" },
-  { name: "Healthcare", icon: "heart-pulse", color: "#ec4899" },
-  { name: "Education", icon: "graduation-cap", color: "#6366f1" },
-  { name: "Travel", icon: "plane", color: "#14b8a6" },
-  { name: "Subscriptions", icon: "repeat", color: "#f43f5e" },
-  { name: "Groceries", icon: "shopping-cart", color: "#22c55e" },
-  { name: "Other", icon: "more-horizontal", color: "#64748b" },
-  { name: "Loan", icon: "banknote", color: "#0f766e" },
+  { name: "Food & Dining", icon: "utensils", color: PALETTE.categories.restaurants },
+  { name: "Transportation", icon: "car", color: PALETTE.categories.transportation },
+  { name: "Housing", icon: "home", color: PALETTE.categories.housing },
+  { name: "Utilities", icon: "zap", color: PALETTE.categories.services },
+  { name: "Entertainment", icon: "film", color: PALETTE.categories.entertainment },
+  { name: "Shopping", icon: "shopping-bag", color: PALETTE.categories.shopping },
+  { name: "Healthcare", icon: "heart-pulse", color: PALETTE.categories.health },
+  { name: "Education", icon: "graduation-cap", color: PALETTE.categories.education },
+  { name: "Travel", icon: "plane", color: PALETTE.categories.travel },
+  { name: "Subscriptions", icon: "repeat", color: PALETTE.categories.subscriptions },
+  { name: "Groceries", icon: "shopping-cart", color: PALETTE.categories.groceries },
+  { name: "Other", icon: "more-horizontal", color: PALETTE.categories.other },
+  { name: "Loan", icon: "banknote", color: PALETTE.categories.loan },
 ] as const;
 
 const CATEGORY_LOCALIZATIONS = [
