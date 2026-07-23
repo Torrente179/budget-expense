@@ -6,7 +6,7 @@ import {
   formatCurrencyWithBreaks,
 } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import type { ReactNode } from "react";
+import { useState, type KeyboardEvent, type ReactNode } from "react";
 
 export interface DonutSlice {
   id: string;
@@ -49,12 +49,28 @@ export function BreakdownDonut({
   const amountClass =
     amountTone === "negative" ? "text-negative" : "text-foreground";
   const { baseCurrency } = useCurrency();
+  const [activeSliceId, setActiveSliceId] = useState<string | null>(null);
   const total = slices.reduce((sum, slice) => sum + slice.value, 0);
   const displayTotal = centerValue ?? total;
-  const centerTotal = formatCurrencyParts(displayTotal, baseCurrency);
+  const activeSlice =
+    slices.find((slice) => slice.id === activeSliceId) ?? null;
+  const centerTotal = formatCurrencyParts(
+    activeSlice?.value ?? displayTotal,
+    baseCurrency
+  );
 
   const canSelect = (id: string) =>
     Boolean(onSelect) && !nonInteractiveIds.includes(id);
+
+  function handleSliceKeyDown(
+    event: KeyboardEvent<SVGCircleElement>,
+    sliceId: string
+  ) {
+    if (!canSelect(sliceId)) return;
+    if (event.key !== "Enter" && event.key !== " ") return;
+    event.preventDefault();
+    onSelect?.(sliceId);
+  }
 
   return (
     <div
@@ -73,7 +89,13 @@ export function BreakdownDonut({
             width={size}
             height={size}
             className="-rotate-90"
-            aria-hidden
+            aria-hidden={onSelect ? undefined : true}
+            role={onSelect ? "group" : undefined}
+            aria-label={
+              onSelect && typeof centerLabel === "string"
+                ? centerLabel
+                : undefined
+            }
           >
             {slices.map((slice, index) => {
               const circumference = 2 * Math.PI * 42;
@@ -84,6 +106,10 @@ export function BreakdownDonut({
                 (slice.value / total) * circumference - 1.5,
                 0
               );
+              const interactive = canSelect(slice.id);
+              const active = activeSliceId === slice.id;
+              const dimmed =
+                activeSliceId !== null && activeSliceId !== slice.id;
               return (
                 <circle
                   key={slice.id}
@@ -92,17 +118,51 @@ export function BreakdownDonut({
                   r="42"
                   fill="none"
                   stroke={slice.color}
-                  strokeWidth="11"
+                  strokeWidth={active ? "13" : "11"}
                   strokeLinecap="round"
                   strokeDasharray={`${length} ${circumference - length}`}
                   strokeDashoffset={-(preceding / total) * circumference}
+                  opacity={dimmed ? 0.45 : 1}
+                  role={interactive ? "button" : undefined}
+                  tabIndex={interactive ? 0 : undefined}
+                  aria-label={interactive ? slice.name : undefined}
+                  className={cn(
+                    "origin-center transition-[opacity,stroke-width] duration-150 outline-none",
+                    interactive && "cursor-pointer"
+                  )}
+                  onPointerEnter={() => setActiveSliceId(slice.id)}
+                  onPointerLeave={() =>
+                    setActiveSliceId((current) =>
+                      current === slice.id ? null : current
+                    )
+                  }
+                  onFocus={() => setActiveSliceId(slice.id)}
+                  onBlur={() =>
+                    setActiveSliceId((current) =>
+                      current === slice.id ? null : current
+                    )
+                  }
+                  onClick={
+                    interactive ? () => onSelect?.(slice.id) : undefined
+                  }
+                  onKeyDown={(event) =>
+                    handleSliceKeyDown(event, slice.id)
+                  }
                 />
               );
             })}
           </svg>
         )}
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-0.5 text-center">
-          <span className="label-caps">{centerLabel}</span>
+          <span
+            className={cn(
+              activeSlice
+                ? "max-w-[72%] text-balance text-[0.5625rem] font-semibold uppercase leading-tight tracking-[0.08em] text-muted-foreground"
+                : "label-caps"
+            )}
+          >
+            {activeSlice?.name ?? centerLabel}
+          </span>
           <span
             className={cn(
               "max-w-[72%] font-mono text-[0.6875rem] font-semibold leading-none tracking-[-0.025em] tabular-nums",
