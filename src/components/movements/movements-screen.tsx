@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useCategories } from "@/hooks/use-categories";
 import { useExpenses } from "@/hooks/use-expenses";
 import { useIncomes } from "@/hooks/use-incomes";
 import { useMediaQuery } from "@/hooks/use-media-query";
@@ -24,12 +25,23 @@ import { getTodayIsoDate } from "@/lib/calendar";
 import { Screen } from "@/components/patterns/screen";
 import { AmountText } from "@/components/patterns/amount-text";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
+import {
+  CategoryOption,
+  CATEGORY_SELECT_CONTENT_CLASS,
+} from "@/components/shared/category-badge";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { PullToRefresh } from "@/components/shared/pull-to-refresh";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { VirtualizedLedger } from "@/components/movements/virtualized-ledger";
 import type {
   CaptureInitialValues,
@@ -44,6 +56,15 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { Database } from "@/types/database";
+
+const ALL_CATEGORIES = "all";
+
+function categoryAppliesToExpense(category: {
+  applies_to?: string | null;
+}) {
+  const value = category.applies_to ?? "expense";
+  return value === "both" || value === "expense";
+}
 
 type Expense = Database["public"]["Tables"]["expenses"]["Row"] & {
   categories: Database["public"]["Tables"]["categories"]["Row"];
@@ -88,6 +109,7 @@ export function MovementsScreen() {
   const tab: TabFilter = TAB_VALUES.includes(tabParam as TabFilter)
     ? (tabParam as TabFilter)
     : "all";
+  const categoryParam = searchParams.get("categoryId");
 
   const [searchOpen, setSearchOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -100,12 +122,30 @@ export function MovementsScreen() {
   const [deleteTarget, setDeleteTarget] = useState<Movement | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const { categories } = useCategories();
+  const expenseCategories = useMemo(
+    () => categories.filter(categoryAppliesToExpense),
+    [categories]
+  );
+  const selectedCategory = useMemo(
+    () =>
+      expenseCategories.find((category) => category.id === categoryParam) ??
+      null,
+    [expenseCategories, categoryParam]
+  );
+  const categoryId = selectedCategory?.id;
+
   const {
     expenses,
     loading: loadingExpenses,
     deleteExpense,
     refetch: refetchExpenses,
-  } = useExpenses({ month, year, search: deferredSearch || undefined });
+  } = useExpenses({
+    month,
+    year,
+    categoryId,
+    search: deferredSearch || undefined,
+  });
   const {
     incomes,
     loading: loadingIncomes,
@@ -116,8 +156,39 @@ export function MovementsScreen() {
   const loading = loadingExpenses || loadingIncomes;
   const isMobile = useMediaQuery("(max-width: 767px)");
 
+  const categoryItems = useMemo(
+    () => [
+      {
+        value: ALL_CATEGORIES,
+        label: t("All categories", "Todas las categorías"),
+      },
+      ...expenseCategories.map((category) => ({
+        value: category.id,
+        label: tc(category.name),
+      })),
+    ],
+    [expenseCategories, t, tc]
+  );
+
+  function buildMovementsUrl(nextTab: TabFilter, nextCategoryId?: string) {
+    const params = new URLSearchParams();
+    if (nextTab !== "all") params.set("tab", nextTab);
+    if (nextCategoryId) params.set("categoryId", nextCategoryId);
+    const query = params.toString();
+    return query ? `/movements?${query}` : "/movements";
+  }
+
   function setTab(next: TabFilter) {
-    router.replace(next === "all" ? "/movements" : `/movements?tab=${next}`, {
+    const nextCategoryId = next === "income" ? undefined : categoryId;
+    router.replace(buildMovementsUrl(next, nextCategoryId), { scroll: false });
+  }
+
+  function setCategoryFilter(next: string | null) {
+    const nextCategoryId =
+      !next || next === ALL_CATEGORIES ? undefined : next;
+    const nextTab =
+      nextCategoryId && tab === "income" ? "expenses" : tab;
+    router.replace(buildMovementsUrl(nextTab, nextCategoryId), {
       scroll: false,
     });
   }
@@ -200,16 +271,22 @@ export function MovementsScreen() {
     }));
 
     let all = [...expenseItems, ...incomeItems];
-    if (tab === "expenses") all = all.filter((m) => m.kind === "expense");
-    else if (tab === "income") all = all.filter((m) => m.kind === "income");
+    if (categoryId || tab === "expenses") {
+      all = all.filter((m) => m.kind === "expense");
+    } else if (tab === "income") {
+      all = all.filter((m) => m.kind === "income");
+    }
     all = all.filter((m) => !pendingDeletes.has(m.id));
 
     return all.sort((a, b) => b.date.localeCompare(a.date));
-  }, [expenses, incomes, tab, t, tc, pendingDeletes]);
+  }, [expenses, incomes, tab, categoryId, t, tc, pendingDeletes]);
 
   const totalIncome = useMemo(
-    () => incomes.reduce((sum, i) => sum + convert(i.amount, i.currency), 0),
-    [convert, incomes]
+    () =>
+      categoryId
+        ? 0
+        : incomes.reduce((sum, i) => sum + convert(i.amount, i.currency), 0),
+    [categoryId, convert, incomes]
   );
   const totalExpenses = useMemo(
     () => expenses.reduce((sum, e) => sum + convert(e.amount, e.currency), 0),
@@ -273,6 +350,61 @@ export function MovementsScreen() {
     { key: "income", label: t("Income", "Ingresos") },
   ];
 
+  function renderCategoryFilter(className?: string) {
+    return (
+      <Select
+        value={categoryId ?? ALL_CATEGORIES}
+        onValueChange={setCategoryFilter}
+        items={categoryItems}
+      >
+        <SelectTrigger
+          size="sm"
+          aria-label={t("Filter by category", "Filtrar por categoría")}
+          className={cn(
+            "h-9 w-full min-w-0 rounded-full border-border bg-secondary/80 px-3 text-sm shadow-none sm:w-[200px]",
+            categoryId && "border-foreground/20 bg-card",
+            className
+          )}
+        >
+          <SelectValue
+            placeholder={t("All categories", "Todas las categorías")}
+          >
+            {selectedCategory ? (
+              <CategoryOption
+                name={tc(selectedCategory.name)}
+                icon={selectedCategory.icon}
+                color={selectedCategory.color}
+              />
+            ) : (
+              t("All categories", "Todas las categorías")
+            )}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent
+          align="start"
+          className={CATEGORY_SELECT_CONTENT_CLASS}
+        >
+          <SelectItem value={ALL_CATEGORIES} className="text-sm">
+            {t("All categories", "Todas las categorías")}
+          </SelectItem>
+          {expenseCategories.map((category) => (
+            <SelectItem
+              key={category.id}
+              value={category.id}
+              className="text-sm"
+            >
+              <CategoryOption
+                name={tc(category.name)}
+                icon={category.icon}
+                color={category.color}
+              />
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    );
+  }
+
   return (
     <Screen
       title={t("Movements", "Movimientos")}
@@ -303,6 +435,7 @@ export function MovementsScreen() {
               onChange={(event) => setSearch(event.target.value)}
             />
           </div>
+          <div className="hidden md:block">{renderCategoryFilter()}</div>
           <Button
             variant="ghost"
             size="icon"
@@ -326,16 +459,25 @@ export function MovementsScreen() {
       subheader={
         <div className="space-y-3">
           {searchOpen && (
-            <div className="relative md:hidden">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={t("Search movements...", "Buscar movimientos...")}
-                className="h-10 rounded-full pl-9 text-sm"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                autoFocus
-              />
+            <div className="space-y-2 md:hidden">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder={t(
+                    "Search movements...",
+                    "Buscar movimientos..."
+                  )}
+                  className="h-10 rounded-full pl-9 text-sm"
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  autoFocus
+                />
+              </div>
+              {renderCategoryFilter()}
             </div>
+          )}
+          {!searchOpen && (
+            <div className="md:hidden">{renderCategoryFilter()}</div>
           )}
           <div className="flex flex-wrap items-end justify-between gap-3">
             <UnderlineTabs
@@ -353,18 +495,22 @@ export function MovementsScreen() {
       {/* Month totals */}
       <div className="flex items-center justify-between gap-4 rounded-xl bg-card px-4 py-3 ring-1 ring-border shadow-1">
         <div className="flex gap-5 text-caption text-muted-foreground">
+          {!categoryId && (
+            <span>
+              {t("Income", "Ingresos")}{" "}
+              <AmountText
+                amount={totalIncome}
+                currency={baseCurrency}
+                tone="positive"
+                size="caption"
+                className="font-medium"
+              />
+            </span>
+          )}
           <span>
-            {t("Income", "Ingresos")}{" "}
-            <AmountText
-              amount={totalIncome}
-              currency={baseCurrency}
-              tone="positive"
-              size="caption"
-              className="font-medium"
-            />
-          </span>
-          <span>
-            {t("Expenses", "Gastos")}{" "}
+            {categoryId && selectedCategory
+              ? tc(selectedCategory.name)
+              : t("Expenses", "Gastos")}{" "}
             <AmountText
               amount={totalExpenses}
               currency={baseCurrency}
@@ -392,11 +538,22 @@ export function MovementsScreen() {
       ) : movements.length === 0 ? (
         <EmptyState
           icon={ArrowUpDown}
-          title={t("No movements", "Sin movimientos")}
-          description={t(
-            "Add your first expense or income to see it here.",
-            "Agrega tu primer gasto o ingreso para verlo aquí."
-          )}
+          title={
+            categoryId || deferredSearch
+              ? t("No matching movements", "Sin movimientos coincidentes")
+              : t("No movements", "Sin movimientos")
+          }
+          description={
+            categoryId || deferredSearch
+              ? t(
+                  "Try another category or clear search.",
+                  "Prueba otra categoría o limpia la búsqueda."
+                )
+              : t(
+                  "Add your first expense or income to see it here.",
+                  "Agrega tu primer gasto o ingreso para verlo aquí."
+                )
+          }
         />
       ) : (
         <PullToRefresh

@@ -109,9 +109,9 @@
   --success: #0e8a63;
   --success-foreground: #ffffff;
   --success-subtle: rgba(24, 185, 134, 0.12);
-  --warning: #9a6210;
+  --warning: #d49412;
   --warning-foreground: #ffffff;
-  --warning-subtle: rgba(217, 152, 33, 0.14);
+  --warning-subtle: rgba(232, 164, 40, 0.16);
   --danger: #b13a58;
   --danger-foreground: #ffffff;
   --danger-subtle: rgba(203, 96, 120, 0.12);
