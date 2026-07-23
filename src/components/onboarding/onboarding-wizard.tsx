@@ -22,13 +22,13 @@ import {
   getBudgetingMethods,
 } from "@/lib/budgeting-methods";
 import { CURRENCIES } from "@/lib/constants";
+import { liabilityKindOptions } from "@/lib/liability-kinds";
+import { resolveRecurringStartDate } from "@/lib/recurring-expenses";
+import { normalizeDecimalInput, parseDecimalInput, cn } from "@/lib/utils";
 import {
-  getCurrentMonth,
-  getCurrentYear,
-  normalizeDecimalInput,
-  parseDecimalInput,
-  cn,
-} from "@/lib/utils";
+  CategoryOption,
+  CATEGORY_SELECT_CONTENT_CLASS,
+} from "@/components/shared/category-badge";
 import { Screen } from "@/components/patterns/screen";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,9 +74,33 @@ const STEPS: Step[] = [
   "suggestions",
 ];
 
+function isBlankRecurringRow(row: DraftRecurring) {
+  return (
+    !row.description.trim() &&
+    !row.amount.trim() &&
+    !row.categoryId &&
+    !row.chargeDay.trim()
+  );
+}
+
+function isIncompleteRecurringRow(row: DraftRecurring) {
+  if (isBlankRecurringRow(row)) return false;
+  const amount = parseDecimalInput(row.amount);
+  const chargeDay = Number(row.chargeDay);
+  return (
+    !row.description.trim() ||
+    typeof amount !== "number" ||
+    amount <= 0 ||
+    !row.categoryId ||
+    !Number.isFinite(chargeDay) ||
+    chargeDay < 1 ||
+    chargeDay > 31
+  );
+}
+
 export function OnboardingWizard() {
   const router = useRouter();
-  const { t, locale } = useLocale();
+  const { t, tc, locale } = useLocale();
   const { baseCurrency } = useCurrency();
   const { categories } = useCategories();
   const { skipOnboarding, completeOnboarding } = useOnboarding();
@@ -100,6 +124,15 @@ export function OnboardingWizard() {
     () => CURRENCIES.map((item) => ({ value: item.code, label: item.code })),
     []
   );
+  const categoryItems = useMemo(
+    () =>
+      categories.map((category) => ({
+        value: category.id,
+        label: tc(category.name),
+      })),
+    [categories, tc]
+  );
+  const debtKindItems = useMemo(() => liabilityKindOptions(t), [t]);
   const budgetingMethods = useMemo(
     () => getBudgetingMethods(locale).methods,
     [locale]
@@ -138,6 +171,15 @@ export function OnboardingWizard() {
   const suggestedMethodId = suggestedPersonalization.methodId;
 
   function goNext() {
+    if (step === "recurring" && recurringRows.some(isIncompleteRecurringRow)) {
+      toast.error(
+        t(
+          "For each fixed expense, fill description, amount, category, and monthly charge day.",
+          "En cada gasto fijo, completa descripción, importe, categoría y día de cargo mensual."
+        )
+      );
+      return;
+    }
     const next = STEPS[stepIndex + 1];
     if (next) setStep(next);
   }
@@ -178,24 +220,37 @@ export function OnboardingWizard() {
       return;
     }
 
+    if (recurringRows.some(isIncompleteRecurringRow)) {
+      toast.error(
+        t(
+          "For each fixed expense, fill description, amount, category, and monthly charge day.",
+          "En cada gasto fijo, completa descripción, importe, categoría y día de cargo mensual."
+        )
+      );
+      setStep("recurring");
+      return;
+    }
+
     setSaving(true);
     try {
-      const housingCategory =
-        categories.find((c) => c.name.toLowerCase().includes("housing")) ??
-        categories.find((c) => c.classification === "essential") ??
-        categories[0];
-
       for (const row of recurringRows) {
+        if (isBlankRecurringRow(row)) continue;
         const rowAmount = parseDecimalInput(row.amount);
-        if (typeof rowAmount !== "number" || rowAmount <= 0 || !row.description.trim()) {
+        if (
+          typeof rowAmount !== "number" ||
+          rowAmount <= 0 ||
+          !row.description.trim() ||
+          !row.categoryId
+        ) {
           continue;
         }
+        const chargeDay = Math.min(31, Math.max(1, Number(row.chargeDay)));
         await addRecurringExpense({
           amount: rowAmount,
           currency: incomeCurrency,
-          category_id: row.categoryId || housingCategory?.id || "",
-          charge_day: Math.min(31, Math.max(1, Number(row.chargeDay) || 1)),
-          start_date: `${getCurrentYear()}-${String(getCurrentMonth()).padStart(2, "0")}-01`,
+          category_id: row.categoryId,
+          charge_day: chargeDay,
+          start_date: resolveRecurringStartDate(chargeDay),
           description: row.description.trim(),
           is_active: true,
         });
@@ -352,78 +407,149 @@ export function OnboardingWizard() {
               </h2>
               <p className="text-caption text-muted-foreground">
                 {t(
-                  "Rent, utilities, subscriptions — add what you know. Optional.",
-                  "Alquiler, servicios, suscripciones — añade lo que sepas. Opcional."
+                  "Rent, utilities, subscriptions — each one repeats every month on the charge day you choose. Optional.",
+                  "Alquiler, servicios, suscripciones — cada uno se repite cada mes el día de cargo que elijas. Opcional."
                 )}
               </p>
               <div className="space-y-3">
-                {recurringRows.map((row) => (
-                  <div
-                    key={row.key}
-                    className="space-y-2 rounded-xl border border-border p-3"
-                  >
-                    <Input
-                      placeholder={t("Description", "Descripción")}
-                      value={row.description}
-                      onChange={(e) =>
-                        setRecurringRows((rows) =>
-                          rows.map((item) =>
-                            item.key === row.key
-                              ? { ...item, description: e.target.value }
-                              : item
-                          )
-                        )
-                      }
-                    />
-                    <div className="flex gap-2">
+                {recurringRows.map((row) => {
+                  const selectedCategory = categories.find(
+                    (category) => category.id === row.categoryId
+                  );
+                  return (
+                    <div
+                      key={row.key}
+                      className="space-y-2 rounded-xl border border-border p-3"
+                    >
                       <Input
-                        inputMode="decimal"
-                        placeholder={t("Amount", "Importe")}
-                        value={row.amount}
-                        className="font-mono text-negative tabular-nums"
+                        placeholder={t("Description", "Descripción")}
+                        value={row.description}
                         onChange={(e) =>
                           setRecurringRows((rows) =>
                             rows.map((item) =>
                               item.key === row.key
-                                ? {
-                                    ...item,
-                                    amount: normalizeDecimalInput(e.target.value),
-                                  }
+                                ? { ...item, description: e.target.value }
                                 : item
                             )
                           )
                         }
                       />
-                      <Input
-                        inputMode="numeric"
-                        placeholder={t("Day", "Día")}
-                        className="w-20"
-                        value={row.chargeDay}
-                        onChange={(e) =>
-                          setRecurringRows((rows) =>
-                            rows.map((item) =>
-                              item.key === row.key
-                                ? { ...item, chargeDay: e.target.value }
-                                : item
+                      <div className="flex gap-2">
+                        <Input
+                          inputMode="decimal"
+                          placeholder={t("Amount", "Importe")}
+                          value={row.amount}
+                          className="font-mono text-negative tabular-nums"
+                          onChange={(e) =>
+                            setRecurringRows((rows) =>
+                              rows.map((item) =>
+                                item.key === row.key
+                                  ? {
+                                      ...item,
+                                      amount: normalizeDecimalInput(
+                                        e.target.value
+                                      ),
+                                    }
+                                  : item
+                              )
                             )
-                          )
-                        }
-                      />
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={() =>
-                          setRecurringRows((rows) =>
-                            rows.filter((item) => item.key !== row.key)
-                          )
-                        }
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                          }
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() =>
+                            setRecurringRows((rows) =>
+                              rows.filter((item) => item.key !== row.key)
+                            )
+                          }
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">
+                            {t("Category", "Categoría")}
+                          </Label>
+                          <Select
+                            value={row.categoryId || undefined}
+                            onValueChange={(value) =>
+                              setRecurringRows((rows) =>
+                                rows.map((item) =>
+                                  item.key === row.key
+                                    ? { ...item, categoryId: value ?? "" }
+                                    : item
+                                )
+                              )
+                            }
+                            items={categoryItems}
+                          >
+                            <SelectTrigger className="h-11 w-full min-w-0 border-border/80 bg-secondary/40">
+                              <SelectValue
+                                placeholder={t("Select", "Selecciona")}
+                              >
+                                {selectedCategory ? (
+                                  <CategoryOption
+                                    name={tc(selectedCategory.name)}
+                                    icon={selectedCategory.icon}
+                                    color={selectedCategory.color}
+                                  />
+                                ) : undefined}
+                              </SelectValue>
+                            </SelectTrigger>
+                            <SelectContent
+                              className={CATEGORY_SELECT_CONTENT_CLASS}
+                            >
+                              {categories.map((category) => (
+                                <SelectItem
+                                  key={category.id}
+                                  value={category.id}
+                                  className="text-sm"
+                                >
+                                  <CategoryOption
+                                    name={tc(category.name)}
+                                    icon={category.icon}
+                                    color={category.color}
+                                  />
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label className="text-xs text-muted-foreground">
+                            {t("Monthly charge day", "Día de cargo mensual")}
+                          </Label>
+                          <Input
+                            inputMode="numeric"
+                            type="number"
+                            min={1}
+                            max={31}
+                            placeholder={t("1–31", "1–31")}
+                            value={row.chargeDay}
+                            onChange={(e) =>
+                              setRecurringRows((rows) =>
+                                rows.map((item) =>
+                                  item.key === row.key
+                                    ? { ...item, chargeDay: e.target.value }
+                                    : item
+                                )
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {t(
+                          "Repeats every month. If that day already passed, it starts next month.",
+                          "Se repite cada mes. Si ese día ya pasó, empieza el mes siguiente."
+                        )}
+                      </p>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <Button
                 type="button"
@@ -436,8 +562,8 @@ export function OnboardingWizard() {
                       key: crypto.randomUUID(),
                       description: "",
                       amount: "",
-                      categoryId: categories[0]?.id ?? "",
-                      chargeDay: "1",
+                      categoryId: "",
+                      chargeDay: "",
                     },
                   ])
                 }
@@ -502,35 +628,17 @@ export function OnboardingWizard() {
                             )
                           )
                         }
-                        items={[
-                          { value: "loan", label: t("Loan", "Préstamo") },
-                          { value: "mortgage", label: t("Mortgage", "Hipoteca") },
-                          {
-                            value: "credit_card",
-                            label: t("Credit card", "Tarjeta"),
-                          },
-                          {
-                            value: "personal",
-                            label: t("Personal", "Personal"),
-                          },
-                          { value: "other", label: t("Other", "Otro") },
-                        ]}
+                        items={debtKindItems}
                       >
                         <SelectTrigger className="flex-1">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="loan">{t("Loan", "Préstamo")}</SelectItem>
-                          <SelectItem value="mortgage">
-                            {t("Mortgage", "Hipoteca")}
-                          </SelectItem>
-                          <SelectItem value="credit_card">
-                            {t("Credit card", "Tarjeta")}
-                          </SelectItem>
-                          <SelectItem value="personal">
-                            {t("Personal", "Personal")}
-                          </SelectItem>
-                          <SelectItem value="other">{t("Other", "Otro")}</SelectItem>
+                          {debtKindItems.map((item) => (
+                            <SelectItem key={item.value} value={item.value}>
+                              {item.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <Input

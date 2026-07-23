@@ -23,6 +23,29 @@ export function getMonthDateRange(month: number, year: number) {
   return { startDate, endDate };
 }
 
+/**
+ * First of the month when a recurring charge should begin.
+ * If this month's charge day already passed, start next month so sync
+ * does not materialize a backdated expense.
+ */
+export function resolveRecurringStartDate(
+  chargeDay: number,
+  today: Date = new Date()
+): string {
+  const day = Math.min(31, Math.max(1, Math.trunc(chargeDay) || 1));
+  const year = today.getFullYear();
+  const month = today.getMonth() + 1;
+  const todayDay = today.getDate();
+
+  if (day >= todayDay) {
+    return `${year}-${String(month).padStart(2, "0")}-01`;
+  }
+
+  const nextMonth = month === 12 ? 1 : month + 1;
+  const nextYear = month === 12 ? year + 1 : year;
+  return `${nextYear}-${String(nextMonth).padStart(2, "0")}-01`;
+}
+
 // Deduplicate sync calls: once synced for a user+month, skip for SYNC_COOLDOWN
 const SYNC_COOLDOWN = 5 * 60 * 1000; // 5 minutes
 const _syncCache = new Map<string, number>();

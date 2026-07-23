@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/empty-state";
 import { CURRENCIES } from "@/lib/constants";
+import { liabilityKindLabel, liabilityKindOptions } from "@/lib/liability-kinds";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { formatCurrency, parseDecimalInput } from "@/lib/utils";
 import { useCurrency } from "@/providers/currency-provider";
@@ -97,13 +98,7 @@ export function LiabilitiesEditor() {
       ),
   });
 
-  const kinds = [
-    { value: "loan", label: t("Loan", "Préstamo") },
-    { value: "mortgage", label: t("Mortgage", "Hipoteca") },
-    { value: "credit_card", label: t("Credit card", "Tarjeta de crédito") },
-    { value: "personal", label: t("Personal debt", "Deuda personal") },
-    { value: "other", label: t("Other", "Otro") },
-  ];
+  const kinds = liabilityKindOptions(t);
 
   return (
     <Card className="border-border/50">
@@ -169,7 +164,12 @@ export function LiabilitiesEditor() {
               </div>
               <div className="space-y-1.5">
                 <Label>{t("Type", "Tipo")}</Label>
-                <Select value={kind} onValueChange={(v) => v && setKind(v)}>
+                {/* Base UI shows the raw value unless `items` supplies labels. */}
+                <Select
+                  value={kind}
+                  onValueChange={(v) => v && setKind(v)}
+                  items={kinds}
+                >
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -339,7 +339,7 @@ function LiabilityRow({
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-medium">{liability.name}</p>
           <p className="text-xs text-muted-foreground">
-            {liability.kind}
+            {liabilityKindLabel(liability.kind, t)}
             {liability.interest_rate_percent != null &&
               ` · ${liability.interest_rate_percent}%`}
             {` · ${payments.length} ${t("payments", "pagos")}`}
