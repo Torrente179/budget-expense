@@ -22,6 +22,7 @@ import {
   sumConvertedAmounts,
   budgetUsageRatio,
 } from "@/lib/budgeting";
+import { budgetUsageColorForRatio } from "@/lib/palette";
 import {
   buildMethodBudgetSeeds,
   methodAllocationPercent,
@@ -161,12 +162,7 @@ export function BudgetScreen() {
   const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
   const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
   const consumedRatio = budgetUsageRatio(totalConsumed, totalBudgeted);
-  const overviewTone =
-    !Number.isFinite(consumedRatio) || consumedRatio > 1
-      ? "bg-danger"
-      : consumedRatio > monthProgress
-        ? "bg-warning"
-        : "bg-success";
+  const overviewColor = budgetUsageColorForRatio(consumedRatio);
 
   const givingSpent = useMemo(
     () =>
@@ -569,7 +565,7 @@ export function BudgetScreen() {
                           "font-mono text-display tabular-nums",
                           totalRemaining >= 0
                             ? "text-foreground"
-                            : "text-negative"
+                            : "text-expense"
                         )}
                       >
                         {formatCurrency(totalRemaining, baseCurrency)}
@@ -582,9 +578,13 @@ export function BudgetScreen() {
                     </div>
                     <div className="relative h-2 w-full overflow-hidden rounded-full bg-secondary">
                       <div
-                        className={cn("h-full rounded-full", overviewTone)}
+                        className="h-full rounded-full transition-[width] duration-500 ease-out"
                         style={{
-                          width: `${Math.min(consumedRatio, 1) * 100}%`,
+                          width: `${Math.min(
+                            Number.isFinite(consumedRatio) ? consumedRatio : 1,
+                            1
+                          ) * 100}%`,
+                          backgroundColor: overviewColor,
                         }}
                       />
                       {isCurrentMonth && (
@@ -596,7 +596,7 @@ export function BudgetScreen() {
                       )}
                     </div>
                     <p className="text-caption text-muted-foreground">
-                      <span className="font-mono tabular-nums text-negative">
+                      <span className="font-mono tabular-nums text-expense">
                         {formatCurrency(totalConsumed, baseCurrency)}
                       </span>{" "}
                       {t("spent of", "gastado de")}{" "}
@@ -700,6 +700,7 @@ export function BudgetScreen() {
                       const limit = metrics?.resolved ?? 0;
                       const ratio = metrics?.ratio ?? 0;
                       const remaining = limit - spent;
+                      const usageColor = budgetUsageColorForRatio(ratio);
                       return (
                         <div
                           key={budget.id}
@@ -721,7 +722,7 @@ export function BudgetScreen() {
                                 </span>
                               </span>
                               <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                                <span className="text-negative">
+                                <span className="text-expense">
                                   {formatCurrency(spent, baseCurrency)}
                                 </span>
                                 {" / "}
@@ -732,10 +733,13 @@ export function BudgetScreen() {
                             <p
                               className={cn(
                                 "text-caption",
-                                remaining >= 0
-                                  ? "text-muted-foreground"
-                                  : "text-danger"
+                                remaining >= 0 && "text-muted-foreground"
                               )}
+                              style={
+                                remaining < 0
+                                  ? { color: usageColor }
+                                  : undefined
+                              }
                             >
                               {remaining >= 0
                                 ? t(
@@ -765,7 +769,7 @@ export function BudgetScreen() {
                     {unallocatedSpent > 0 && (
                       <p className="px-2 pt-2 text-caption text-muted-foreground">
                         +{" "}
-                        <span className="font-mono tabular-nums text-negative">
+                        <span className="font-mono tabular-nums text-expense">
                           {formatCurrency(unallocatedSpent, baseCurrency)}
                         </span>{" "}
                         {t(

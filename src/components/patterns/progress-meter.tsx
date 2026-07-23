@@ -1,6 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { budgetUsageColorForRatio } from "@/lib/palette";
 
 type MeterTone = "success" | "warning" | "danger" | "neutral";
 
@@ -12,32 +13,33 @@ const toneClass: Record<MeterTone, string> = {
 };
 
 interface ProgressMeterProps {
-  /** Consumed / total, where 1 = 100%. Values above 1 render full + danger. */
+  /** Consumed / total, where 1 = 100%. Values above 1 render full + usage color. */
   ratio: number;
-  /** Override the automatic ok→warning→over tone mapping. */
+  /**
+   * Override automatic usage-band coloring (safe → critical).
+   * When omitted, colors match home budget rings.
+   */
   tone?: MeterTone;
   className?: string;
-  /** Warning threshold as a ratio (default 0.85). */
+  /** @deprecated Unused when tone is omitted; kept for call-site compatibility. */
   warnAt?: number;
 }
 
-/** Budget/tithe progress bar with semantic thresholds. */
+/** Budget/tithe progress bar. Default colors follow budget usage bands. */
 export function ProgressMeter({
   ratio,
   tone,
   className,
-  warnAt = 0.85,
 }: ProgressMeterProps) {
   const clamped = Math.max(0, Math.min(ratio, 1));
-  const resolvedTone: MeterTone =
-    tone ?? (ratio >= 1 ? "danger" : ratio >= warnAt ? "warning" : "success");
+  const usageColor = tone ? null : budgetUsageColorForRatio(ratio);
 
   return (
     <div
       role="progressbar"
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={Math.round(Math.min(ratio, 1) * 100)}
+      aria-valuenow={Math.round(Math.min(Math.max(ratio, 0), 9.99) * 100)}
       className={cn(
         "h-1.5 w-full overflow-hidden rounded-full bg-secondary",
         className
@@ -46,9 +48,12 @@ export function ProgressMeter({
       <div
         className={cn(
           "h-full rounded-full transition-[width] duration-500 ease-out",
-          toneClass[resolvedTone]
+          tone && toneClass[tone]
         )}
-        style={{ width: `${clamped * 100}%` }}
+        style={{
+          width: `${clamped * 100}%`,
+          ...(usageColor ? { backgroundColor: usageColor } : {}),
+        }}
       />
     </div>
   );

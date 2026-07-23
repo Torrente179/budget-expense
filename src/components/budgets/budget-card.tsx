@@ -1,7 +1,13 @@
 "use client";
 
+import type { CSSProperties } from "react";
 import { useCurrency } from "@/providers/currency-provider";
 import { formatCurrency } from "@/lib/utils";
+import {
+  budgetUsageColorForRatio,
+  resolveBudgetUsageTone,
+  BUDGET_USAGE_BANDS,
+} from "@/lib/palette";
 import { CategoryIcon } from "@/components/shared/category-badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -31,32 +37,19 @@ export function BudgetCard({
   onDelete,
 }: BudgetCardProps) {
   const { baseCurrency, convert } = useCurrency();
-  const { t, tc } = useLocale();
+  const { t, tc, locale } = useLocale();
   const budgetAmount = convert(budget.amount, budget.currency);
   const spentAmount = convert(spent, spentCurrency);
   const remaining = budgetAmount - spentAmount;
-  const percentage = budgetAmount > 0 ? (spentAmount / budgetAmount) * 100 : 0;
+  const ratio = budgetAmount > 0 ? spentAmount / budgetAmount : 0;
+  const percentage = ratio * 100;
   const cappedPercentage = Math.min(percentage, 100);
   const shareOfPool = poolAmount > 0 ? (budgetAmount / poolAmount) * 100 : 0;
-
-  const status =
-    percentage >= 90
-      ? "danger"
-      : percentage >= 75
-        ? "warning"
-        : "good";
-
-  const statusColor = {
-    good: "text-success",
-    warning: "text-warning",
-    danger: "text-danger",
-  }[status];
-
-  const progressColor = {
-    good: "[&_[data-slot=progress-indicator]]:bg-success",
-    warning: "[&_[data-slot=progress-indicator]]:bg-warning",
-    danger: "[&_[data-slot=progress-indicator]]:bg-danger",
-  }[status];
+  const tone = resolveBudgetUsageTone(ratio);
+  const usageColor = budgetUsageColorForRatio(ratio);
+  const band = BUDGET_USAGE_BANDS.find((b) => b.tone === tone);
+  const statusLabel =
+    locale === "es" ? band?.labelEs ?? "" : band?.labelEn ?? "";
 
   return (
     <div className="group rounded-lg border bg-card p-4 shadow-sm md:rounded-xl md:p-5 md:shadow-1">
@@ -91,26 +84,23 @@ export function BudgetCard({
 
       <div className="mt-3 grid gap-2 sm:grid-cols-3 md:mt-5 md:gap-3">
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
-          <p className="label-caps">
-            {t("Reserved", "Reservado")}
-          </p>
+          <p className="label-caps">{t("Reserved", "Reservado")}</p>
           <p className="mt-2 font-mono text-base font-semibold">
             {formatCurrency(budgetAmount, baseCurrency)}
           </p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
-          <p className="label-caps">
-            {t("Consumed", "Consumido")}
-          </p>
-          <p className="mt-2 font-mono text-base font-semibold text-negative">
+          <p className="label-caps">{t("Consumed", "Consumido")}</p>
+          <p className="mt-2 font-mono text-base font-semibold text-expense">
             {formatCurrency(spentAmount, baseCurrency)}
           </p>
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
-          <p className="label-caps">
-            {t("Left", "Disponible")}
-          </p>
-          <p className={`mt-2 font-mono text-base font-semibold ${statusColor}`}>
+          <p className="label-caps">{t("Left", "Disponible")}</p>
+          <p
+            className="mt-2 font-mono text-base font-semibold"
+            style={{ color: usageColor }}
+          >
             {formatCurrency(Math.abs(remaining), baseCurrency)}
           </p>
         </div>
@@ -120,17 +110,30 @@ export function BudgetCard({
         <div className="flex items-center justify-between">
           <Badge
             variant="outline"
-            className={`border-current/10 bg-secondary/60 ${statusColor}`}
+            className="border-current/10 bg-secondary/60"
+            style={{ color: usageColor }}
           >
-            {t(`${percentage.toFixed(0)}% used`, `${percentage.toFixed(0)}% usado`)}
+            {t(
+              `${percentage.toFixed(0)}% used`,
+              `${percentage.toFixed(0)}% usado`
+            )}
           </Badge>
           <span className="text-sm text-muted-foreground">
-            {remaining >= 0
-              ? t("Within envelope", "Dentro del sobre")
-              : t("Overspent", "Excedido")}
+            {statusLabel ||
+              (remaining >= 0
+                ? t("Within envelope", "Dentro del sobre")
+                : t("Overspent", "Excedido"))}
           </span>
         </div>
-        <Progress value={cappedPercentage} className={`gap-0 ${progressColor}`} />
+        <Progress
+          value={cappedPercentage}
+          className="gap-0 [&_[data-slot=progress-indicator]]:bg-[var(--budget-usage)]"
+          style={
+            {
+              "--budget-usage": usageColor,
+            } as CSSProperties
+          }
+        />
       </div>
     </div>
   );
