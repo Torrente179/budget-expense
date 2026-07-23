@@ -350,6 +350,20 @@ export function BreakdownDonut({
                 const textX = callout.side === "right" ? 258 : 82;
                 const textAnchor =
                   callout.side === "right" ? "start" : "end";
+                const bendOvershootsEnd =
+                  callout.side === "left"
+                    ? callout.bendX < lineEndX
+                    : callout.bendX > lineEndX;
+                const connectorPath = bendOvershootsEnd
+                  ? [
+                      `M ${callout.startX} ${callout.startY}`,
+                      `L ${lineEndX} ${callout.labelY}`,
+                    ]
+                  : [
+                      `M ${callout.startX} ${callout.startY}`,
+                      `L ${callout.bendX} ${callout.bendY}`,
+                      `L ${lineEndX} ${callout.labelY}`,
+                    ];
                 const labelLines = wrapCalloutLabel(callout.slice.name);
                 const active = activeSliceId === callout.slice.id;
                 const dimmed =
@@ -365,11 +379,7 @@ export function BreakdownDonut({
                     className="transition-opacity duration-150"
                   >
                     <path
-                      d={[
-                        `M ${callout.startX} ${callout.startY}`,
-                        `L ${callout.bendX} ${callout.bendY}`,
-                        `L ${lineEndX} ${callout.labelY}`,
-                      ].join(" ")}
+                      d={connectorPath.join(" ")}
                       fill="none"
                       stroke={callout.slice.color}
                       strokeWidth={active ? 2 : 1.25}
