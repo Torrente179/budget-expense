@@ -165,50 +165,59 @@ export function HomeSummaryCard({
       />
 
       <div className="relative space-y-6 p-5 sm:p-7">
-        {/* Top: remaining + income/spent + ring */}
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
-          <div className="min-w-0 flex-1 space-y-6">
-            <div>
-              <p className="text-[0.9375rem] font-medium text-white/90">
-                {t("You have", "Te quedan")}
+        {/* Top row: remaining | income | spent | ring (desktop horizontal) */}
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+          <div className="min-w-0 shrink-0">
+            <p className="text-[0.9375rem] font-medium text-white/90">
+              {t("You have", "Te quedan")}
+            </p>
+            <p className="mt-1 font-mono text-[2.25rem] font-bold leading-none tracking-[-0.035em] tabular-nums text-white sm:text-[2.5rem]">
+              {remainingLabel}
+            </p>
+            <p className="mt-2 text-[0.9375rem] font-medium text-white/80">
+              {t("available this month", "disponibles este mes")}
+            </p>
+          </div>
+
+          <div
+            aria-hidden
+            className="hidden h-14 w-px shrink-0 bg-white/20 lg:mx-6 lg:block xl:mx-8"
+          />
+
+          <div className="grid min-w-0 flex-1 grid-cols-2 gap-6 lg:contents">
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
+                <span
+                  aria-hidden
+                  className="h-2 w-2 shrink-0 rounded-full bg-[#5eead4]"
+                />
+                {t("Income received", "Ingresos recibidos")}
               </p>
-              <p className="mt-1 font-mono text-[2.25rem] font-bold leading-none tracking-[-0.035em] tabular-nums text-white sm:text-[2.75rem]">
-                {remainingLabel}
-              </p>
-              <p className="mt-2 text-[0.9375rem] font-medium text-white/80">
-                {t("available this month", "disponibles este mes")}
+              <p className="mt-1.5 font-mono text-lg font-bold tracking-[-0.02em] tabular-nums text-[#5eead4] sm:text-xl">
+                {incomeLabel}
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-6 sm:max-w-md sm:gap-10">
-              <div className="min-w-0">
-                <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
-                  <span
-                    aria-hidden
-                    className="h-2 w-2 shrink-0 rounded-full bg-[#5eead4]"
-                  />
-                  {t("Income received", "Ingresos recibidos")}
-                </p>
-                <p className="mt-1.5 font-mono text-lg font-bold tabular-nums tracking-[-0.02em] text-[#5eead4] sm:text-xl">
-                  {incomeLabel}
-                </p>
-              </div>
-              <div className="min-w-0">
-                <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
-                  <span
-                    aria-hidden
-                    className="h-2 w-2 shrink-0 rounded-full bg-white/90"
-                  />
-                  {t("You've spent", "Has gastado")}
-                </p>
-                <p className="mt-1.5 font-mono text-lg font-bold tabular-nums tracking-[-0.02em] text-white sm:text-xl">
-                  {spentLabel}
-                </p>
-              </div>
+            <div
+              aria-hidden
+              className="hidden h-14 w-px shrink-0 bg-white/20 lg:mx-6 lg:block xl:mx-8"
+            />
+
+            <div className="min-w-0">
+              <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
+                <span
+                  aria-hidden
+                  className="h-2 w-2 shrink-0 rounded-full bg-white/90"
+                />
+                {t("You've spent", "Has gastado")}
+              </p>
+              <p className="mt-1.5 font-mono text-lg font-bold tracking-[-0.02em] tabular-nums text-white sm:text-xl">
+                {spentLabel}
+              </p>
             </div>
           </div>
 
-          <div className="hidden shrink-0 sm:block">
+          <div className="ml-auto hidden shrink-0 lg:block lg:pl-4">
             <HeroRing usedRatio={cashflow.usedRatio} />
           </div>
         </div>
@@ -229,7 +238,7 @@ export function HomeSummaryCard({
           </div>
 
           {/* Mobile labels: % spent / % available */}
-          <div className="flex items-center justify-between gap-3 text-[0.75rem] text-white/80 sm:hidden">
+          <div className="flex items-center justify-between gap-3 text-[0.75rem] text-white/80 lg:hidden">
             <span>
               {usedPct !== "—"
                 ? t(`${usedPct}% spent`, `${usedPct}% gastado`)
@@ -245,11 +254,19 @@ export function HomeSummaryCard({
             </span>
           </div>
 
-          {/* Desktop: spent under bar (mockup) */}
-          <div className="hidden text-[0.8125rem] text-white/85 sm:block">
-            {t("Spent", "Gastado")}:{" "}
-            <span className="font-mono tabular-nums text-white">
-              {spentLabel}
+          {/* Desktop: spent + month target under bar */}
+          <div className="hidden items-center justify-between gap-3 text-[0.8125rem] text-white/85 lg:flex">
+            <span>
+              {t("Spent", "Gastado")}:{" "}
+              <span className="font-mono tabular-nums text-white">
+                {spentLabel}
+              </span>
+            </span>
+            <span>
+              {t("Month target", "Meta del mes")}:{" "}
+              <span className="font-mono tabular-nums text-white">
+                {incomeLabel}
+              </span>
             </span>
           </div>
         </div>
