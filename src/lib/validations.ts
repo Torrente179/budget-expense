@@ -65,6 +65,9 @@ export const customBudgetSchema = z
     category_ids: z
       .array(z.string().uuid())
       .min(1, "Select at least one category"),
+    /** null → default 75/90/100 alert ladder. */
+    warn_threshold: z.coerce.number().int().min(50).max(99).nullable().default(null),
+    repeats_monthly: z.boolean().default(true),
     month: z.coerce.number().int().min(1).max(12),
     year: z.coerce.number().int().min(2020).max(2100),
   })

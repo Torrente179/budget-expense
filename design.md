@@ -347,6 +347,7 @@ error states. No blank areas while fetching.
 | Stat tile | `<StatCard label value detail href?>` |
 | Budget/tithe progress | `<ProgressMeter ratio>` — default colors = usage bands; pass `tone` to override (Giving) |
 | Home Presupuesto cards | `BudgetPaceChart` — Metas-style cards, swipe pages; optional `onSelect` |
+| Create / edit a budget | `<BudgetWizard mode="create" \| "edit">` — centered modal (bottom sheet on mobile), 3 steps branching by kind |
 | Home month hero | `HomeSummaryCard` + `lib/home/month-cashflow.ts` |
 | Stat tile swatch | `<StatCard swatchClassName="bg-income" …>` |
 | Add/edit a movement | `<CaptureSheet>` (await save before close; Save & add another) |

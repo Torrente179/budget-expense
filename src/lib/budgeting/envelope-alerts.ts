@@ -7,7 +7,7 @@ import type { Database } from "@/types/database";
 
 type ExpenseRow = Database["public"]["Tables"]["expenses"]["Row"];
 
-export type EnvelopeThreshold = 75 | 90 | 100;
+export type EnvelopeThreshold = number;
 
 export interface EnvelopeAlert {
   budgetId: string;
@@ -16,11 +16,30 @@ export interface EnvelopeAlert {
   threshold: EnvelopeThreshold;
 }
 
-function highestThreshold(percentUsed: number): EnvelopeThreshold | null {
-  if (percentUsed >= 100) return 100;
-  if (percentUsed >= 90) return 90;
-  if (percentUsed >= 75) return 75;
-  return null;
+/** No custom threshold set → the original ladder. */
+const DEFAULT_LADDER: EnvelopeThreshold[] = [75, 90, 100];
+
+/**
+ * A budget's own `warn_threshold` replaces the ladder: one heads-up at that
+ * percentage, then the unavoidable one at 100%.
+ */
+export function resolveAlertLadder(
+  warnThreshold: number | null | undefined
+): EnvelopeThreshold[] {
+  if (warnThreshold == null) return DEFAULT_LADDER;
+  const clamped = Math.min(Math.max(Math.round(warnThreshold), 1), 99);
+  return [clamped, 100];
+}
+
+function highestThreshold(
+  percentUsed: number,
+  ladder: EnvelopeThreshold[]
+): EnvelopeThreshold | null {
+  let hit: EnvelopeThreshold | null = null;
+  for (const step of ladder) {
+    if (percentUsed >= step && (hit == null || step > hit)) hit = step;
+  }
+  return hit;
 }
 
 export function computeEnvelopeAlerts(input: {
@@ -48,7 +67,10 @@ export function computeEnvelopeAlerts(input: {
       input.convert
     );
     const percentUsed = (spent / target) * 100;
-    const threshold = highestThreshold(percentUsed);
+    const threshold = highestThreshold(
+      percentUsed,
+      resolveAlertLadder(budget.warn_threshold)
+    );
     if (!threshold) continue;
 
     alerts.push({

@@ -369,10 +369,30 @@ shrunk income pool).
 
 - **Empty (no income, no budgets):** guided setup — set income → optional
   method → create budgets. Full-width card.
-- **Otherwise:** blue **BudgetSummaryHero** (compact density) then
+- **Otherwise:** black **BudgetSummaryHero** (compact density) then
   side-by-side **Presupuestos** + **Metas de aportación**; plan distribution
   (both engines) + recommendation (overspent Presupuestos).
-- Create/edit sheet: kind picker (Presupuesto vs Meta).
+- **Create / edit — `BudgetWizard`** (`src/components/budgets/budget-wizard.tsx`):
+  centered modal on desktop, bottom sheet under 768px.
+  - Create runs **Tipo → Configuración → Revisar**; edit skips the type step
+    (2 steps) and locks the kind — changing engine mid-month would reclassify
+    history.
+  - Step 2 branches: a limit asks for *Límite mensual* + warning threshold; a
+    goal asks for *Objetivo mensual* (importe fijo or % de ingresos, with the
+    resolved estimate) and never shows a threshold. Copy forks too — *aportado
+    / completado / objetivo* vs *gastado / usado / límite*.
+  - The preview panel renders the real card **already matched against this
+    month's movements**, so nothing jumps after saving; step 3 states the
+    match explicitly ("ya tiene X gastados este mes").
+  - Picking a category that belongs to another budget warns inline — spending
+    counts in both and plan distribution double-counts it (no parent/child
+    envelopes exist yet).
+  - Closing with unsaved input asks *¿Descartar los cambios?*; Back preserves
+    everything.
+- **Per-budget settings:** `custom_budgets.warn_threshold` (null → the default
+  75/90/100 ladder in `envelope-alerts.ts`; 50–99 → warn once there, then at
+  100%) and `repeats_monthly` (whether *Copiar &lt;mes&gt;* carries it forward —
+  the copy RPC filters on it).
 - **No Primicias / Generosidad card** (giving stays on Home / Insights /
   Settings; methods may still seed Donations / Tithe as Metas).
 - Applying a method with existing budgets opens an **in-app** replace dialog

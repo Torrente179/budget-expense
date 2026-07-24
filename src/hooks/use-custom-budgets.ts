@@ -24,6 +24,8 @@ type BudgetInput = {
   amount_value: number;
   currency: string;
   category_ids: string[];
+  warn_threshold?: number | null;
+  repeats_monthly?: boolean;
 };
 
 async function authenticatedUserId() {

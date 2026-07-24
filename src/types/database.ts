@@ -762,6 +762,10 @@ export interface Database {
           currency: string;
           month: number;
           year: number;
+          /** null → default 75/90/100 alert ladder; 50–99 → warn once at that %. */
+          warn_threshold: number | null;
+          /** Whether "Copiar <mes>" carries this budget forward. */
+          repeats_monthly: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -775,6 +779,8 @@ export interface Database {
           currency?: string;
           month: number;
           year: number;
+          warn_threshold?: number | null;
+          repeats_monthly?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -788,6 +794,8 @@ export interface Database {
           currency?: string;
           month?: number;
           year?: number;
+          warn_threshold?: number | null;
+          repeats_monthly?: boolean;
           created_at?: string;
           updated_at?: string;
         };

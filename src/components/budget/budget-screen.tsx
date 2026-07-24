@@ -60,9 +60,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
-const CustomBudgetForm = dynamic(() =>
-  import("@/components/budgets/custom-budget-form").then(
-    (module) => module.CustomBudgetForm
+const BudgetWizard = dynamic(() =>
+  import("@/components/budgets/budget-wizard").then(
+    (module) => module.BudgetWizard
   )
 );
 const MonthlyPlanForm = dynamic(() =>
@@ -320,6 +320,8 @@ export function BudgetScreen() {
     amount_value: number;
     currency: string;
     category_ids: string[];
+    warn_threshold?: number | null;
+    repeats_monthly?: boolean;
     month: number;
     year: number;
   }) {
@@ -344,6 +346,8 @@ export function BudgetScreen() {
     amount_value: number;
     currency: string;
     category_ids: string[];
+    warn_threshold?: number | null;
+    repeats_monthly?: boolean;
     month: number;
     year: number;
   }) {
@@ -826,14 +830,25 @@ export function BudgetScreen() {
       )}
 
       {budgetSheetMounted ? (
-        <CustomBudgetForm
+        <BudgetWizard
           key={editBudget?.id ?? "new"}
+          mode={editBudget ? "edit" : "create"}
           month={month}
           year={year}
           incomeAmount={incomeAmount}
           incomeCurrency={plan?.income_currency ?? baseCurrency}
+          expenses={expenses}
+          otherBudgets={customBudgets
+            .filter((budget) => budget.id !== editBudget?.id)
+            .map((budget) => ({
+              id: budget.id,
+              name: budget.name,
+              categoryIds: budget.custom_budget_categories.map(
+                (link) => link.category_id
+              ),
+            }))}
           onSubmit={editBudget ? handleEditBudget : handleAddBudget}
-          controlledOpen={budgetSheetOpen}
+          open={budgetSheetOpen}
           onOpenChange={(open) => {
             setBudgetSheetOpen(open);
             if (!open) setEditBudget(null);
@@ -851,6 +866,8 @@ export function BudgetScreen() {
                   category_ids: editBudget.custom_budget_categories.map(
                     (category) => category.category_id
                   ),
+                  warn_threshold: editBudget.warn_threshold ?? null,
+                  repeats_monthly: editBudget.repeats_monthly ?? true,
                 }
               : undefined
           }
