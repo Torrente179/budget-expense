@@ -57,6 +57,21 @@ export function inferBudgetKindFromCategories(
   return allGoals ? "contribution_goal" : "spending_limit";
 }
 
+/**
+ * Prefer persisted kind; if missing (older snapshot payloads), infer from
+ * linked categories so Home never treats Metas as Presupuestos.
+ */
+export function resolveBudgetKind(input: {
+  kind?: unknown;
+  categories?: Array<{
+    classification?: string | null;
+    budget_role?: string | null;
+  }>;
+}): BudgetKind {
+  if (isBudgetKind(input.kind)) return input.kind;
+  return inferBudgetKindFromCategories(input.categories ?? []);
+}
+
 export function inferBudgetKindFromSliceKey(sliceKey: string): BudgetKind {
   return GOAL_SLICE_KEYS.has(sliceKey)
     ? "contribution_goal"

@@ -1,57 +1,5 @@
--- Additive, RLS-preserving performance contracts for the current Next.js client and
--- a future static frontend. This migration does not delete or rewrite rows.
-
-create or replace function public.get_app_bootstrap()
-returns jsonb
-language sql
-stable
-security invoker
-set search_path = public, auth
-as $$
-  select jsonb_build_object(
-    'identity', jsonb_build_object(
-      'id', auth.uid(),
-      'email', auth.jwt() ->> 'email'
-    ),
-    'profile', coalesce(
-      (
-        select jsonb_build_object(
-          'displayName', p.display_name,
-          'avatarUrl', p.avatar_url,
-          'baseCurrency', p.base_currency,
-          'manualFxRates', coalesce(p.manual_fx_rates, '{}'::jsonb),
-          'titheTargetPercent', p.tithe_target_percent,
-          'onboardingCompletedAt', p.onboarding_completed_at,
-          'onboardingSkippedAt', p.onboarding_skipped_at,
-          'wantsBudgetHelp', p.wants_budget_help,
-          'primaryGoals', to_jsonb(p.primary_goals),
-          'createdAt', p.created_at
-        )
-        from public.profiles p
-        where p.id = auth.uid()
-      ),
-      jsonb_build_object(
-        'displayName', null,
-        'avatarUrl', null,
-        'baseCurrency', 'EUR',
-        'manualFxRates', '{}'::jsonb,
-        'titheTargetPercent', 10,
-        'onboardingCompletedAt', null,
-        'onboardingSkippedAt', null,
-        'wantsBudgetHelp', null,
-        'primaryGoals', '[]'::jsonb,
-        'createdAt', null
-      )
-    ),
-    'reviewCount', (
-      select count(*)
-      from public.expenses e
-      where e.user_id = auth.uid()
-        and e.needs_review = true
-    )
-  )
-  where auth.uid() is not null;
-$$;
+-- Include custom_budgets.kind in prepare_month_snapshot so Home/Budget
+-- can separate spending_limit (Presupuestos) from contribution_goal (Metas).
 
 create or replace function public.prepare_month_snapshot(
   p_year integer,
@@ -785,16 +733,4 @@ end;
 $$;
 
 revoke all on function public.get_app_bootstrap() from public;
-revoke all on function public.prepare_month_snapshot(integer, integer, date) from public;
-revoke all on function public.get_household_insights() from public;
-revoke all on function public.replace_custom_budget_set(integer, integer, jsonb, boolean) from public;
-revoke all on function public.copy_custom_budgets_from_previous_month(integer, integer) from public;
-revoke all on function public.copy_category_budgets_from_previous_month(integer, integer) from public;
-revoke all on function public.create_expense_with_envelope_status(uuid, numeric, text, date, text) from public;
-grant execute on function public.get_app_bootstrap() to authenticated;
-grant execute on function public.prepare_month_snapshot(integer, integer, date) to authenticated;
-grant execute on function public.get_household_insights() to authenticated;
-grant execute on function public.replace_custom_budget_set(integer, integer, jsonb, boolean) to authenticated;
-grant execute on function public.copy_custom_budgets_from_previous_month(integer, integer) to authenticated;
-grant execute on function public.copy_category_budgets_from_previous_month(integer, integer) to authenticated;
-grant execute on function public.create_expense_with_envelope_status(uuid, numeric, text, date, text) to authenticated;
+

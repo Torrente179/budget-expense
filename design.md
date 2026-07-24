@@ -31,9 +31,9 @@ of truth for every nav surface is
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — navy hero (`remaining = income − spent`, pace bar + daily guide); Metas-style Presupuesto cards (usage bands; swipe when &gt;3); category donut with legend % (no callout connectors); recent movements. Desktop: movements left, Presupuestos+donut right. Checkpoint bank balance lives in Settings / Wealth — not the hero. Metas (contribution goals) are a future dual engine; not on Home yet. |
+| **Home** | `/home` | "How am I doing right now" — navy hero (`remaining = income − spent`, pace bar + daily guide); Metas-style **Presupuesto** cards only (`kind = spending_limit`; swipe when &gt;3); category donut with legend % (no callout connectors); recent movements. Desktop: movements left, Presupuestos+donut right. Checkpoint bank balance lives in Settings / Wealth — not the hero. **Metas** (`contribution_goal`) live on `/budget`, never on Home. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
-| **Budget** | `/budget` | **Presupuestos** (= spending limits / ceilings; 100%=exceeded). Hero remaining = income − spent. Plan distribution + recommendation from those budgets. Contribution goals (`kind`) stay in the data model for later — not shown in UI yet. Methods still seed by `budget_role`. |
+| **Budget** | `/budget` | Dual engines: **Presupuestos** (ceilings; 100%=exceeded) + **Metas de aportación** (floors; 100%=success). Hero remaining = income − spent. Plan distribution includes both; recommendation from overspent Presupuestos. Methods seed by `budget_role` → `kind`. |
 | **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`, `/loans`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts, money lent. If it's a balance, it lives here. |
 | **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, pillars, clickable 12-month + daily spend bars (magenta series), envelope utilization, anomalies, monthly report (owns category spend bars), calendar day drilldown. No data-entry CTAs. No duplicate standalone “Where it went” list. |
 
@@ -123,10 +123,12 @@ font-size values in components** except:
 
 - Component: `src/components/home/budget-pace-chart.tsx` (shared with Budget).
 - Metas-style horizontal cards: icon tint + name + spent/limit + compact ring.
-- One card per `custom_budget`; max **3 per swipe page** (carousel + dots).
+- Home lists **only** `spending_limit` envelopes (Presupuestos). Metas stay on
+  `/budget`.
+- Max **3 per swipe page** (carousel + dots).
 - Month-progress mark (dot on the ring) remains; color is **usage band only**
   (safe → critical). Never treat 100% as success green — that is reserved for
-  future Metas (contribution goals).
+  Metas on the Budget tab.
 - Home: cards link to `/budget`. Budget tab: pass `onSelect` to open the
   edit sheet; a compact manage list below carries delete.
 - Hero math: `src/lib/home/month-cashflow.ts` + `HomeSummaryCard`.

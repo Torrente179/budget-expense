@@ -23,6 +23,7 @@ import {
 } from "@/lib/budgeting";
 import {
   normalizeBudgetKind,
+  resolveBudgetKind,
   type BudgetKind,
 } from "@/lib/budgeting/envelope-kinds";
 import { resolveMonthCashflow } from "@/lib/home/month-cashflow";
@@ -144,7 +145,12 @@ export function BudgetScreen() {
           expenses,
           convert
         );
-        const kind = normalizeBudgetKind(budget.kind);
+        const kind = resolveBudgetKind({
+          kind: budget.kind,
+          categories: budget.custom_budget_categories.map(
+            (link) => link.categories ?? {}
+          ),
+        });
         return {
           id: budget.id,
           name: budget.name,
@@ -159,6 +165,10 @@ export function BudgetScreen() {
 
   const spendingLimits = useMemo(
     () => budgetMetrics.filter((row) => row.kind === "spending_limit"),
+    [budgetMetrics]
+  );
+  const contributionGoals = useMemo(
+    () => budgetMetrics.filter((row) => row.kind === "contribution_goal"),
     [budgetMetrics]
   );
 
@@ -178,13 +188,13 @@ export function BudgetScreen() {
 
   const planSlices = useMemo(() => {
     const colors = ["#EF4444", "#3B82F6", "#22C55E", "#8B5CF6", "#F59E0B", "#06B6D4"];
-    return spendingLimits.map((row, index) => ({
+    return budgetMetrics.map((row, index) => ({
       id: row.id,
       name: row.name,
       amount: row.resolved,
       color: colors[index % colors.length],
     }));
-  }, [spendingLimits]);
+  }, [budgetMetrics]);
 
   const recommendation = useMemo(() => {
     const over = spendingLimits
@@ -197,9 +207,9 @@ export function BudgetScreen() {
     return over ?? null;
   }, [spendingLimits]);
 
-  const totalBudgeted = spendingLimits.reduce((s, m) => s + m.resolved, 0);
+  const totalBudgeted = budgetMetrics.reduce((s, m) => s + m.resolved, 0);
   /* Only spending inside a budget's categories counts against the plan. */
-  const totalConsumed = spendingLimits.reduce((s, m) => s + m.spent, 0);
+  const totalConsumed = budgetMetrics.reduce((s, m) => s + m.spent, 0);
   const monthTotalSpent = sumConvertedAmounts(expenses, convert);
   const unallocatedSpent = Math.max(monthTotalSpent - totalConsumed, 0);
   const hasPlan = Boolean(plan);
@@ -647,8 +657,8 @@ export function BudgetScreen() {
                   <CardContent className="space-y-3 py-5">
                     <p className="text-body text-muted-foreground">
                       {t(
-                        "Income is set. Create budgets with a method, or build them yourself.",
-                        "El ingreso está listo. Crea presupuestos con un método, o ármalos tú."
+                        "Income is set. Create budgets and contribution goals — or let a method do it.",
+                        "El ingreso está listo. Crea presupuestos y metas de aportación — o deja que un método lo haga."
                       )}
                     </p>
                     {buildBudgetsActions}
@@ -656,49 +666,92 @@ export function BudgetScreen() {
                 </Card>
               ) : null}
 
-              <Card>
-                <CardHeader>
-                  <SectionHeader
-                    eyebrow={t("This month", "Este mes")}
-                    title={t("Budgets", "Presupuestos")}
-                    description={t(
-                      "Group categories under a spending ceiling. 100% means exceeded.",
-                      "Agrupa categorías bajo un techo de gasto. El 100% significa excedido."
-                    )}
-                  />
-                </CardHeader>
-                <CardContent>
-                  <EnvelopeListCard
-                    kind="spending_limit"
-                    rows={spendingLimits.map((row) => ({
-                      id: row.id,
-                      name: row.name,
-                      kind: row.kind,
-                      target: row.resolved,
-                      progressAmount: row.spent,
-                      ratio: row.ratio,
-                    }))}
-                    onEdit={(id) => {
-                      const budget = customBudgets.find((b) => b.id === id);
-                      if (budget) openBudgetSheet(budget);
-                    }}
-                    onDelete={(id) => setDeleteId(id)}
-                    emptyAction={buildBudgetsActions}
-                  />
-                  {unallocatedSpent > 0 && (
-                    <p className="mt-3 text-caption text-muted-foreground">
-                      +{" "}
-                      <span className="font-mono tabular-nums text-expense">
-                        {formatCurrency(unallocatedSpent, baseCurrency)}
-                      </span>{" "}
-                      {t(
-                        "spent outside these budgets",
-                        "gastado fuera de estos presupuestos"
+              <div className="grid gap-4 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <SectionHeader
+                      eyebrow={t("This month", "Este mes")}
+                      title={t("Budgets", "Presupuestos")}
+                      description={t(
+                        "Group categories under a spending ceiling. 100% means exceeded.",
+                        "Agrupa categorías bajo un techo de gasto. El 100% significa excedido."
                       )}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    <EnvelopeListCard
+                      kind="spending_limit"
+                      rows={spendingLimits.map((row) => ({
+                        id: row.id,
+                        name: row.name,
+                        kind: row.kind,
+                        target: row.resolved,
+                        progressAmount: row.spent,
+                        ratio: row.ratio,
+                      }))}
+                      onEdit={(id) => {
+                        const budget = customBudgets.find((b) => b.id === id);
+                        if (budget) openBudgetSheet(budget);
+                      }}
+                      onDelete={(id) => setDeleteId(id)}
+                      emptyAction={buildBudgetsActions}
+                    />
+                    {unallocatedSpent > 0 && (
+                      <p className="mt-3 text-caption text-muted-foreground">
+                        +{" "}
+                        <span className="font-mono tabular-nums text-expense">
+                          {formatCurrency(unallocatedSpent, baseCurrency)}
+                        </span>{" "}
+                        {t(
+                          "spent outside these budgets",
+                          "gastado fuera de estos presupuestos"
+                        )}
+                      </p>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <SectionHeader
+                      eyebrow={t("This month", "Este mes")}
+                      title={t("Contribution goals", "Metas de aportación")}
+                      description={t(
+                        "Fund these targets. Reaching 100% is success.",
+                        "Fondea estas metas. Llegar al 100% es éxito."
+                      )}
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    <EnvelopeListCard
+                      kind="contribution_goal"
+                      rows={contributionGoals.map((row) => ({
+                        id: row.id,
+                        name: row.name,
+                        kind: row.kind,
+                        target: row.resolved,
+                        progressAmount: row.spent,
+                        ratio: row.ratio,
+                      }))}
+                      onEdit={(id) => {
+                        const budget = customBudgets.find((b) => b.id === id);
+                        if (budget) openBudgetSheet(budget);
+                      }}
+                      onDelete={(id) => setDeleteId(id)}
+                      emptyAction={
+                        <Button
+                          size="sm"
+                          className="gap-1.5"
+                          onClick={() => openBudgetSheet()}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          {t("Add goal", "Añadir meta")}
+                        </Button>
+                      }
+                    />
+                  </CardContent>
+                </Card>
+              </div>
 
               <div className="grid gap-4 lg:grid-cols-2">
                 <Card>

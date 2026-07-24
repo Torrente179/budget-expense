@@ -24,9 +24,9 @@ only):
 
 | Section | Route | Job |
 |---|---|---|
-| Home | `/home` | Now + actionable: navy hero (income − spent remaining, pace, daily); Metas-style Presupuesto cards (swipe); category donut with legend % (no callouts); recent movements |
+| Home | `/home` | Now + actionable: navy hero (income − spent remaining, pace, daily); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
 | Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
-| Budget | `/budget` | Guided setup when empty; else two-column: budgets+rings left, monthly income right (no Giving card) |
+| Budget | `/budget` | Dual engines: **Presupuestos** (ceilings) + **Metas de aportación** (floors); plan distribution + recommendation |
 | Wealth | `/wealth` (+ investments / savings / liabilities / loans) | Balances: owned, owed, and money lent |
 | Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — ratios, clickable spend charts, monthly report, calendar; no data-entry CTAs |
 
@@ -305,8 +305,8 @@ Navy gradient card (`HomeSummaryCard`). Math in
 
 - **Max 3 cards per page**; more budgets swipe (snap + dots).
 - Empty state: CTA into `/budget`.
-- **Future Metas** (contribution goals: Diezmo, Ahorro, …) will reuse this
-  chrome with inverted status logic (100% = success). Not on Home yet.
+- **Only Presupuestos** (`kind = spending_limit`). Metas (`contribution_goal`:
+  Diezmo, Ahorro, Inversión, …) live on `/budget` — never on this Home card.
 
 ### Rest of Home
 
