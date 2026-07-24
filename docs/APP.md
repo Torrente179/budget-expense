@@ -24,7 +24,7 @@ only):
 
 | Section | Route | Job |
 |---|---|---|
-| Home | `/home` | Now + actionable: compact blue hero (income − spent remaining, pace, daily); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
+| Home | `/home` | Now + actionable: compact black hero (income − spent remaining, pace, daily); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
 | Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
 | Budget | `/budget` | Compact hero + dual engines: **Presupuestos** (ceilings) + **Metas de aportación** (floors); plan distribution + recommendation |
 | Wealth | `/wealth` (+ investments / savings / liabilities / loans) | Balances: owned, owed, and money lent |
@@ -274,8 +274,12 @@ primary nav + FAB.
 
 ### Hero summary card
 
-Compact blue gradient card (`HomeSummaryCard` — denser padding/type/ring as of
-2026-07-24). Math in `src/lib/home/month-cashflow.ts`:
+Compact **black** card (`HomeSummaryCard` — denser padding/type/ring as of
+2026-07-24). Chrome comes from `src/components/patterns/hero-surface.tsx`,
+shared with the Budget hero: graphite→black gradient, hairline `white/10` edge,
+top-edge sheen, `white/55` labels against white numbers, and `HERO_ACCENT`
+(`#34D399`) for income / healthy states. Dark mode lifts the gradient a step so
+the card still reads as a card. Math in `src/lib/home/month-cashflow.ts`:
 
 - **Income base:** plan income when set, else recorded income.
 - **Remaining (“Te quedan …”):** `monthlyIncome − actualOutflows` (spent).

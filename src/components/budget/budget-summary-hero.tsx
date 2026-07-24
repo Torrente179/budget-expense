@@ -4,6 +4,14 @@ import { AlertTriangle, CheckCircle2, Gauge } from "lucide-react";
 import type { MonthCashflow } from "@/lib/home/month-cashflow";
 import { formatUsagePercent } from "@/lib/home/month-cashflow";
 import { cn, formatCurrency } from "@/lib/utils";
+import {
+  HeroSheen,
+  HERO_ACCENT,
+  HERO_ICON_TILE,
+  HERO_SURFACE,
+  HERO_TILE,
+  HERO_TRACK,
+} from "@/components/patterns/hero-surface";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -12,9 +20,6 @@ interface BudgetSummaryHeroProps {
   dayOfMonth: number;
   daysInMonth: number;
 }
-
-const HERO_GRADIENT =
-  "bg-[linear-gradient(160deg,#3b82f6_0%,#2563eb_42%,#1d4ed8_100%)] dark:bg-[linear-gradient(160deg,#1e40af_0%,#1d4ed8_45%,#1e3a8a_100%)]";
 
 /**
  * Budget tab hero: remaining for the rest of the month + daily/pace chips.
@@ -55,6 +60,14 @@ export function BudgetSummaryHero({
       ? 0
       : Math.min(Math.max(cashflow.usedRatio, 0), 1) * 100;
 
+  /* The bar clamps at 100%, so its color carries the overspend instead. */
+  const barColor =
+    cashflow.paceStatus === "over_plan"
+      ? "#FB7185"
+      : cashflow.paceStatus === "high_pace"
+        ? "#FBBF24"
+        : HERO_ACCENT;
+
   const statusCopy = (() => {
     switch (cashflow.paceStatus) {
       case "over_plan":
@@ -86,16 +99,12 @@ export function BudgetSummaryHero({
   })();
 
   return (
-    <section
-      className={cn(
-        "relative overflow-hidden rounded-2xl text-white shadow-2",
-        HERO_GRADIENT
-      )}
-    >
+    <section className={HERO_SURFACE}>
+      <HeroSheen />
       <div className="relative grid gap-3.5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(14rem,0.85fr)] lg:items-center lg:gap-5">
         <div className="min-w-0 space-y-3">
           <div>
-            <p className="text-[0.8125rem] font-medium text-white/90">
+            <p className="text-[0.8125rem] font-medium text-white/55">
               {t(
                 "Available for the rest of the month",
                 "Disponible para el resto del mes"
@@ -107,13 +116,18 @@ export function BudgetSummaryHero({
           </div>
 
           <div className="space-y-1.5">
-            <div className="relative h-2 overflow-hidden rounded-full bg-white/25">
+            <div
+              className={cn(
+                "relative h-2 overflow-hidden rounded-full",
+                HERO_TRACK
+              )}
+            >
               <div
-                className="absolute inset-y-0 left-0 rounded-full bg-[#86efac] transition-[width] duration-700 ease-out"
-                style={{ width: `${barFill}%` }}
+                className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ease-out"
+                style={{ width: `${barFill}%`, backgroundColor: barColor }}
               />
             </div>
-            <p className="text-[0.75rem] text-white/85">
+            <p className="text-[0.75rem] text-white/55">
               <span className="font-mono tabular-nums">{spentLabel}</span>{" "}
               {t("spent of", "gastados de")}{" "}
               <span className="font-mono tabular-nums">{incomeLabel}</span>
@@ -134,32 +148,57 @@ export function BudgetSummaryHero({
 
         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
           {dailyLabel != null && (
-            <div className="flex items-start gap-2.5 rounded-xl bg-white/12 px-3 py-2.5 ring-1 ring-white/10">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15">
+            <div
+              className={cn(
+                "flex items-start gap-2.5 rounded-xl px-3 py-2.5",
+                HERO_TILE
+              )}
+            >
+              <span
+                className={cn(
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                  HERO_ICON_TILE
+                )}
+              >
                 <Gauge className="h-3.5 w-3.5 text-white" />
               </span>
               <div className="min-w-0">
                 <p className="font-mono text-sm font-semibold tabular-nums">
                   {dailyLabel} {t("/ day", "al día")}
                 </p>
-                <p className="text-[0.6875rem] text-white/75">
+                <p className="text-[0.6875rem] text-white/55">
                   {t("To stay on plan", "Para mantenerte en el plan")}
                 </p>
               </div>
             </div>
           )}
-          <div className="flex items-start gap-2.5 rounded-xl bg-white/12 px-3 py-2.5 ring-1 ring-white/10">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15">
+          <div
+            className={cn(
+              "flex items-start gap-2.5 rounded-xl px-3 py-2.5",
+              HERO_TILE
+            )}
+          >
+            <span
+              className={cn(
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
+                HERO_ICON_TILE
+              )}
+            >
               {cashflow.paceStatus === "over_plan" ||
               cashflow.paceStatus === "high_pace" ? (
-                <AlertTriangle className="h-3.5 w-3.5 text-amber-200" />
+                <AlertTriangle className="h-3.5 w-3.5 text-amber-300" />
               ) : (
-                <CheckCircle2 className="h-3.5 w-3.5 text-[#86efac]" />
+                <CheckCircle2
+                  className="h-3.5 w-3.5"
+                  style={{ color: HERO_ACCENT }}
+                />
               )}
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold">{statusCopy.title}</p>
-              <p className="text-[0.6875rem] text-white/75">{statusCopy.detail}</p>
+              <p className="text-[0.6875rem] text-white/55">
+                {statusCopy.detail}
+              </p>
             </div>
           </div>
         </div>

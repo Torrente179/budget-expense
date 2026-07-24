@@ -31,7 +31,7 @@ of truth for every nav surface is
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — compact blue hero (`remaining = income − spent`, pace bar + daily guide); Metas-style **Presupuesto** cards only (`kind = spending_limit`; swipe when &gt;3); category donut with legend % (no callout connectors); recent movements. Desktop: movements left, Presupuestos+donut right. Checkpoint bank balance lives in Settings / Wealth — not the hero. **Metas** (`contribution_goal`) live on `/budget`, never on Home. |
+| **Home** | `/home` | "How am I doing right now" — compact black hero (`remaining = income − spent`, pace bar + daily guide); Metas-style **Presupuesto** cards only (`kind = spending_limit`; swipe when &gt;3); category donut with legend % (no callout connectors); recent movements. Desktop: movements left, Presupuestos+donut right. Checkpoint bank balance lives in Settings / Wealth — not the hero. **Metas** (`contribution_goal`) live on `/budget`, never on Home. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
 | **Budget** | `/budget` | Dual engines: **Presupuestos** (ceilings; 100%=exceeded) + **Metas de aportación** (floors; 100%=success). Compact hero remaining = income − spent. Plan distribution includes both; recommendation from overspent Presupuestos. Methods seed by `budget_role` → `kind`. |
 | **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`, `/loans`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts, money lent. If it's a balance, it lives here. |
@@ -63,8 +63,12 @@ font-size values in components** except:
 1. Dynamic **category color** (DB hex via `CategoryBadge` / donut inline style).
 2. **Budget usage-band** hex from [`src/lib/palette.ts`](src/lib/palette.ts)
    (Home Presupuesto cards / Budget meters). Cashflow amounts use CSS vars
-   (`income` / `available` / `expense`). Hero blue gradient is Home + Budget
-   summary chrome (compact density); do not reuse ad-hoc blues elsewhere.
+   (`income` / `available` / `expense`). The **black hero surface** is Home +
+   Budget summary chrome only — import it from
+   [`src/components/patterns/hero-surface.tsx`](src/components/patterns/hero-surface.tsx)
+   (`HERO_SURFACE`, `HERO_TILE`, `HERO_ICON_TILE`, `HERO_RULE`, `HERO_TRACK`,
+   `HERO_ACCENT`, `HeroSheen`) rather than writing ad-hoc `white/xx` values,
+   and do not reuse the surface on other cards.
 3. **Insights spend series** `SPEND_CHART_COLOR` (`#EC4899`) in
    [`src/components/charts/chart-theme.tsx`](src/components/charts/chart-theme.tsx)
    — soft magenta for bar fills (matches clarity Health); not `--expense`
