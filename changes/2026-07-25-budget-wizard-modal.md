@@ -43,7 +43,7 @@ threshold and a monthly-repeat flag.
 
 ## Data Model
 
-Migration `supabase/migrations/2026-07-24-budget-warn-threshold-and-repeat.sql`:
+Migration `supabase/migrations/20260725000000_budget_warn_threshold_and_repeat.sql`:
 
 - `custom_budgets.warn_threshold integer null`, checked 50–99. Null keeps the
   original 75/90/100 ladder; a value warns once there, then again at 100%.
@@ -57,9 +57,15 @@ Migration `supabase/migrations/2026-07-24-budget-warn-threshold-and-repeat.sql`:
 
 `database.ts`, `customBudgetSchema` and `BudgetInput` updated to match.
 
-**This migration has not been applied** — no working local Supabase session
-here. Until it runs, saving a budget will error on the unknown columns. Apply it
-before shipping the UI.
+**Applied to the linked project on 2026-07-25** via `supabase db push --linked`,
+and confirmed present in the remote migration history.
+
+Note the filename: every other migration here is date-named
+(`2026-07-24-*.sql`), which the CLI **skips** — it only tracks
+`<timestamp>_name.sql`. Those files have been applied by hand, so the remote
+history knew about exactly one migration before this one. This file uses the
+timestamp form so `db push` manages it; consider renaming the older ones if the
+CLI should own them too.
 
 ### Scope note
 
@@ -86,4 +92,9 @@ exist.
   the discard prompt. `form.formState.isDirty` was only read inside the close
   handler, and react-hook-form's formState proxy only subscribes to what the
   *render* reads — so it always reported false. Now read during render.
-- Not exercised: the live Budget screen behind auth, and the migration itself.
+- Migration applied and verified against the linked project: `migration list`
+  shows it local *and* remote, and PostgREST returns 200 for
+  `select=id,warn_threshold,repeats_monthly` on `custom_budgets` where a bogus
+  column returns 400 — so the columns exist and the schema cache is fresh.
+- Not exercised: the live Budget screen behind auth (no local session), and
+  the copy RPC's new `repeats_monthly` filter, which needs two months of data.
