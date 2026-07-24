@@ -49,12 +49,12 @@ export function EnvelopeListCard({
           <p className="text-body text-muted-foreground">
             {isGoal
               ? t(
-                  "No contribution goals yet. Add tithe, savings, or investing targets.",
-                  "Aún sin metas de aportación. Añade diezmo, ahorro o inversión."
+                  "No contribution goals yet.",
+                  "Aún sin metas de aportación."
                 )
               : t(
-                  "No spending limits yet. Group categories under a ceiling.",
-                  "Aún sin límites de gasto. Agrupa categorías bajo un techo."
+                  "No budgets yet. Group categories under a spending ceiling.",
+                  "Aún sin presupuestos. Agrupa categorías bajo un techo de gasto."
                 )}
           </p>
           {emptyAction}
