@@ -37,12 +37,13 @@ function paceStatusLabel(
 
 function HeroRing({
   usedRatio,
-  size = 104,
+  size = 128,
 }: {
   usedRatio: number | null;
   size?: number;
 }) {
-  const strokeWidth = 8;
+  /* Mockup: thick white used arc on a faint white track. */
+  const strokeWidth = 11;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const filled =
@@ -70,7 +71,7 @@ function HeroRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="rgba(255,255,255,0.18)"
+          stroke="rgba(255,255,255,0.28)"
           strokeWidth={strokeWidth}
         />
         <circle
@@ -78,20 +79,20 @@ function HeroRing({
           cy={size / 2}
           r={radius}
           fill="none"
-          stroke="#34d399"
+          stroke="#ffffff"
           strokeWidth={strokeWidth}
-          strokeLinecap="round"
+          strokeLinecap="butt"
           strokeDasharray={circumference}
           strokeDashoffset={dashOffset}
           className="transition-[stroke-dashoffset] duration-700 ease-out"
         />
       </svg>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-mono text-xl font-semibold leading-none tracking-[-0.03em] tabular-nums text-white">
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
+        <span className="font-mono text-[1.625rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-white">
           {pct}
-          {pct !== "—" && <span className="text-[0.55em]">%</span>}
+          {pct !== "—" && <span className="text-[0.62em]">%</span>}
         </span>
-        <span className="mt-1 max-w-[4.5rem] text-[0.625rem] leading-tight text-white/70">
+        <span className="mt-1.5 max-w-[5.25rem] text-[0.6875rem] font-medium leading-snug text-white/85">
           {t("of budget used", "del presupuesto utilizado")}
         </span>
       </div>
@@ -163,72 +164,72 @@ export function HomeSummaryCard({
         className="pointer-events-none absolute -right-4 top-6 h-28 w-28 rounded-full border border-white/10"
       />
 
-      <div className="relative space-y-5 p-5 sm:p-6">
+      <div className="relative space-y-6 p-5 sm:p-7">
         {/* Top: remaining + income/spent + ring */}
-        <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0 flex-1 space-y-4">
+        <div className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between sm:gap-8">
+          <div className="min-w-0 flex-1 space-y-6">
             <div>
-              <p className="text-caption text-white/75">
+              <p className="text-[0.9375rem] font-medium text-white/90">
                 {t("You have", "Te quedan")}
               </p>
-              <p className="mt-0.5 font-mono text-[1.75rem] font-semibold leading-none tracking-[-0.03em] tabular-nums sm:text-[2rem]">
+              <p className="mt-1 font-mono text-[2.25rem] font-bold leading-none tracking-[-0.035em] tabular-nums text-white sm:text-[2.75rem]">
                 {remainingLabel}
               </p>
-              <p className="mt-1.5 text-caption text-white/70">
+              <p className="mt-2 text-[0.9375rem] font-medium text-white/80">
                 {t("available this month", "disponibles este mes")}
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-x-6 gap-y-2 sm:gap-x-8">
+            <div className="grid grid-cols-2 gap-6 sm:max-w-md sm:gap-10">
               <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-[0.6875rem] text-white/65">
+                <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
                   <span
                     aria-hidden
-                    className="h-1.5 w-1.5 rounded-full bg-emerald-400"
+                    className="h-2 w-2 shrink-0 rounded-full bg-[#5eead4]"
                   />
                   {t("Income received", "Ingresos recibidos")}
                 </p>
-                <p className="mt-0.5 font-mono text-sm font-semibold tabular-nums text-emerald-300">
+                <p className="mt-1.5 font-mono text-lg font-bold tabular-nums tracking-[-0.02em] text-[#5eead4] sm:text-xl">
                   {incomeLabel}
                 </p>
               </div>
               <div className="min-w-0">
-                <p className="flex items-center gap-1.5 text-[0.6875rem] text-white/65">
+                <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
                   <span
                     aria-hidden
-                    className="h-1.5 w-1.5 rounded-full bg-white/80"
+                    className="h-2 w-2 shrink-0 rounded-full bg-white/90"
                   />
                   {t("You've spent", "Has gastado")}
                 </p>
-                <p className="mt-0.5 font-mono text-sm font-semibold tabular-nums text-white">
+                <p className="mt-1.5 font-mono text-lg font-bold tabular-nums tracking-[-0.02em] text-white sm:text-xl">
                   {spentLabel}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="hidden sm:block">
+          <div className="hidden shrink-0 sm:block">
             <HeroRing usedRatio={cashflow.usedRatio} />
           </div>
         </div>
 
         {/* Pace bar */}
-        <div className="space-y-2">
-          <div className="relative h-2.5 overflow-visible rounded-full bg-white/15">
+        <div className="space-y-2.5">
+          <div className="relative h-3 overflow-visible rounded-full bg-white/20">
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-emerald-400 transition-[width] duration-700 ease-out"
+              className="absolute inset-y-0 left-0 rounded-full bg-[#5eead4] transition-[width] duration-700 ease-out"
               style={{ width: `${barFill}%` }}
             />
             <span
               aria-hidden
-              className="absolute top-1/2 z-10 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm"
+              className="absolute top-1/2 z-10 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm"
               style={{ left: `${paceMark}%` }}
               title={t("Month progress", "Progreso del mes")}
             />
           </div>
 
           {/* Mobile labels: % spent / % available */}
-          <div className="flex items-center justify-between gap-3 text-[0.6875rem] text-white/75 sm:hidden">
+          <div className="flex items-center justify-between gap-3 text-[0.75rem] text-white/80 sm:hidden">
             <span>
               {usedPct !== "—"
                 ? t(`${usedPct}% spent`, `${usedPct}% gastado`)
@@ -244,19 +245,11 @@ export function HomeSummaryCard({
             </span>
           </div>
 
-          {/* Desktop labels: amounts */}
-          <div className="hidden items-center justify-between gap-3 text-[0.6875rem] text-white/75 sm:flex">
-            <span>
-              {t("Spent", "Gastado")}:{" "}
-              <span className="font-mono tabular-nums text-white">
-                {spentLabel}
-              </span>
-            </span>
-            <span>
-              {t("Month target", "Meta del mes")}:{" "}
-              <span className="font-mono tabular-nums text-white">
-                {incomeLabel}
-              </span>
+          {/* Desktop: spent under bar (mockup) */}
+          <div className="hidden text-[0.8125rem] text-white/85 sm:block">
+            {t("Spent", "Gastado")}:{" "}
+            <span className="font-mono tabular-nums text-white">
+              {spentLabel}
             </span>
           </div>
         </div>
