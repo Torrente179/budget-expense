@@ -11,6 +11,7 @@ import {
   resolveCustomBudgetAmount,
   budgetUsageRatio,
 } from "@/lib/budgeting";
+import { normalizeBudgetKind } from "@/lib/budgeting/envelope-kinds";
 import { resolveMonthCashflow } from "@/lib/home/month-cashflow";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -89,6 +90,9 @@ export function HomeScreen() {
       summary.categoryBreakdown.map((row) => [row.category_id, row.total_amount])
     );
     return customBudgets
+      .filter(
+        (budget) => normalizeBudgetKind(budget.kind) === "spending_limit"
+      )
       .map((budget) => {
         const limit = resolveCustomBudgetAmount(budget, monthlyIncome, convert);
         const spent = budget.custom_budget_categories.reduce(

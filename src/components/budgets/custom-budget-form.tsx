@@ -90,6 +90,7 @@ export function CustomBudgetForm({
     resolver: zodResolver(customBudgetSchema) as any,
     defaultValues: {
       name: defaultValues?.name ?? "",
+      kind: defaultValues?.kind ?? "spending_limit",
       amount_type: defaultValues?.amount_type ?? "fixed",
       amount_value:
         defaultValues?.amount_value ?? (undefined as unknown as number),
@@ -101,6 +102,7 @@ export function CustomBudgetForm({
   });
 
   const amountType = form.watch("amount_type");
+  const kind = form.watch("kind");
   const amountValue = Number(form.watch("amount_value")) || 0;
   const selectedCategoryIds: string[] = form.watch("category_ids") ?? [];
 
@@ -128,6 +130,7 @@ export function CustomBudgetForm({
       setOpen(false);
       form.reset({
         name: "",
+        kind: "spending_limit",
         amount_type: "fixed",
         amount_value: undefined as unknown as number,
         currency: baseCurrency,
@@ -203,6 +206,46 @@ export function CustomBudgetForm({
                   {form.formState.errors.name.message}
                 </p>
               )}
+            </div>
+
+            {/* Kind: spending limit vs contribution goal */}
+            <div className="space-y-2">
+              <Label>{t("Type", "Tipo")}</Label>
+              <div className="flex rounded-xl border border-border/70 bg-secondary/50 p-1">
+                <button
+                  type="button"
+                  onClick={() => form.setValue("kind", "spending_limit")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    kind === "spending_limit"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t("Spending limit", "Límite de gasto")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => form.setValue("kind", "contribution_goal")}
+                  className={`flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                    kind === "contribution_goal"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {t("Contribution goal", "Meta de aportación")}
+                </button>
+              </div>
+              <p className="text-caption text-muted-foreground">
+                {kind === "contribution_goal"
+                  ? t(
+                      "Reaching 100% is success (tithe, savings, investing).",
+                      "Llegar al 100% es éxito (diezmo, ahorro, inversión)."
+                    )
+                  : t(
+                      "Spending should stay under this ceiling.",
+                      "El gasto debe quedarse bajo este techo."
+                    )}
+              </p>
             </div>
 
             {/* Amount type toggle */}

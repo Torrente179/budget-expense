@@ -756,6 +756,7 @@ export interface Database {
           id: string;
           user_id: string;
           name: string;
+          kind: string;
           amount_type: string;
           amount_value: number;
           currency: string;
@@ -768,6 +769,7 @@ export interface Database {
           id?: string;
           user_id: string;
           name: string;
+          kind?: string;
           amount_type: string;
           amount_value: number;
           currency?: string;
@@ -780,6 +782,7 @@ export interface Database {
           id?: string;
           user_id?: string;
           name?: string;
+          kind?: string;
           amount_type?: string;
           amount_value?: number;
           currency?: string;

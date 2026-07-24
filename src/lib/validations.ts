@@ -58,6 +58,7 @@ export type BudgetFormValues = z.output<typeof budgetSchema>;
 export const customBudgetSchema = z
   .object({
     name: z.string().min(1, "Budget name is required").max(120),
+    kind: z.enum(["spending_limit", "contribution_goal"]).default("spending_limit"),
     amount_type: z.enum(["fixed", "percentage"]),
     amount_value: z.coerce.number().positive("Amount must be greater than 0"),
     currency: z.string().min(3).max(3),

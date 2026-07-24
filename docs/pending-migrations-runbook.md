@@ -69,7 +69,7 @@ As of 2026-07-17 (post data reconciliation, see
 | `2026-07-24-palette-v2-category-colors.sql` | Clarity palette category colors (EN/ES name match; Housing `#EAB308`) | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
 | `2026-07-24-fix-replace-custom-budget-set-category-ids.sql` | Fix `replace_custom_budget_set` category_ids UUID cast (`jsonb_array_elements_text`) | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
 | `2026-07-24-category-budget-roles.sql` | `categories.budget_role` + Insurance/Cash/Savings/Investments defaults | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
-| `2026-07-24-reclassify-insurance-cash.sql` | Generali/Mutua → Insurance; ATM → Cash | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
+| `2026-07-24-custom-budget-kinds.sql` | `custom_budgets.kind` spending_limit vs contribution_goal + RPC copy/seed | ✅ Applied 2026-07-24 on `awpygbfocmynxpadpsji` |
 
 ```bash
 # Re-apply is safe (IF NOT EXISTS / CREATE OR REPLACE)
@@ -78,19 +78,24 @@ node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-h
 node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-18-household-insights-aggregates-ledger.sql
 node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-24-palette-v2-category-colors.sql
 node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-24-fix-replace-custom-budget-set-category-ids.sql
+node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-24-category-budget-roles.sql
+node scripts/apply-sql.mjs --project app --file supabase/migrations/2026-07-24-reclassify-insurance-cash.sql
 
 node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND (column_name LIKE 'onboarding%' OR column_name IN ('wants_budget_help','primary_goals'))"
 node scripts/apply-sql.mjs --project app --query "SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND (proname LIKE 'household%' OR proname='liability_payment_totals') ORDER BY 1"
 node scripts/apply-sql.mjs --project app --query "SELECT name, color FROM public.categories WHERE lower(btrim(name)) IN ('housing','food & dining','salary') ORDER BY 1"
 node scripts/apply-sql.mjs --project app --query "SELECT pg_get_functiondef('public.replace_custom_budget_set(integer,integer,jsonb,boolean)'::regprocedure) LIKE '%jsonb_array_elements_text%' AS uses_text_elements"
+node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='categories' AND column_name IN ('budget_role','applies_to') ORDER BY 1"
 ```
 
-Product behavior: [`docs/APP.md`](./APP.md) §2–§3, §8–§9, §14 and `design.md` §2 / §8–§9.
+Product behavior: [`docs/APP.md`](./APP.md) §2–§3, §8–§9b, §14 and `design.md` §2 / §8–§9.
 Change notes: `changes/2026-07-18-onboarding-goals-budget-alerts.md`,
 `changes/2026-07-18-fix-onboarding-skip-and-new-user-gate.md`,
 `changes/2026-07-18-expense-path-performance.md`,
 `changes/2026-07-24-clarity-palette-v2.md`,
-`changes/2026-07-24-fix-method-seed-confirm-and-rpc.md`.
+`changes/2026-07-24-fix-method-seed-confirm-and-rpc.md`,
+`changes/2026-07-24-budget-roles-and-smarter-categorization.md`,
+`changes/2026-07-24-document-budget-simplification-and-roles.md`.
 
 **Status:** no pending migrations for the listed clusters on live
 `awpygbfocmynxpadpsji` (all rows above ✅).

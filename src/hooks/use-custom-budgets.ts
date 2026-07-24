@@ -19,6 +19,7 @@ export type CustomBudget =
 
 type BudgetInput = {
   name: string;
+  kind?: string;
   amount_type: string;
   amount_value: number;
   currency: string;

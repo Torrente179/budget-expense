@@ -1,5 +1,6 @@
 import type { BudgetingMethod } from "@/lib/budgeting-methods";
 import type { BudgetRole } from "@/lib/budgeting/budget-roles";
+import { inferBudgetKindFromSliceKey } from "@/lib/budgeting/envelope-kinds";
 import type { Database } from "@/types/database";
 
 type CategoryRow = Database["public"]["Tables"]["categories"]["Row"];
@@ -148,6 +149,7 @@ export interface MethodBudgetSeed {
   amount_value: number;
   category_ids: string[];
   sliceKey: string;
+  kind: "spending_limit" | "contribution_goal";
 }
 
 type SeedCategory = Pick<
@@ -223,6 +225,7 @@ export function buildMethodBudgetSeeds(
       amount_value: slice.percent,
       category_ids: matched.map((category) => category.id),
       sliceKey: slice.key,
+      kind: inferBudgetKindFromSliceKey(slice.key),
     });
   }
 
