@@ -251,8 +251,10 @@ export function HomeScreen() {
             </Card>
           )}
 
-          {/* Month status row: Income · Spent · Available · Giving */}
-          <div className="-mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 pb-1 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:px-0 lg:grid-cols-4">
+          {/* Month status row: Income · Spent · Available · Giving.
+              Stay in the Screen gutter (no -mx bleed) so the first card
+              lines up with Presupuestos / donut below on mobile. */}
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4">
             <div className="min-w-[11rem] snap-start sm:min-w-0">
               <StatCard
                 label={t("Income", "Ingresos")}

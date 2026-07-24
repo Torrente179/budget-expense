@@ -29,7 +29,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   className={
                     isOnboarding
                       ? "flex-1 overflow-y-auto"
-                      : "flex-1 overflow-y-auto pb-[calc(4.5rem+env(safe-area-inset-bottom))] md:pb-0"
+                      : "flex-1 overflow-y-auto pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-0"
                   }
                 >
                   <div className="mx-auto w-full max-w-[1480px] px-4 pb-8 sm:px-5 lg:px-8">
