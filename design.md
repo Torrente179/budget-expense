@@ -31,10 +31,10 @@ of truth for every nav surface is
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — cashflow stats (Income · Spent · Available · Giving) with matching label swatches; one usage-band ring per budget (swipe when &gt;3); category donut ("Where it went"); attention feed; recent movements; desktop-only shortcuts. Desktop: movements left, budgets+donut stacked right. Current month primary, everything actionable. |
+| **Home** | `/home` | "How am I doing right now" — navy hero (`remaining = income − spent`, pace bar + daily guide); Metas-style Presupuesto cards (usage bands; swipe when &gt;3); category donut with legend % (no callout connectors); recent movements. Desktop: movements left, Presupuestos+donut right. Checkpoint bank balance lives in Settings / Wealth — not the hero. Metas (contribution goals) are a future dual engine; not on Home yet. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
-| **Budget** | `/budget` | Guided setup on first run; then desktop two-column (budgets+rings left; plan right). Same usage bands as Home. No Primicias card. Mobile: Plan → Budgets. |
-| **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts. If it's a balance, it lives here. |
+| **Budget** | `/budget` | Guided setup on first run; then desktop two-column (budgets+rings left; monthly income right). Same usage bands as Home. No Primicias card; no protected-% control. Methods seed envelopes by category `budget_role`. Mobile: Plan → Budgets. |
+| **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`, `/loans`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts, money lent. If it's a balance, it lives here. |
 | **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, pillars, clickable 12-month + daily spend bars (magenta series), envelope utilization, anomalies, monthly report (owns category spend bars), calendar day drilldown. No data-entry CTAs. No duplicate standalone “Where it went” list. |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings` — reachable from the
@@ -62,8 +62,9 @@ font-size values in components** except:
 
 1. Dynamic **category color** (DB hex via `CategoryBadge` / donut inline style).
 2. **Budget usage-band** hex from [`src/lib/palette.ts`](src/lib/palette.ts)
-   (Home rings / Budget meters). Cashflow amounts use CSS vars
-   (`income` / `available` / `expense`).
+   (Home Presupuesto cards / Budget meters). Cashflow amounts use CSS vars
+   (`income` / `available` / `expense`). Hero navy gradient is a Home-only
+   surface exception (mock-matched); do not reuse ad-hoc blues elsewhere.
 3. **Insights spend series** `SPEND_CHART_COLOR` (`#EC4899`) in
    [`src/components/charts/chart-theme.tsx`](src/components/charts/chart-theme.tsx)
    — soft magenta for bar fills (matches clarity Health); not `--expense`
@@ -118,15 +119,19 @@ font-size values in components** except:
 - Usage: `text-success`, `bg-warning-subtle`, `ring-danger/25`, `text-income`,
   etc.
 
-### 2.1.1 Home & Budget rings (composition)
+### 2.1.1 Home Presupuesto cards (composition)
 
-- Component: `src/components/home/budget-pace-chart.tsx` (shared).
-- One ring per `custom_budget`; max **3 per swipe page**; even
-  `repeat(n, 1fr)` distribution; size ladder 88 / 76 / 64 px by count on the
-  page.
-- Month-progress mark (black dot) remains; color is **usage band only**.
-- Home: rings link to `/budget`. Budget tab: pass `onSelect` to open the
+- Component: `src/components/home/budget-pace-chart.tsx` (shared with Budget).
+- Metas-style horizontal cards: icon tint + name + spent/limit + compact ring.
+- One card per `custom_budget`; max **3 per swipe page** (carousel + dots).
+- Month-progress mark (dot on the ring) remains; color is **usage band only**
+  (safe → critical). Never treat 100% as success green — that is reserved for
+  future Metas (contribution goals).
+- Home: cards link to `/budget`. Budget tab: pass `onSelect` to open the
   edit sheet; a compact manage list below carries delete.
+- Hero math: `src/lib/home/month-cashflow.ts` + `HomeSummaryCard`.
+  `remaining = monthlyIncome − actualOutflows` (plan income when set, else
+  recorded). Daily = `max(remaining, 0) / max(daysInMonth − currentDay, 1)`.
 - Budget desktop layout: budgets column left (`lg:col-span-3`); plan column
   right (`lg:col-span-2`). Plan meters use `max-w-xs` — never full-bleed.
 
@@ -327,7 +332,8 @@ error states. No blank areas while fetching.
 | Ledger row | `<TransactionRow>` |
 | Stat tile | `<StatCard label value detail href?>` |
 | Budget/tithe progress | `<ProgressMeter ratio>` — default colors = usage bands; pass `tone` to override (Giving) |
-| Home budget rings | `BudgetPaceChart` — one ring per envelope, swipe pages; optional `onSelect` |
+| Home Presupuesto cards | `BudgetPaceChart` — Metas-style cards, swipe pages; optional `onSelect` |
+| Home month hero | `HomeSummaryCard` + `lib/home/month-cashflow.ts` |
 | Stat tile swatch | `<StatCard swatchClassName="bg-income" …>` |
 | Add/edit a movement | `<CaptureSheet>` (await save before close; Save & add another) |
 | First-run setup | `/onboarding` + `useOnboarding` / `OnboardingGate` |
@@ -408,17 +414,19 @@ on live project `awpygbfocmynxpadpsji` (2026-07-18):
 
 ### Personalization (deterministic)
 
-`src/lib/onboarding/personalize.ts` maps answers → method id, allocation %,
-seed envelopes, Home CTAs, Attention hints. Optional `methodId` keeps a
+`src/lib/onboarding/personalize.ts` maps answers → method id, seed envelopes
+(by `budget_role`), Home CTAs, Attention hints. Optional `methodId` keeps a
 user-chosen budget profile. Applied at finish via `lib/onboarding/apply.ts`.
-Home shortcuts and Budget empty/guided copy read `profile.primary_goals` /
-`wants_budget_help`. No separate goals table in v1.
+Monthly plan stores **income only** (`allocation_percent` always `100`).
+Budget empty/guided copy and Attention read `profile.primary_goals` /
+`wants_budget_help`. Desktop Home quick shortcuts were removed 2026-07-24.
+No separate goals table in v1.
 
 | Signal | App adjustment |
 |---|---|
-| `wants_budget_help` | Method % on monthly plan; seed 2–4 starter envelopes |
+| `wants_budget_help` | Seed 2–4 starter envelopes from chosen/suggested method |
 | User-picked `methodId` | Overrides goal-based method suggestion |
-| `budget_tracking` | Emphasize Budget + Movements in Home shortcuts |
+| `budget_tracking` | Attention / empty-state emphasis toward Budget + Movements |
 | `decrease_expenses` | Attention → Insights; Budget messaging |
 | `save_more` / `build_emergency_fund` | Savings-oriented method; optional Savings envelope |
 | `pay_debt` | Attention → Wealth/Liabilities; Wealth CTA |

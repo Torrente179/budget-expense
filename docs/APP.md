@@ -24,10 +24,10 @@ only):
 
 | Section | Route | Job |
 |---|---|---|
-| Home | `/home` | Now + actionable: Income · Spent · Available · Giving (colored swatches); per-budget usage rings (swipe pages); “Where it went” donut; Attention; recent movements |
+| Home | `/home` | Now + actionable: navy hero (income − spent remaining, pace, daily); Metas-style Presupuesto cards (swipe); category donut with legend % (no callouts); recent movements |
 | Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
-| Budget | `/budget` | Guided setup when empty; else two-column: budgets+rings left, plan right (no Giving card) |
-| Wealth | `/wealth` (+ investments / savings / liabilities) | Balances: owned and owed |
+| Budget | `/budget` | Guided setup when empty; else two-column: budgets+rings left, monthly income right (no Giving card) |
+| Wealth | `/wealth` (+ investments / savings / liabilities / loans) | Balances: owned, owed, and money lent |
 | Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — ratios, clickable spend charts, monthly report, calendar; no data-entry CTAs |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings`, `/onboarding` (first-run).
@@ -159,7 +159,7 @@ overrides the goal-based suggestion. Applied at finish via
 |---|---|
 | `wants_budget_help` | 2–4 starter envelopes from the chosen/suggested method |
 | User-picked `methodId` | Wins over goal-based method suggestion |
-| `budget_tracking` | Budget + Movements shortcuts |
+| `budget_tracking` | Attention / empty-state emphasis toward Budget + Movements |
 | `decrease_expenses` | Attention → Insights |
 | `save_more` / `build_emergency_fund` | Savings-oriented method / Savings envelope |
 | `pay_debt` | Attention → Liabilities; Wealth CTA |
@@ -199,8 +199,12 @@ Movements for create/edit.
 8. Optimistic updates for **both** expense and income.
 9. Ledger rows use `AmountText` with `showOriginal` so foreign currencies
    (e.g. COP) show next to the converted base amount.
+10. Expense category suggest returns up to **3 ranked** picks (rules + history).
+    Alternative chips in the sheet; correcting away from the top pick can
+    auto-learn a merchant keyword (see §9b).
 
-Change note: `changes/2026-07-18-fix-capture-multi-add-currency-income.md`.
+Change notes: `changes/2026-07-18-fix-capture-multi-add-currency-income.md`,
+`changes/2026-07-24-budget-roles-and-smarter-categorization.md`.
 
 ---
 
@@ -257,36 +261,38 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 ## 8. Home (current composition)
 
-Desktop layout (`lg+`): two columns after the stat row —
+Desktop layout (`lg+`): hero full-width, then two columns —
 
-- **Left (`lg:col-span-3`):** recent movements (starts at the top of this block).
-- **Right (`lg:col-span-2`):** monthly budgets card stacked above the
-  “Where it went” donut (same narrow width).
+- **Left (`lg:col-span-3`):** recent movements.
+- **Right (`lg:col-span-2`):** Presupuestos card stacked above the
+  “Tus gastos por categoría” donut (same narrow width).
 
-Mobile order: budgets → donut → movements (unchanged).
+Mobile order: hero → Presupuestos → donut → movements.
 
-Desktop quick-action shortcuts (Movements / Budget / Import / Review and
-personalized CTAs) were **removed** 2026-07-24 — navigation is primary nav + FAB.
+Desktop quick-action shortcuts were **removed** 2026-07-24 — navigation is
+primary nav + FAB.
 
-### Stat row
+### Hero summary card
 
-**Income** · **Spent** · **Available** (checkpoint balance) · **Giving**
-(income-based **target** as the hero number; given in the detail line).
+Navy gradient card (`HomeSummaryCard`). Math in
+`src/lib/home/month-cashflow.ts`:
 
-- Cashflow tones: Income `text-income` / `#059669`, Spent `text-expense` /
-  `#E11D48`, Available `text-available` / `#06B6D4` (expense red if balance &lt; 0).
-- Matching **color swatch** beside each of those three labels
-  (`StatCard` `swatchClassName`).
-- Spent / Income link into Movements tabs; Available → Settings
-  (`#available-balance`) to reconcile the bank balance.
+- **Income base:** plan income when set, else recorded income.
+- **Remaining (“Te quedan …”):** `monthlyIncome − actualOutflows` (spent).
+  Not the checkpoint bank balance (that stays Settings / Wealth).
+- **Used %:** `outflows / income`; circular ring on desktop; mobile bar shows
+  % spent / % available.
+- **Pace marker:** vertical tick at `currentDay / daysInMonth`.
+- **Daily guide:** `max(remaining, 0) / max(daysInMonth − currentDay, 1)`
+  (excludes today; floors at 1 day).
+- **Pace status:** over plan / on track / slightly ahead / high pace.
 
-### Monthly budgets card
+### Presupuestos card
 
-- **One ring per custom budget** (spent ÷ limit). No aggregate “all budgets”
-  ring and no redundant per-budget bars.
+- **Metas-style horizontal cards** per custom budget (spent ÷ limit): icon tint,
+  name, amounts, compact usage-band ring. Same carousel as before.
 - Ring **fill clamps at 100%**; the **% label can exceed 100%** (and tone
-  changes). Black pace mark still shows month progress when viewing the
-  current month.
+  changes). Pace mark still shows month progress on the current month.
 - **Usage-band colors** (shared with `/budget`, see §9 and `src/lib/palette.ts`):
 
   | Band | Ratio | Color |
@@ -297,46 +303,109 @@ personalized CTAs) were **removed** 2026-07-24 — navigation is primary nav + F
   | Exceeded | 100–119% | `#EF4444` |
   | Critical | 120%+ | `#BE123C` |
 
-- Ring size by count on the page: 1 → 88px, 2 → 76px, 3 → 64px.
-- **Max 3 rings per page**; more budgets swipe to the next page (snap + dots).
-  Each page sizes rings by how many sit on that page.
-- Rings distribute evenly across the card (`repeat(n, 1fr)` grid).
+- **Max 3 cards per page**; more budgets swipe (snap + dots).
 - Empty state: CTA into `/budget`.
+- **Future Metas** (contribution goals: Diezmo, Ahorro, …) will reuse this
+  chrome with inverted status logic (100% = success). Not on Home yet.
 
 ### Rest of Home
 
-- “Where it went” category donut (DB category colors).
-- Attention feed (review, envelopes, anomalies, bills, onboarding hints).
-- Personalized shortcuts + Import/Review — **desktop-only** (mobile uses tabs + FAB).
+- Category donut with legend percentages; **no callout connector lines**
+  (`calloutCount={0}`). DB category colors unchanged.
 - Finish-setup banner when a new user skipped / never completed onboarding.
+- Primary navigation + FAB cover Movements / Budget / Import / Review.
 
-Change notes: `changes/2026-07-23-home-desktop-two-column-layout.md`,
+Change notes: `changes/2026-07-24-home-hero-and-presupuesto-cards.md`,
+`changes/2026-07-23-home-desktop-two-column-layout.md`,
 `changes/2026-07-23-home-per-budget-rings.md`,
 `changes/2026-07-24-clarity-palette-v2.md`,
-`changes/2026-07-24-stat-card-color-swatch.md`.
+`changes/2026-07-24-remove-home-quick-actions.md`.
 
 ---
 
 ## 9. Budget (current composition)
 
-- **Empty (no plan, no objectives):** guided setup — income → optional method →
-  create objectives (plain-language copy; profile-aware when
-  `wants_budget_help`). Full-width card.
+### Mental model
+
+1. **Monthly income** — expected income for the month (`monthly_budget_plans`).
+   There is no user-facing “protected budget %”. The DB column
+   `allocation_percent` is always written as `100`
+   (`MONTHLY_PLAN_FULL_ALLOCATION` in `src/lib/validations.ts`).
+2. **Named budgets (envelopes)** — limits as fixed amounts or % of that income,
+   each spanning one or more categories.
+3. **Methods** — frameworks (50/30/20, Base cero, 5 Jarras, …) that **create**
+   those envelopes from each category’s `budget_role` (see §9b). Methods do not
+   set a separate plan “protected %”.
+
+UI totals prefer the sum of custom-budget limits when envelopes exist (not a
+shrunk income pool).
+
+### UI
+
+- **Empty (no income, no budgets):** guided setup — set income → optional
+  method → create budgets. Full-width card.
 - **Otherwise (desktop `lg+`):** two-column layout matching Home density —
-  - **Left (`lg:col-span-3`):** “Your budgets” with the same usage-band
-    **rings** as Home (`BudgetPaceChart`, swipe when &gt;3); tap ring to edit
-    (`onSelect`); compact manage list with delete (no full-bleed bars).
-  - **Right (`lg:col-span-2`):** “Your plan” — remaining, short usage-band
-    bar (`max-w-xs`), plan summary; actions for Methods / Edit income /
-    Delete income (visible trash when a plan exists).
+  - **Left (`lg:col-span-3`):** “Your budgets” with usage-band **rings**
+    (`BudgetPaceChart`, swipe when &gt;3); tap to edit; compact manage list
+    with delete.
+  - **Right (`lg:col-span-2`):** “Your plan” — remaining vs budgeted, income
+    caption, **Edit** / trash to delete income (in-app confirm). Form resets
+    when the sheet reopens; Cancel closes the controlled sheet.
 - **Mobile order:** Plan → Budgets.
-- **No Primicias / Generosidad card** on this screen (giving stays on Home /
-  Insights). Monthly plan delete confirms and keeps expenses + objectives.
+- **No Primicias / Generosidad card** (giving stays on Home / Insights /
+  Settings; methods may still seed Donations / Tithe envelopes).
+- Applying a method with existing budgets opens an **in-app** replace dialog
+  (not `window.confirm`). Seeding uses RPC `replace_custom_budget_set` (fixed
+  `jsonb_array_elements_text` for category UUIDs) with a client fallback.
 
 Change notes: `changes/2026-07-24-budget-tab-usage-band-colors.md`,
 `changes/2026-07-24-budget-two-column-layout.md`,
+`changes/2026-07-24-remove-protected-budget-percent.md`,
+`changes/2026-07-24-visible-delete-monthly-income.md`,
 `changes/2026-07-24-remove-primicias-card-from-budget.md`,
-`changes/2026-07-24-visible-delete-monthly-income.md`.
+`changes/2026-07-24-fix-method-seed-confirm-and-rpc.md`.
+
+---
+
+## 9b. Category `budget_role` + smarter suggest
+
+### Budget role vs classification
+
+Each category has `budget_role` (closed vocabulary) **in addition to**
+stewardship `classification` (essential / discretionary / giving / savings).
+
+| Used for | Field |
+|---|---|
+| Insights pillars, liquidity, giving detection | `classification` |
+| Which method envelope a category joins | `budget_role` |
+
+Examples: `housing`, `groceries`, `insurance`, `dining`, `tithe`, `donations`,
+`savings`, `investments`, `loan_lent` (money **you** lend — Wealth → Loans;
+never seeds into “savings” or debt-payment envelopes), `income` (Salary /
+Other Income — excluded from spend seeds).
+
+Settings → **Category roles** edits both fields
+(`src/components/settings/category-classification.tsx`). Defaults include
+Insurance, Cash, Savings, Investments. Applied data pass: Generali / Mutua
+Madrileña → Insurance; ATM withdrawals → Cash (rent paid partly in cash may
+still be manually Housing).
+
+Method seeding:
+[`src/lib/budgeting/method-seed.ts`](../src/lib/budgeting/method-seed.ts) +
+[`budget-roles.ts`](../src/lib/budgeting/budget-roles.ts) — slice → roles;
+giving slices **create** envelopes; leftovers go only to lifestyle/wants-style
+slices.
+
+### Capture / import suggest
+
+[`GET /api/categorization/suggest`](../src/app/api/categorization/suggest/route.ts)
+returns ranked **top 3**: rule matches first, then similar past expenses
+([`categorize.ts`](../src/lib/ledger/categorize.ts)). Capture shows suggestion
+chips; picking a non-top category **learns** a short merchant pattern via
+[`extractMerchantPattern`](../src/lib/ledger/merchant-pattern.ts) (not the full
+bank line). Import “remember” uses the same extraction.
+
+Change note: `changes/2026-07-24-budget-roles-and-smarter-categorization.md`.
 
 ---
 
@@ -482,6 +551,9 @@ Project `awpygbfocmynxpadpsji`. As of 2026-07-24 **all of these are applied**:
 | `2026-07-18-household-insights-aggregates-app.sql` | `liability_payment_totals` + index |
 | `2026-07-18-household-insights-aggregates-ledger.sql` | `household_expense_category_aggregates`, `household_income_aggregates` (on app — single project) |
 | `2026-07-24-palette-v2-category-colors.sql` | Clarity category hex update by known EN/ES names (Housing kept/restored yellow `#EAB308`) |
+| `2026-07-24-fix-replace-custom-budget-set-category-ids.sql` | RPC category UUID cast via `jsonb_array_elements_text` |
+| `2026-07-24-category-budget-roles.sql` | `categories.budget_role` + Insurance / Cash / Savings / Investments defaults |
+| `2026-07-24-reclassify-insurance-cash.sql` | Generali / Mutua → Insurance; ATM → Cash |
 
 Verify:
 
@@ -489,6 +561,8 @@ Verify:
 node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='profiles' AND (column_name LIKE 'onboarding%' OR column_name IN ('wants_budget_help','primary_goals'))"
 node scripts/apply-sql.mjs --project app --query "SELECT proname FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND (proname LIKE 'household%' OR proname='liability_payment_totals') ORDER BY 1"
 node scripts/apply-sql.mjs --project app --query "SELECT name, color FROM public.categories WHERE lower(btrim(name)) IN ('housing','food & dining','salary','groceries') ORDER BY 1"
+node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='categories' AND column_name='budget_role'"
+node scripts/apply-sql.mjs --project app --query "SELECT pg_get_functiondef('public.replace_custom_budget_set(integer,integer,jsonb,boolean)'::regprocedure) LIKE '%jsonb_array_elements_text%' AS uses_text_elements"
 ```
 
 Primary data owner: `pablopablo179@gmail.com`
@@ -521,11 +595,16 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Available balance settings UI | `src/components/settings/balance-checkpoint-settings.tsx` |
 | Giving helpers | `src/lib/giving.ts` (`resolveGivingTarget`, `isGivingExpense`) |
 | Envelope alerts | `src/lib/budgeting/envelope-alerts.ts` |
+| Budget roles + method seed | `src/lib/budgeting/budget-roles.ts`, `method-seed.ts` |
+| Plan write constant | `MONTHLY_PLAN_FULL_ALLOCATION` in `src/lib/validations.ts` |
+| Categorization suggest / learn | `src/lib/ledger/categorize.ts`, `merchant-pattern.ts`, `api/categorization/suggest` |
+| Category roles UI | `src/components/settings/category-classification.tsx` |
 | Clarity palette (usage bands + cashflow + category defaults) | `src/lib/palette.ts` (`ACTIVE_PALETTE`) |
 | Home | `src/components/home/home-screen.tsx`, `budget-pace-chart.tsx`, `attention-feed.tsx` |
 | Stat tiles | `src/components/patterns/stat-card.tsx` (`swatchClassName`) |
 | Progress meters | `src/components/patterns/progress-meter.tsx` (default = usage bands) |
 | Budget | `src/components/budget/budget-screen.tsx` (reuses `BudgetPaceChart`) |
+| Custom budgets hook (RPC + fallback) | `src/hooks/use-custom-budgets.ts` |
 | Movements | `src/components/movements/movements-screen.tsx`, `virtualized-ledger.tsx` |
 | Wealth | `src/components/wealth/wealth-overview.tsx`, `wealth-nav.tsx` |
 | Insights | `src/components/insights/insights-screen.tsx`, `insights-trend-charts.tsx`, `deferred-insights-trend-charts.tsx`, `monthly-report.tsx`, `calendar-screen.tsx` |
@@ -610,6 +689,21 @@ Full session record: `changes/2026-07-24-document-home-budget-ui-session.md`.
   month → Movements expenses; Recharts `activeIndex` typing
 - `2026-07-24-document-insights-charts-session.md` — handbook / design /
   architecture sync for this session
+
+## 20. Related change notes (2026-07-24 — budget simplification + roles)
+
+Full session record:
+`changes/2026-07-24-document-budget-simplification-and-roles.md`.
+
+- `2026-07-24-remove-protected-budget-percent.md` — plan is income-only; no
+  protected-% UX; `allocation_percent` always `100`
+- `2026-07-24-visible-delete-monthly-income.md` — Edit + trash on plan card
+- `2026-07-24-remove-primicias-card-from-budget.md` — Giving card off Budget
+- `2026-07-24-remove-home-quick-actions.md` — desktop shortcut row removed
+- `2026-07-24-fix-method-seed-confirm-and-rpc.md` — in-app confirm + RPC UUID fix
+- `2026-07-24-budget-roles-and-smarter-categorization.md` — `budget_role`,
+  method seed map, ranked suggest, merchant learn
+- `2026-07-24-document-budget-simplification-and-roles.md` — this handbook sync
 
 ---
 

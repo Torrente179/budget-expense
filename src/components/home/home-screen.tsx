@@ -4,40 +4,27 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDaysInMonth } from "date-fns";
-import {
-  Compass,
-  HandHeart,
-  Target,
-  TrendingDown,
-  TrendingUp,
-  ArrowUpDown,
-} from "lucide-react";
+import { Compass, Target, ArrowUpDown } from "lucide-react";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useOnboarding } from "@/hooks/use-onboarding";
-import { useTitheTarget } from "@/hooks/use-tithe-target";
 import {
   resolveCustomBudgetAmount,
   budgetUsageRatio,
 } from "@/lib/budgeting";
-import { resolveGivingTarget } from "@/lib/giving";
+import { resolveMonthCashflow } from "@/lib/home/month-cashflow";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
-import { cn, formatCurrency, formatCurrencyWithBreaks } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
-import { StatCard } from "@/components/patterns/stat-card";
 import { TransactionRow } from "@/components/patterns/transaction-row";
-import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { BudgetPaceChart } from "@/components/home/budget-pace-chart";
+import { HomeSummaryCard } from "@/components/home/home-summary-card";
 import { BreakdownDonut, type DonutSlice } from "@/components/patterns/breakdown-donut";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-
-const SUMMARY_AMOUNT_CLASS =
-  "block max-w-full whitespace-normal font-mono text-[clamp(0.6875rem,5.5cqw,1.0625rem)] font-semibold leading-tight tracking-[-0.025em] tabular-nums";
 
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
@@ -56,7 +43,6 @@ export function HomeScreen() {
         income_currency: snapshot.monthlyPlan.incomeCurrency,
       }
     : null;
-  const titheTarget = useTitheTarget();
   const { incomplete } = useOnboarding();
 
   const greeting = useMemo(() => {
@@ -66,57 +52,36 @@ export function HomeScreen() {
     return t("Good evening", "Buenas noches");
   }, [t]);
 
-  /* Available is an actual checkpoint-based balance, never monthly net flow. */
-  const currentBalance = summary.trackedBalance;
-  const balanceAsOfLabel = summary.balanceAsOfDate
-    ? new Intl.DateTimeFormat(intlLocale, {
-        day: "numeric",
-        month: "short",
-        timeZone: "UTC",
-      }).format(new Date(`${summary.balanceAsOfDate}T00:00:00Z`))
-    : null;
-  const monthlyNetLabel = formatCurrency(
-    summary.monthlyNetFlow,
-    baseCurrency,
-    intlLocale
-  );
-  const availableDetail =
-    summary.balanceTrackingStatus === "tracked" && balanceAsOfLabel
-      ? t(
-          `As of ${balanceAsOfLabel} · Month net ${monthlyNetLabel}`,
-          `Al ${balanceAsOfLabel} · Flujo del mes ${monthlyNetLabel}`
-        )
-      : summary.balanceTrackingStatus === "future"
-        ? t(
-            `Not projected · Month net ${monthlyNetLabel}`,
-            `Sin proyección · Flujo del mes ${monthlyNetLabel}`
-          )
-        : summary.balanceTrackingStatus === "unavailable"
-          ? t(
-              `Temporarily unavailable · Month net ${monthlyNetLabel}`,
-              `No disponible · Flujo del mes ${monthlyNetLabel}`
-            )
-          : t(
-              `${isCurrentMonth ? "Set starting balance" : "Not reconciled"} · Month net ${monthlyNetLabel}`,
-              `${isCurrentMonth ? "Define el saldo inicial" : "Sin conciliación"} · Flujo del mes ${monthlyNetLabel}`
-            );
-
-  /* Month progress, for the budget pace tick. */
   const daysInMonth = getDaysInMonth(new Date(year, month - 1));
   const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
-  const monthProgress = Math.min(dayOfMonth / daysInMonth, 1);
 
-  /* Budget limits: spend per budget from the category breakdown.
-     Percentage budgets fall back to recorded income when the plan is missing. */
+  /* Plan income when set, else recorded income. */
   const planIncome = plan
     ? convert(plan.income_amount, plan.income_currency)
     : null;
-  const incomeAmount =
+  const monthlyIncome =
     planIncome !== null && planIncome > 0
       ? planIncome
       : summary.totalIncome > 0
         ? summary.totalIncome
         : null;
+
+  const cashflow = useMemo(
+    () =>
+      resolveMonthCashflow({
+        monthlyIncome,
+        actualOutflows: summary.totalSpent,
+        daysInMonth,
+        currentDay: dayOfMonth,
+        isCurrentMonth,
+      }),
+    [monthlyIncome, summary.totalSpent, daysInMonth, dayOfMonth, isCurrentMonth]
+  );
+
+  const monthEndLabel = new Intl.DateTimeFormat(intlLocale, {
+    day: "numeric",
+    month: "long",
+  }).format(new Date(year, month - 1, daysInMonth));
 
   const budgetsView = useMemo(() => {
     if (customBudgets.length === 0) return [];
@@ -125,7 +90,7 @@ export function HomeScreen() {
     );
     return customBudgets
       .map((budget) => {
-        const limit = resolveCustomBudgetAmount(budget, incomeAmount, convert);
+        const limit = resolveCustomBudgetAmount(budget, monthlyIncome, convert);
         const spent = budget.custom_budget_categories.reduce(
           (sum, link) => sum + (spentByCategory.get(link.category_id) ?? 0),
           0
@@ -143,7 +108,7 @@ export function HomeScreen() {
         const br = Number.isFinite(b.ratio) ? b.ratio : Number.MAX_VALUE;
         return br - ar;
       });
-  }, [customBudgets, summary.categoryBreakdown, incomeAmount, convert]);
+  }, [customBudgets, summary.categoryBreakdown, monthlyIncome, convert]);
 
   /* Category donut: every spent category, colored by DB category color. */
   const donut = useMemo(() => {
@@ -165,20 +130,6 @@ export function HomeScreen() {
     );
   }
 
-  const givingSpent = summary.givingSpent;
-  // Generosidad is a share of income (plan first), not of expenses.
-  const givingTarget = resolveGivingTarget({
-    tithePercent: titheTarget,
-    planIncome: planIncome,
-    recordedIncome: summary.totalIncome,
-  });
-
-  const spentDelta =
-    summary.previousMonthTotal > 0
-      ? (summary.totalSpent - summary.previousMonthTotal) /
-        summary.previousMonthTotal
-      : null;
-
   const recentMovements = useMemo(
     () =>
       summary.recentMovements.map((movement) => ({
@@ -199,25 +150,15 @@ export function HomeScreen() {
     [summary.recentMovements, t, tc]
   );
 
-  const monthLabel = new Intl.DateTimeFormat(intlLocale, {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1));
-
   return (
     <Screen
-      eyebrow={monthLabel}
       title={greeting}
       actions={<MonthPicker month={month} year={year} onChange={setMonthYear} />}
     >
       {loading ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-28 rounded-xl" />
-            ))}
-          </div>
-          <Skeleton className="h-44 rounded-xl" />
+          <Skeleton className="h-52 rounded-2xl" />
+          <Skeleton className="h-36 rounded-xl" />
           <Skeleton className="h-64 rounded-xl" />
         </div>
       ) : (
@@ -251,139 +192,20 @@ export function HomeScreen() {
             </Card>
           )}
 
-          {/* Month status row: Income · Spent · Available · Giving.
-              Stay in the Screen gutter (no -mx bleed) so the first card
-              lines up with Presupuestos / donut below on mobile. */}
-          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1 [scrollbar-width:none] sm:grid sm:grid-cols-2 sm:overflow-visible lg:grid-cols-4">
-            <div className="min-w-[11rem] snap-start sm:min-w-0">
-              <StatCard
-                label={t("Income", "Ingresos")}
-                href="/movements?tab=income"
-                swatchClassName="bg-income"
-                value={
-                  <span className={cn(SUMMARY_AMOUNT_CLASS, "text-income")}>
-                    {formatCurrencyWithBreaks(
-                      summary.totalIncome,
-                      baseCurrency
-                    )}
-                  </span>
-                }
-                detail={t("this month", "este mes")}
-              />
-            </div>
-            <div className="min-w-[11rem] snap-start sm:min-w-0">
-              <StatCard
-                label={t("Spent", "Gastado")}
-                href="/movements?tab=expenses"
-                swatchClassName="bg-expense"
-                value={
-                  <span className={cn(SUMMARY_AMOUNT_CLASS, "text-expense")}>
-                    {formatCurrencyWithBreaks(
-                      summary.totalSpent,
-                      baseCurrency
-                    )}
-                  </span>
-                }
-                detail={
-                  spentDelta !== null ? (
-                    <span className="inline-flex items-center gap-1">
-                      {spentDelta > 0 ? (
-                        <TrendingUp className="h-3 w-3" />
-                      ) : (
-                        <TrendingDown className="h-3 w-3" />
-                      )}
-                      {`${Math.abs(spentDelta * 100).toFixed(0)}% ${t("vs last month", "vs mes anterior")}`}
-                    </span>
-                  ) : (
-                    t(
-                      `${summary.expenseCount} movements`,
-                      `${summary.expenseCount} movimientos`
-                    )
-                  )
-                }
-              />
-            </div>
-            <div className="min-w-[11rem] snap-start sm:min-w-0">
-              <StatCard
-                label={t("Available", "Disponible")}
-                href="/settings#available-balance"
-                swatchClassName={
-                  currentBalance !== null && currentBalance < 0
-                    ? "bg-expense"
-                    : "bg-available"
-                }
-                value={
-                  <span
-                    className={cn(
-                      SUMMARY_AMOUNT_CLASS,
-                      currentBalance !== null && currentBalance < 0
-                        ? "text-expense"
-                        : "text-available"
-                    )}
-                  >
-                    {currentBalance === null
-                      ? "—"
-                      : formatCurrencyWithBreaks(
-                          currentBalance,
-                          baseCurrency,
-                          intlLocale
-                        )}
-                  </span>
-                }
-                detail={availableDetail}
-              />
-            </div>
-            <div className="min-w-[11rem] snap-start sm:min-w-0">
-              <StatCard
-                label={t("Giving", "Generosidad")}
-                icon={<HandHeart className="h-4 w-4" />}
-                value={
-                  <span className={SUMMARY_AMOUNT_CLASS}>
-                    {givingTarget > 0
-                      ? formatCurrencyWithBreaks(givingTarget, baseCurrency)
-                      : "—"}
-                  </span>
-                }
-                detail={
-                  givingTarget > 0 ? (
-                    <div className="space-y-1">
-                      <ProgressMeter
-                        ratio={givingSpent / givingTarget}
-                        tone={givingSpent >= givingTarget ? "success" : "neutral"}
-                        className="h-1"
-                      />
-                      <span>
-                        <span className="font-mono tabular-nums text-negative">
-                          {formatCurrency(givingSpent, baseCurrency)}
-                        </span>{" "}
-                        {t(
-                          `given · ${titheTarget}% of income`,
-                          `dado · ${titheTarget}% del ingreso`
-                        )}
-                      </span>
-                    </div>
-                  ) : (
-                    t(
-                      "Based on your monthly income",
-                      "Basado en tu ingreso mensual"
-                    )
-                  )
-                }
-                href="/budget"
-              />
-            </div>
-          </div>
+          <HomeSummaryCard
+            cashflow={cashflow}
+            monthEndLabel={monthEndLabel}
+          />
 
-          {/* Desktop: movements left; budgets + donut stacked right (same width).
-              Mobile: budgets → donut → movements. */}
+          {/* Desktop: movements left; Presupuestos + donut stacked right.
+              Mobile: Presupuestos → donut → movements. */}
           <div className="grid gap-4 lg:grid-cols-5">
             <div className="min-w-0 space-y-4 lg:order-2 lg:col-span-2">
-              {/* Monthly budgets — pace at a glance */}
               <Card>
                 <CardHeader>
                   <SectionHeader
-                    eyebrow={t("Budgets", "Presupuestos")}
-                    title={t("Monthly budgets", "Presupuestos del mes")}
+                    eyebrow={t("This month", "Este mes")}
+                    title={t("Budgets", "Presupuestos")}
                     action={
                       budgetsView.length > 0 ? (
                         <Link
@@ -425,7 +247,7 @@ export function HomeScreen() {
                   ) : (
                     <BudgetPaceChart
                       budgets={budgetsView}
-                      monthProgress={monthProgress}
+                      monthProgress={cashflow.monthProgress}
                       isCurrentMonth={isCurrentMonth}
                     />
                   )}
@@ -437,7 +259,7 @@ export function HomeScreen() {
                   <CardHeader>
                     <SectionHeader
                       eyebrow={t("This month", "Este mes")}
-                      title={t("Where it went", "A dónde se fue")}
+                      title={t("Your spending by category", "Tus gastos por categoría")}
                       action={
                         <Link
                           href="/insights"
@@ -455,7 +277,7 @@ export function HomeScreen() {
                       centerValue={donut.total}
                       amountTone="negative"
                       onSelect={openCategory}
-                      calloutCount={5}
+                      calloutCount={0}
                     />
                   </CardContent>
                 </Card>
@@ -463,7 +285,6 @@ export function HomeScreen() {
             </div>
 
             <div className="min-w-0 space-y-4 lg:order-1 lg:col-span-3">
-              {/* Recent movements */}
               <Card>
                 <CardHeader>
                   <SectionHeader

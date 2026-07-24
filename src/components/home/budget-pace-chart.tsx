@@ -8,6 +8,7 @@ import {
   type ReactNode,
 } from "react";
 import Link from "next/link";
+import { Target } from "lucide-react";
 import { cn, formatCurrencyWithBreaks } from "@/lib/utils";
 import {
   budgetUsageColor,
@@ -43,42 +44,8 @@ function chunkBudgets(
   return pages;
 }
 
-/** How many rings fit comfortably in the home budgets card. */
+/** How many Metas-style cards fit per carousel page. */
 const MAX_PER_PAGE = 3;
-
-/** Ring size shrinks as more budgets share a page. */
-function resolveRingLayout(count: number): {
-  size: number;
-  strokeWidth: number;
-  percentClass: string;
-} {
-  if (count <= 1) {
-    return {
-      size: 88,
-      strokeWidth: 8,
-      percentClass: "text-lg",
-    };
-  }
-  if (count === 2) {
-    return {
-      size: 76,
-      strokeWidth: 7,
-      percentClass: "text-base",
-    };
-  }
-  if (count === 3) {
-    return {
-      size: 64,
-      strokeWidth: 6,
-      percentClass: "text-sm",
-    };
-  }
-  return {
-    size: 56,
-    strokeWidth: 5,
-    percentClass: "text-xs",
-  };
-}
 
 function CircularMeter({
   ratio,
@@ -107,7 +74,7 @@ function CircularMeter({
   const paceRad = (paceAngle * Math.PI) / 180;
   const paceX = size / 2 + radius * Math.cos(paceRad);
   const paceY = size / 2 + radius * Math.sin(paceRad);
-  const markSize = size >= 72 ? 8 : 6;
+  const markSize = 6;
   const stroke = budgetUsageColor(tone);
 
   return (
@@ -161,28 +128,30 @@ function CircularMeter({
   );
 }
 
-function BudgetRing({
+/**
+ * Metas-style horizontal card for a spending Presupuesto.
+ * Colors follow spending-limit usage bands (safe → critical), never Metas success green at 100%.
+ */
+function BudgetMetaCard({
   budget,
   monthProgress,
   isCurrentMonth,
-  layout,
   onSelect,
 }: {
   budget: BudgetPaceItem;
   monthProgress: number;
   isCurrentMonth: boolean;
-  layout: ReturnType<typeof resolveRingLayout>;
   onSelect?: (budgetId: string) => void;
 }) {
   const { t } = useLocale();
   const { baseCurrency } = useCurrency();
   const tone = resolveBudgetUsageTone(budget.ratio);
   const pct = formatUsagePercent(budget.ratio);
-  const remaining = budget.limit - budget.spent;
   const toneColor = budgetUsageColor(tone);
+  const remaining = budget.limit - budget.spent;
 
   const className =
-    "flex min-w-0 w-full flex-col items-center gap-1.5 rounded-xl px-1 py-1 transition-colors hover:bg-accent/50 active:bg-accent/70";
+    "flex w-full min-w-0 items-center gap-3 rounded-2xl bg-card px-3.5 py-3 ring-1 ring-border/60 shadow-1 transition-all hover:shadow-2 hover:ring-border/80 active:bg-accent/40";
   const ariaLabel = t(
     `${budget.name}: ${pct}% used`,
     `${budget.name}: ${pct}% usado`
@@ -190,41 +159,48 @@ function BudgetRing({
 
   const content = (
     <>
+      <div
+        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+        style={{ backgroundColor: `${toneColor}18`, color: toneColor }}
+        aria-hidden
+      >
+        <Target className="h-4.5 w-4.5 h-[1.125rem] w-[1.125rem]" />
+      </div>
+
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-body font-medium leading-tight">
+          {budget.name}
+        </p>
+        <p
+          className={cn(
+            "mt-0.5 font-mono text-[0.6875rem] leading-tight tabular-nums",
+            remaining >= 0 ? "text-muted-foreground" : "text-expense"
+          )}
+        >
+          <span className="text-expense">
+            {formatCurrencyWithBreaks(budget.spent, baseCurrency)}
+          </span>
+          {" / "}
+          {formatCurrencyWithBreaks(budget.limit, baseCurrency)}
+        </p>
+      </div>
+
       <CircularMeter
         ratio={budget.ratio}
         monthProgress={monthProgress}
         showPaceMark={isCurrentMonth}
-        size={layout.size}
-        strokeWidth={layout.strokeWidth}
+        size={52}
+        strokeWidth={5}
         tone={tone}
       >
         <span
-          className={cn(
-            "font-mono font-semibold leading-none tracking-[-0.03em] tabular-nums",
-            layout.percentClass
-          )}
+          className="font-mono text-[0.6875rem] font-semibold leading-none tracking-[-0.03em] tabular-nums"
           style={{ color: toneColor }}
         >
           {pct}
           {pct !== "∞" && <span className="text-[0.55em]">%</span>}
         </span>
       </CircularMeter>
-
-      <p className="w-full truncate text-center text-caption font-medium leading-tight">
-        {budget.name}
-      </p>
-      <p
-        className={cn(
-          "w-full text-center font-mono text-[0.6875rem] leading-tight tabular-nums",
-          remaining >= 0 ? "text-muted-foreground" : "text-expense"
-        )}
-      >
-        <span className="text-expense">
-          {formatCurrencyWithBreaks(budget.spent, baseCurrency)}
-        </span>
-        {" / "}
-        {formatCurrencyWithBreaks(budget.limit, baseCurrency)}
-      </p>
     </>
   );
 
@@ -260,29 +236,20 @@ function BudgetPage({
   isCurrentMonth: boolean;
   onSelect?: (budgetId: string) => void;
 }) {
-  const layout = resolveRingLayout(budgets.length);
-  const count = budgets.length;
-
   return (
     <div
       className={cn(
-        "grid w-full gap-y-3",
-        count === 1 && "place-items-center"
+        "grid w-full gap-2.5",
+        budgets.length === 1 && "sm:max-w-sm"
       )}
-      style={
-        count > 1
-          ? { gridTemplateColumns: `repeat(${count}, minmax(0, 1fr))` }
-          : undefined
-      }
       role="list"
     >
       {budgets.map((budget) => (
-        <BudgetRing
+        <BudgetMetaCard
           key={budget.id}
           budget={budget}
           monthProgress={monthProgress}
           isCurrentMonth={isCurrentMonth}
-          layout={layout}
           onSelect={onSelect}
         />
       ))}
@@ -294,15 +261,14 @@ interface BudgetPaceChartProps {
   budgets: BudgetPaceItem[];
   monthProgress: number;
   isCurrentMonth: boolean;
-  /** When set, rings act as buttons instead of linking to `/budget`. */
+  /** When set, cards act as buttons instead of linking to `/budget`. */
   onSelect?: (budgetId: string) => void;
 }
 
 /**
- * Home budget overview: one ring per budget (spent / limit).
- * More than 3 budgets spill into swipeable pages; each page sizes
- * rings by how many budgets are on that page.
- * Ring color follows usage bands (safe → critical), not month pace.
+ * Home Presupuestos overview: Metas-style cards (spent / limit).
+ * More than 3 budgets spill into swipeable pages.
+ * Ring color follows spending-limit usage bands, not month pace.
  */
 export function BudgetPaceChart({
   budgets,

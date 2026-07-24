@@ -227,6 +227,7 @@ function buildSliceCallouts(
  * The app's one donut: a thin ring with a center total and a live legend
  * showing share % and amount. Colors come from the caller (category hex or
  * chart tokens). Used by Home and Wealth for a single visual language.
+ * Home passes `calloutCount={0}` (legend only — no connector lines).
  */
 export function BreakdownDonut({
   slices,
@@ -449,7 +450,7 @@ export function BreakdownDonut({
                 .slice(0, index)
                 .reduce((sum, item) => sum + item.value, 0);
               const length = Math.max(
-                (slice.value / total) * circumference - 1.5,
+                (slice.value / total) * circumference - 0.4,
                 0
               );
               const interactive = canSelect(slice.id);
