@@ -24,9 +24,9 @@ only):
 
 | Section | Route | Job |
 |---|---|---|
-| Home | `/home` | Now + actionable: navy hero (income − spent remaining, pace, daily); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
+| Home | `/home` | Now + actionable: compact blue hero (income − spent remaining, pace, daily); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
 | Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
-| Budget | `/budget` | Dual engines: **Presupuestos** (ceilings) + **Metas de aportación** (floors); plan distribution + recommendation |
+| Budget | `/budget` | Compact hero + dual engines: **Presupuestos** (ceilings) + **Metas de aportación** (floors); plan distribution + recommendation |
 | Wealth | `/wealth` (+ investments / savings / liabilities / loans) | Balances: owned, owed, and money lent |
 | Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — ratios, clickable spend charts, monthly report, calendar; no data-entry CTAs |
 
@@ -274,14 +274,14 @@ primary nav + FAB.
 
 ### Hero summary card
 
-Navy gradient card (`HomeSummaryCard`). Math in
-`src/lib/home/month-cashflow.ts`:
+Compact blue gradient card (`HomeSummaryCard` — denser padding/type/ring as of
+2026-07-24). Math in `src/lib/home/month-cashflow.ts`:
 
 - **Income base:** plan income when set, else recorded income.
 - **Remaining (“Te quedan …”):** `monthlyIncome − actualOutflows` (spent).
   Not the checkpoint bank balance (that stays Settings / Wealth).
-- **Used %:** `outflows / income`; circular ring on desktop; mobile bar shows
-  % spent / % available.
+- **Used %:** `outflows / income`; circular ring (~88px) on desktop; mobile bar
+  shows % spent / % available.
 - **Pace marker:** vertical tick at `currentDay / daysInMonth`.
 - **Daily guide:** `max(remaining, 0) / max(daysInMonth − currentDay, 1)`
   (excludes today; floors at 1 day).
@@ -289,10 +289,14 @@ Navy gradient card (`HomeSummaryCard`). Math in
 
 ### Presupuestos card
 
-- **Metas-style horizontal cards** per custom budget (spent ÷ limit): icon tint,
-  name, amounts, compact usage-band ring. Same carousel as before.
-- Ring **fill clamps at 100%**; the **% label can exceed 100%** (and tone
-  changes). Pace mark still shows month progress on the current month.
+- **Metas-style tiles, three across** per custom budget (spent ÷ limit): tinted
+  round category glyph and usage-band ring with the `%` inside on top, then
+  name, spent, and `of <limit>`. Tiles scale off their own width (container
+  queries) so the row works in the Home column and on a phone.
+- Ring **fill clamps at 100%**; the **% label can exceed 100%**. The label reads
+  `foreground` until the budget is over limit, then takes the band color — as
+  does the spent amount. Pace mark still shows month progress on the current
+  month.
 - **Usage-band colors** (shared with `/budget`, see §9 and `src/lib/palette.ts`):
 
   | Band | Ratio | Color |
@@ -316,6 +320,9 @@ Navy gradient card (`HomeSummaryCard`). Math in
 - Primary navigation + FAB cover Movements / Budget / Import / Review.
 
 Change notes: `changes/2026-07-24-home-hero-and-presupuesto-cards.md`,
+`changes/2026-07-24-home-presupuestos-only-metas-on-budget.md`,
+`changes/2026-07-24-compact-month-hero-cards.md`,
+`changes/2026-07-24-document-dual-engine-home-budget-session.md`,
 `changes/2026-07-23-home-desktop-two-column-layout.md`,
 `changes/2026-07-23-home-per-budget-rings.md`,
 `changes/2026-07-24-clarity-palette-v2.md`,
@@ -331,34 +338,48 @@ Change notes: `changes/2026-07-24-home-hero-and-presupuesto-cards.md`,
    There is no user-facing “protected budget %”. The DB column
    `allocation_percent` is always written as `100`
    (`MONTHLY_PLAN_FULL_ALLOCATION` in `src/lib/validations.ts`).
-2. **Named budgets (envelopes)** — limits as fixed amounts or % of that income,
-   each spanning one or more categories.
+2. **Two envelope engines** (`custom_budgets.kind`):
+   - **Presupuestos** (`spending_limit`) — spending ceilings; 100% = exceeded.
+   - **Metas de aportación** (`contribution_goal`) — contribution floors
+     (tithe, savings, investing, …); 100% = success.
 3. **Methods** — frameworks (50/30/20, Base cero, 5 Jarras, …) that **create**
-   those envelopes from each category’s `budget_role` (see §9b). Methods do not
-   set a separate plan “protected %”.
+   those envelopes from each category’s `budget_role` (see §9b), including
+   `kind` via method seed / backfill. Methods do not set a separate plan
+   “protected %”.
 
 UI totals prefer the sum of custom-budget limits when envelopes exist (not a
 shrunk income pool).
+
+### Home vs Budget placement
+
+| Surface | Presupuestos | Metas |
+|---|---|---|
+| `/home` Presupuestos card | Yes | **No** |
+| `/budget` | Yes | Yes |
+
+`prepare_month_snapshot` must return `kind` (migration
+`2026-07-24-month-snapshot-budget-kind.sql`). Client fallback:
+`resolveBudgetKind()` infers from category roles if `kind` is missing.
 
 ### UI
 
 - **Empty (no income, no budgets):** guided setup — set income → optional
   method → create budgets. Full-width card.
-- **Otherwise (desktop `lg+`):** two-column layout matching Home density —
-  - **Left (`lg:col-span-3`):** “Your budgets” with usage-band **rings**
-    (`BudgetPaceChart`, swipe when &gt;3); tap to edit; compact manage list
-    with delete.
-  - **Right (`lg:col-span-2`):** “Your plan” — remaining vs budgeted, income
-    caption, **Edit** / trash to delete income (in-app confirm). Form resets
-    when the sheet reopens; Cancel closes the controlled sheet.
-- **Mobile order:** Plan → Budgets.
+- **Otherwise:** blue **BudgetSummaryHero** (compact density) then
+  side-by-side **Presupuestos** + **Metas de aportación**; plan distribution
+  (both engines) + recommendation (overspent Presupuestos).
+- Create/edit sheet: kind picker (Presupuesto vs Meta).
 - **No Primicias / Generosidad card** (giving stays on Home / Insights /
-  Settings; methods may still seed Donations / Tithe envelopes).
+  Settings; methods may still seed Donations / Tithe as Metas).
 - Applying a method with existing budgets opens an **in-app** replace dialog
   (not `window.confirm`). Seeding uses RPC `replace_custom_budget_set` (fixed
   `jsonb_array_elements_text` for category UUIDs) with a client fallback.
 
-Change notes: `changes/2026-07-24-budget-tab-usage-band-colors.md`,
+Change notes: `changes/2026-07-24-budget-dual-engines-mockup.md`,
+`changes/2026-07-24-home-presupuestos-only-metas-on-budget.md`,
+`changes/2026-07-24-compact-month-hero-cards.md`,
+`changes/2026-07-24-document-dual-engine-home-budget-session.md`,
+`changes/2026-07-24-budget-tab-usage-band-colors.md`,
 `changes/2026-07-24-budget-two-column-layout.md`,
 `changes/2026-07-24-remove-protected-budget-percent.md`,
 `changes/2026-07-24-visible-delete-monthly-income.md`,
@@ -704,6 +725,19 @@ Full session record:
 - `2026-07-24-budget-roles-and-smarter-categorization.md` — `budget_role`,
   method seed map, ranked suggest, merchant learn
 - `2026-07-24-document-budget-simplification-and-roles.md` — this handbook sync
+
+## 21. Related change notes (2026-07-24 — dual engines, Home filter, compact heroes)
+
+Full session record:
+`changes/2026-07-24-document-dual-engine-home-budget-session.md`.
+
+- `2026-07-24-budget-dual-engines-mockup.md` — `kind` column + Budget mockup
+  layout (Presupuestos + Metas)
+- `2026-07-24-presupuestos-not-metas-ui.md` — **superseded**; briefly hid Metas
+- `2026-07-24-home-presupuestos-only-metas-on-budget.md` — Home filter + restore
+  Metas on `/budget` + snapshot `kind` fix
+- `2026-07-24-compact-month-hero-cards.md` — denser Home + Budget heroes
+- `2026-07-24-document-dual-engine-home-budget-session.md` — this handbook sync
 
 ---
 

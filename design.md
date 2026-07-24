@@ -31,9 +31,9 @@ of truth for every nav surface is
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — navy hero (`remaining = income − spent`, pace bar + daily guide); Metas-style **Presupuesto** cards only (`kind = spending_limit`; swipe when &gt;3); category donut with legend % (no callout connectors); recent movements. Desktop: movements left, Presupuestos+donut right. Checkpoint bank balance lives in Settings / Wealth — not the hero. **Metas** (`contribution_goal`) live on `/budget`, never on Home. |
+| **Home** | `/home` | "How am I doing right now" — compact blue hero (`remaining = income − spent`, pace bar + daily guide); Metas-style **Presupuesto** cards only (`kind = spending_limit`; swipe when &gt;3); category donut with legend % (no callout connectors); recent movements. Desktop: movements left, Presupuestos+donut right. Checkpoint bank balance lives in Settings / Wealth — not the hero. **Metas** (`contribution_goal`) live on `/budget`, never on Home. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
-| **Budget** | `/budget` | Dual engines: **Presupuestos** (ceilings; 100%=exceeded) + **Metas de aportación** (floors; 100%=success). Hero remaining = income − spent. Plan distribution includes both; recommendation from overspent Presupuestos. Methods seed by `budget_role` → `kind`. |
+| **Budget** | `/budget` | Dual engines: **Presupuestos** (ceilings; 100%=exceeded) + **Metas de aportación** (floors; 100%=success). Compact hero remaining = income − spent. Plan distribution includes both; recommendation from overspent Presupuestos. Methods seed by `budget_role` → `kind`. |
 | **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`, `/loans`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts, money lent. If it's a balance, it lives here. |
 | **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, pillars, clickable 12-month + daily spend bars (magenta series), envelope utilization, anomalies, monthly report (owns category spend bars), calendar day drilldown. No data-entry CTAs. No duplicate standalone “Where it went” list. |
 
@@ -63,8 +63,8 @@ font-size values in components** except:
 1. Dynamic **category color** (DB hex via `CategoryBadge` / donut inline style).
 2. **Budget usage-band** hex from [`src/lib/palette.ts`](src/lib/palette.ts)
    (Home Presupuesto cards / Budget meters). Cashflow amounts use CSS vars
-   (`income` / `available` / `expense`). Hero navy gradient is a Home-only
-   surface exception (mock-matched); do not reuse ad-hoc blues elsewhere.
+   (`income` / `available` / `expense`). Hero blue gradient is Home + Budget
+   summary chrome (compact density); do not reuse ad-hoc blues elsewhere.
 3. **Insights spend series** `SPEND_CHART_COLOR` (`#EC4899`) in
    [`src/components/charts/chart-theme.tsx`](src/components/charts/chart-theme.tsx)
    — soft magenta for bar fills (matches clarity Health); not `--expense`
@@ -122,13 +122,21 @@ font-size values in components** except:
 ### 2.1.1 Home Presupuesto cards (composition)
 
 - Component: `src/components/home/budget-pace-chart.tsx` (shared with Budget).
-- Metas-style horizontal cards: icon tint + name + spent/limit + compact ring.
+- Metas-style tiles laid out **side by side, up to 3 per row**. Inside a tile:
+  tinted round icon badge (left) and usage ring with the `%` inside (right) on
+  the top row, then name, `spent`, and `de <limit>` / `of <limit>`.
+- Tile glyph = the `icon` of the category carrying most of that budget's spend;
+  no linked categories falls back to `Target`.
+- Tiles size themselves off their own width (`@container/budget-card`), so the
+  same three fit the narrow Home column and a phone.
 - Home lists **only** `spending_limit` envelopes (Presupuestos). Metas stay on
   `/budget`.
-- Max **3 per swipe page** (carousel + dots).
+- More than 3 → **swipe pages of 3** (snap + dots); pages keep a fixed
+  3-column grid so card width never jumps between pages.
 - Month-progress mark (dot on the ring) remains; color is **usage band only**
   (safe → critical). Never treat 100% as success green — that is reserved for
-  Metas on the Budget tab.
+  Metas on the Budget tab. The `%` label is `foreground` until the budget is
+  over its limit, where it takes the band color (as does the spent amount).
 - Home: cards link to `/budget`. Budget tab: pass `onSelect` to open the
   edit sheet; a compact manage list below carries delete.
 - Hero math: `src/lib/home/month-cashflow.ts` + `HomeSummaryCard`.

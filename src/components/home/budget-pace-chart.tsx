@@ -15,6 +15,7 @@ import {
   resolveBudgetUsageTone,
   type BudgetUsageTone,
 } from "@/lib/palette";
+import { CategoryGlyph } from "@/components/shared/category-badge";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
 
@@ -24,6 +25,8 @@ export interface BudgetPaceItem {
   limit: number;
   spent: number;
   ratio: number;
+  /** Category `icon` key of the budget's leading category; falls back to a target. */
+  icon?: string;
 }
 
 function formatUsagePercent(ratio: number): string {
@@ -44,83 +47,88 @@ function chunkBudgets(
   return pages;
 }
 
-/** How many Metas-style cards fit per carousel page. */
+/** How many Metas-style cards fit per carousel page (one row, side by side). */
 const MAX_PER_PAGE = 3;
+
+/** Card glyph sizing, shared by category icons and the no-category fallback. */
+const GLYPH_CLASS =
+  "h-3.5 w-3.5 @min-[8rem]/budget-card:h-4 @min-[8rem]/budget-card:w-4 @min-[11rem]/budget-card:h-[1.125rem] @min-[11rem]/budget-card:w-[1.125rem]";
+
+const COLUMN_CLASS: Record<number, string> = {
+  1: "grid-cols-1",
+  2: "grid-cols-2",
+  3: "grid-cols-3",
+};
+
+/** Meter geometry in viewBox units so the ring scales with its CSS width. */
+const METER_VIEW = 100;
+const METER_STROKE = 12;
+const METER_RADIUS = (METER_VIEW - METER_STROKE) / 2;
+const METER_CIRCUMFERENCE = 2 * Math.PI * METER_RADIUS;
 
 function CircularMeter({
   ratio,
   monthProgress,
   showPaceMark,
-  size,
-  strokeWidth,
   tone,
+  className,
   children,
 }: {
   ratio: number;
   monthProgress: number;
   showPaceMark: boolean;
-  size: number;
-  strokeWidth: number;
   tone: BudgetUsageTone;
+  className?: string;
   children?: ReactNode;
 }) {
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const filled = Number.isFinite(ratio)
-    ? Math.min(Math.max(ratio, 0), 1)
-    : 1;
-  const dashOffset = circumference * (1 - filled);
-  const paceAngle = monthProgress * 360 - 90;
-  const paceRad = (paceAngle * Math.PI) / 180;
-  const paceX = size / 2 + radius * Math.cos(paceRad);
-  const paceY = size / 2 + radius * Math.sin(paceRad);
-  const markSize = 6;
+  const filled = Number.isFinite(ratio) ? Math.min(Math.max(ratio, 0), 1) : 1;
+  const dashOffset = METER_CIRCUMFERENCE * (1 - filled);
+  /* SVG is CSS-rotated -90deg, so 0rad already sits at 12 o'clock. */
+  const paceRad = monthProgress * 2 * Math.PI;
+  const paceX = METER_VIEW / 2 + METER_RADIUS * Math.cos(paceRad);
+  const paceY = METER_VIEW / 2 + METER_RADIUS * Math.sin(paceRad);
   const stroke = budgetUsageColor(tone);
 
   return (
-    <div className="relative shrink-0" style={{ width: size, height: size }}>
+    <div className={cn("relative aspect-square shrink-0", className)}>
       <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        className="block -rotate-90"
+        viewBox={`0 0 ${METER_VIEW} ${METER_VIEW}`}
+        className="block h-full w-full -rotate-90"
         aria-hidden
       >
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
+          cx={METER_VIEW / 2}
+          cy={METER_VIEW / 2}
+          r={METER_RADIUS}
           fill="none"
           stroke="var(--secondary)"
-          strokeWidth={strokeWidth}
+          strokeWidth={METER_STROKE}
         />
         <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
+          cx={METER_VIEW / 2}
+          cy={METER_VIEW / 2}
+          r={METER_RADIUS}
           fill="none"
           stroke={stroke}
-          strokeWidth={strokeWidth}
+          strokeWidth={METER_STROKE}
           strokeLinecap="round"
-          strokeDasharray={circumference}
+          strokeDasharray={METER_CIRCUMFERENCE}
           strokeDashoffset={dashOffset}
           className="transition-[stroke-dashoffset] duration-700 ease-out"
         />
+        {showPaceMark && (
+          <circle
+            cx={paceX}
+            cy={paceY}
+            r={METER_STROKE / 2.6}
+            fill="var(--foreground)"
+            stroke="var(--card)"
+            strokeWidth={2}
+          />
+        )}
       </svg>
-      {showPaceMark && (
-        <span
-          aria-hidden
-          className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground shadow-1 ring-2 ring-card"
-          style={{
-            left: paceX,
-            top: paceY,
-            width: markSize,
-            height: markSize,
-          }}
-        />
-      )}
       {children && (
-        <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center text-center">
+        <div className="pointer-events-none absolute inset-0 flex items-center justify-center text-center">
           {children}
         </div>
       )}
@@ -129,8 +137,11 @@ function CircularMeter({
 }
 
 /**
- * Metas-style horizontal card for a spending Presupuesto.
- * Colors follow spending-limit usage bands (safe → critical), never Metas success green at 100%.
+ * Metas-style card for a spending Presupuesto: icon + ring on top, then
+ * name and `spent` / `of limit`. Sizes scale off the card's own width
+ * (container queries) so three fit side by side even in the Home column.
+ * Colors follow spending-limit usage bands (safe → critical), never Metas
+ * success green at 100%.
  */
 function BudgetMetaCard({
   budget,
@@ -143,15 +154,20 @@ function BudgetMetaCard({
   isCurrentMonth: boolean;
   onSelect?: (budgetId: string) => void;
 }) {
-  const { t } = useLocale();
+  const { t, intlLocale } = useLocale();
   const { baseCurrency } = useCurrency();
   const tone = resolveBudgetUsageTone(budget.ratio);
   const pct = formatUsagePercent(budget.ratio);
   const toneColor = budgetUsageColor(tone);
-  const remaining = budget.limit - budget.spent;
+  const overLimit = !Number.isFinite(budget.ratio) || budget.ratio >= 1;
+  const limitLabel = formatCurrencyWithBreaks(
+    budget.limit,
+    baseCurrency,
+    intlLocale
+  );
 
   const className =
-    "flex w-full min-w-0 items-center gap-3 rounded-2xl bg-card px-3.5 py-3 ring-1 ring-border/60 shadow-1 transition-all hover:shadow-2 hover:ring-border/80 active:bg-accent/40";
+    "flex h-full w-full min-w-0 flex-col gap-2.5 rounded-2xl bg-card px-3 py-3 text-left ring-1 ring-border/60 shadow-1 transition-all hover:shadow-2 hover:ring-border/80 active:bg-accent/40 @min-[10rem]/budget-card:gap-3 @min-[10rem]/budget-card:px-3.5 @min-[10rem]/budget-card:py-3.5";
   const ariaLabel = t(
     `${budget.name}: ${pct}% used`,
     `${budget.name}: ${pct}% usado`
@@ -159,79 +175,87 @@ function BudgetMetaCard({
 
   const content = (
     <>
-      <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
-        style={{ backgroundColor: `${toneColor}18`, color: toneColor }}
-        aria-hidden
-      >
-        <Target className="h-4.5 w-4.5 h-[1.125rem] w-[1.125rem]" />
+      <div className="flex items-center justify-between gap-1.5">
+        <span
+          className="flex aspect-square w-7 shrink-0 items-center justify-center rounded-full @min-[8rem]/budget-card:w-9 @min-[11rem]/budget-card:w-10"
+          style={{ backgroundColor: `${toneColor}1f`, color: toneColor }}
+          aria-hidden
+        >
+          {budget.icon ? (
+            <CategoryGlyph icon={budget.icon} className={GLYPH_CLASS} />
+          ) : (
+            <Target className={GLYPH_CLASS} />
+          )}
+        </span>
+
+        <CircularMeter
+          ratio={budget.ratio}
+          monthProgress={monthProgress}
+          showPaceMark={isCurrentMonth}
+          tone={tone}
+          className="w-9 @min-[8rem]/budget-card:w-11 @min-[11rem]/budget-card:w-12"
+        >
+          <span
+            className="font-mono text-[0.625rem] font-semibold leading-none tracking-[-0.04em] tabular-nums @min-[8rem]/budget-card:text-[0.6875rem] @min-[11rem]/budget-card:text-caption"
+            style={{ color: overLimit ? toneColor : "var(--foreground)" }}
+          >
+            {pct}
+            {pct !== "∞" && "%"}
+          </span>
+        </CircularMeter>
       </div>
 
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-body font-medium leading-tight">
+      <div className="min-w-0">
+        <p className="truncate text-caption font-semibold leading-tight @min-[8rem]/budget-card:text-body">
           {budget.name}
         </p>
         <p
           className={cn(
-            "mt-0.5 font-mono text-[0.6875rem] leading-tight tabular-nums",
-            remaining >= 0 ? "text-muted-foreground" : "text-expense"
+            "mt-1 font-mono text-[0.625rem] leading-tight tabular-nums @min-[9rem]/budget-card:text-[0.6875rem]",
+            !overLimit && "text-muted-foreground"
           )}
+          style={overLimit ? { color: toneColor } : undefined}
         >
-          <span className="text-expense">
-            {formatCurrencyWithBreaks(budget.spent, baseCurrency)}
-          </span>
-          {" / "}
-          {formatCurrencyWithBreaks(budget.limit, baseCurrency)}
+          {formatCurrencyWithBreaks(budget.spent, baseCurrency, intlLocale)}
+        </p>
+        <p className="mt-0.5 font-mono text-[0.625rem] leading-tight tabular-nums text-muted-foreground @min-[9rem]/budget-card:text-[0.6875rem]">
+          {t(`of ${limitLabel}`, `de ${limitLabel}`)}
         </p>
       </div>
-
-      <CircularMeter
-        ratio={budget.ratio}
-        monthProgress={monthProgress}
-        showPaceMark={isCurrentMonth}
-        size={52}
-        strokeWidth={5}
-        tone={tone}
-      >
-        <span
-          className="font-mono text-[0.6875rem] font-semibold leading-none tracking-[-0.03em] tabular-nums"
-          style={{ color: toneColor }}
-        >
-          {pct}
-          {pct !== "∞" && <span className="text-[0.55em]">%</span>}
-        </span>
-      </CircularMeter>
     </>
   );
 
-  if (onSelect) {
-    return (
-      <button
-        type="button"
-        role="listitem"
-        className={className}
-        aria-label={ariaLabel}
-        onClick={() => onSelect(budget.id)}
-      >
-        {content}
-      </button>
-    );
-  }
-
+  /* Wrapper is the query container so the card can size off its own width. */
   return (
-    <Link href="/budget" role="listitem" className={className} aria-label={ariaLabel}>
-      {content}
-    </Link>
+    <div className="@container/budget-card min-w-0" role="listitem">
+      {onSelect ? (
+        <button
+          type="button"
+          className={className}
+          aria-label={ariaLabel}
+          onClick={() => onSelect(budget.id)}
+        >
+          {content}
+        </button>
+      ) : (
+        <Link href="/budget" className={className} aria-label={ariaLabel}>
+          {content}
+        </Link>
+      )}
+    </div>
   );
 }
 
 function BudgetPage({
   budgets,
+  columns,
   monthProgress,
   isCurrentMonth,
   onSelect,
 }: {
   budgets: BudgetPaceItem[];
+  /** Fixed across pages so cards keep one width while swiping. */
+  columns: number;
   monthProgress: number;
   isCurrentMonth: boolean;
   onSelect?: (budgetId: string) => void;
@@ -239,8 +263,9 @@ function BudgetPage({
   return (
     <div
       className={cn(
-        "grid w-full gap-2.5",
-        budgets.length === 1 && "sm:max-w-sm"
+        "grid w-full items-stretch gap-2.5",
+        COLUMN_CLASS[columns] ?? COLUMN_CLASS[MAX_PER_PAGE],
+        columns === 1 && "sm:max-w-[14rem]"
       )}
       role="list"
     >
@@ -266,8 +291,8 @@ interface BudgetPaceChartProps {
 }
 
 /**
- * Home Presupuestos overview: Metas-style cards (spent / limit).
- * More than 3 budgets spill into swipeable pages.
+ * Home Presupuestos overview: a row of up to three Metas-style cards
+ * (spent / limit). More than three spill into swipeable pages.
  * Ring color follows spending-limit usage bands, not month pace.
  */
 export function BudgetPaceChart({
@@ -309,6 +334,7 @@ export function BudgetPaceChart({
       <div aria-label={t("Monthly budgets", "Presupuestos del mes")}>
         <BudgetPage
           budgets={pages[0]}
+          columns={Math.min(pages[0].length, MAX_PER_PAGE)}
           monthProgress={monthProgress}
           isCurrentMonth={isCurrentMonth}
           onSelect={onSelect}
@@ -324,16 +350,19 @@ export function BudgetPaceChart({
     >
       <div
         ref={scrollerRef}
-        className="-mx-1 flex snap-x snap-mandatory overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        /* Flush horizontally so no card from the next page peeks; pages pad
+           their own cards instead. Vertical padding keeps shadows uncut. */
+        className="-my-1 flex snap-x snap-mandatory overflow-x-auto py-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {pages.map((page, pageIndex) => (
           <div
             key={`budget-page-${pageIndex}`}
-            className="w-full shrink-0 snap-center px-0.5"
+            className="w-full shrink-0 snap-center px-1"
             aria-hidden={pageIndex !== activePage}
           >
             <BudgetPage
               budgets={page}
+              columns={MAX_PER_PAGE}
               monthProgress={monthProgress}
               isCurrentMonth={isCurrentMonth}
               onSelect={onSelect}

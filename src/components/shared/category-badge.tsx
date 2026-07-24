@@ -50,6 +50,21 @@ const iconMap: Record<string, LucideIcon> = {
   "circle-dollar-sign": CircleDollarSign,
 };
 
+/**
+ * Bare category glyph — no badge chrome. For callers that draw their own
+ * container (Home Presupuesto cards) and only need the right pictogram.
+ */
+export function CategoryGlyph({
+  icon,
+  className,
+}: {
+  icon: string;
+  className?: string;
+}) {
+  const Icon = iconMap[icon] || MoreHorizontal;
+  return <Icon className={className} />;
+}
+
 /** Elevated, high-contrast surface for category menus nested inside sheets. */
 export const CATEGORY_SELECT_CONTENT_CLASS =
   "border-2 border-foreground/20 bg-card shadow-3 ring-1 ring-foreground/10";

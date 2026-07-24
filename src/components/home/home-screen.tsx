@@ -101,9 +101,15 @@ export function HomeScreen() {
       )
       .map((budget) => {
         const limit = resolveCustomBudgetAmount(budget, monthlyIncome, convert);
-        const spent = budget.custom_budget_categories.reduce(
-          (sum, link) => sum + (spentByCategory.get(link.category_id) ?? 0),
-          0
+        const links = budget.custom_budget_categories.map((link) => ({
+          link,
+          spent: spentByCategory.get(link.category_id) ?? 0,
+        }));
+        const spent = links.reduce((sum, row) => sum + row.spent, 0);
+        /* Card glyph: the category carrying most of this budget's spend. */
+        const leading = links.reduce<(typeof links)[number] | undefined>(
+          (best, row) => (!best || row.spent > best.spent ? row : best),
+          undefined
         );
         return {
           id: budget.id,
@@ -111,6 +117,7 @@ export function HomeScreen() {
           limit,
           spent,
           ratio: budgetUsageRatio(spent, limit),
+          icon: leading?.link.categories?.icon,
         };
       })
       .sort((a, b) => {
@@ -275,7 +282,7 @@ export function HomeScreen() {
                           href="/budget"
                           className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
                         >
-                          {t("Manage", "Gestionar")}
+                          {t("View all", "Ver todos")}
                         </Link>
                       ) : undefined
                     }
