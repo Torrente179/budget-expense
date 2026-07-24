@@ -28,7 +28,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
-  const { baseCurrency, convert } = useCurrency();
+  const { convert } = useCurrency();
   const { month, year, isCurrentMonth, setMonthYear } = useMonth();
   const router = useRouter();
 
@@ -192,16 +192,69 @@ export function HomeScreen() {
             </Card>
           )}
 
-          <HomeSummaryCard
-            cashflow={cashflow}
-            monthEndLabel={monthEndLabel}
-          />
+          {/* Desktop: [Hero + Movimientos] | [Presupuestos + Gastos]
+              Mobile: Hero → Presupuestos → Gastos → Movimientos */}
+          <div className="grid gap-4 lg:grid-cols-5 lg:items-start">
+            <div className="contents lg:col-span-3 lg:flex lg:flex-col lg:gap-4">
+              <div className="order-1 min-w-0 lg:order-none">
+                <HomeSummaryCard
+                  cashflow={cashflow}
+                  monthEndLabel={monthEndLabel}
+                />
+              </div>
 
-          {/* Desktop: movements left; Presupuestos + donut stacked right.
-              Mobile: Presupuestos → donut → movements. */}
-          <div className="grid gap-4 lg:grid-cols-5">
-            <div className="min-w-0 space-y-4 lg:order-2 lg:col-span-2">
-              <Card>
+              <Card className="order-4 min-w-0 lg:order-none">
+                <CardHeader>
+                  <SectionHeader
+                    eyebrow={t("Latest", "Recientes")}
+                    title={t("Recent movements", "Movimientos recientes")}
+                    action={
+                      <Link
+                        href="/movements"
+                        className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {t("View all", "Ver todos")}
+                      </Link>
+                    }
+                  />
+                </CardHeader>
+                <CardContent className="px-0 pb-0">
+                  {recentMovements.length === 0 ? (
+                    <div className="px-4 pb-4">
+                      <EmptyState
+                        icon={ArrowUpDown}
+                        title={t("No movements yet", "Aún sin movimientos")}
+                        description={t(
+                          "Add your first expense with the + button.",
+                          "Agrega tu primer gasto con el botón +."
+                        )}
+                      />
+                    </div>
+                  ) : (
+                    <div className="divide-y divide-border/40">
+                      {recentMovements.map((movement) => (
+                        <TransactionRow
+                          key={`${movement.kind}-${movement.id}`}
+                          title={movement.title}
+                          subtitle={`${movement.subtitle} · ${new Intl.DateTimeFormat(
+                            intlLocale,
+                            { day: "numeric", month: "short" }
+                          ).format(new Date(`${movement.date}T00:00:00`))}`}
+                          amount={movement.amount}
+                          currency={movement.currency}
+                          kind={movement.kind}
+                          category={movement.category}
+                          needsReview={movement.needsReview}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+
+            <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-4">
+              <Card className="order-2 min-w-0 lg:order-none">
                 <CardHeader>
                   <SectionHeader
                     eyebrow={t("This month", "Este mes")}
@@ -255,11 +308,14 @@ export function HomeScreen() {
               </Card>
 
               {donut.slices.length > 0 && (
-                <Card>
+                <Card className="order-3 min-w-0 lg:order-none">
                   <CardHeader>
                     <SectionHeader
                       eyebrow={t("This month", "Este mes")}
-                      title={t("Your spending by category", "Tus gastos por categoría")}
+                      title={t(
+                        "Your spending by category",
+                        "Tus gastos por categoría"
+                      )}
                       action={
                         <Link
                           href="/insights"
@@ -282,57 +338,6 @@ export function HomeScreen() {
                   </CardContent>
                 </Card>
               )}
-            </div>
-
-            <div className="min-w-0 space-y-4 lg:order-1 lg:col-span-3">
-              <Card>
-                <CardHeader>
-                  <SectionHeader
-                    eyebrow={t("Latest", "Recientes")}
-                    title={t("Recent movements", "Movimientos recientes")}
-                    action={
-                      <Link
-                        href="/movements"
-                        className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {t("View all", "Ver todos")}
-                      </Link>
-                    }
-                  />
-                </CardHeader>
-                <CardContent className="px-0 pb-0">
-                  {recentMovements.length === 0 ? (
-                    <div className="px-4 pb-4">
-                      <EmptyState
-                        icon={ArrowUpDown}
-                        title={t("No movements yet", "Aún sin movimientos")}
-                        description={t(
-                          "Add your first expense with the + button.",
-                          "Agrega tu primer gasto con el botón +."
-                        )}
-                      />
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-border/40">
-                      {recentMovements.map((movement) => (
-                        <TransactionRow
-                          key={`${movement.kind}-${movement.id}`}
-                          title={movement.title}
-                          subtitle={`${movement.subtitle} · ${new Intl.DateTimeFormat(
-                            intlLocale,
-                            { day: "numeric", month: "short" }
-                          ).format(new Date(`${movement.date}T00:00:00`))}`}
-                          amount={movement.amount}
-                          currency={movement.currency}
-                          kind={movement.kind}
-                          category={movement.category}
-                          needsReview={movement.needsReview}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
             </div>
           </div>
         </>
