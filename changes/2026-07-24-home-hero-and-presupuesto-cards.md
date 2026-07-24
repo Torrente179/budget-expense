@@ -23,3 +23,4 @@ No schema changes. Hero math in `src/lib/home/month-cashflow.ts` (cents-friendly
 - >3 Presupuestos: swipe carousel + dots still work.
 - Donut: no connectors; legend % intact; category colors unchanged.
 - Desktop hero: remaining/income/spent match mockup scale; ring uses white arc (not green) with “of budget used” / “del presupuesto utilizado”.
+- Mobile hero: stacked mockup (remaining → white spend bar → Ingresos|Gastado with icons → daily footer); shared vibrant blue gradient on desktop too.

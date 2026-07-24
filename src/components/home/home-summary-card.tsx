@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
+import { ArrowDownLeft, ArrowUpRight, CalendarDays, Wallet } from "lucide-react";
 import {
   formatUsagePercent,
   type MonthCashflow,
@@ -16,6 +16,10 @@ interface HomeSummaryCardProps {
   monthEndLabel: string;
   className?: string;
 }
+
+/** Vibrant blue from the mobile hero mockup — shared with desktop. */
+const HERO_GRADIENT =
+  "bg-[linear-gradient(160deg,#3b82f6_0%,#2563eb_42%,#1d4ed8_100%)] dark:bg-[linear-gradient(160deg,#1e40af_0%,#1d4ed8_45%,#1e3a8a_100%)]";
 
 function paceStatusLabel(
   status: MonthPaceStatus,
@@ -42,7 +46,6 @@ function HeroRing({
   usedRatio: number | null;
   size?: number;
 }) {
-  /* Mockup: thick white used arc on a faint white track. */
   const strokeWidth = 11;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
@@ -102,6 +105,7 @@ function HeroRing({
 
 /**
  * Home hero: month remaining = income − outflows, with pace bar + daily guide.
+ * Mobile matches the stacked mockup; desktop keeps the horizontal metrics row.
  */
 export function HomeSummaryCard({
   cashflow,
@@ -150,95 +154,43 @@ export function HomeSummaryCard({
     <section
       className={cn(
         "relative overflow-hidden rounded-2xl text-white shadow-2",
-        "bg-[linear-gradient(135deg,#1b3a6b_0%,#244f8a_48%,#1e4a7c_100%)]",
-        "dark:bg-[linear-gradient(135deg,#152a42_0%,#1a3a5c_50%,#14304d_100%)]",
+        HERO_GRADIENT,
         className
       )}
     >
-      <div
+      {/* Mobile wallet watermark */}
+      <Wallet
         aria-hidden
-        className="pointer-events-none absolute -right-8 bottom-0 h-40 w-40 rounded-full bg-white/5 blur-2xl"
+        className="pointer-events-none absolute -right-2 top-3 h-28 w-28 text-white/[0.08] lg:hidden"
+        strokeWidth={1}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-4 top-6 h-28 w-28 rounded-full border border-white/10"
+        className="pointer-events-none absolute -right-10 bottom-0 hidden h-44 w-44 rounded-full bg-white/10 blur-3xl lg:block"
       />
 
-      <div className="relative space-y-6 p-5 sm:p-7">
-        {/* Top row: remaining | income | spent | ring (desktop horizontal) */}
-        <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
-          <div className="min-w-0 shrink-0">
-            <p className="text-[0.9375rem] font-medium text-white/90">
-              {t("You have", "Te quedan")}
-            </p>
-            <p className="mt-1 font-mono text-[2.25rem] font-bold leading-none tracking-[-0.035em] tabular-nums text-white sm:text-[2.5rem]">
-              {remainingLabel}
-            </p>
-            <p className="mt-2 text-[0.9375rem] font-medium text-white/80">
-              {t("available this month", "disponibles este mes")}
-            </p>
-          </div>
-
-          <div
-            aria-hidden
-            className="hidden h-14 w-px shrink-0 bg-white/20 lg:mx-6 lg:block xl:mx-8"
-          />
-
-          <div className="grid min-w-0 flex-1 grid-cols-2 gap-6 lg:contents">
-            <div className="min-w-0">
-              <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
-                <span
-                  aria-hidden
-                  className="h-2 w-2 shrink-0 rounded-full bg-[#5eead4]"
-                />
-                {t("Income received", "Ingresos recibidos")}
-              </p>
-              <p className="mt-1.5 font-mono text-lg font-bold tracking-[-0.02em] tabular-nums text-[#5eead4] sm:text-xl">
-                {incomeLabel}
-              </p>
-            </div>
-
-            <div
-              aria-hidden
-              className="hidden h-14 w-px shrink-0 bg-white/20 lg:mx-6 lg:block xl:mx-8"
-            />
-
-            <div className="min-w-0">
-              <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
-                <span
-                  aria-hidden
-                  className="h-2 w-2 shrink-0 rounded-full bg-white/90"
-                />
-                {t("You've spent", "Has gastado")}
-              </p>
-              <p className="mt-1.5 font-mono text-lg font-bold tracking-[-0.02em] tabular-nums text-white sm:text-xl">
-                {spentLabel}
-              </p>
-            </div>
-          </div>
-
-          <div className="ml-auto hidden shrink-0 lg:block lg:pl-4">
-            <HeroRing usedRatio={cashflow.usedRatio} />
-          </div>
+      {/* —— Mobile layout —— */}
+      <div className="relative space-y-5 p-5 lg:hidden">
+        <div>
+          <p className="text-[0.9375rem] font-medium text-white/90">
+            {t("You have", "Te quedan")}
+          </p>
+          <p className="mt-1 font-mono text-[2.35rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+            {remainingLabel}
+          </p>
+          <p className="mt-2 text-[0.9375rem] font-medium text-white/85">
+            {t("available this month", "disponibles este mes")}
+          </p>
         </div>
 
-        {/* Pace bar */}
-        <div className="space-y-2.5">
-          <div className="relative h-3 overflow-visible rounded-full bg-white/20">
+        <div className="space-y-2">
+          <div className="relative h-2.5 overflow-hidden rounded-full bg-white/25">
             <div
-              className="absolute inset-y-0 left-0 rounded-full bg-[#5eead4] transition-[width] duration-700 ease-out"
+              className="absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-700 ease-out"
               style={{ width: `${barFill}%` }}
             />
-            <span
-              aria-hidden
-              className="absolute top-1/2 z-10 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm"
-              style={{ left: `${paceMark}%` }}
-              title={t("Month progress", "Progreso del mes")}
-            />
           </div>
-
-          {/* Mobile labels: % spent / % available */}
-          <div className="flex items-center justify-between gap-3 text-[0.75rem] text-white/80 lg:hidden">
+          <div className="flex items-center justify-between gap-3 text-[0.75rem] text-white/90">
             <span>
               {usedPct !== "—"
                 ? t(`${usedPct}% spent`, `${usedPct}% gastado`)
@@ -253,9 +205,122 @@ export function HomeSummaryCard({
                 : t("Available", "Disponible")}
             </span>
           </div>
+        </div>
 
-          {/* Desktop: spent + month target under bar */}
-          <div className="hidden items-center justify-between gap-3 text-[0.8125rem] text-white/85 lg:flex">
+        <div className="grid grid-cols-2 gap-0 border-t border-white/20 pt-4">
+          <div className="min-w-0 pr-4">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white">
+                <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-500" />
+              </span>
+              <span className="text-[0.8125rem] font-medium text-white/85">
+                {t("Income", "Ingresos")}
+              </span>
+            </div>
+            <p className="mt-2 font-mono text-base font-bold tracking-[-0.02em] tabular-nums text-[#86efac]">
+              {incomeLabel}
+            </p>
+          </div>
+          <div className="min-w-0 border-l border-white/20 pl-4">
+            <div className="flex items-center gap-2">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white">
+                <ArrowUpRight className="h-3.5 w-3.5 text-slate-700" />
+              </span>
+              <span className="text-[0.8125rem] font-medium text-white/85">
+                {t("Spent", "Gastado")}
+              </span>
+            </div>
+            <p className="mt-2 font-mono text-base font-bold tracking-[-0.02em] tabular-nums text-white">
+              {spentLabel}
+            </p>
+          </div>
+        </div>
+
+        {dailyLabel != null && (
+          <div className="flex items-center gap-2.5 border-t border-white/20 pt-4">
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <CalendarDays className="h-4 w-4 text-white" />
+            </span>
+            <p className="text-[0.8125rem] leading-snug text-white/95">
+              {t(
+                `${dailyLabel} / day until ${monthEndLabel}`,
+                `${dailyLabel} al día hasta el ${monthEndLabel}`
+              )}
+            </p>
+          </div>
+        )}
+      </div>
+
+      {/* —— Desktop layout —— */}
+      <div className="relative hidden space-y-6 p-7 lg:block">
+        <div className="flex flex-row items-center">
+          <div className="min-w-0 shrink-0">
+            <p className="text-[0.9375rem] font-medium text-white/90">
+              {t("You have", "Te quedan")}
+            </p>
+            <p className="mt-1 font-mono text-[2.5rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+              {remainingLabel}
+            </p>
+            <p className="mt-2 text-[0.9375rem] font-medium text-white/80">
+              {t("available this month", "disponibles este mes")}
+            </p>
+          </div>
+
+          <div
+            aria-hidden
+            className="mx-6 h-14 w-px shrink-0 bg-white/25 xl:mx-8"
+          />
+
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
+              <span
+                aria-hidden
+                className="h-2 w-2 shrink-0 rounded-full bg-[#86efac]"
+              />
+              {t("Income received", "Ingresos recibidos")}
+            </p>
+            <p className="mt-1.5 font-mono text-xl font-bold tracking-[-0.02em] tabular-nums text-[#86efac]">
+              {incomeLabel}
+            </p>
+          </div>
+
+          <div
+            aria-hidden
+            className="mx-6 h-14 w-px shrink-0 bg-white/25 xl:mx-8"
+          />
+
+          <div className="min-w-0">
+            <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
+              <span
+                aria-hidden
+                className="h-2 w-2 shrink-0 rounded-full bg-white/90"
+              />
+              {t("You've spent", "Has gastado")}
+            </p>
+            <p className="mt-1.5 font-mono text-xl font-bold tracking-[-0.02em] tabular-nums text-white">
+              {spentLabel}
+            </p>
+          </div>
+
+          <div className="ml-auto shrink-0 pl-4">
+            <HeroRing usedRatio={cashflow.usedRatio} />
+          </div>
+        </div>
+
+        <div className="space-y-2.5">
+          <div className="relative h-3 overflow-visible rounded-full bg-white/25">
+            <div
+              className="absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-700 ease-out"
+              style={{ width: `${barFill}%` }}
+            />
+            <span
+              aria-hidden
+              className="absolute top-1/2 z-10 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm ring-1 ring-blue-700/40"
+              style={{ left: `${paceMark}%` }}
+              title={t("Month progress", "Progreso del mes")}
+            />
+          </div>
+          <div className="flex items-center justify-between gap-3 text-[0.8125rem] text-white/85">
             <span>
               {t("Spent", "Gastado")}:{" "}
               <span className="font-mono tabular-nums text-white">
@@ -271,11 +336,12 @@ export function HomeSummaryCard({
           </div>
         </div>
 
-        {/* Daily + status footer */}
-        <div className="flex flex-wrap items-center gap-2 border-t border-white/10 pt-4">
+        <div className="flex flex-wrap items-center gap-2 border-t border-white/15 pt-4">
           {dailyLabel != null && (
-            <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-caption text-white/90">
-              <CalendarDays className="h-3.5 w-3.5 shrink-0 text-white/70" />
+            <p className="inline-flex items-center gap-2.5 text-[0.8125rem] text-white/95">
+              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
+                <CalendarDays className="h-4 w-4 text-white" />
+              </span>
               <span>
                 {t(
                   `About ${dailyLabel} / day until ${monthEndLabel}`,
@@ -285,7 +351,7 @@ export function HomeSummaryCard({
             </p>
           )}
           {status && (
-            <span className="rounded-full bg-white/10 px-2.5 py-1 text-[0.6875rem] font-medium text-white/85">
+            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[0.6875rem] font-medium text-white/90">
               {status}
             </span>
           )}
