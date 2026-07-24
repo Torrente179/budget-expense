@@ -41,12 +41,12 @@ function paceStatusLabel(
 
 function HeroRing({
   usedRatio,
-  size = 128,
+  size = 88,
 }: {
   usedRatio: number | null;
   size?: number;
 }) {
-  const strokeWidth = 11;
+  const strokeWidth = 8;
   const radius = (size - strokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   const filled =
@@ -90,12 +90,12 @@ function HeroRing({
           className="transition-[stroke-dashoffset] duration-700 ease-out"
         />
       </svg>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-3 text-center">
-        <span className="font-mono text-[1.625rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-white">
+      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-2 text-center">
+        <span className="font-mono text-[1.25rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-white">
           {pct}
           {pct !== "—" && <span className="text-[0.62em]">%</span>}
         </span>
-        <span className="mt-1.5 max-w-[5.25rem] text-[0.6875rem] font-medium leading-snug text-white/85">
+        <span className="mt-0.5 max-w-[4.5rem] text-[0.625rem] font-medium leading-tight text-white/85">
           {t("of budget used", "del presupuesto utilizado")}
         </span>
       </div>
@@ -161,36 +161,36 @@ export function HomeSummaryCard({
       {/* Mobile wallet watermark */}
       <Wallet
         aria-hidden
-        className="pointer-events-none absolute -right-2 top-3 h-28 w-28 text-white/[0.08] lg:hidden"
+        className="pointer-events-none absolute -right-2 top-2 h-20 w-20 text-white/[0.08] lg:hidden"
         strokeWidth={1}
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute -right-10 bottom-0 hidden h-44 w-44 rounded-full bg-white/10 blur-3xl lg:block"
+        className="pointer-events-none absolute -right-8 bottom-0 hidden h-32 w-32 rounded-full bg-white/10 blur-3xl lg:block"
       />
 
       {/* —— Mobile layout —— */}
-      <div className="relative space-y-5 p-5 lg:hidden">
+      <div className="relative space-y-3.5 p-4 lg:hidden">
         <div>
-          <p className="text-[0.9375rem] font-medium text-white/90">
+          <p className="text-[0.8125rem] font-medium text-white/90">
             {t("You have", "Te quedan")}
           </p>
-          <p className="mt-1 font-mono text-[2.35rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+          <p className="mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
             {remainingLabel}
           </p>
-          <p className="mt-2 text-[0.9375rem] font-medium text-white/85">
+          <p className="mt-1 text-[0.8125rem] font-medium text-white/85">
             {t("available this month", "disponibles este mes")}
           </p>
         </div>
 
-        <div className="space-y-2">
-          <div className="relative h-2.5 overflow-hidden rounded-full bg-white/25">
+        <div className="space-y-1.5">
+          <div className="relative h-2 overflow-hidden rounded-full bg-white/25">
             <div
               className="absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-700 ease-out"
               style={{ width: `${barFill}%` }}
             />
           </div>
-          <div className="flex items-center justify-between gap-3 text-[0.75rem] text-white/90">
+          <div className="flex items-center justify-between gap-3 text-[0.6875rem] text-white/90">
             <span>
               {usedPct !== "—"
                 ? t(`${usedPct}% spent`, `${usedPct}% gastado`)
@@ -207,41 +207,41 @@ export function HomeSummaryCard({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-0 border-t border-white/20 pt-4">
-          <div className="min-w-0 pr-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white">
-                <ArrowDownLeft className="h-3.5 w-3.5 text-emerald-500" />
+        <div className="grid grid-cols-2 gap-0 border-t border-white/20 pt-3">
+          <div className="min-w-0 pr-3">
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white">
+                <ArrowDownLeft className="h-3 w-3 text-emerald-500" />
               </span>
-              <span className="text-[0.8125rem] font-medium text-white/85">
+              <span className="text-[0.75rem] font-medium text-white/85">
                 {t("Income", "Ingresos")}
               </span>
             </div>
-            <p className="mt-2 font-mono text-base font-bold tracking-[-0.02em] tabular-nums text-[#86efac]">
+            <p className="mt-1 font-mono text-sm font-bold tracking-[-0.02em] tabular-nums text-[#86efac]">
               {incomeLabel}
             </p>
           </div>
-          <div className="min-w-0 border-l border-white/20 pl-4">
-            <div className="flex items-center gap-2">
-              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white">
-                <ArrowUpRight className="h-3.5 w-3.5 text-slate-700" />
+          <div className="min-w-0 border-l border-white/20 pl-3">
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white">
+                <ArrowUpRight className="h-3 w-3 text-slate-700" />
               </span>
-              <span className="text-[0.8125rem] font-medium text-white/85">
+              <span className="text-[0.75rem] font-medium text-white/85">
                 {t("Spent", "Gastado")}
               </span>
             </div>
-            <p className="mt-2 font-mono text-base font-bold tracking-[-0.02em] tabular-nums text-white">
+            <p className="mt-1 font-mono text-sm font-bold tracking-[-0.02em] tabular-nums text-white">
               {spentLabel}
             </p>
           </div>
         </div>
 
         {dailyLabel != null && (
-          <div className="flex items-center gap-2.5 border-t border-white/20 pt-4">
-            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
-              <CalendarDays className="h-4 w-4 text-white" />
+          <div className="flex items-center gap-2 border-t border-white/20 pt-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15">
+              <CalendarDays className="h-3.5 w-3.5 text-white" />
             </span>
-            <p className="text-[0.8125rem] leading-snug text-white/95">
+            <p className="text-[0.75rem] leading-snug text-white/95">
               {t(
                 `${dailyLabel} / day until ${monthEndLabel}`,
                 `${dailyLabel} al día hasta el ${monthEndLabel}`
@@ -252,75 +252,75 @@ export function HomeSummaryCard({
       </div>
 
       {/* —— Desktop layout —— */}
-      <div className="relative hidden space-y-6 p-7 lg:block">
+      <div className="relative hidden space-y-3.5 p-5 lg:block">
         <div className="flex flex-row items-center">
           <div className="min-w-0 shrink-0">
-            <p className="text-[0.9375rem] font-medium text-white/90">
+            <p className="text-[0.8125rem] font-medium text-white/90">
               {t("You have", "Te quedan")}
             </p>
-            <p className="mt-1 font-mono text-[2.5rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+            <p className="mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
               {remainingLabel}
             </p>
-            <p className="mt-2 text-[0.9375rem] font-medium text-white/80">
+            <p className="mt-1 text-[0.8125rem] font-medium text-white/80">
               {t("available this month", "disponibles este mes")}
             </p>
           </div>
 
           <div
             aria-hidden
-            className="mx-6 h-14 w-px shrink-0 bg-white/25 xl:mx-8"
+            className="mx-4 h-10 w-px shrink-0 bg-white/25 xl:mx-5"
           />
 
           <div className="min-w-0">
-            <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
+            <p className="flex items-center gap-1.5 text-[0.75rem] font-medium text-white/85">
               <span
                 aria-hidden
-                className="h-2 w-2 shrink-0 rounded-full bg-[#86efac]"
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#86efac]"
               />
               {t("Income received", "Ingresos recibidos")}
             </p>
-            <p className="mt-1.5 font-mono text-xl font-bold tracking-[-0.02em] tabular-nums text-[#86efac]">
+            <p className="mt-1 font-mono text-base font-bold tracking-[-0.02em] tabular-nums text-[#86efac]">
               {incomeLabel}
             </p>
           </div>
 
           <div
             aria-hidden
-            className="mx-6 h-14 w-px shrink-0 bg-white/25 xl:mx-8"
+            className="mx-4 h-10 w-px shrink-0 bg-white/25 xl:mx-5"
           />
 
           <div className="min-w-0">
-            <p className="flex items-center gap-2 text-[0.8125rem] font-medium text-white/85">
+            <p className="flex items-center gap-1.5 text-[0.75rem] font-medium text-white/85">
               <span
                 aria-hidden
-                className="h-2 w-2 shrink-0 rounded-full bg-white/90"
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/90"
               />
               {t("You've spent", "Has gastado")}
             </p>
-            <p className="mt-1.5 font-mono text-xl font-bold tracking-[-0.02em] tabular-nums text-white">
+            <p className="mt-1 font-mono text-base font-bold tracking-[-0.02em] tabular-nums text-white">
               {spentLabel}
             </p>
           </div>
 
-          <div className="ml-auto shrink-0 pl-4">
+          <div className="ml-auto shrink-0 pl-3">
             <HeroRing usedRatio={cashflow.usedRatio} />
           </div>
         </div>
 
-        <div className="space-y-2.5">
-          <div className="relative h-3 overflow-visible rounded-full bg-white/25">
+        <div className="space-y-1.5">
+          <div className="relative h-2 overflow-visible rounded-full bg-white/25">
             <div
               className="absolute inset-y-0 left-0 rounded-full bg-white transition-[width] duration-700 ease-out"
               style={{ width: `${barFill}%` }}
             />
             <span
               aria-hidden
-              className="absolute top-1/2 z-10 h-4 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm ring-1 ring-blue-700/40"
+              className="absolute top-1/2 z-10 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-sm ring-1 ring-blue-700/40"
               style={{ left: `${paceMark}%` }}
               title={t("Month progress", "Progreso del mes")}
             />
           </div>
-          <div className="flex items-center justify-between gap-3 text-[0.8125rem] text-white/85">
+          <div className="flex items-center justify-between gap-3 text-[0.75rem] text-white/85">
             <span>
               {t("Spent", "Gastado")}:{" "}
               <span className="font-mono tabular-nums text-white">
@@ -336,11 +336,11 @@ export function HomeSummaryCard({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2 border-t border-white/15 pt-4">
+        <div className="flex flex-wrap items-center gap-2 border-t border-white/15 pt-3">
           {dailyLabel != null && (
-            <p className="inline-flex items-center gap-2.5 text-[0.8125rem] text-white/95">
-              <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/15">
-                <CalendarDays className="h-4 w-4 text-white" />
+            <p className="inline-flex items-center gap-2 text-[0.75rem] text-white/95">
+              <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-white/15">
+                <CalendarDays className="h-3.5 w-3.5 text-white" />
               </span>
               <span>
                 {t(
@@ -351,7 +351,7 @@ export function HomeSummaryCard({
             </p>
           )}
           {status && (
-            <span className="rounded-full bg-white/15 px-2.5 py-1 text-[0.6875rem] font-medium text-white/90">
+            <span className="rounded-full bg-white/15 px-2 py-0.5 text-[0.625rem] font-medium text-white/90">
               {status}
             </span>
           )}
