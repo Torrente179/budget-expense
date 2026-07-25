@@ -140,7 +140,7 @@ function CategoryDetail() {
                   />
                 )}
                 <div className="min-w-0">
-                  <p className="font-mono text-title font-semibold tabular-nums text-negative">
+                  <p className="font-mono text-title font-semibold tabular-nums text-foreground">
                     {formatCurrency(totalSpent, baseCurrency)}
                   </p>
                   <p className="text-caption text-muted-foreground">
@@ -164,7 +164,7 @@ function CategoryDetail() {
                       )}
                     </span>
                     <span className="font-mono text-caption tabular-nums text-muted-foreground">
-                      <span className="text-negative">
+                      <span className="text-foreground">
                         {formatCurrency(totalSpent, baseCurrency)}
                       </span>
                       {" / "}

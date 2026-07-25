@@ -35,6 +35,7 @@ import {
 import { CURRENCIES } from "@/lib/constants";
 import { isLoanCategoryName } from "@/lib/loans/is-loan-category";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
+import { queryKeys } from "@/lib/query/keys";
 import { cn, formatCurrency, normalizeDecimalInput, parseDecimalInput } from "@/lib/utils";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -121,7 +122,7 @@ export function CaptureSheet({
   const learnedForRef = useRef<string | null>(null);
 
   const { data: loansData } = useQuery({
-    queryKey: ["loans"],
+    queryKey: queryKeys.loans,
     enabled: open,
     queryFn: () =>
       authorizedFetch<{
@@ -499,7 +500,7 @@ export function CaptureSheet({
                   }
                   className={cn(
                     "h-12 min-w-0 flex-1 font-mono text-xl tabular-nums",
-                    kind === "expense" ? "text-negative" : "text-positive"
+                    kind === "expense" ? "text-foreground" : "text-positive"
                   )}
                 />
                 <Select

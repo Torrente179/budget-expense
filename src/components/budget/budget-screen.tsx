@@ -703,7 +703,7 @@ export function BudgetScreen() {
                     {unallocatedSpent > 0 && (
                       <p className="mt-3 text-caption text-muted-foreground">
                         +{" "}
-                        <span className="font-mono tabular-nums text-expense">
+                        <span className="font-mono tabular-nums text-foreground">
                           {formatCurrency(unallocatedSpent, baseCurrency)}
                         </span>{" "}
                         {t(

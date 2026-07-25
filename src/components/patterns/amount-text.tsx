@@ -9,7 +9,8 @@ type AmountSize = "display" | "title" | "heading" | "body" | "caption";
 const toneClass: Record<AmountTone, string> = {
   default: "text-foreground",
   positive: "text-positive",
-  negative: "text-negative",
+  // Expenses are neutral ink — green stays reserved for income.
+  negative: "text-foreground",
   muted: "text-muted-foreground",
 };
 

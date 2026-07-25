@@ -104,7 +104,7 @@ export function CustomBudgetCard({
         </div>
         <div className="rounded-2xl border border-border/70 bg-secondary/50 p-3">
           <p className="label-caps">{t("Spent", "Gastado")}</p>
-          <p className="mt-2 font-mono text-base font-semibold text-expense">
+          <p className="mt-2 font-mono text-base font-semibold text-foreground">
             {formatCurrency(spent, baseCurrency)}
           </p>
         </div>

@@ -9,7 +9,8 @@ type CurrencyTone = "default" | "positive" | "negative" | "muted";
 const toneClass: Record<CurrencyTone, string | undefined> = {
   default: undefined,
   positive: "text-positive",
-  negative: "text-negative",
+  // Expenses are neutral ink — green stays reserved for income.
+  negative: undefined,
   muted: "text-muted-foreground",
 };
 

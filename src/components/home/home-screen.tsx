@@ -348,7 +348,6 @@ export function HomeScreen() {
                       slices={donut.slices}
                       centerLabel={t("Spent", "Gastado")}
                       centerValue={donut.total}
-                      amountTone="negative"
                       onSelect={openCategory}
                       calloutCount={0}
                     />

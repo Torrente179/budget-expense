@@ -185,7 +185,7 @@ export function AttentionFeed({
           recurring.description || tc(recurring.categories?.name ?? "—"),
         caption: (
           <>
-            <span className="font-mono tabular-nums text-negative">
+            <span className="font-mono tabular-nums text-foreground">
               {formatCurrency(
                 convert(recurring.amount, recurring.currency),
                 baseCurrency

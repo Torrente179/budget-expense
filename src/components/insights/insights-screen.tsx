@@ -404,7 +404,7 @@ export function InsightsScreen() {
                           )}
                         </span>
                         <span className="shrink-0 font-mono text-caption tabular-nums text-muted-foreground">
-                          <span className="text-negative">
+                          <span className="text-foreground">
                             {formatCurrency(row.spent, baseCurrency)}
                           </span>
                           {" / "}
@@ -444,7 +444,7 @@ export function InsightsScreen() {
                         {tc(anomaly.categoryName)}
                       </p>
                       <p className="text-caption text-muted-foreground">
-                        <span className="font-mono tabular-nums text-negative">
+                        <span className="font-mono tabular-nums text-foreground">
                           {formatCurrency(anomaly.currentTotal, baseCurrency)}
                         </span>{" "}
                         {t(

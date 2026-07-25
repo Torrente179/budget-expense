@@ -227,7 +227,7 @@ export function CalendarScreen() {
                     {day}
                   </span>
                   {expenseTotal > 0 && (
-                    <span className="hidden font-mono text-label tabular-nums text-negative sm:block">
+                    <span className="hidden font-mono text-label tabular-nums text-foreground sm:block">
                       {new Intl.NumberFormat(intlLocale, {
                         style: "currency",
                         currency: baseCurrency,
@@ -291,7 +291,7 @@ export function CalendarScreen() {
                 {dayExpenseTotal(selectedEntries) > 0 && (
                   <>
                     {" · "}
-                    <span className="font-mono tabular-nums text-negative">
+                    <span className="font-mono tabular-nums text-foreground">
                       {formatCurrency(
                         dayExpenseTotal(selectedEntries),
                         baseCurrency
@@ -330,7 +330,7 @@ export function CalendarScreen() {
                           {entry.subtitle}
                         </p>
                       </div>
-                      <span className="font-mono text-body tabular-nums text-negative">
+                      <span className="font-mono text-body tabular-nums text-foreground">
                         {formatCurrency(
                           convert(entry.amount, entry.currency),
                           baseCurrency

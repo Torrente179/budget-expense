@@ -254,7 +254,7 @@ export function RecurringScreen() {
                         amount: normalizeDecimalInput(event.target.value),
                       })
                     }
-                    className="h-12 flex-1 font-mono text-xl tabular-nums text-negative"
+                    className="h-12 flex-1 font-mono text-xl tabular-nums text-foreground"
                   />
                   <Select
                     value={form.currency}

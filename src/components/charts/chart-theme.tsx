@@ -9,10 +9,10 @@ import { useSyncExternalStore } from "react";
  */
 
 /**
- * Soft magenta for spending series — expense-adjacent without alarm red.
- * Matches clarity palette Health (`#EC4899`).
+ * Neutral slate for spending series — charges read as ink, not alarm red.
+ * Income series keep green elsewhere.
  */
-export const SPEND_CHART_COLOR = "#EC4899";
+export const SPEND_CHART_COLOR = "#64748B";
 
 /** Shared Tooltip contentStyle — spread into <Tooltip contentStyle={…}>. */
 export const chartTooltipStyle: React.CSSProperties = {
