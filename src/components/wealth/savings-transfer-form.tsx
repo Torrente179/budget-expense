@@ -12,6 +12,7 @@ import {
   type InvestmentSavingsAccountRow,
 } from "@/lib/investments";
 import { CURRENCIES } from "@/lib/constants";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -64,6 +65,7 @@ function getDefaults(
     savings_account_id: values?.savings_account_id ?? account?.id ?? "",
     transfer_date: values?.transfer_date ?? format(new Date(), "yyyy-MM-dd"),
     amount: values?.amount ?? (undefined as unknown as number),
+    direction: values?.direction ?? "deposit",
     currency: values?.currency ?? account?.currency ?? "EUR",
     notes: values?.notes ?? "",
     source_kind: values?.source_kind ?? sourceKind ?? "manual",
@@ -97,6 +99,7 @@ export function SavingsTransferForm({
   });
 
   const selectedAccountId = form.watch("savings_account_id");
+  const direction = form.watch("direction");
   const selectedAccount = useMemo(
     () => accounts.find((account) => account.id === selectedAccountId) ?? null,
     [accounts, selectedAccountId]
@@ -236,6 +239,56 @@ export function SavingsTransferForm({
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t("Direction", "Dirección")}</Label>
+              <div
+                role="radiogroup"
+                aria-label={t("Direction", "Dirección")}
+                className="grid grid-cols-2 gap-2"
+              >
+                {(
+                  [
+                    { value: "deposit", en: "Deposit", es: "Aporte" },
+                    { value: "withdrawal", en: "Withdrawal", es: "Retiro" },
+                  ] as const
+                ).map((option) => {
+                  const active = direction === option.value;
+                  return (
+                    <button
+                      key={option.value}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() =>
+                        form.setValue("direction", option.value, {
+                          shouldDirty: true,
+                        })
+                      }
+                      className={cn(
+                        "rounded-lg px-3 py-2.5 text-body font-medium transition-colors",
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-secondary text-muted-foreground hover:text-foreground"
+                      )}
+                    >
+                      {t(option.en, option.es)}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="text-caption text-muted-foreground">
+                {direction === "withdrawal"
+                  ? t(
+                      "Reduces the fund. Moving money out is not income.",
+                      "Reduce el fondo. Sacar dinero no es un ingreso."
+                    )
+                  : t(
+                      "Adds to the fund. Moving money in is not an expense.",
+                      "Aumenta el fondo. Meter dinero no es un gasto."
+                    )}
+              </p>
             </div>
 
             <div className="space-y-2">

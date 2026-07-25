@@ -24,7 +24,7 @@ src/app/
 │   ├── home/          page.tsx · loading.tsx
 │   ├── movements/     page.tsx · loading.tsx · recurring/page.tsx
 │   ├── budget/        page.tsx
-│   ├── wealth/        page.tsx · investments/ · savings/ · liabilities/ · loans/
+│   ├── wealth/        page.tsx · accounts/ · investments/ · savings/ · liabilities/ · loans/
 │   ├── insights/      page.tsx · calendar/ · categories/[id]/
 │   ├── review/ · import/ · wisdom/ · settings/ · onboarding/
 │   └── ── permanent redirect stubs ──
@@ -215,14 +215,55 @@ Budget **usage-band** hexes (safe → critical) and category default map live in
 `"og"`) for a controlled revert. Cashflow CSS vars in `globals.css` must stay
 mirrored when flipping.
 
-Home composition (desktop): movements column left; budgets + spending donut
-stacked in the right `lg:col-span-2` column. Budget rings:
-`src/components/home/budget-pace-chart.tsx`.
+Home composition (desktop): compact **black** `HomeSummaryCard` (remaining =
+income − spent) beside Presupuestos + spending donut; movements under the hero
+column. Home Presupuestos shows **`spending_limit` only** (`BudgetPaceChart`),
+as a row of up to three tiles that pages three at a time beyond that. Metas
+never appear on Home.
 
-Budget screen composition (desktop): budgets + rings left
-(`lg:col-span-3`); “Your plan” right (`lg:col-span-2`). No Giving card on
-`/budget`. Rings reuse `BudgetPaceChart` with `onSelect` for edit.
-`src/components/budget/budget-screen.tsx`.
+Budget screen: compact `BudgetSummaryHero`, then **Presupuestos** +
+**Metas de aportación** (`EnvelopeListCard` dual engines), plan distribution,
+recommendation. `src/components/budget/budget-screen.tsx`.
+
+**Shared hero chrome** — `src/components/patterns/hero-surface.tsx` exports the
+black summary surface used by the three headline screens: Home, Budget and
+Patrimonio (`HERO_SURFACE`, `HERO_TILE`, `HERO_ICON_TILE`, `HERO_RULE`,
+`HERO_TRACK`, `HERO_ACCENT`, `HERO_ACCENT_NEGATIVE`, `HERO_ACCENT_WARNING`,
+`HeroSheen`). Dark in both themes; dark mode lifts the gradient a step so the
+card still reads as a card. Use the tokens rather than ad-hoc `white/xx` values.
+
+**Patrimonio** (`/wealth`) — the balance sheet. `wealth-overview.tsx` is
+orchestration only: it calls `useNetWorth()` (the single composition root over
+`useInvestments` + `useHouseholdInsights` + `useWealthAccounts` + loans +
+snapshots) and passes plain props to every card. Because the cards take props
+rather than calling hooks, they can be rendered from fixtures in a preview
+harness without network access — which is how this section is visually verified,
+since there is no local auth session.
+
+The old five-item `WealthNav` underline sub-nav is **deleted**. Patrimonio is a
+hub with pushed category pages (`Patrimonio → category → item`), so sub-pages
+render a `WealthBreadcrumb` plus `Screen`'s back chevron. In-screen tabs on the
+overview (Resumen · Activos · Deudas) are client state, not routes.
+
+Net-worth math lives in `src/lib/wealth/net-worth.ts` — pure, currency-agnostic,
+and unit-tested (`npm run test:wealth`). No screen re-derives a total.
+
+**Create / edit** — `src/components/budgets/budget-wizard.tsx` (`BudgetWizard`),
+a centered `Dialog` on desktop and a bottom `Sheet` under 768px, replacing the
+old single-step side sheet (`custom-budget-form.tsx`, deleted 2026-07-25).
+Three steps (Tipo → Configuración → Revisar); edit enters at step 2 as a 2-step
+flow with the kind locked, since changing engine mid-month would reclassify
+history. Form state lives above the step switch so Back never remounts.
+The step-2 preview matches the chosen categories against the month's expenses
+**before** saving, so a limit created over existing spend never jumps from 0%
+after the write.
+
+> **Component-scoped colour conflict (unresolved):** limits are drawn with two
+> different band systems. `EnvelopeListCard` + the wizard use the 3-band
+> `envelope-kinds.ts` scale (blue &lt;80, amber 80–99, coral 100+); Home's
+> `BudgetPaceChart` uses the 5-band `palette.ts` scale (safe ≤69, watch 70–84,
+> near 85–99, exceeded 100–119, critical 120+). The same envelope at 75% is
+> blue on Budget and amber on Home. Pick one before adding a third surface.
 
 ### Typography
 

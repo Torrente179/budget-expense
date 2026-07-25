@@ -59,7 +59,7 @@ export const PRIMARY_NAV: NavItem[] = [
   {
     key: "wealth",
     href: "/wealth",
-    label: { en: "Wealth", es: "Patrimonio" },
+    label: { en: "Net worth", es: "Patrimonio" },
     icon: Landmark,
     match: /^\/wealth/,
   },

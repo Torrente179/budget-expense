@@ -229,7 +229,7 @@ export function useCapture() {
     onSuccess: (_result, values) => {
       void invalidateIncomes(values.date);
       if (values.loan_id) {
-        void queryClient.invalidateQueries({ queryKey: ["loans"] });
+        void queryClient.invalidateQueries({ queryKey: queryKeys.loans });
       }
       toast.success(t("Income added", "Ingreso añadido"));
     },
@@ -259,7 +259,7 @@ export function useCapture() {
     },
     onSuccess: (result, values) => {
       void invalidateExpenses(values.date);
-      void queryClient.invalidateQueries({ queryKey: ["loans"] });
+      void queryClient.invalidateQueries({ queryKey: queryKeys.loans });
       const loanId = result.loan.id;
       toast.success(
         t(
@@ -278,7 +278,7 @@ export function useCapture() {
                 .then(() =>
                   Promise.all([
                     invalidateExpenses(values.date),
-                    queryClient.invalidateQueries({ queryKey: ["loans"] }),
+                    queryClient.invalidateQueries({ queryKey: queryKeys.loans }),
                   ])
                 )
                 .catch(() =>

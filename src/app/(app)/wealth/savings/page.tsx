@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import dynamic from "next/dynamic";
 import { Plus, Trash2 } from "lucide-react";
 import { useCurrency } from "@/providers/currency-provider";
@@ -12,8 +12,11 @@ import {
   type SavingsProductType,
 } from "@/lib/investments";
 import { formatCurrency } from "@/lib/utils";
+import { PiggyBank } from "lucide-react";
 import { Screen } from "@/components/patterns/screen";
-import { WealthNav } from "@/components/wealth/wealth-nav";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
+import { WealthBreadcrumb } from "@/components/wealth/wealth-breadcrumb";
+import { WealthCategoryHero } from "@/components/wealth/wealth-category-hero";
 import { SavingsTransferTable } from "@/components/wealth/savings-transfer-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,7 +35,7 @@ const SavingsTransferForm = dynamic(() =>
 
 export default function InvestmentSavingsPage() {
   const { t } = useLocale();
-  const { baseCurrency } = useCurrency();
+  const { baseCurrency, convert } = useCurrency();
   const [accountFormMounted, setAccountFormMounted] = useState(false);
   const [accountFormOpen, setAccountFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] =
@@ -63,19 +66,24 @@ export default function InvestmentSavingsPage() {
     includeWatchlist: false,
   });
 
-  async function handleDeleteSavingsAccount(id: string) {
-    if (
-      !window.confirm(
-        t(
-          "Delete this savings account and all linked transfers?",
-          "¿Eliminar esta cuenta de ahorro y todas las transferencias vinculadas?"
-        )
-      )
-    ) {
-      return;
-    }
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
-    await deleteSavingsAccount(id);
+  /** Net movement this month — deposits minus withdrawals, in base currency. */
+  const movedThisMonth = useMemo(() => {
+    const prefix = new Date().toISOString().slice(0, 7);
+    return savingsTransfers
+      .filter((transfer) => transfer.transfer_date.startsWith(prefix))
+      .reduce(
+        (sum, transfer) =>
+          sum + convert(Number(transfer.amount), transfer.currency),
+        0
+      );
+  }, [savingsTransfers, convert]);
+
+  async function confirmDeleteSavingsAccount() {
+    if (!pendingDeleteId) return;
+    await deleteSavingsAccount(pendingDeleteId);
+    setPendingDeleteId(null);
   }
 
   function openAccountForm(account: InvestmentSavingsAccountRow | null = null) {
@@ -117,39 +125,35 @@ export default function InvestmentSavingsPage() {
           </Button>
         </>
       }
-      subheader={<WealthNav />}
+      subheader={<WealthBreadcrumb current={t("Savings", "Ahorros")} />}
     >
 
-      <div>
-        <Card className="bg-card">
-          <CardContent className="grid grid-cols-2 gap-3 p-5 sm:grid-cols-3">
-            <div className="rounded-lg border border-border/70 bg-secondary/35 p-4">
-              <p className="label-caps">
-                {t("Savings balance", "Saldo de ahorros")}
-              </p>
-              <p className="mt-3 font-heading text-title font-semibold leading-none tracking-tight">
-                {formatCurrency(totalSavingsBalance, baseCurrency)}
-              </p>
-            </div>
-            <div className="rounded-lg border border-border/70 bg-secondary/35 p-4">
-              <p className="label-caps">
-                {t("Accounts configured", "Cuentas configuradas")}
-              </p>
-              <p className="mt-3 font-heading text-title font-semibold leading-none tracking-tight">
-                {savingsAccounts.length}
-              </p>
-            </div>
-            <div className="hidden rounded-lg border border-border/70 bg-secondary/35 p-4 sm:block">
-              <p className="label-caps">
-                {t("Movements", "Movimientos")}
-              </p>
-              <p className="mt-3 font-heading text-title font-semibold leading-none tracking-tight">
-                {savingsTransfers.length}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <WealthCategoryHero
+        eyebrow={t("Total saved", "Total ahorrado")}
+        amount={totalSavingsBalance}
+        icon={PiggyBank}
+        delta={
+          movedThisMonth !== 0
+            ? { amount: movedThisMonth, label: t("this month", "este mes") }
+            : null
+        }
+        stats={[
+          {
+            label: t("Funds", "Fondos"),
+            value: String(savingsAccounts.length),
+          },
+          {
+            label: t("Movements", "Movimientos"),
+            value: String(savingsTransfers.length),
+          },
+          {
+            label: t("Currencies", "Monedas"),
+            value: String(
+              new Set(savingsAccounts.map((account) => account.currency)).size
+            ),
+          },
+        ]}
+      />
 
       <div className="xl:grid xl:grid-cols-[minmax(0,1.2fr)_420px] xl:gap-5">
         <div>
@@ -217,7 +221,7 @@ export default function InvestmentSavingsPage() {
                         variant="ghost"
                         size="icon"
                         className="h-9 w-9 rounded-2xl text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                        onClick={() => void handleDeleteSavingsAccount(account.id)}
+                        onClick={() => setPendingDeleteId(account.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -272,7 +276,12 @@ export default function InvestmentSavingsPage() {
               ? {
                   savings_account_id: editingTransfer.savings_account_id,
                   transfer_date: editingTransfer.transfer_date,
-                  amount: Number(editingTransfer.amount),
+                  // Stored signed; the form edits a positive amount + direction.
+                  amount: Math.abs(Number(editingTransfer.amount)),
+                  direction:
+                    Number(editingTransfer.amount) < 0
+                      ? ("withdrawal" as const)
+                      : ("deposit" as const),
                   currency: editingTransfer.currency,
                   notes: editingTransfer.notes ?? "",
                   source_kind: editingTransfer.source_kind as
@@ -293,6 +302,20 @@ export default function InvestmentSavingsPage() {
           }}
         />
       ) : null}
+      <ConfirmDialog
+        open={pendingDeleteId !== null}
+        onOpenChange={(open) => {
+          if (!open) setPendingDeleteId(null);
+        }}
+        destructive
+        title={t("Delete this fund?", "¿Eliminar este fondo?")}
+        description={t(
+          "Its movements go with it, and past net worth will change. Consider keeping it at zero instead.",
+          "Sus movimientos se eliminan con él y tu patrimonio pasado cambiará. Considera dejarlo a cero en su lugar."
+        )}
+        confirmLabel={t("Delete", "Eliminar")}
+        onConfirm={confirmDeleteSavingsAccount}
+      />
     </Screen>
   );
 }

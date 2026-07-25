@@ -57,7 +57,7 @@ export function CategoryClassification() {
         body: JSON.stringify(body),
       });
       await queryClient.invalidateQueries({ queryKey: queryKeys.categories });
-      await queryClient.invalidateQueries({ queryKey: ["household-insights"] });
+      await queryClient.invalidateQueries({ queryKey: queryKeys.householdInsights });
     } catch {
       toast.error(
         t("Could not update the category", "No se pudo actualizar la categoría")

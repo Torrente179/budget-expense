@@ -647,6 +647,153 @@ export interface Database {
           },
         ];
       };
+      wealth_accounts: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: string;
+          name: string;
+          institution: string | null;
+          currency: string;
+          opening_balance: number;
+          opening_date: string;
+          include_in_available: boolean;
+          is_primary: boolean;
+          color: string | null;
+          icon: string | null;
+          notes: string | null;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind?: string;
+          name: string;
+          institution?: string | null;
+          currency?: string;
+          opening_balance?: number;
+          opening_date?: string;
+          include_in_available?: boolean;
+          is_primary?: boolean;
+          color?: string | null;
+          icon?: string | null;
+          notes?: string | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          kind?: string;
+          name?: string;
+          institution?: string | null;
+          currency?: string;
+          opening_balance?: number;
+          opening_date?: string;
+          include_in_available?: boolean;
+          is_primary?: boolean;
+          color?: string | null;
+          icon?: string | null;
+          notes?: string | null;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      wealth_account_movements: {
+        Row: {
+          id: string;
+          account_id: string;
+          user_id: string;
+          movement_type: string;
+          amount: number;
+          currency: string;
+          occurred_on: string;
+          note: string | null;
+          linked_account_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          account_id: string;
+          user_id: string;
+          movement_type: string;
+          amount: number;
+          currency?: string;
+          occurred_on?: string;
+          note?: string | null;
+          linked_account_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          account_id?: string;
+          user_id?: string;
+          movement_type?: string;
+          amount?: number;
+          currency?: string;
+          occurred_on?: string;
+          note?: string | null;
+          linked_account_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "wealth_account_movements_account_id_fkey";
+            columns: ["account_id"];
+            isOneToOne: false;
+            referencedRelation: "wealth_accounts";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "wealth_account_movements_linked_account_id_fkey";
+            columns: ["linked_account_id"];
+            isOneToOne: false;
+            referencedRelation: "wealth_accounts";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      net_worth_snapshots: {
+        Row: {
+          id: string;
+          user_id: string;
+          as_of_date: string;
+          base_currency: string;
+          total_assets: number;
+          total_liabilities: number;
+          net_worth: number;
+          breakdown: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          as_of_date: string;
+          base_currency: string;
+          total_assets: number;
+          total_liabilities: number;
+          net_worth: number;
+          breakdown?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          as_of_date?: string;
+          base_currency?: string;
+          total_assets?: number;
+          total_liabilities?: number;
+          net_worth?: number;
+          breakdown?: Json | null;
+          created_at?: string;
+        };
+        Relationships: [];
+      };
       loan_people: {
         Row: {
           id: string;

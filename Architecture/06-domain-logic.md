@@ -14,19 +14,27 @@ than importing currency context.
 
 [`src/lib/budgeting.ts`](../src/lib/budgeting.ts)
 
-### The pool
+### Monthly income vs envelopes
+
+Product rule (2026-07-24): `monthly_budget_plans` stores **expected income**.
+There is no user-facing protected allocation %. Writes always set
+`allocation_percent = 100`. Methods create **named envelopes**; those limits are
+what the Budget UI paces against when present.
+
+### The pool (compatibility helper)
 
 ```
 pool = plan.income_amount × (plan.allocation_percent / 100)     … when a plan exists
 pool = Σ per-category budgets                                    … when it does not
 ```
 
+With current writes (`allocation_percent = 100`), `pool` equals plan income.
 `calculateBudgetPoolMetrics` returns eleven derived numbers from four inputs
 (plan, budgets, expenses, convert):
 
 | Metric | Meaning |
 |---|---|
-| `poolAmount` | The spendable pool for the month |
+| `poolAmount` | Plan income (or legacy shrunk pool) / fallback category budgets |
 | `consumedAmount` | Sum of converted expenses |
 | `remainingAmount` | `pool − consumed` (may be negative) |
 | `consumedPercent` | Guarded against divide-by-zero |
@@ -58,10 +66,55 @@ return 0;
 Spending against a zero limit is *infinitely* over budget, not undefined — so it
 sorts to the top of alert lists and renders as over rather than silently as 0%.
 
-### UI usage bands (Home rings + Budget meters)
+### Dual engines: Presupuestos vs Metas
 
-Visual progress on Home rings and the Budget plan/list uses a **five-band
-palette** driven by `spent / limit` alone (not calendar pace), defined in
+[`envelope-kinds.ts`](../src/lib/budgeting/envelope-kinds.ts)
+
+| `kind` | Product name | Status at 100% | Surfaces |
+|---|---|---|---|
+| `spending_limit` | Presupuestos | Exceeded (coral/red bands) | Home + `/budget` |
+| `contribution_goal` | Metas de aportación | Complete (green) | `/budget` only |
+
+Helpers: `resolveSpendingLimitStatus` / `resolveContributionGoalStatus`,
+`resolveBudgetKind` (persisted kind, else infer from category
+`classification` / `budget_role`). Home filters with
+`resolveBudgetKind(...) === "spending_limit"`.
+
+**Both engines are funded the same way — by expenses.** A Meta advances only
+when an expense lands in one of its linked categories
+(`calculateCustomBudgetSpending(categoryIds, expenses, convert)`); progress is
+literally the same sum a Presupuesto uses, read as a floor instead of a ceiling.
+There is **no transfer concept and no goal id on a transaction**: `expenses`
+carries `category_id` only, and `investment_savings_transfers` belongs to Wealth
+and is not wired to envelopes. So "moving €300 to savings" is recorded as an
+expense in a savings-classified category — which is why tithe, savings and
+investing contributions all reduce `Te quedan` today.
+
+Consequence for anyone proposing a stricter available-to-spend number: an
+"unfunded goals" reservation must be computed as
+`max(target − contributed, 0)`, never as `expenses + transfersToGoals`. The
+latter double-subtracts, because those contributions are *already* in
+`expenses`. Any reservation would also change the headline on Home, since
+`resolveMonthCashflow` feeds both heroes — see the `Te quedan` definition in
+[`docs/APP.md` §9](../docs/APP.md). No reservation exists today; the create
+wizard deliberately ships without one.
+
+Month cashflow hero math (`income − spent`, pace, daily guide) lives in
+[`month-cashflow.ts`](../src/lib/home/month-cashflow.ts) and is shared by
+`HomeSummaryCard` and `BudgetSummaryHero`.
+
+### UI usage bands (Home rings)
+
+> **Two band systems are live for the same concept (unresolved, 2026-07-25).**
+> Home's `BudgetPaceChart` uses the five-band `palette.ts` scale below. The
+> Budget tab's `EnvelopeListCard` and the create wizard use the three-band scale
+> in `envelope-kinds.ts` (`spendingLimitBarColor`: blue &lt; 80%, amber 80–99%,
+> coral ≥ 100%). The same envelope at 75% is **amber on Home and blue on
+> Budget**. Neither is wrong in isolation; they were introduced by different
+> passes. Consolidate before a third surface renders a limit.
+
+Visual progress on Home rings uses a **five-band palette** driven by
+`spent / limit` alone (not calendar pace), defined in
 [`palette.ts`](../src/lib/palette.ts) (`resolveBudgetUsageTone`):
 
 | Band | Ratio |
@@ -75,6 +128,22 @@ palette** driven by `spent / limit` alone (not calendar pace), defined in
 These bands are independent of the toast/Attention thresholds in §6.2 (75 / 90 /
 100). Category-colored rings were rejected so the usage signal stays primary.
 Flip `ACTIVE_PALETTE` to `"og"` for the previous three-tone semantic mapping.
+
+### Method seeding by `budget_role`
+
+[`method-seed.ts`](../src/lib/budgeting/method-seed.ts) ·
+[`budget-roles.ts`](../src/lib/budgeting/budget-roles.ts)
+
+Budgeting methods (50/30/20, Base cero, 5 Jarras, …) map each slice to one or
+more `budget_role` values and create `custom_budgets` + join rows:
+
+- Giving slices **create** Tithe / Donations envelopes (they are not skipped).
+- `income` and `loan_lent` never join spend envelopes.
+- Categories already claimed by a more specific slice do not also land in a
+  catch-all lifestyle/wants slice.
+- Persist path: RPC `replace_custom_budget_set` (category IDs via
+  `jsonb_array_elements_text`) with a client fallback in
+  `use-custom-budgets.ts`. UI replace confirm is an in-app Dialog.
 
 ---
 
@@ -150,6 +219,9 @@ The keyword list is bilingual and ecumenical: `tithe`, `diezmo`, `giving`,
 
 In the UI, the **primary number is the target**, with the amount given shown as
 detail — reinforcing that giving is a commitment to meet, not an outcome to report.
+Home (and Insights / Settings stewardship) surface giving; the Budget tab no
+longer has a Primicias / Generosidad card (methods may still seed giving
+envelopes via `budget_role`).
 
 ---
 
@@ -231,6 +303,66 @@ active locale shows the matching Spanish or English label.
 
 ---
 
+## 6.4b Net worth — the balance-sheet invariants
+
+[`net-worth.ts`](../src/lib/wealth/net-worth.ts) ·
+[`use-net-worth.ts`](../src/hooks/use-net-worth.ts)
+
+```
+totalAssets      = accountsAndCash + savings + investments + moneyLent
+totalLiabilities = debts
+netWorth         = totalAssets − totalLiabilities
+```
+
+The module is pure and takes already-converted amounts, so it never touches
+React and is unit-tested directly (`npm run test:wealth`).
+
+**Net worth and available money are different figures.** Investments,
+receivables and reserved savings belong to the user but cannot necessarily be
+spent today, so a €9.950 net worth can sit beside €2.500 of available money.
+`computeAvailableMoney` exists so `include_in_available` has meaning, but under
+the editorial rule (Home = now, Wealth = balances) **Patrimonio renders nothing
+from it** — otherwise "Te quedan", "Available balance" and "Disponible" would be
+three numbers competing for one word.
+
+### Transfers are not expenses
+
+The invariants that keep Patrimonio and Presupuesto from double-counting:
+
+| Event | Assets | Debts | Net worth | Monthly cash flow |
+|---|---|---|---|---|
+| Opening account balance | ↑ | — | ↑ | **No effect** |
+| Move money to savings | redistributed | — | **unchanged** | reduces spendable |
+| Buy an investment | redistributed | — | **unchanged** | not an expense |
+| Market gain | ↑ | — | ↑ | **not income** |
+| Lend money | cash ↓, receivable ↑ | — | **unchanged** | not an expense |
+| Recover principal | cash ↑, receivable ↓ | — | **unchanged** | **not income** |
+| Receive loan interest | ↑ | — | ↑ | income |
+| Pay debt principal | cash ↓ | ↓ | **unchanged** | not an expense |
+| Pay interest | ↓ | — | ↓ | expense |
+
+Two of these are already live: `loans` dual-writes (§6.6), and a savings
+transfer is subtracted from tracked liquid balance without being an expense
+(§6.4). The rest are enforced by the creation wizards in a later phase.
+
+### Monthly change and the cushion
+
+`resolvePreviousMonthClosing` takes the latest snapshot dated **on or before**
+the last day of the previous month — not an exact month-end row. Snapshots are
+written when the user opens the app, so requiring the 31st would show no change
+for anyone who skipped that day. With no prior snapshot the amount **and** the
+percentage are `null`, and the hero renders no change line rather than a
+fabricated `+0,00 €`. A zero previous month gives an amount but never an
+infinite percentage.
+
+`computeCushion` divides liquid money by average monthly essential spend against
+a 6-month target. Note the input window: `useHouseholdInsights` averages the
+**6** most recent months *that have data* (`ESSENTIAL_WINDOW_MONTHS`), which for
+a sparse user may span far more than six calendar months — so the copy says
+"liquid" and never claims a 12-month average.
+
+---
+
 ## 6.5 Onboarding personalization
 
 [`goals.ts`](../src/lib/onboarding/goals.ts) ·
@@ -259,8 +391,9 @@ choice is sticky **even if they go back and change their goals**. Respecting an
 explicit choice over an inference is the same principle as the locale provider's
 explicit-preference flag.
 
-Goals also produce seed envelopes (Essentials 50%, Lifestyle 30% or 20% if
-decreasing expenses, Savings 20%, Giving 10%), Home CTAs, and Attention hints.
+Goals also produce seed envelopes (via method slices → `budget_role`), Home CTAs,
+and Attention hints. The monthly plan written at finish stores income with
+`allocation_percent = 100` (no protected-% product concept).
 
 `applyOnboardingPersonalization` writes it all at finish: monthly plan, recurring
 charges, liabilities, seed envelopes, and — for `give_generously` — sets
@@ -323,6 +456,27 @@ Undo is handled explicitly: the loan toast's Undo action calls
 `resolveLoanCategoryId` prefers the **global** Loan category (`user_id IS NULL`)
 and falls back to any category named "loan", so the dual-write works whether or not
 a user has created their own.
+
+The Loan category’s `budget_role` is `loan_lent`: money you lend to people. It
+must not seed into method “savings” or “debt payment” envelopes.
+
+---
+
+## 6.6b Category suggestion ranking
+
+[`ledger/categorize.ts`](../src/lib/ledger/categorize.ts) ·
+[`ledger/merchant-pattern.ts`](../src/lib/ledger/merchant-pattern.ts) ·
+[`GET /api/categorization/suggest`](../src/app/api/categorization/suggest/route.ts)
+
+Capture and import “remember” share one ranking path:
+
+1. Matching `categorization_rules` (priority / keyword) first
+2. Then similar past expenses by description / merchant tokens
+3. Return up to **three** ranked category IDs
+
+`extractMerchantPattern` strips bank noise and keeps a short learnable token so
+auto-learned rules are not full raw bank lines. Capture shows alternative chips;
+picking a non-top suggestion can insert a user rule from that pattern.
 
 ---
 

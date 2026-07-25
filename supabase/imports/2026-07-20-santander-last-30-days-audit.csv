@@ -1,0 +1,140 @@
+action,kind,tx_date,amount,currency,category_or_source,description,matched_date,matched_description
+skip,expense,2026-07-20,6.60,EUR,Food & Dining,EL CAFE DE DIEGO,2026-07-18,Desayuno
+skip,expense,2026-07-20,53.50,EUR,Professional Services,GYSECAN ASESORES TENERIFE,2026-07-20,Cuota Gestor
+skip,expense,2026-07-19,2.43,EUR,Groceries,0535-SUP.OPENCO,2026-07-19,Día bebida
+skip,expense,2026-07-19,31.00,EUR,Other,Bizum to Lesvin Reyes Centeno - Cena Cumpleaños,2026-07-19,Cumpleaños Alejo consul
+skip,expense,2026-07-18,8.46,EUR,Groceries,DIA 7739,2026-07-18,Mercado Dia
+skip,expense,2026-07-17,5.80,EUR,Food & Dining,KIWI BEACH BAR,2026-07-17,Kiwi Beach Bar
+skip,expense,2026-07-17,2.50,EUR,Food & Dining,CHIRINGUITO EL,2026-07-17,Chiringuito El
+skip,expense,2026-07-17,58.93,EUR,Healthcare,Generali Espana S.A. Seg,2026-07-17,"Recibo generali espana s.a. seg, concepto: generali salud total de 16/07/2026 a 16/08/2026 primas 58"
+skip,expense,2026-07-16,250.00,EUR,Other,ATM cash withdrawal,2026-07-16,Retirada de efectivo en cajero automatico 004969800001 el 16/07/2026 a las 15:15..pan:54890103848521
+skip,expense,2026-07-16,2.60,EUR,Food & Dining,BUENO CAFE,2026-07-16,Bueno Cafe
+skip,expense,2026-07-16,2.30,EUR,Food & Dining,BUENO CAFE,2026-07-16,Bueno Cafe
+skip,expense,2026-07-15,6.10,EUR,Food & Dining,EL CAFE DE DIEGO,2026-07-15,"Compra el cafe de diego, rincon de la, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-15,6.10,EUR,Food & Dining,RESTAURANTE LA,2026-07-15,Restaurante La
+skip,expense,2026-07-15,300.00,EUR,Housing,Transfer to HAFSA LAGHZAOUI CONCEPTO Renta,2026-07-15,Transfer to Hafsa Laghzaoui Concepto Renta
+skip,expense,2026-07-14,1.00,EUR,Transportation,Nyx*airservspain,2026-07-14,"Compra nyx*airservspain, sansebastiand, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-14,17.83,EUR,Other,ABBA DISTRIBUID,2026-07-14,"Compra internet en abba distribuid, 934199023 es, tarj. :*852115"
+skip,expense,2026-07-14,7.00,EUR,Other,LA CASITA 33,2026-07-14,La Casita 33
+skip,expense,2026-07-13,18.08,EUR,Subscriptions,OPENAI *CHATGPT SUBSCR,2026-07-13,"Compra openai *chatgpt subscr, san francisco, tarjeta 2115 , comision 0,53"
+skip,expense,2026-07-13,4.99,EUR,Subscriptions,Amazon Prime*5x7ii5j45,2026-07-13,"Compra amazon prime*5x7ii5j45, luxembourg, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-13,11.35,EUR,Groceries,DIA 7739,2026-07-13,Dia 7739
+skip,expense,2026-07-13,53.85,EUR,Other,TELEFONICA MOVILES SA,2026-07-13,"Recibo telefonica moviles sa, concepto: mov.xxxxxx366.jul"
+skip,expense,2026-07-10,26.75,EUR,Other,Bizum to RUBEN CANOVACA NIETO - Salamanca,2026-07-10,Bizum to Ruben Canovaca Nieto - salamanca
+skip,expense,2026-07-10,5.00,EUR,Other,Bizum to RUBEN CANOVACA NIETO,2026-07-10,Bizum to Ruben Canovaca Nieto
+skip,expense,2026-07-10,4.00,EUR,Food & Dining,HELADERIA CAFETERIA DI,2026-07-10,"Compra heladeria cafeteria di, rincon de la, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-10,6.00,EUR,Food & Dining,EL CAPRICHO DE,2026-07-10,El Capricho De
+skip,expense,2026-07-10,13.50,EUR,Food & Dining,ROOM MATE VALER,2026-07-10,Room Mate Valer
+skip,expense,2026-07-10,3.61,EUR,Food & Dining,WORKCAFE MALAGA,2026-07-10,Workcafe Malaga
+skip,expense,2026-07-10,2.31,EUR,Food & Dining,WORKCAFE MALAGA,2026-07-10,Workcafe Malaga
+skip,expense,2026-07-09,15.00,EUR,Groceries,CARNICERIA MEDINA,2026-07-09,"Compra carniceria medina, malaga, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-09,6.40,EUR,Food & Dining,BUENO CAFE,2026-07-09,Bueno Cafe
+skip,expense,2026-07-09,36.10,EUR,Food & Dining,LA MAS FRIA MER,2026-07-09,La Mas Fria Mer
+skip,expense,2026-07-09,4.00,EUR,Food & Dining,CAFE BAR EL 13,2026-07-09,Cafe Bar El 13
+skip,expense,2026-07-09,8.90,EUR,Food & Dining,LA CANASTA LARI,2026-07-09,La Canasta Lari
+skip,expense,2026-07-09,4.60,EUR,Food & Dining,LA CANASTA LARI,2026-07-09,La Canasta Lari
+skip,expense,2026-07-08,3.95,EUR,Healthcare,FARMACIA SANCHE,2026-07-08,Farmacia Sanche
+skip,expense,2026-07-08,140.00,EUR,Donations,Transfer to Comunidad Cristiana El Cónsul,2026-07-08,Transfer to Comunidad Cristiana El Cónsul
+skip,expense,2026-07-08,2.50,EUR,Other,Bizum to MONIKA DOMEOVA - coca cola,2026-07-08,Bizum to Monika Domeova - coca cola
+skip,expense,2026-07-08,7.10,EUR,Food & Dining,RESTAURANTE LA,2026-07-08,Restaurante La
+skip,expense,2026-07-07,4.20,EUR,Food & Dining,STARBUCKS PLAZA,2026-07-07,Starbucks Plaza
+skip,expense,2026-07-07,3.50,EUR,Groceries,FRUTAS VERDURAS,2026-07-07,Frutas Verduras
+skip,expense,2026-07-07,5.50,EUR,Food & Dining,LEXPERIENCE,2026-07-07,Lexperience
+skip,expense,2026-07-06,6.50,EUR,Other,VENTA HERMANOS ROMERO,2026-07-06,"Compra venta hermanos romero, villanueva de, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-06,5.29,EUR,Subscriptions,SERVICIOS WEB EBANX CO,2026-07-06,"Compra servicios web ebanx co, bogota, tarjeta 2115 , comision 0,15"
+skip,expense,2026-07-06,12.80,EUR,Other,Bizum to ADRIAN ERNESTO RAHN VIEIRA - Raff,2026-07-06,Bizum to Adrian Ernesto Rahn Vieira - raff
+skip,expense,2026-07-03,0.42,EUR,Subscriptions,GOOGLE *CLOUD CMQVKG,2026-07-03,"Compra google *cloud cmqvkg, mountain view, tarjeta 2115 , comision 0,01"
+skip,expense,2026-07-03,6.00,EUR,Food & Dining,EL CAPRICHO DE,2026-07-03,El Capricho De
+skip,expense,2026-07-03,2.31,EUR,Food & Dining,WORKCAFE MALAGA,2026-07-03,Workcafe Malaga
+skip,expense,2026-07-01,6.50,EUR,Food & Dining,EL CAFE DE DIEGO,2026-07-01,"Compra el cafe de diego, rincon de la, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-01,19.90,EUR,Shopping,WWW.AMAZON* 0E9AO7ER5,2026-07-01,"Compra www.amazon* 0e9ao7er5, luxembourg, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-01,28.12,EUR,Shopping,WWW.AMAZON* WA9VS07X5,2026-07-01,"Compra www.amazon* wa9vs07x5, luxembourg, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-01,1.60,EUR,Food & Dining,BAR CIUDAD DEL,2026-07-01,Bar Ciudad Del
+skip,expense,2026-06-30,6.00,EUR,Food & Dining,EL CAPRICHO DE,2026-06-30,El Capricho De
+skip,expense,2026-06-30,2.80,EUR,Food & Dining,WORKCAFE MALAGA,2026-06-30,Workcafe Malaga
+skip,expense,2026-06-30,299.57,EUR,Taxes,"TGSS COTIZACION 005 R.E.AUTONOMOS, concepto: PERIODO LIQUIDACION: 06/2026-06/2026",2026-06-30,"TGSS cotizacion 005 r.e.autonomos, concepto: periodo liquidacion: 06/2026-06/2026"
+skip,expense,2026-06-29,5.60,EUR,Food & Dining,EL CAFE DE DIEGO,2026-06-29,"Compra el cafe de diego, rincon de la, tarjeta 2115 , comision 0,00"
+skip,expense,2026-06-29,18.15,EUR,Subscriptions,ANTHROPIC* CLAUDE SUB,2026-06-29,"Compra anthropic* claude sub, san francisco, tarjeta 2115 , comision 0,53"
+skip,expense,2026-06-29,7.00,EUR,Food & Dining,EL CAFE DE DIEGO,2026-06-29,"Compra el cafe de diego, rincon de la, tarjeta 2115 , comision 0,00"
+skip,expense,2026-06-29,0.30,EUR,Groceries,MERCADONA TORRE,2026-06-29,Mercadona Torre
+skip,expense,2026-06-29,54.61,EUR,Groceries,MERCADONA TORRE,2026-06-29,Mercadona Torre
+skip,expense,2026-06-29,12.70,EUR,Food & Dining,RESTAURANTE LA,2026-06-29,Restaurante La
+skip,expense,2026-06-26,4.90,EUR,Food & Dining,STARBUCKS PLAZA,2026-06-26,Starbucks Plaza
+skip,expense,2026-06-26,6.50,EUR,Food & Dining,MARCOS PAREJA,2026-06-26,Marcos Pareja
+skip,expense,2026-06-26,6.00,EUR,Food & Dining,EL CAPRICHO DE,2026-06-26,El Capricho De
+skip,expense,2026-06-26,4.90,EUR,Food & Dining,STARBUCKS PLAZA,2026-06-26,Starbucks Plaza
+skip,expense,2026-06-26,44.81,EUR,Shopping,HSNSTORE.COM,2026-06-26,"Compra internet en hsnstore.com, albolote es, tarj. :*852115"
+skip,expense,2026-06-25,150.00,EUR,Other,Transfer to Juan Wise Euro,2026-06-25,Transfer to Juan Wise Euro
+skip,expense,2026-06-25,2.20,EUR,Food & Dining,RESTAURANTE LA,2026-06-25,Restaurante La
+skip,expense,2026-06-25,6.65,EUR,Groceries,MERCADONA TORRE,2026-06-25,Mercadona Torre
+skip,expense,2026-06-25,200.00,EUR,Taxes,BIZUM DGT SANCIONES INTERNET 2 25/06/2026,2026-06-25,Compra bizum dgt sanciones internet 2 25/06/2026
+skip,expense,2026-06-25,110.00,EUR,Donations,Transfer to Comunidad Cristiana El Cónsul,2026-06-25,Transfer to Comunidad Cristiana El Cónsul
+skip,expense,2026-06-24,11.89,EUR,Shopping,WWW.AMAZON* R82B15ED5,2026-06-24,"Compra www.amazon* r82b15ed5, luxembourg, tarjeta 2115 , comision 0,00"
+skip,expense,2026-06-24,2.80,EUR,Food & Dining,WORKCAFE MALAGA,2026-06-24,Workcafe Malaga
+skip,expense,2026-06-24,6.00,EUR,Food & Dining,EL CAPRICHO DE,2026-06-24,El Capricho De
+skip,expense,2026-06-23,3.61,EUR,Food & Dining,WORKCAFE MALAGA,2026-06-23,Workcafe Malaga
+skip,expense,2026-06-23,20.60,EUR,Subscriptions,GOOGLE *google One,2026-06-23,"Compra google *google one, mountain view, tarjeta 2115 , comision 0,60"
+skip,expense,2026-06-23,5.19,EUR,Subscriptions,UBER *ONE MEMBERSHIP U,2026-06-23,"Compra uber *one membership u, vorden, tarjeta 2115 , comision 0,15"
+skip,expense,2026-06-23,3.00,EUR,Food & Dining,HABANA CAFE,2026-06-23,"Compra habana cafe, rincon de la, tarjeta 2115 , comision 0,00"
+skip,expense,2026-06-23,3.61,EUR,Food & Dining,WORKCAFE MALAGA,2026-06-23,Workcafe Malaga
+skip,expense,2026-06-23,2.80,EUR,Food & Dining,WORKCAFE MALAGA,2026-06-23,Workcafe Malaga
+skip,expense,2026-06-23,2.20,EUR,Food & Dining,RESTAURANTE LA,2026-06-23,Restaurante La
+skip,expense,2026-06-22,5.50,EUR,Food & Dining,EL CAFE DE DIEGO,2026-06-22,"Compra el cafe de diego, rincon de la, tarjeta 2115 , comision 0,00"
+skip,expense,2026-07-20,10.30,EUR,Food & Dining,VOX SPORTS BAR RINCON,2026-07-19,Cerveza
+skip,expense,2026-07-16,10.00,EUR,Groceries,DIA 7739,2026-07-17,Dia 7739
+skip,expense,2026-07-15,7.34,EUR,Groceries,MERCADONA COTOM,2026-07-16,Mercadona Cotom
+skip,expense,2026-07-14,7.71,EUR,Groceries,MERCADONA COTOM,2026-07-15,Mercadona Cotom
+skip,expense,2026-07-12,9.00,EUR,Other,Bizum to ADRIAN ERNESTO RAHN VIEIRA,2026-07-13,Bizum to Adrian Ernesto Rahn Vieira
+skip,expense,2026-07-12,1.15,EUR,Transportation,WAYLET,2026-07-13,"Compra internet en waylet, rincon de la es, tarj. :*852115"
+skip,expense,2026-07-12,17.00,EUR,Food & Dining,LA TERRACITA BU,2026-07-13,La Terracita Bu
+skip,expense,2026-07-12,18.03,EUR,Transportation,REPSOL WAYLET,2026-07-13,"Compra internet en repsol waylet, madrid es, tarj. :*852115"
+skip,expense,2026-07-11,2.00,EUR,Food & Dining,HORIZONTE BEACH,2026-07-13,Horizonte Beach
+skip,expense,2026-07-11,12.01,EUR,Groceries,MERCADONA TORRE,2026-07-13,Mercadona Torre
+skip,expense,2026-07-11,7.30,EUR,Food & Dining,RESTAURANTE LA,2026-07-13,Restaurante La
+skip,expense,2026-07-08,12.50,EUR,Food & Dining,ZAIQA RINCON,2026-07-09,Zaiqa Rincon
+skip,expense,2026-07-06,15.87,EUR,Groceries,MERCADONA COTOM,2026-07-07,Mercadona Cotom
+skip,expense,2026-07-05,7.80,EUR,Food & Dining,TAJ RESTAURANTE,2026-07-06,Taj Restaurante
+skip,expense,2026-07-05,1.80,EUR,Food & Dining,ESPRESSO COFFE,2026-07-06,Espresso Coffe
+skip,expense,2026-07-04,10.30,EUR,Groceries,MERCADONA COTOM,2026-07-06,Mercadona Cotom
+skip,expense,2026-07-04,12.60,EUR,Groceries,LIDL ANTEQUERA,2026-07-06,Lidl Antequera
+skip,expense,2026-07-04,3.60,EUR,Food & Dining,DLORENZO ANTEQU,2026-07-06,Dlorenzo Antequ
+skip,expense,2026-07-04,3.50,EUR,Transportation,REPSOL WAYLET,2026-07-06,"Compra internet en repsol waylet, madrid es, tarj. :*852115"
+skip,expense,2026-07-02,1.90,EUR,Groceries,MERCADONA COTOM,2026-07-03,Mercadona Cotom
+skip,expense,2026-06-28,17.23,EUR,Transportation,REPSOL WAYLET,2026-06-29,"Compra internet en repsol waylet, madrid es, tarj. :*852115"
+skip,expense,2026-06-28,14.26,EUR,Groceries,LIDL M LAGA-C N,2026-06-29,Lidl M Laga-c N
+skip,expense,2026-06-28,2.49,EUR,Groceries,LIDL M LAGA-C N,2026-06-29,Lidl M Laga-c N
+skip,expense,2026-06-28,4.50,EUR,Other,Bizum to RAFAEL EDUARDO DELGADO ROCCA - Cerveza,2026-06-29,Bizum to Rafael Eduardo Delgado Rocca - cerveza
+skip,expense,2026-06-28,2.20,EUR,Food & Dining,PANCAFE GOURMET,2026-06-29,Pancafe Gourmet
+skip,expense,2026-06-27,9.90,EUR,Food & Dining,TAJ RESTAURANTE,2026-06-29,Taj Restaurante
+skip,expense,2026-06-27,5.20,EUR,Shopping,EL CORTE INGLES,2026-06-29,El Corte Ingles
+skip,expense,2026-06-27,8.90,EUR,Food & Dining,TAJ RESTAURANTE,2026-06-29,Taj Restaurante
+skip,expense,2026-06-26,5.00,EUR,Food & Dining,ASOC CULT TORRE,2026-06-29,Asoc Cult Torre
+skip,expense,2026-06-26,10.00,EUR,Food & Dining,ASOC CULT TORRE,2026-06-29,Asoc Cult Torre
+skip,expense,2026-06-24,2.60,EUR,Groceries,MERCADONA COTOM,2026-06-25,Mercadona Cotom
+skip,expense,2026-06-23,11.58,EUR,Groceries,MERCADONA COTOM,2026-06-24,Mercadona Cotom
+skip,expense,2026-06-22,3.91,EUR,Groceries,MERCADONA COTOM,2026-06-23,Mercadona Cotom
+skip,expense,2026-06-21,11.83,EUR,Other,EXPRESS C/ ROND,2026-06-22,Express C/ Rond
+skip,expense,2026-06-21,15.34,EUR,Transportation,REPSOL WAYLET,2026-06-22,"Compra internet en repsol waylet, madrid es, tarj. :*852115"
+skip,expense,2026-06-21,6.00,EUR,Other,Bizum to ADRIAN ERNESTO RAHN VIEIRA,2026-06-22,Bizum to Adrian Ernesto Rahn Vieira
+skip,expense,2026-06-20,3.26,EUR,Groceries,MERCADONA TORRE,2026-06-22,Mercadona Torre
+skip,expense,2026-06-20,3.70,EUR,Food & Dining,CAPO BONIFATI,2026-06-22,Capo Bonifati
+skip,expense,2026-06-20,6.30,EUR,Other,Bizum to ADRIAN ERNESTO RAHN VIEIRA - raff,2026-06-22,Bizum to Adrian Ernesto Rahn Vieira - raff
+skip,expense,2026-06-20,1.45,EUR,Groceries,MERCADONA URB L,2026-06-22,Mercadona Urb L
+skip,expense,2026-06-20,5.70,EUR,Food & Dining,RESTAURANTE LA,2026-06-22,Restaurante La
+skip,income,2026-07-10,33.00,EUR,Monika,Transfer from MONIKA DOEMEOVA - Food coffees and all,2026-07-10,"Transferencia inmediata de monika doemeova, concepto food coffees and all"
+skip,income,2026-07-08,2.00,EUR,Monika,Transfer from MONIKA DOEMEOVA - Sent from N26,2026-07-08,"Transferencia inmediata de monika doemeova, concepto sent from n26"
+skip,income,2026-07-08,1315.45,EUR,Salary,Transfer from NIUM * Memberdev - RT5314435225,2026-07-08,"Transferencia inmediata de nium * memberdev, concepto rt5314435225"
+skip,income,2026-07-07,3.50,EUR,Monika,Transfer from MONIKA DOEMEOVA - Sent from N26,2026-07-07,"Transferencia inmediata de monika doemeova, concepto sent from n26"
+skip,income,2026-07-04,22.50,EUR,Federica Busco,Transfer from FEDERICA BUSCO - movistar,2026-07-06,"Transferencia de federica busco, concepto movistar"
+skip,income,2026-07-03,49.00,EUR,Bridge Building,Transfer from Bridge Building S.A. - Payout - Sent from ARQ,2026-07-03,"Transferencia inmediata de bridge building s.a., concepto payout - sent from arq"
+skip,income,2026-06-25,1087.29,EUR,Salary,Transfer from NIUM * Memberdev - RT4029866947,2026-06-25,"Transferencia inmediata de nium * memberdev, concepto rt4029866947"
+skip,income,2026-07-08,5.50,EUR,Monika,Transfer from MONIKA DOEMEOVA - Kebab,2026-07-09,"Transferencia inmediata de monika doemeova, concepto kebab"
+skip,income,2026-07-06,49.00,EUR,Bridge Building,Transfer from Bridge Building S.A. - Payout - Sent from ARQ,2026-07-07,"Transferencia inmediata de bridge building s.a., concepto payout - sent from arq"
+insert,expense,2026-07-20,2.99,EUR,Subscriptions,APPLE.COM/BILL,,
+insert,expense,2026-07-20,64.01,EUR,Travel,OMIO,,
+insert,expense,2026-07-20,4.90,EUR,Food & Dining,NO PIQUI,,
+insert,expense,2026-07-20,17.30,EUR,Shopping,WWW.AMAZON*QV82U1SL5,,
+insert,expense,2026-07-20,2.50,EUR,Food & Dining,CHIRINGUITO EL,,
+insert,expense,2026-07-19,5.50,EUR,Food & Dining,HAMBURGUESERIA,,
+insert,expense,2026-07-17,10.84,EUR,Groceries,MERCADONA COTOM,,
+insert,income,2026-06-22,22.50,EUR,Monika,Transfer from MONIKA DOEMEOVA - Movistart July,,

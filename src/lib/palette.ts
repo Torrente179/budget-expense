@@ -53,11 +53,25 @@ interface CategoryColorMap {
   loan: string;
 }
 
+/**
+ * Patrimonio category accents (Cuentas · Ahorros · Inversiones · Dinero
+ * prestado · Deudas). Reused palette values rather than new hues, so the
+ * balance sheet reads in the same language as the rest of the app.
+ */
+interface WealthColorMap {
+  accounts: string;
+  savings: string;
+  investments: string;
+  lent: string;
+  debts: string;
+}
+
 interface Palette {
   id: PaletteId;
   cashflow: CashflowColors;
   budgetUsage: Record<BudgetUsageTone, string>;
   categories: CategoryColorMap;
+  wealth: WealthColorMap;
 }
 
 /** Previous product colors (pre–Jul 2026 palette pass). */
@@ -93,6 +107,13 @@ export const PALETTE_OG: Palette = {
     education: "#6366f1",
     loan: "#0f766e",
   },
+  wealth: {
+    accounts: "#171b24",
+    savings: "#0e8a63",
+    investments: "#6366f1",
+    lent: "#d49412",
+    debts: "#b13a58",
+  },
 };
 
 /** Jul 2026 clarity palette. */
@@ -127,6 +148,13 @@ export const PALETTE_V2: Palette = {
     entertainment: "#06B6D4",
     education: "#6366F1",
     loan: "#0f766e",
+  },
+  wealth: {
+    accounts: "#06B6D4",
+    savings: "#059669",
+    investments: "#6366F1",
+    lent: "#F59E0B",
+    debts: "#E11D48",
   },
 };
 
@@ -191,4 +219,16 @@ export function budgetUsageColor(tone: BudgetUsageTone): string {
 
 export function budgetUsageColorForRatio(ratio: number): string {
   return budgetUsageColor(resolveBudgetUsageTone(ratio));
+}
+
+export type WealthCategory = keyof WealthColorMap;
+
+/**
+ * Accent per Patrimonio category. Import these instead of writing raw
+ * Tailwind status colors — `design.md` gate 1 bans those in `src/`.
+ */
+export const WEALTH_ACCENTS: Record<WealthCategory, string> = PALETTE.wealth;
+
+export function wealthAccent(category: WealthCategory): string {
+  return PALETTE.wealth[category];
 }

@@ -171,11 +171,17 @@ available and provides a stronger idempotency signal when present.
                      ├─ RE-RUN dedupe (rows may have been added since upload)
                      ├─ INSERT with source_kind='import', external_ref,
                      │    import_batch_id, needs_review
+                     ├─ optional “remember” → user categorization_rules using
+                     │    extractMerchantPattern (short token, not full line)
                      └─ status → "committed", committed_at set
 
    ROLLBACK        POST /api/import/batches/[id]/rollback
                      └─ DELETE rows carrying this import_batch_id
 ```
+
+As-you-type Capture suggestions use the same ranking helpers as import matching
+plus history (`GET /api/categorization/suggest` → top 3). See Architecture
+[06 §6.6b](06-domain-logic.md#66b-category-suggestion-ranking).
 
 ### Design properties worth noting
 

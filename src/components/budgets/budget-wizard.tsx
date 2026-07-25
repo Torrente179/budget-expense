@@ -33,25 +33,13 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/constants";
 import { useCategories } from "@/hooks/use-categories";
-import { useMediaQuery } from "@/hooks/use-media-query";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { WizardModal } from "@/components/patterns/wizard-modal";
 import {
   Select,
   SelectContent,
@@ -131,7 +119,6 @@ export function BudgetWizard({
   const { t, tc, intlLocale } = useLocale();
   const { baseCurrency, convert } = useCurrency();
   const { categories } = useCategories();
-  const isMobile = useMediaQuery("(max-width: 767px)");
 
   const isEdit = mode === "edit";
   const [step, setStep] = useState<Step>(isEdit ? "config" : "type");
@@ -254,10 +241,6 @@ export function BudgetWizard({
     setSubmitting(false);
     if (!error) onOpenChange(false);
   }
-
-  const stepIndex = step === "type" ? 1 : step === "config" ? 2 : 3;
-  const totalSteps = isEdit ? 2 : 3;
-  const shownIndex = isEdit ? stepIndex - 1 : stepIndex;
 
   const title = isEdit
     ? isGoal
@@ -803,115 +786,32 @@ export function BudgetWizard({
     </>
   );
 
-  const header = (
-    <div className="border-b border-border/60 px-5 py-4 sm:px-6">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          {isMobile ? (
-            <SheetTitle className="text-heading">{title}</SheetTitle>
-          ) : (
-            <DialogTitle className="text-heading">{title}</DialogTitle>
-          )}
-          {isMobile ? (
-            <SheetDescription className="mt-0.5 text-caption">
-              {t(
-                "Set up a rule to organize your money each month.",
-                "Configura una regla para organizar tu dinero cada mes."
-              )}
-            </SheetDescription>
-          ) : (
-            <DialogDescription className="mt-0.5 text-caption">
-              {t(
-                "Set up a rule to organize your money each month.",
-                "Configura una regla para organizar tu dinero cada mes."
-              )}
-            </DialogDescription>
-          )}
-        </div>
-        <p className="shrink-0 pr-8 text-caption text-muted-foreground">
-          {t(
-            `Step ${shownIndex} of ${totalSteps}`,
-            `Paso ${shownIndex} de ${totalSteps}`
-          )}
-        </p>
-      </div>
-
-      <div className="mt-4 flex items-center gap-2">
-        {(isEdit
-          ? ([
-              ["config", t("Setup", "Configuración")],
-              ["review", t("Review", "Revisar")],
-            ] as const)
-          : ([
-              ["type", t("Type", "Tipo")],
-              ["config", t("Setup", "Configuración")],
-              ["review", t("Review", "Revisar")],
-            ] as const)
-        ).map(([id, label], index, all) => {
-          const order: Step[] = ["type", "config", "review"];
-          const done = order.indexOf(step) > order.indexOf(id);
-          const active = step === id;
-          return (
-            <div key={id} className="flex flex-1 items-center gap-2">
-              <span
-                className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[0.6875rem] font-semibold transition-colors",
-                  active
-                    ? "bg-primary text-primary-foreground"
-                    : done
-                      ? "bg-primary/15 text-primary"
-                      : "bg-secondary text-muted-foreground"
-                )}
-              >
-                {done ? <Check className="h-3 w-3" /> : index + 1}
-              </span>
-              <span
-                className={cn(
-                  "truncate text-caption",
-                  active ? "font-medium text-foreground" : "text-muted-foreground"
-                )}
-              >
-                {label}
-              </span>
-              {index < all.length - 1 && (
-                <span className="h-px flex-1 bg-border" aria-hidden />
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-
-  const shell = (
-    <div className="flex max-h-[inherit] flex-col">
-      {header}
-      <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
-      <div className="flex items-center justify-between gap-3 border-t border-border/60 bg-background/95 px-5 py-4 sm:px-6">
-        {footer}
-      </div>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <Sheet open={open} onOpenChange={(next) => (next ? null : requestClose())}>
-        <SheetContent
-          side="bottom"
-          className="max-h-[92vh] rounded-t-3xl border-x border-t p-0"
-        >
-          {shell}
-        </SheetContent>
-      </Sheet>
-    );
-  }
-
   return (
-    <Dialog open={open} onOpenChange={(next) => (next ? null : requestClose())}>
-      <DialogContent className="max-h-[90vh] gap-0 p-0 sm:max-w-[54rem]">
-        {shell}
-      </DialogContent>
-    </Dialog>
+    <WizardModal
+      open={open}
+      onOpenChange={requestClose}
+      title={title}
+      description={t(
+        "Set up a rule to organize your money each month.",
+        "Configura una regla para organizar tu dinero cada mes."
+      )}
+      steps={
+        isEdit
+          ? [
+              { id: "config" as Step, label: t("Setup", "Configuración") },
+              { id: "review" as Step, label: t("Review", "Revisar") },
+            ]
+          : [
+              { id: "type" as Step, label: t("Type", "Tipo") },
+              { id: "config" as Step, label: t("Setup", "Configuración") },
+              { id: "review" as Step, label: t("Review", "Revisar") },
+            ]
+      }
+      step={step}
+      body={body}
+      footer={footer}
+      submitting={submitting}
+    />
   );
 }
 

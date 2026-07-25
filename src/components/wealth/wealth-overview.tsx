@@ -1,75 +1,56 @@
 "use client";
 
-import { useMemo } from "react";
-import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import {
-  ArrowRight,
-  Banknote,
-  Landmark,
-  PiggyBank,
-  Timer,
-  TrendingUp,
-} from "lucide-react";
+import { useMemo, useState } from "react";
+import { CreditCard, Wallet } from "lucide-react";
 import { useHouseholdInsights } from "@/hooks/use-household-insights";
 import { useInvestments } from "@/hooks/use-investments";
+import { useNetWorth } from "@/hooks/use-net-worth";
+import { useWealthAccounts } from "@/hooks/use-wealth-accounts";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
-import { authorizedFetch } from "@/lib/query/authorized-fetch";
-import { cn, formatCurrency } from "@/lib/utils";
+import { formatCurrency } from "@/lib/utils";
+import type { WealthCategory } from "@/lib/palette";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
-import { BreakdownDonut, type DonutSlice } from "@/components/patterns/breakdown-donut";
-import { WealthNav } from "@/components/wealth/wealth-nav";
-import { FxExposureCard } from "@/components/wealth/fx-exposure-card";
+import { UnderlineTabs } from "@/components/patterns/underline-tabs";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { Database } from "@/types/database";
+import { AssetsDebtsCard } from "@/components/wealth/assets-debts-card";
+import { CushionCard } from "@/components/wealth/cushion-card";
+import { FxExposureCard } from "@/components/wealth/fx-exposure-card";
+import { NetWorthTrendCard } from "@/components/wealth/net-worth-trend-card";
+import { OrganizeMoneyGrid } from "@/components/wealth/organize-money-grid";
+import { PatrimonioHero } from "@/components/wealth/patrimonio-hero";
+import {
+  WealthBreakdownList,
+  type BreakdownRow,
+} from "@/components/wealth/wealth-breakdown-list";
+import { WealthEmptyPreview } from "@/components/wealth/wealth-empty-preview";
 
-type Loan = Database["public"]["Tables"]["loans"]["Row"];
-type LoanRepayment = Database["public"]["Tables"]["loan_repayments"]["Row"];
+type WealthTab = "summary" | "assets" | "debts";
 
 /**
- * Wealth overview: what you own and owe, in one glance — net worth,
- * allocation across investments/cash/savings, runway, debts, FX exposure.
+ * Patrimonio — the personal balance sheet.
+ *
+ * Orchestration only: every figure comes from `useNetWorth()` so no surface
+ * re-derives a total, and every card below takes plain props.
  */
 export function WealthOverview() {
   const { t } = useLocale();
-  const { baseCurrency, convert } = useCurrency();
-  const { insights, loading: insightsLoading } = useHouseholdInsights();
-  const {
-    overview,
-    accounts,
-    savingsTransfers,
-    totalSavingsBalance,
-    loading: investmentsLoading,
-  } = useInvestments({
+  const { baseCurrency } = useCurrency();
+  const [tab, setTab] = useState<WealthTab>("summary");
+
+  const { totals, monthlyChange, cushion, snapshots, counts, isEmpty, loading } =
+    useNetWorth();
+
+  const { insights } = useHouseholdInsights();
+  const { overview, savingsTransfers, accounts } = useInvestments({
     includeTrades: false,
     includeCash: false,
     includeSavings: true,
     includeWatchlist: false,
   });
-
-  const { data: loansData, isPending: loansLoading } = useQuery({
-    queryKey: ["loans"],
-    queryFn: () =>
-      authorizedFetch<{ loans: Loan[]; repayments: LoanRepayment[] }>(
-        "/api/loans"
-      ),
-  });
-
-  const loansOutstandingBase = useMemo(() => {
-    if (!loansData) return 0;
-    return loansData.loans
-      .filter((loan) => loan.is_active)
-      .reduce((sum, loan) => {
-        const repaid = loansData.repayments
-          .filter((repayment) => repayment.loan_id === loan.id)
-          .reduce((paid, repayment) => paid + Number(repayment.amount), 0);
-        const outstanding = Math.max(Number(loan.principal) - repaid, 0);
-        return sum + convert(outstanding, loan.currency);
-      }, 0);
-  }, [loansData, convert]);
+  const { activeAccounts } = useWealthAccounts();
 
   const accountCurrencies = useMemo(
     () =>
@@ -79,257 +60,263 @@ export function WealthOverview() {
     [accounts]
   );
 
-  const loading = insightsLoading || investmentsLoading || loansLoading;
+  const categoryTotals = useMemo<Record<WealthCategory, number>>(
+    () => ({
+      accounts: totals.accountsAndCash,
+      savings: totals.savings,
+      investments: totals.investments,
+      lent: totals.moneyLent,
+      debts: totals.debts,
+    }),
+    [totals]
+  );
 
-  const liabilitiesTotal = insights?.totalLiabilitiesBase ?? 0;
-  const liquidReserves = totalSavingsBalance + overview.estimatedCash;
-  const totalAssets =
-    overview.totalMarketValue +
-    overview.estimatedCash +
-    totalSavingsBalance +
-    loansOutstandingBase;
-  const netWorth = totalAssets - liabilitiesTotal;
+  const categoryCounts = useMemo<Record<WealthCategory, number>>(
+    () => ({
+      accounts: counts.accounts,
+      savings: counts.savings,
+      investments: counts.investments,
+      lent: counts.loans,
+      debts: counts.debts,
+    }),
+    [counts]
+  );
 
-  const runwayMonths =
-    insights?.hasEssentialData &&
-    insights.essentialMonthlyAvg &&
-    insights.essentialMonthlyAvg > 0
-      ? liquidReserves / insights.essentialMonthlyAvg
-      : null;
+  const assetRows = useMemo<BreakdownRow[]>(
+    () => [
+      {
+        key: "accounts",
+        category: "accounts",
+        label: t("Accounts & cash", "Cuentas y efectivo"),
+        detail: t(
+          `${counts.accounts} ${counts.accounts === 1 ? "account" : "accounts"}`,
+          `${counts.accounts} ${counts.accounts === 1 ? "cuenta" : "cuentas"}`
+        ),
+        value: totals.accountsAndCash,
+        href: "/wealth/accounts",
+      },
+      {
+        key: "savings",
+        category: "savings",
+        label: t("Savings", "Ahorros"),
+        detail: t(
+          `${counts.savings} ${counts.savings === 1 ? "fund" : "funds"}`,
+          `${counts.savings} ${counts.savings === 1 ? "fondo" : "fondos"}`
+        ),
+        value: totals.savings,
+        href: "/wealth/savings",
+      },
+      {
+        key: "investments",
+        category: "investments",
+        label: t("Investments", "Inversiones"),
+        detail: t(
+          `${counts.investments} ${counts.investments === 1 ? "position" : "positions"}`,
+          `${counts.investments} ${counts.investments === 1 ? "posición" : "posiciones"}`
+        ),
+        value: totals.investments,
+        href: "/wealth/investments",
+      },
+      {
+        key: "lent",
+        category: "lent",
+        label: t("Money lent", "Dinero prestado"),
+        detail: t(
+          `${counts.loans} ${counts.loans === 1 ? "loan" : "loans"}`,
+          `${counts.loans} ${counts.loans === 1 ? "préstamo" : "préstamos"}`
+        ),
+        value: totals.moneyLent,
+        href: "/wealth/loans",
+      },
+    ],
+    [t, totals, counts]
+  );
 
-  const allocation: DonutSlice[] = [
-    {
-      id: "investments",
-      name: t("Investments", "Inversiones"),
-      value: overview.totalMarketValue,
-      color: "var(--chart-1)",
-    },
-    {
-      id: "savings",
-      name: t("Savings", "Ahorros"),
-      value: totalSavingsBalance,
-      color: "var(--chart-2)",
-    },
-    {
-      id: "cash",
-      name: t("Broker cash", "Caja de broker"),
-      value: overview.estimatedCash,
-      color: "var(--chart-3)",
-    },
-    {
-      id: "loans",
-      name: t("Loans lent", "Préstamos"),
-      value: loansOutstandingBase,
-      color: "var(--chart-4)",
-    },
-  ].filter((slice) => slice.value > 0);
+  const debtRows = useMemo<BreakdownRow[]>(
+    () =>
+      (insights?.liabilities ?? [])
+        .filter((liability) => liability.isActive)
+        .map((liability) => ({
+          key: liability.id,
+          category: "debts" as const,
+          label: liability.name,
+          detail:
+            liability.interestRatePercent !== null
+              ? `${liability.interestRatePercent}% ${t("APR", "TAE")}`
+              : undefined,
+          value: liability.currentBalanceBase,
+          href: "/wealth/liabilities",
+        })),
+    [insights?.liabilities, t]
+  );
 
-  const stats = [
-    {
-      key: "runway",
-      label: t("Cash runway", "Meses de colchón"),
-      icon: Timer,
-      value:
-        runwayMonths !== null
-          ? `${runwayMonths.toFixed(1)} ${t("mo", "mes")}`
-          : "—",
-      detail:
-        runwayMonths !== null
-          ? t(
-              `${formatCurrency(liquidReserves, baseCurrency)} liquid`,
-              `${formatCurrency(liquidReserves, baseCurrency)} líquidos`
-            )
-          : t("Tag essentials in Settings", "Etiqueta esenciales en Ajustes"),
-      href: undefined as string | undefined,
-      tone: "default" as "default" | "negative",
-    },
-    {
-      key: "loans",
-      label: t("Loans lent", "Préstamos"),
-      icon: Banknote,
-      value: formatCurrency(loansOutstandingBase, baseCurrency),
-      detail: t("Money others owe you", "Lo que te deben"),
-      href: "/wealth/loans",
-      tone: "default" as const,
-    },
-    {
-      key: "debts",
-      label: t("Debts", "Deudas"),
-      icon: Landmark,
-      value: formatCurrency(liabilitiesTotal, baseCurrency),
-      detail: t("Loans, mortgages, credit", "Préstamos, hipotecas, crédito"),
-      href: "/wealth/liabilities",
-      tone: liabilitiesTotal > 0 ? ("negative" as const) : ("default" as const),
-    },
-  ];
+  if (loading) {
+    return (
+      <Screen title={t("Net worth", "Patrimonio")}>
+        <Skeleton className="h-40 rounded-2xl" />
+        <div className="grid gap-3 lg:grid-cols-3">
+          {Array.from({ length: 3 }).map((_, index) => (
+            <Skeleton key={index} className="h-56 rounded-xl" />
+          ))}
+        </div>
+        <Skeleton className="h-44 rounded-xl" />
+      </Screen>
+    );
+  }
 
   return (
-    <Screen title={t("Wealth", "Patrimonio")} subheader={<WealthNav />}>
-      {loading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-64 rounded-xl" />
-          <div className="grid grid-cols-3 gap-3">
-            {Array.from({ length: 3 }).map((_, index) => (
-              <Skeleton key={index} className="h-24 rounded-xl" />
-            ))}
-          </div>
-          <Skeleton className="h-48 rounded-xl" />
-        </div>
-      ) : (
+    <Screen
+      title={t("Net worth", "Patrimonio")}
+      subheader={
+        <p className="text-caption text-muted-foreground">
+          {t(
+            "Assets, savings and debts in one place.",
+            "Activos, ahorros y deudas en un solo lugar."
+          )}
+        </p>
+      }
+    >
+      <PatrimonioHero
+        totals={totals}
+        monthlyChange={monthlyChange}
+        isEmpty={isEmpty}
+        addHref="/wealth/accounts"
+      />
+
+      {isEmpty ? (
         <>
-          {/* Net worth + allocation, together */}
-          <Card>
-            <CardContent className="space-y-6 py-6">
-              <div className="space-y-1">
-                <p className="label-caps">{t("Net worth", "Patrimonio neto")}</p>
-                <p
-                  className={cn(
-                    "font-mono text-display tabular-nums",
-                    netWorth >= 0 ? "text-foreground" : "text-negative"
-                  )}
-                >
-                  {formatCurrency(netWorth, baseCurrency)}
-                </p>
-                <p className="text-caption text-muted-foreground">
-                  {formatCurrency(totalAssets, baseCurrency)}{" "}
-                  {t("in assets", "en activos")}
-                  {liabilitiesTotal > 0 &&
-                    ` − ${formatCurrency(liabilitiesTotal, baseCurrency)} ${t("debt", "deuda")}`}
-                </p>
-              </div>
-
-              {allocation.length > 0 && (
-                <div className="border-t border-border/60 pt-5">
-                  <p className="label-caps mb-3">
-                    {t("Allocation", "Distribución")}
-                  </p>
-                  <BreakdownDonut
-                    slices={allocation}
-                    centerLabel={t("Assets", "Activos")}
-                    centerValue={totalAssets}
-                  />
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Stat row */}
-          <div className="grid grid-cols-3 gap-3">
-            {stats.map((stat) => {
-              const body = (
-                <Card
-                  size="sm"
-                  className={cn(
-                    "h-full min-w-0 justify-between gap-2 px-3.5",
-                    stat.href &&
-                      "transition-all duration-200 hover:shadow-2 hover:ring-border/80"
-                  )}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="label-caps truncate">{stat.label}</p>
-                    <stat.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </div>
-                  <div className="min-w-0">
-                    <p
-                      className={cn(
-                        "truncate font-mono text-heading font-semibold tabular-nums",
-                        stat.tone === "negative" && "text-negative"
-                      )}
-                    >
-                      {stat.value}
-                    </p>
-                    <p className="mt-0.5 truncate text-caption text-muted-foreground">
-                      {stat.detail}
-                    </p>
-                  </div>
-                </Card>
-              );
-              return stat.href ? (
-                <Link key={stat.key} href={stat.href} className="block min-w-0">
-                  {body}
-                </Link>
-              ) : (
-                <div key={stat.key} className="min-w-0">
-                  {body}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Jump-in links to the sub-sections */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {(
-              [
-                {
-                  href: "/wealth/investments",
-                  label: t("Investments", "Inversiones"),
-                  value: formatCurrency(overview.totalMarketValue, baseCurrency),
-                  icon: TrendingUp,
-                },
-                {
-                  href: "/wealth/savings",
-                  label: t("Savings", "Ahorros"),
-                  value: formatCurrency(totalSavingsBalance, baseCurrency),
-                  icon: PiggyBank,
-                },
-                {
-                  href: "/wealth/loans",
-                  label: t("Loans", "Préstamos"),
-                  value: formatCurrency(loansOutstandingBase, baseCurrency),
-                  icon: Banknote,
-                },
-                {
-                  href: "/wealth/liabilities",
-                  label: t("Debts", "Deudas"),
-                  value: formatCurrency(liabilitiesTotal, baseCurrency),
-                  icon: Landmark,
-                },
-              ] as const
-            ).map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="group flex items-center gap-3 rounded-xl bg-card px-4 py-3.5 ring-1 ring-border shadow-1 transition-all hover:shadow-2 hover:ring-border/80"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
-                  <link.icon className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-body font-medium">{link.label}</p>
-                  <p className="truncate font-mono text-caption tabular-nums text-muted-foreground">
-                    {link.value}
-                  </p>
-                </div>
-                <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5" />
-              </Link>
-            ))}
-          </div>
-
-          {/* FX exposure */}
-          {insights && (
+          <OrganizeMoneyGrid
+            totals={categoryTotals}
+            counts={categoryCounts}
+            isEmpty
+          />
+          <div className="grid gap-3 lg:grid-cols-2">
+            <WealthEmptyPreview />
             <Card>
               <CardHeader>
                 <SectionHeader
                   eyebrow={t("Currency", "Moneda")}
-                  title={t("By currency", "Por divisa")}
+                  title={t("By currency", "Distribución por moneda")}
                 />
               </CardHeader>
               <CardContent>
-                <FxExposureCard
-                  variant="bare"
-                  holdings={overview.holdings}
-                  accountSummaries={overview.accountSummaries}
-                  accountCurrencies={accountCurrencies}
-                  savingsTransfers={savingsTransfers.map((transfer) => ({
-                    amount: Number(transfer.amount),
-                    currency: transfer.currency,
-                  }))}
-                  liabilitiesByCurrency={insights.liabilitiesByCurrency}
-                />
+                <p className="py-8 text-center text-caption text-muted-foreground">
+                  {t(
+                    "Appears once you add your first account.",
+                    "Aparecerá cuando añadas tu primera cuenta."
+                  )}
+                </p>
               </CardContent>
             </Card>
+          </div>
+        </>
+      ) : (
+        <>
+          <UnderlineTabs
+            tabs={[
+              { key: "summary" as const, label: t("Summary", "Resumen") },
+              { key: "assets" as const, label: t("Assets", "Activos") },
+              { key: "debts" as const, label: t("Debts", "Deudas") },
+            ]}
+            value={tab}
+            onChange={setTab}
+            ariaLabel={t("Net worth views", "Vistas de patrimonio")}
+          />
+
+          {tab === "summary" && (
+            <>
+              <div className="grid gap-3 lg:grid-cols-3">
+                <NetWorthTrendCard snapshots={snapshots} />
+                <AssetsDebtsCard totals={totals} />
+                <CushionCard
+                  cushion={cushion}
+                  liquidBase={
+                    totals.accountsAndCash +
+                    totals.savings +
+                    overview.estimatedCash
+                  }
+                />
+              </div>
+
+              <OrganizeMoneyGrid
+                totals={categoryTotals}
+                counts={categoryCounts}
+                isEmpty={false}
+              />
+
+              {insights && (
+                <Card>
+                  <CardHeader>
+                    <SectionHeader
+                      eyebrow={t("Currency", "Moneda")}
+                      title={t("By currency", "Distribución por moneda")}
+                    />
+                  </CardHeader>
+                  <CardContent>
+                    <FxExposureCard
+                      variant="bare"
+                      holdings={overview.holdings}
+                      accountSummaries={overview.accountSummaries}
+                      accountCurrencies={accountCurrencies}
+                      savingsTransfers={[
+                        ...savingsTransfers.map((transfer) => ({
+                          amount: Number(transfer.amount),
+                          currency: transfer.currency,
+                        })),
+                        ...activeAccounts.map((account) => ({
+                          amount: account.balance,
+                          currency: account.currency,
+                        })),
+                      ]}
+                      liabilitiesByCurrency={insights.liabilitiesByCurrency}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </>
+          )}
+
+          {tab === "assets" && (
+            <WealthBreakdownList
+              eyebrow={t("Owned", "Lo que tienes")}
+              title={t("Assets", "Activos")}
+              rows={assetRows}
+              total={totals.totalAssets}
+              totalLabel={t("Total assets", "Total activos")}
+              emptyIcon={Wallet}
+              emptyTitle={t("No assets yet", "Aún no tienes activos")}
+              emptyDescription={t(
+                "Add an account, a savings fund or an investment to get started.",
+                "Añade una cuenta, un fondo de ahorro o una inversión para empezar."
+              )}
+            />
+          )}
+
+          {tab === "debts" && (
+            <WealthBreakdownList
+              eyebrow={t("Owed", "Lo que debes")}
+              title={t("Debts", "Deudas")}
+              rows={debtRows}
+              total={totals.totalLiabilities}
+              totalLabel={t("Total debt", "Deuda total")}
+              emptyIcon={CreditCard}
+              emptyTitle={t("No debts recorded", "Sin deudas registradas")}
+              emptyDescription={t(
+                "Nothing owed — or nothing added yet.",
+                "No debes nada, o aún no lo has añadido."
+              )}
+            />
           )}
         </>
+      )}
+
+      {!isEmpty && tab === "summary" && totals.totalAssets > 0 && (
+        <p className="px-1 text-caption text-muted-foreground">
+          {t(
+            `Net worth is everything you own minus everything you owe. It is not spendable money — ${formatCurrency(totals.investments, baseCurrency)} of it is invested.`,
+            `El patrimonio neto es todo lo que tienes menos lo que debes. No es dinero disponible — ${formatCurrency(totals.investments, baseCurrency)} están invertidos.`
+          )}
+        </p>
       )}
     </Screen>
   );

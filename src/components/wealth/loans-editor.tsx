@@ -21,6 +21,9 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { CURRENCIES } from "@/lib/constants";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { queryKeys } from "@/lib/query/keys";
+import { sumLoansOutstandingBase } from "@/lib/wealth/net-worth";
+import { WealthCategoryHero } from "@/components/wealth/wealth-category-hero";
+import { HandCoins } from "lucide-react";
 import { formatCurrency, parseDecimalInput } from "@/lib/utils";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -29,8 +32,6 @@ import type { Database } from "@/types/database";
 type Loan = Database["public"]["Tables"]["loans"]["Row"];
 type LoanRepayment = Database["public"]["Tables"]["loan_repayments"]["Row"];
 type LoanPerson = Database["public"]["Tables"]["loan_people"]["Row"];
-
-const loansKey = ["loans"] as const;
 
 function formatLoanDate(isoDate: string, locale: string) {
   try {
@@ -45,11 +46,11 @@ function formatLoanDate(isoDate: string, locale: string) {
 /** Money you lent — repayments reduce outstanding; dual-writes movements. */
 export function LoansEditor() {
   const { t } = useLocale();
-  const { baseCurrency } = useCurrency();
+  const { baseCurrency, convert } = useCurrency();
   const queryClient = useQueryClient();
 
   const { data, isPending, isError } = useQuery({
-    queryKey: loansKey,
+    queryKey: queryKeys.loans,
     queryFn: () =>
       authorizedFetch<{
         loans: Loan[];
@@ -60,11 +61,11 @@ export function LoansEditor() {
 
   const invalidate = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: loansKey }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.loans }),
       queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
       queryClient.invalidateQueries({ queryKey: queryKeys.incomesAll }),
       queryClient.invalidateQueries({ queryKey: queryKeys.monthSnapshotAll }),
-      queryClient.invalidateQueries({ queryKey: ["household-insights"] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.householdInsights }),
     ]);
 
   const [showForm, setShowForm] = useState(false);
@@ -128,8 +129,67 @@ export function LoansEditor() {
     data?.loans.filter((loan) => loan.is_active) ?? data?.loans ?? [];
   const closedLoans = data?.loans.filter((loan) => !loan.is_active) ?? [];
 
+  /**
+   * Outstanding uses the shared balance-sheet reducer so this page and the
+   * Patrimonio hero can never disagree about what is still owed to you.
+   */
+  const outstandingBase = useMemo(
+    () =>
+      data ? sumLoansOutstandingBase(data.loans, data.repayments, convert) : 0,
+    [data, convert]
+  );
+
+  const lentBase = useMemo(
+    () =>
+      (data?.loans ?? []).reduce(
+        (sum, loan) => sum + convert(Number(loan.principal), loan.currency),
+        0
+      ),
+    [data?.loans, convert]
+  );
+
+  const recoveredBase = useMemo(
+    () =>
+      (data?.repayments ?? []).reduce(
+        (sum, repayment) =>
+          sum + convert(Number(repayment.amount), repayment.currency),
+        0
+      ),
+    [data?.repayments, convert]
+  );
+
   return (
-    <Card className="border-border/50">
+    <>
+      <WealthCategoryHero
+        eyebrow={t("Still to collect", "Pendiente por cobrar")}
+        amount={outstandingBase}
+        icon={HandCoins}
+        progress={
+          lentBase > 0
+            ? {
+                ratio: recoveredBase / lentBase,
+                label: t("Recovered", "Recuperado"),
+              }
+            : null
+        }
+        stats={[
+          {
+            label: t("Total lent", "Total prestado"),
+            value: formatCurrency(lentBase, baseCurrency),
+          },
+          {
+            label: t("Recovered", "Recuperado"),
+            value: formatCurrency(recoveredBase, baseCurrency),
+            tone: "positive",
+          },
+          {
+            label: t("Active", "Activos"),
+            value: String(activeLoans.length),
+          },
+        ]}
+      />
+
+      <Card className="border-border/50">
       <CardHeader>
         <CardTitle className="text-sm font-medium">
           {t("Loans lent", "Préstamos concedidos")}
@@ -295,7 +355,8 @@ export function LoansEditor() {
           )
         )}
       </CardContent>
-    </Card>
+      </Card>
+    </>
   );
 }
 

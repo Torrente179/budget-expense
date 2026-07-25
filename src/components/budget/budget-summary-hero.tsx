@@ -7,6 +7,8 @@ import { cn, formatCurrency } from "@/lib/utils";
 import {
   HeroSheen,
   HERO_ACCENT,
+  HERO_ACCENT_NEGATIVE,
+  HERO_ACCENT_WARNING,
   HERO_ICON_TILE,
   HERO_SURFACE,
   HERO_TILE,
@@ -63,9 +65,9 @@ export function BudgetSummaryHero({
   /* The bar clamps at 100%, so its color carries the overspend instead. */
   const barColor =
     cashflow.paceStatus === "over_plan"
-      ? "#FB7185"
+      ? HERO_ACCENT_NEGATIVE
       : cashflow.paceStatus === "high_pace"
-        ? "#FBBF24"
+        ? HERO_ACCENT_WARNING
         : HERO_ACCENT;
 
   const statusCopy = (() => {

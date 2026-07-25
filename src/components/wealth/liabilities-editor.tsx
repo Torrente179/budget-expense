@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Landmark, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -19,6 +19,9 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { CURRENCIES } from "@/lib/constants";
 import { liabilityKindLabel, liabilityKindOptions } from "@/lib/liability-kinds";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
+import { queryKeys } from "@/lib/query/keys";
+import { WealthCategoryHero } from "@/components/wealth/wealth-category-hero";
+import { CreditCard } from "lucide-react";
 import { formatCurrency, parseDecimalInput } from "@/lib/utils";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -28,16 +31,14 @@ type Liability = Database["public"]["Tables"]["liabilities"]["Row"];
 type LiabilityPayment =
   Database["public"]["Tables"]["liability_payments"]["Row"];
 
-const liabilitiesKey = ["liabilities"] as const;
-
 /** Loans, mortgages, credit balances — with payments reducing the balance. */
 export function LiabilitiesEditor() {
   const { t } = useLocale();
-  const { baseCurrency } = useCurrency();
+  const { baseCurrency, convert } = useCurrency();
   const queryClient = useQueryClient();
 
   const { data, isPending, isError } = useQuery({
-    queryKey: liabilitiesKey,
+    queryKey: queryKeys.liabilities,
     queryFn: () =>
       authorizedFetch<{
         liabilities: Liability[];
@@ -47,8 +48,8 @@ export function LiabilitiesEditor() {
 
   const invalidate = () =>
     Promise.all([
-      queryClient.invalidateQueries({ queryKey: liabilitiesKey }),
-      queryClient.invalidateQueries({ queryKey: ["household-insights"] }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.liabilities }),
+      queryClient.invalidateQueries({ queryKey: queryKeys.householdInsights }),
     ]);
 
   const [showForm, setShowForm] = useState(false);
@@ -100,8 +101,67 @@ export function LiabilitiesEditor() {
 
   const kinds = liabilityKindOptions(t);
 
+  const activeLiabilities = (data?.liabilities ?? []).filter(
+    (liability) => liability.is_active
+  );
+
+  /** Outstanding = original − Σ payments, floored at zero, in base currency. */
+  const outstandingBase = useMemo(
+    () =>
+      activeLiabilities.reduce((sum, liability) => {
+        const paid = (data?.payments ?? [])
+          .filter((payment) => payment.liability_id === liability.id)
+          .reduce((total, payment) => total + Number(payment.amount), 0);
+        const remaining = Math.max(
+          Number(liability.original_balance) - paid,
+          0
+        );
+        return sum + convert(remaining, liability.currency);
+      }, 0),
+    [activeLiabilities, data?.payments, convert]
+  );
+
+  const originalBase = useMemo(
+    () =>
+      activeLiabilities.reduce(
+        (sum, liability) =>
+          sum + convert(Number(liability.original_balance), liability.currency),
+        0
+      ),
+    [activeLiabilities, convert]
+  );
+
+  const paidBase = Math.max(originalBase - outstandingBase, 0);
+
   return (
-    <Card className="border-border/50">
+    <>
+      <WealthCategoryHero
+        eyebrow={t("Outstanding debt", "Deuda pendiente")}
+        amount={outstandingBase}
+        icon={CreditCard}
+        progress={
+          originalBase > 0
+            ? { ratio: paidBase / originalBase, label: t("Paid off", "Pagado") }
+            : null
+        }
+        stats={[
+          {
+            label: t("Paid so far", "Pagado hasta hoy"),
+            value: formatCurrency(paidBase, baseCurrency),
+            tone: "positive",
+          },
+          {
+            label: t("Original", "Importe original"),
+            value: formatCurrency(originalBase, baseCurrency),
+          },
+          {
+            label: t("Active", "Activas"),
+            value: String(activeLiabilities.length),
+          },
+        ]}
+      />
+
+      <Card className="border-border/50">
       <CardHeader>
         <CardTitle className="text-sm font-medium">
           {t("Liabilities", "Pasivos")}
@@ -258,7 +318,8 @@ export function LiabilitiesEditor() {
           {t("where converted.", "cuando se convierten.")}
         </p>
       </CardContent>
-    </Card>
+      </Card>
+    </>
   );
 }
 

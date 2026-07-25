@@ -30,6 +30,12 @@ export const HERO_TRACK = "bg-white/10";
 /** Mint used for income / healthy states — the app's dark-mode income green. */
 export const HERO_ACCENT = "#34D399";
 
+/** Coral for a genuinely bad state: over plan, net worth falling. */
+export const HERO_ACCENT_NEGATIVE = "#FB7185";
+
+/** Amber for "watch this", short of bad. */
+export const HERO_ACCENT_WARNING = "#FBBF24";
+
 /**
  * Light catching the top edge plus a soft corner bloom. Drop it as the first
  * child of a `HERO_SURFACE` section, before the content.

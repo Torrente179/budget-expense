@@ -1,7 +1,7 @@
 "use client";
 
 import { Screen } from "@/components/patterns/screen";
-import { WealthNav } from "@/components/wealth/wealth-nav";
+import { WealthBreadcrumb } from "@/components/wealth/wealth-breadcrumb";
 import { LoansEditor } from "@/components/wealth/loans-editor";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -12,7 +12,7 @@ export default function LoansPage() {
     <Screen
       title={t("Loans", "Préstamos")}
       backHref="/wealth"
-      subheader={<WealthNav />}
+      subheader={<WealthBreadcrumb current={t("Loans", "Préstamos")} />}
     >
       <LoansEditor />
     </Screen>

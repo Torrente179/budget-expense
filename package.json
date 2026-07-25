@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "test:balance": "tsx --test src/lib/balance-checkpoint.test.ts",
+    "test:wealth": "tsx --test src/lib/wealth/net-worth.test.ts",
     "check:parity": "node scripts/check-normalize-parity.mjs && tsx scripts/check-import-parity.mjs"
   },
   "dependencies": {

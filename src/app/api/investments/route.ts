@@ -14,6 +14,7 @@ import {
   investmentSavingsTransferSchema,
   investmentTradeSchema,
   investmentWatchlistSchema,
+  signedSavingsAmount,
 } from "@/lib/validations";
 
 export const dynamic = "force-dynamic";
@@ -839,7 +840,7 @@ export async function POST(request: NextRequest) {
             user_id: context.userId,
             savings_account_id: parsed.data.values.savings_account_id,
             transfer_date: parsed.data.values.transfer_date,
-            amount: parsed.data.values.amount,
+            amount: signedSavingsAmount(parsed.data.values),
             currency: parsed.data.values.currency,
             notes: normalizeOptionalText(parsed.data.values.notes),
             source_kind: parsed.data.values.source_kind,
@@ -923,7 +924,7 @@ export async function PATCH(request: NextRequest) {
           .update({
             savings_account_id: parsed.data.values.savings_account_id,
             transfer_date: parsed.data.values.transfer_date,
-            amount: parsed.data.values.amount,
+            amount: signedSavingsAmount(parsed.data.values),
             currency: parsed.data.values.currency,
             notes: normalizeOptionalText(parsed.data.values.notes),
             source_kind: parsed.data.values.source_kind,

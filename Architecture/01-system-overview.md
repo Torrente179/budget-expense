@@ -18,11 +18,11 @@ enforced by a single navigation source of truth
 
 | Section | Route | Owns | Editorial rule |
 |---|---|---|---|
-| **Home** | `/home` | Income · Spent · Current · Giving stat row; budget pace; "Where it went" donut; attention feed; recent movements | *Now + actionable* |
+| **Home** | `/home` | Compact blue hero (`remaining = income − spent`); Presupuesto cards only (`spending_limit`); category donut; recent movements | *Now + actionable* |
 | **Movements** | `/movements`, `/movements/recurring` | Unified expense + income ledger, filters, search, swipe-delete, recurring charges | The ledger itself |
-| **Budget** | `/budget` | Guided 3-step setup when empty; else plan overview, objectives list, Giving card | Planning |
+| **Budget** | `/budget` | Dual engines: Presupuestos (ceilings) + Metas (floors); compact hero; methods seed by `budget_role` → `kind` | Planning |
 | **Wealth** | `/wealth` + `/investments`, `/savings`, `/liabilities`, `/loans` | Net worth, allocation, runway, FX exposure, holdings, debts, money lent | *Balances* |
-| **Insights** | `/insights` + `/calendar`, `/categories/[id]` | Ratios, 12-month trends, pillars, category breakdown, anomalies, monthly report | *Past + patterns* — no data-entry CTAs |
+| **Insights** | `/insights` + `/calendar`, `/categories/[id]` | Ratios, pillars, clickable 12-month + daily spend bars, envelope use, anomalies, monthly report (category bars), calendar day drilldown | *Past + patterns* — no data-entry CTAs |
 
 Secondary destinations — `/review`, `/import`, `/wisdom`, `/settings` — are
 reachable from the desktop sidebar, the mobile profile sheet, and a ⌘K command

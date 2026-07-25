@@ -225,11 +225,27 @@ export type InvestmentSavingsAccountFormValues = z.output<
 export const investmentSavingsTransferSchema = z.object({
   savings_account_id: z.string().uuid("Please select a savings account"),
   transfer_date: isoDate,
+  /**
+   * Always entered as a positive number — users type what moved, and the
+   * direction says which way. The API signs it before storing
+   * (`investment_savings_transfers.amount` is signed: negative = withdrawal).
+   */
   amount: z.coerce.number().positive("Amount must be greater than 0"),
+  direction: z.enum(["deposit", "withdrawal"]).default("deposit"),
   currency: z.string().min(3).max(3),
   notes: z.string().max(255).optional(),
   source_kind: z.enum(["manual", "expense_flow"]).default("manual"),
 });
+
+/** Signed DB amount from the form's positive amount + direction. */
+export function signedSavingsAmount(values: {
+  amount: number;
+  direction?: "deposit" | "withdrawal";
+}) {
+  return values.direction === "withdrawal"
+    ? -Math.abs(values.amount)
+    : Math.abs(values.amount);
+}
 
 export type InvestmentSavingsTransferFormValues = z.output<
   typeof investmentSavingsTransferSchema

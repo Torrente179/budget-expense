@@ -39,7 +39,7 @@ read on demand.
 | 03 | [Data Model](03-data-model.md) | All 25 Postgres tables by domain, relationships, RLS model, triggers, aggregate RPCs, and the migration history |
 | 04 | [API Surface](04-api-surface.md) | Every one of the 28 route handlers: methods, contracts, auth, validation, and behavior |
 | 05 | [Frontend Architecture](05-frontend-architecture.md) | App Router structure, the provider tree, component taxonomy, the design-token system, and mobile/responsive strategy |
-| 06 | [Domain Logic](06-domain-logic.md) | The business rules: budget pool math, envelope alerts, income-based giving, balance checkpoints, loans, onboarding personalization, investments |
+| 06 | [Domain Logic](06-domain-logic.md) | The business rules: income + envelopes, method seeding by `budget_role`, envelope alerts, giving, balance checkpoints, loans, category suggest ranking, onboarding, investments |
 | 07 | [Import Pipeline](07-import-pipeline.md) | Bank-statement ingestion, the two-path architecture, deduplication identity, and the load-bearing parity contract |
 | 08 | [Cross-Cutting Concerns](08-cross-cutting-concerns.md) | Authentication, internationalization, multi-currency, state & caching, error handling, performance |
 | 09 | [Operations](09-operations.md) | Infrastructure, environment variables, the migration workflow, known operational hazards, testing and gates |
@@ -81,8 +81,8 @@ If you only remember ten facts about this architecture, make them these.
    never trigger a refetch.
 
 6. **Giving is a share of income, structurally.** `resolveGivingTarget` takes plan
-   income first, recorded income second, and never expenses. This is enforced in
-   one function and documented as a product invariant.
+   income first, recorded income second, and never expenses. Monthly plans store
+   income only (no protected-% UX); methods seed envelopes via `budget_role`.
 
 7. **The import pipeline has a byte-level parity contract.** TypeScript
    normalizers in `src/lib/ledger/normalize.ts` must produce output identical to

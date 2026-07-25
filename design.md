@@ -34,7 +34,7 @@ of truth for every nav surface is
 | **Home** | `/home` | "How am I doing right now" — compact black hero (`remaining = income − spent`, pace bar + daily guide); Metas-style **Presupuesto** cards only (`kind = spending_limit`; swipe when &gt;3); category donut with legend % (no callout connectors); recent movements. Desktop: movements left, Presupuestos+donut right. Checkpoint bank balance lives in Settings / Wealth — not the hero. **Metas** (`contribution_goal`) live on `/budget`, never on Home. |
 | **Movements** | `/movements` (+`/recurring`) | The unified ledger: expenses + income, search/filter tabs, swipe-delete, edit sheets, recurring management. |
 | **Budget** | `/budget` | Dual engines: **Presupuestos** (ceilings; 100%=exceeded) + **Metas de aportación** (floors; 100%=success). Compact hero remaining = income − spent. Plan distribution includes both; recommendation from overspent Presupuestos. Methods seed by `budget_role` → `kind`. |
-| **Wealth** | `/wealth` (+`/investments`, `/savings`, `/liabilities`, `/loans`) | Everything owned and owed: net worth, allocation, runway, FX exposure, holdings, savings, debts, money lent. If it's a balance, it lives here. |
+| **Patrimonio** | `/wealth` (+`/accounts`, `/investments`, `/savings`, `/liabilities`, `/loans`) | The personal balance sheet: `netWorth = (accounts + savings + investments + moneyLent) − debts`. Black net-worth hero with the monthly change; quick-glance row (Evolución · Activos y deudas · Colchón financiero); **Organiza tu dinero** (5 category cards → pushed pages); by-currency. In-screen tabs **Resumen · Activos · Deudas**. If it's a balance, it lives here. **Available money is not a Patrimonio headline** — spendable "now" belongs to Home. |
 | **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, pillars, clickable 12-month + daily spend bars (magenta series), envelope utilization, anomalies, monthly report (owns category spend bars), calendar day drilldown. No data-entry CTAs. No duplicate standalone “Where it went” list. |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings` — reachable from the
@@ -63,12 +63,16 @@ font-size values in components** except:
 1. Dynamic **category color** (DB hex via `CategoryBadge` / donut inline style).
 2. **Budget usage-band** hex from [`src/lib/palette.ts`](src/lib/palette.ts)
    (Home Presupuesto cards / Budget meters). Cashflow amounts use CSS vars
-   (`income` / `available` / `expense`). The **black hero surface** is Home +
-   Budget summary chrome only — import it from
+   (`income` / `available` / `expense`). **Patrimonio category accents** come
+   from `WEALTH_ACCENTS` in the same file (accounts / savings / investments /
+   lent / debts). The **black hero surface** is the summary chrome for the three
+   screens that lead with one headline figure — **Home, Budget and
+   Patrimonio** — import it from
    [`src/components/patterns/hero-surface.tsx`](src/components/patterns/hero-surface.tsx)
    (`HERO_SURFACE`, `HERO_TILE`, `HERO_ICON_TILE`, `HERO_RULE`, `HERO_TRACK`,
-   `HERO_ACCENT`, `HeroSheen`) rather than writing ad-hoc `white/xx` values,
-   and do not reuse the surface on other cards.
+   `HERO_ACCENT`, `HERO_ACCENT_NEGATIVE`, `HERO_ACCENT_WARNING`, `HeroSheen`)
+   rather than writing ad-hoc `white/xx` values, and do not reuse the surface on
+   ordinary cards.
 3. **Insights spend series** `SPEND_CHART_COLOR` (`#EC4899`) in
    [`src/components/charts/chart-theme.tsx`](src/components/charts/chart-theme.tsx)
    — soft magenta for bar fills (matches clarity Health); not `--expense`
@@ -348,7 +352,15 @@ error states. No blank areas while fetching.
 | Budget/tithe progress | `<ProgressMeter ratio>` — default colors = usage bands; pass `tone` to override (Giving) |
 | Home Presupuesto cards | `BudgetPaceChart` — Metas-style cards, swipe pages; optional `onSelect` |
 | Create / edit a budget | `<BudgetWizard mode="create" \| "edit">` — centered modal (bottom sheet on mobile), 3 steps branching by kind |
+| Any 3-step creation flow | `<WizardModal>` in `patterns/wizard-modal.tsx` — Dialog/Sheet switch, step indicator, footer; `useDiscardPanel()` for the discard guard |
+| Wizard consequence block | `<FinancialImpact>` + `lib/wealth/transaction-effects.ts` — step 3 must state what the write does |
+| Confirm a destructive action | `<ConfirmDialog>` — `window.confirm` is banned |
+| Patrimonio category hero | `<WealthCategoryHero>` (black `HERO_SURFACE`) |
 | Home month hero | `HomeSummaryCard` + `lib/home/month-cashflow.ts` |
+| Net worth math | `lib/wealth/net-worth.ts` (pure) + `useNetWorth()` — never re-derive a total in a screen |
+| Patrimonio hero | `<PatrimonioHero>` (black `HERO_SURFACE`) |
+| Patrimonio category accent | `WEALTH_ACCENTS` in `lib/palette.ts` |
+| Cushion / goal meter | `<ProgressMeter tone="…">` — **always pass `tone`** when a full bar is good; the default bands read high as bad |
 | Stat tile swatch | `<StatCard swatchClassName="bg-income" …>` |
 | Add/edit a movement | `<CaptureSheet>` (await save before close; Save & add another) |
 | First-run setup | `/onboarding` + `useOnboarding` / `OnboardingGate` |

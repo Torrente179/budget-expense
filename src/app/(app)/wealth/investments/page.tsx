@@ -8,7 +8,9 @@ import { useInvestments } from "@/hooks/use-investments";
 import { formatCurrency } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
-import { WealthNav } from "@/components/wealth/wealth-nav";
+import { WealthBreadcrumb } from "@/components/wealth/wealth-breadcrumb";
+import { WealthCategoryHero } from "@/components/wealth/wealth-category-hero";
+import { TrendingUp } from "lucide-react";
 import { InvestmentOverviewCards } from "@/components/wealth/investment-overview-cards";
 import { HoldingsTable } from "@/components/wealth/holdings-table";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -202,8 +204,46 @@ export default function InvestmentStocksPage() {
           </Button>
         </>
       }
-      subheader={<WealthNav />}
+      subheader={<WealthBreadcrumb current={t("Investments", "Inversiones")} />}
     >
+      {accounts.length > 0 || loading ? (
+        <WealthCategoryHero
+          eyebrow={t("Portfolio value", "Valor de tus inversiones")}
+          amount={overview.totalMarketValue + overview.estimatedCash}
+          icon={TrendingUp}
+          delta={
+            overview.totalUnrealizedPnl !== 0
+              ? {
+                  amount: overview.totalUnrealizedPnl,
+                  label:
+                    overview.totalCostBasis > 0
+                      ? `· ${(
+                          (overview.totalUnrealizedPnl /
+                            overview.totalCostBasis) *
+                          100
+                        ).toFixed(2)}% ${t("return", "de rentabilidad")}`
+                      : t("unrealized", "no realizada"),
+                }
+              : null
+          }
+          stats={[
+            {
+              label: t("Contributed", "Capital aportado"),
+              value: formatCurrency(overview.totalCostBasis, baseCurrency),
+            },
+            {
+              label: t("Realized", "Ganancia realizada"),
+              value: formatCurrency(overview.totalRealizedPnl, baseCurrency),
+              tone: overview.totalRealizedPnl >= 0 ? "positive" : "negative",
+            },
+            {
+              label: t("Broker cash", "Caja de broker"),
+              value: formatCurrency(overview.estimatedCash, baseCurrency),
+            },
+          ]}
+        />
+      ) : null}
+
       {accounts.length === 0 && !loading ? (
         <Card>
           <CardContent className="flex flex-col items-start justify-between gap-4 p-5 sm:flex-row sm:items-center">

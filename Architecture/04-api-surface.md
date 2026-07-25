@@ -109,7 +109,7 @@ same database.
 
 | Route | Methods | Behavior |
 |---|---|---|
-| `/api/categories/[id]` | PATCH | Name, color, icon, `classification` |
+| `/api/categories/[id]` | PATCH | Name, color, icon, `classification`, `budget_role` (when provided) |
 | `/api/balance-checkpoints` | POST | Records a bank balance with reconciliation delta; books non-zero surplus/deficit as income/expense with standard bilingual names before inserting the checkpoint (rollback on checkpoint failure); consistency enforced by CHECK + trigger |
 
 Budget CRUD (`budgets`, `custom_budgets`, `monthly_budget_plans`) does **not** go
@@ -124,8 +124,8 @@ See [§4.4](#44-the-two-data-paths).
 | `/api/import/batches/[id]` | GET, PATCH, DELETE | 197 | Read with proposed rows; PATCH row overrides; DELETE a pending batch |
 | `/api/import/batches/[id]/commit` | POST | 271 | Inserts accepted rows into the ledger |
 | `/api/import/batches/[id]/rollback` | POST | 89 | Deletes rows carrying this `import_batch_id` |
-| `/api/categorization/rules` | POST | 52 | Creates a user rule |
-| `/api/categorization/suggest` | GET | 46 | As-you-type category suggestion in CaptureSheet |
+| `/api/categorization/rules` | POST | 52 | Creates a user rule (keyword preferably from `extractMerchantPattern`) |
+| `/api/categorization/suggest` | GET | — | Ranked top-3 category suggestions (rules + history) for CaptureSheet |
 
 The commit route re-runs deduplication at commit time rather than trusting the
 proposal — rows may have been added between upload and commit:

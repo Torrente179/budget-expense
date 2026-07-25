@@ -27,7 +27,7 @@ only):
 | Home | `/home` | Now + actionable: compact black hero (income − spent remaining, pace, daily); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
 | Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
 | Budget | `/budget` | Compact hero + dual engines: **Presupuestos** (ceilings) + **Metas de aportación** (floors); plan distribution + recommendation |
-| Wealth | `/wealth` (+ investments / savings / liabilities / loans) | Balances: owned, owed, and money lent |
+| Patrimonio | `/wealth` (+ accounts / investments / savings / liabilities / loans) | The balance sheet: `netWorth = (accounts + savings + investments + moneyLent) − debts`; net-worth hero, Evolución, Activos y deudas, Colchón financiero, Organiza tu dinero |
 | Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — ratios, clickable spend charts, monthly report, calendar; no data-entry CTAs |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings`, `/onboarding` (first-run).
@@ -408,7 +408,11 @@ Change notes: `changes/2026-07-24-budget-dual-engines-mockup.md`,
 `changes/2026-07-24-remove-protected-budget-percent.md`,
 `changes/2026-07-24-visible-delete-monthly-income.md`,
 `changes/2026-07-24-remove-primicias-card-from-budget.md`,
-`changes/2026-07-24-fix-method-seed-confirm-and-rpc.md`.
+`changes/2026-07-24-fix-method-seed-confirm-and-rpc.md`,
+`changes/2026-07-25-budget-wizard-modal.md`,
+`changes/2026-07-24-black-hero-surface.md`,
+`changes/2026-07-24-home-budget-cards-mockup-grid.md`,
+`changes/2026-07-25-document-black-hero-and-wizard-session.md`.
 
 ---
 
@@ -501,24 +505,124 @@ Architecture: `Architecture/06-domain-logic.md` §6.4, AD-8 in
 
 ---
 
-## 11. Wealth (current composition)
+## 11. Patrimonio (current composition)
 
-- **Overview** (`/wealth`): net worth + allocation together in one hero card
-  — big net-worth number, then a `BreakdownDonut` split across
-  investments / savings / broker cash (center total, legend with share %
-  and amount). A 3-up stat row (cash runway / months of buffer, kept over
-  12mo, debts). Premium jump-in cards to Investments / Savings / Debts.
-  FX shown as **By currency**.
+The personal balance sheet. It answers *what do I own, what do I owe, what am I
+worth today*; Presupuesto answers *what came in, what went out, what can I spend
+this month*. The same euro must never be counted in both.
+
+### The math — `src/lib/wealth/net-worth.ts` (pure, shared)
+
+```
+totalAssets      = accountsAndCash + savings + investments + moneyLent
+totalLiabilities = debts
+netWorth         = totalAssets − totalLiabilities
+```
+
+**Available money is a different figure** and is *not* a Patrimonio headline —
+only `include_in_available` accounts, plus available savings, minus reservations.
+A €9.950 net worth can sit beside €2.500 of spendable money.
+
+- `monthlyChange` = current − the previous month's closing net worth (the latest
+  snapshot on or before the last day of last month). No prior snapshot → both
+  the amount and the percentage are `null` and the hero renders **no** change
+  line. A zero previous month gives an amount but never an infinite percentage.
+- `cushionMonths` = liquid money ÷ average monthly essential spend, against a
+  6-month target. Tones: `<1` critical · `1–<3` building · `3–<6` good · `≥6`
+  strong. The essential average comes from `useHouseholdInsights`, which uses
+  the **6** most recent months that have data (`ESSENTIAL_WINDOW_MONTHS`) — the
+  copy must not claim a 12-month average.
+- Everything is computed once in `useNetWorth()`. No screen re-derives a total.
+
+### Overview (`/wealth`)
+
+- **Black net-worth hero** (`patrimonio-hero.tsx`) on the shared
+  `patterns/hero-surface.tsx` chrome. Empty state is
+  "Construye tu patrimonio" + `+ Añadir primera cuenta`; populated shows net
+  worth, the signed monthly change, and an `Activos · Deudas` split.
+- **Quick-glance row:** Evolución (net-worth area chart, 1M/3M/6M/1Y/All),
+  Activos y deudas (two-slice `BreakdownDonut`, net worth in the centre), and
+  Colchón financiero (`StatusTag` + `ProgressMeter`).
+- **Tabs:** Resumen · Activos · Deudas via `UnderlineTabs` (in-screen state).
+- **Organiza tu dinero:** five cards → Cuentas y efectivo · Ahorros ·
+  Inversiones · Dinero prestado · Deudas. An empty category still opens its
+  parent page, never a modal.
+- Empty state swaps the quick-glance row for a "Lo que verás aquí" preview
+  rather than rendering zeros.
+
+### Navigation
+
+Patrimonio is a **hub with pushed category pages**
+(`Patrimonio → category → item`). The old five-item `WealthNav` underline
+sub-nav is deleted; sub-pages carry a `Patrimonio / <category>` breadcrumb
+(`wealth-breadcrumb.tsx`) plus `Screen`'s back chevron.
+
+### Category pages
+
+- **Cuentas y efectivo** (`/wealth/accounts`): black hero (total liquid,
+  spendable, count), list, inline add form. The opening balance is stated as a
+  starting snapshot, **not** income for the month.
 - **Investments** (`/wealth/investments`): `UnderlineTabs` for
-  Overview / Orders / Cash / Watchlist.
-  Overview/cash mini-stats are plain label+number pairs, not bordered
-  blocks. Buy/Sell and Deposit/Withdrawal use `StatusTag`.
-- **Savings** / **Liabilities**: unchanged data model, same `WealthNav`
-  underline sub-nav.
-- Shared sub-nav: `src/components/wealth/wealth-nav.tsx` (underline tabs,
-  not chips).
+  Overview / Orders / Cash / Watchlist. Buy/Sell and Deposit/Withdrawal use
+  `StatusTag`.
+- **Savings** (`/wealth/savings`): black hero (total saved, net moved this
+  month, funds/movements/currencies). Movements now carry a **direction** —
+  deposit or withdrawal. The form takes a positive amount and
+  `signedSavingsAmount()` signs it at the API boundary;
+  `investment_savings_transfers.amount` is signed in the DB.
+- **Loans** (`/wealth/loans`): black hero (pendiente por cobrar, recovery
+  progress, total lent / recovered / active). Reuses `sumLoansOutstandingBase`
+  so the page and the Patrimonio hero cannot disagree.
+- **Liabilities** (`/wealth/liabilities`): black hero (deuda pendiente, payoff
+  progress, paid / original / active).
 
-Change note: `changes/2026-07-18-premium-sweep-wealth-insights.md`.
+### Creation wizards
+
+`components/patterns/wizard-modal.tsx` is the shared three-step shell —
+Dialog on desktop, bottom `Sheet` under 768px — extracted from `BudgetWizard`,
+which now runs on it. `useDiscardPanel()` supplies the "¿Descartar los
+cambios?" body/footer.
+
+Step 3 of every wizard shows `<FinancialImpact>`, driven by
+`lib/wealth/transaction-effects.ts`. That module encodes the rules users get
+wrong: an opening balance is not income, a transfer is not an expense, a market
+gain is not salary, recovered principal is not income. The preview and the
+write read the same function so they cannot drift.
+
+`AccountWizard` (`/wealth/accounts`) is the reference implementation. The
+savings, investment, loan and debt wizards are not built yet — those categories
+keep their existing single-step forms.
+
+Change notes: `changes/2026-07-25-patrimonio-net-worth-foundation.md`,
+`changes/2026-07-18-premium-sweep-wealth-insights.md`.
+
+---
+
+## 11b. Accounts and net-worth history
+
+**`wealth_accounts`** is the cash the balance sheet was missing — checking,
+savings, cash, digital wallet. Balance is derived
+(`opening_balance + Σ wealth_account_movements.amount`), matching how
+liabilities and loans already work. `include_in_available` decides spendability
+only; net worth always counts the account.
+
+**Relationship to `balance_checkpoints`.** Checkpoints remain the reconciliation
+tool and are **not** added to `totalAssets`, so there is no double count. A user
+with both will still see two figures for "my cash" until the Settings
+reconciliation is pointed at `wealth_accounts.is_primary` — the column ships as
+that seam.
+
+**`net_worth_snapshots`** — one row per user per day, enforced by
+`UNIQUE (user_id, as_of_date)`; the writer upserts, so the once-a-day rule is
+structural. Totals are stored already converted, with the base currency
+recorded.
+
+The write happens **on the client** (`useNetWorth`): conversion only exists in
+`CurrencyProvider.convert`, so no trigger or cron could compute net worth. It is
+guarded by a ref holding the last attempted date+value, and on success writes
+into the cache with `setQueryData` — invalidating would refetch, recompute and
+re-fire. Month-end needs no cron: the last day the user opened the app in a
+month is that month's closing snapshot. **History is not backfilled.**
 
 ---
 
@@ -599,6 +703,13 @@ Project `awpygbfocmynxpadpsji`. As of 2026-07-24 **all of these are applied**:
 | `2026-07-24-fix-replace-custom-budget-set-category-ids.sql` | RPC category UUID cast via `jsonb_array_elements_text` |
 | `2026-07-24-category-budget-roles.sql` | `categories.budget_role` + Insurance / Cash / Savings / Investments defaults |
 | `2026-07-24-reclassify-insurance-cash.sql` | Generali / Mutua → Insurance; ATM → Cash |
+| `20260725000000_budget_warn_threshold_and_repeat.sql` | `custom_budgets.warn_threshold` + `repeats_monthly`; copy RPC filters on repeat and carries both. **Applied 2026-07-25 via `supabase db push --linked`** — the only migration here besides `20260723000000` that the CLI tracks (the date-named ones don't match its filename pattern and are applied with `apply-sql.mjs`). |
+| `20260726000000_wealth_accounts.sql` | `wealth_accounts` + `wealth_account_movements`; partial unique index for one primary account per user |
+| `20260726000001_net_worth_snapshots.sql` | `net_worth_snapshots`, `UNIQUE (user_id, as_of_date)` |
+| `20260726000002_savings_withdrawals.sql` | `investment_savings_transfers.amount` relaxed from `> 0` to `<> 0` so savings can be withdrawn |
+| `20260726000003_wealth_updated_at_triggers.sql` | `updated_at` trigger on `wealth_accounts`; movement trigger forcing `user_id` and inheriting the account currency |
+
+All four applied **2026-07-26 via `supabase db push --linked`**.
 
 Verify:
 
@@ -608,7 +719,13 @@ node scripts/apply-sql.mjs --project app --query "SELECT proname FROM pg_proc p 
 node scripts/apply-sql.mjs --project app --query "SELECT name, color FROM public.categories WHERE lower(btrim(name)) IN ('housing','food & dining','salary','groceries') ORDER BY 1"
 node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='categories' AND column_name='budget_role'"
 node scripts/apply-sql.mjs --project app --query "SELECT pg_get_functiondef('public.replace_custom_budget_set(integer,integer,jsonb,boolean)'::regprocedure) LIKE '%jsonb_array_elements_text%' AS uses_text_elements"
+node scripts/apply-sql.mjs --project app --query "SELECT column_name FROM information_schema.columns WHERE table_schema='public' AND table_name='custom_budgets' AND column_name IN ('warn_threshold','repeats_monthly')"
+node scripts/apply-sql.mjs --project app --query "SELECT table_name, count(*) AS cols FROM information_schema.columns WHERE table_schema='public' AND table_name IN ('wealth_accounts','wealth_account_movements','net_worth_snapshots') GROUP BY 1 ORDER BY 1"
+node scripts/apply-sql.mjs --project app --query "SELECT pg_get_constraintdef(con.oid) AS def FROM pg_constraint con JOIN pg_class rel ON rel.oid=con.conrelid JOIN pg_namespace n ON n.oid=rel.relnamespace WHERE n.nspname='public' AND rel.relname='investment_savings_transfers' AND con.contype='c'"
 ```
+
+Expected: `net_worth_snapshots` 9 columns, `wealth_account_movements` 10,
+`wealth_accounts` 16; the savings constraint reads `CHECK ((amount <> (0)::numeric))`.
 
 Primary data owner: `pablopablo179@gmail.com`
 (`36d56f02-711b-4eac-80df-803bdb599828`).
@@ -639,7 +756,10 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Balance checkpoint API | `src/app/api/balance-checkpoints/route.ts` |
 | Available balance settings UI | `src/components/settings/balance-checkpoint-settings.tsx` |
 | Giving helpers | `src/lib/giving.ts` (`resolveGivingTarget`, `isGivingExpense`) |
-| Envelope alerts | `src/lib/budgeting/envelope-alerts.ts` |
+| Envelope alerts (+ per-budget ladder) | `src/lib/budgeting/envelope-alerts.ts` (`resolveAlertLadder`) |
+| Month-hero black chrome | `src/components/patterns/hero-surface.tsx` |
+| Create / edit a budget | `src/components/budgets/budget-wizard.tsx` |
+| Bare category pictogram | `CategoryGlyph` in `src/components/shared/category-badge.tsx` |
 | Budget roles + method seed | `src/lib/budgeting/budget-roles.ts`, `method-seed.ts` |
 | Plan write constant | `MONTHLY_PLAN_FULL_ALLOCATION` in `src/lib/validations.ts` |
 | Categorization suggest / learn | `src/lib/ledger/categorize.ts`, `merchant-pattern.ts`, `api/categorization/suggest` |
@@ -651,7 +771,18 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Budget | `src/components/budget/budget-screen.tsx` (reuses `BudgetPaceChart`) |
 | Custom budgets hook (RPC + fallback) | `src/hooks/use-custom-budgets.ts` |
 | Movements | `src/components/movements/movements-screen.tsx`, `virtualized-ledger.tsx` |
-| Wealth | `src/components/wealth/wealth-overview.tsx`, `wealth-nav.tsx` |
+| Net worth math (pure) | `src/lib/wealth/net-worth.ts` (+ `net-worth.test.ts`, `npm run test:wealth`) |
+| Net worth composition root | `src/hooks/use-net-worth.ts` (also owns the snapshot writer) |
+| Accounts data | `src/hooks/use-wealth-accounts.ts` |
+| Wealth API | `src/app/api/wealth/accounts/**`, `src/app/api/wealth/snapshots/` |
+| Patrimonio | `src/components/wealth/wealth-overview.tsx`, `patrimonio-hero.tsx`, `net-worth-trend-card.tsx`, `assets-debts-card.tsx`, `cushion-card.tsx`, `organize-money-grid.tsx`, `wealth-breakdown-list.tsx`, `wealth-breadcrumb.tsx` |
+| Accounts screen | `src/components/wealth/accounts-screen.tsx` |
+| Shared wizard shell | `src/components/patterns/wizard-modal.tsx` (`WizardModal`, `useDiscardPanel`) |
+| Wizard consequence rules | `src/lib/wealth/transaction-effects.ts` + `src/components/wealth/financial-impact.tsx` |
+| Account wizard | `src/components/wealth/wizards/account-wizard.tsx` |
+| Category page hero | `src/components/wealth/wealth-category-hero.tsx` |
+| In-app confirm | `src/components/shared/confirm-dialog.tsx` |
+| Patrimonio accents | `WEALTH_ACCENTS` in `src/lib/palette.ts` |
 | Insights | `src/components/insights/insights-screen.tsx`, `insights-trend-charts.tsx`, `deferred-insights-trend-charts.tsx`, `monthly-report.tsx`, `calendar-screen.tsx` |
 | Chart theme (incl. spend series color) | `src/components/charts/chart-theme.tsx` (`SPEND_CHART_COLOR`) |
 | Wisdom content | `src/lib/financial-wisdom.ts`, `src/lib/budgeting-methods.ts` |

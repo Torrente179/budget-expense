@@ -81,6 +81,38 @@ Management API with `SUPABASE_ACCESS_TOKEN`. The `--project ledger` flag is
 another vestige of the two-project era; both values now resolve to the same
 instance.
 
+### The Supabase CLI is also linked — and it ignores most of this directory
+
+`supabase/.temp/` holds a live link to the app project, so `supabase db push
+--linked` works. **But the CLI only recognises `<timestamp>_name.sql`** and
+silently logs `Skipping migration … (file name must match pattern)` for every
+date-named file here. As of 2026-07-25 the remote
+`supabase_migrations.schema_migrations` table therefore knows about only two
+files — `20260723000000_performance_data_contracts.sql` and
+`20260725000000_budget_warn_threshold_and_repeat.sql` — while ~20 date-named
+migrations that *are* applied to the database are invisible to it.
+
+Two consequences:
+
+1. **Never trust `supabase migration list` as the applied-status source.** Prose
+   in `docs/APP.md` §14 and the runbook remain authoritative.
+2. **Pick one path per migration and note which.** `apply-sql.mjs` runs any
+   filename; `db push` requires the timestamp form and records history. Mixing
+   them is how the current half-and-half state arose.
+
+Verifying DDL without Docker (`supabase db dump` needs it, and it usually isn't
+running): ask PostgREST with the anon key —
+
+```bash
+curl -s -o /dev/null -w "%{http_code}\n" \
+  "$NEXT_PUBLIC_SUPABASE_URL/rest/v1/custom_budgets?select=id,warn_threshold&limit=1" \
+  -H "apikey: $NEXT_PUBLIC_SUPABASE_ANON_KEY"
+```
+
+200 means the column exists *and* the schema cache is fresh; 400 means it
+doesn't. Always run a deliberately bogus column name as a control, otherwise the
+test proves nothing.
+
 ### Consequences of manual migration
 
 1. **Code can ship ahead of schema.** Hence the missing-table tolerance in

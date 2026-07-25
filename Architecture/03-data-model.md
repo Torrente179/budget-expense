@@ -7,8 +7,10 @@
 ## 3.1 Overview
 
 The database is a single Supabase Postgres instance (`awpygbfocmynxpadpsji`,
-`eu-west-1`) holding **25 tables** in the `public` schema, all with Row Level
-Security enabled, plus **6 functions** (3 trigger functions, 3 aggregate RPCs).
+`eu-west-1`) holding **28 tables** in the `public` schema, all with Row Level
+Security enabled, plus **14 functions** (trigger functions + RPCs). Counts
+verified against the live project on 2026-07-26; the previous "25 tables / 6
+functions" was stale.
 
 Every table is owner-scoped by `user_id` referencing `auth.users(id)` with
 `ON DELETE CASCADE`. The one exception is `categories`, whose `user_id` is
@@ -87,11 +89,19 @@ redirected into the wizard.
 | `color` | TEXT DEFAULT `'#6366f1'` | The one sanctioned dynamic color |
 | `is_default` | BOOLEAN | |
 | `classification` | TEXT NOT NULL DEFAULT `'discretionary'` | CHECK: `essential` \| `discretionary` \| `giving` \| `savings` |
+| `budget_role` | TEXT NOT NULL | Closed vocabulary for method seeding (e.g. `housing`, `tithe`, `loan_lent`, `income`) — see `src/lib/budgeting/budget-roles.ts` |
+| `applies_to` | TEXT | `expense` \| `income` \| `both` — which ledger side the category appears on |
 
 `classification` was added 2026-07-03 with a bilingual name-matching seed pass
 (`ILIKE '%housing%' OR '%vivienda%'` → essential; `'%tithe%' OR '%diezmo%'` →
-giving, and so on). It drives the Insights pillars, envelope hints, and giving
+giving, and so on). It drives the Insights pillars, liquidity views, and giving
 detection.
+
+`budget_role` (2026-07-24) is the finer key for **which method envelope** a
+category joins. Stewardship `classification` alone is too coarse (e.g. Loan is
+not “savings”; Insurance is not generic “essentials” for Base cero housing).
+`loan_lent` marks money **you** lend (Wealth → Loans), never personal debt
+payoff. Income categories use `income` and are excluded from spend seeds.
 
 Category names are **stored in English and translated for display**. The
 translation index in [`lib/constants.ts`](../src/lib/constants.ts) is keyed on an
@@ -143,37 +153,70 @@ conceptual complexity.
 
 `UNIQUE(user_id, category_id, month, year)`. One amount per category per month.
 
-### `monthly_budget_plans` — the pool
+### `monthly_budget_plans` — monthly income
 
 | Column | Notes |
 |---|---|
 | `income_amount` DECIMAL(12,2) > 0 | Planned monthly income |
 | `income_currency` | |
-| `allocation_percent` DECIMAL(5,2) | 0 < x ≤ 100, default 20 |
+| `allocation_percent` DECIMAL(5,2) | NOT NULL, 0 < x ≤ 100. **Product always writes `100`** (`MONTHLY_PLAN_FULL_ALLOCATION`). Legacy “protected %” UX removed 2026-07-24; column kept for NOT NULL / older rows. |
 | `UNIQUE(user_id, month, year)` | One plan per month |
 
-The **pool** = `income_amount × allocation_percent / 100`. This is the number the
-Budget screen and Home pace bar are built around.
+Product model: the plan is **expected income**, not a second savings system.
+Named envelopes (`custom_budgets`) own the spend split. UI totals prefer the sum
+of envelope limits when they exist. Older pool math
+(`income × allocation_percent / 100`) still exists in
+`calculateBudgetPoolMetrics` for compatibility when envelopes are absent.
 
-### `custom_budgets` — envelopes / objectives (the current model)
+### `custom_budgets` — envelopes (Presupuestos + Metas)
 
 | Column | Notes |
 |---|---|
 | `name` | 1–120 chars, `UNIQUE(user_id, name, month, year)` |
+| `kind` | `spending_limit` (Presupuesto / ceiling) \| `contribution_goal` (Meta / floor). Default `spending_limit`. Seeded from category roles / method slices. |
 | `amount_type` | CHECK `fixed` \| `percentage` |
 | `amount_value` DECIMAL(12,2) > 0 | Either an amount or a % of plan income |
 | `currency` | CHECK length 3 |
 | `month`, `year` | |
+| `warn_threshold` | NULL → the default 75/90/100 alert ladder; 50–99 (CHECK) → warn once there, then again at 100%. Read by `resolveAlertLadder()` in `envelope-alerts.ts`. Limits only — the wizard hides it for Metas. |
+| `repeats_monthly` | Default **true**. `copy_custom_budgets_from_previous_month` filters on it, so an unchecked budget is left behind when the user copies a month. |
 
 Joined to categories through `custom_budget_categories`
 (`UNIQUE(custom_budget_id, category_id)`), so one envelope can span several
 categories — "Lifestyle" covering Entertainment + Shopping + Travel, for example.
 
+**Nothing stops two envelopes claiming the same category**, and that overlap is
+not handled downstream — see [Known gaps](#known-gaps-envelope-overlap) below.
+There is no `parent_id`; envelopes are a flat list, so a "Gastos de vida" that
+conceptually contains Vivienda and Transporte is a *sibling* of them, not a
+parent.
+
+**Placement:** Home’s Presupuestos carousel filters to `spending_limit` only.
+Metas (`contribution_goal`) render on `/budget`. The month snapshot RPC must
+include `kind` (`2026-07-24-month-snapshot-budget-kind.sql`); client
+`resolveBudgetKind()` infers from linked categories if the field is absent.
+
 **Why two models coexist:** `budgets` predates the envelope rework.
 `calculateBudgetPoolMetrics` still reads `budgets` to compute
 `assignedCategoryBudgetTotal` and `isOverAssigned`, while the UI now surfaces
-`custom_budgets` as "objectives". Both are live. See
+`custom_budgets`. Both are live. See
 [10 — Assessment](10-architectural-decisions.md#risk-1-two-budget-models).
+
+<a id="known-gaps-envelope-overlap"></a>
+**Known gap — envelope overlap double-counts (unfixed, 2026-07-25).** When one
+category belongs to two envelopes, its spend is counted once per envelope:
+
+- `budget-screen.tsx` sums `totalConsumed` per envelope, then derives
+  `unallocatedSpent = monthTotalSpent − totalConsumed`. Double-counted spend
+  inflates `totalConsumed`, so the value clamps at `0` and **hides genuinely
+  unallocated spending**.
+- `planSlices` / plan distribution allocate the same euros twice, overstating
+  how much of income is committed.
+
+The create wizard warns at selection time (naming the other envelope) but does
+not prevent it, and existing overlaps and edits bypass the warning entirely.
+The aggregation needs fixing regardless of whether parent/child envelopes are
+ever added.
 
 ### `recurring_expenses`
 
@@ -275,7 +318,7 @@ Eight tables model the investing surface:
 | `investment_trades` | Buy/sell with quantity, price, fees |
 | `investment_cash_movements` | Deposit/withdrawal into broker cash |
 | `investment_watchlist` | Tracked-but-unowned symbols |
-| `investment_savings_accounts` | Bank savings (country, product type, APR) |
+| `investment_savings_accounts` | Bank savings (country, bank, product type, account name, currency). **No APR column exists** — `interest_rate_percent` lives only on `liabilities`. |
 | `investment_savings_transfers` | Deposits/withdrawals to savings |
 | `market_price_history` | Cached quotes keyed by asset lookup |
 
@@ -300,13 +343,47 @@ keys implement the **dual-write** design: lending money creates both a loan reco
 CASCADE means deleting the movement leaves the loan intact but unlinked — the
 receivable survives a ledger cleanup.
 
+### Accounts and net-worth history (added 2026-07-26)
+
+| Table | Purpose |
+|---|---|
+| `wealth_accounts` | Cuentas y efectivo: `kind` (checking/savings/cash/digital_wallet/other), `name`, `institution`, `currency`, `opening_balance`, `opening_date`, `include_in_available`, `is_primary`, `color`, `icon`, `notes`, `status` |
+| `wealth_account_movements` | Signed balance deltas: `movement_type` (opening_balance/transfer_in/transfer_out/adjustment), `amount` (`<> 0`), `occurred_on`, `linked_account_id` |
+| `net_worth_snapshots` | Daily history: `as_of_date`, `base_currency`, `total_assets`, `total_liabilities`, `net_worth`, `breakdown` jsonb |
+
+Three design points worth knowing:
+
+1. **Account balance is derived, never stored** — `opening_balance + Σ movements`.
+   This matches `liabilities` (`original_balance − Σ payments`) and `loans`
+   (`principal − Σ repayments`), so all three read the same way.
+2. **`UNIQUE (user_id, as_of_date)` on snapshots is the once-a-day rule.** The
+   writer upserts, so a duplicate request updates rather than appending. A
+   partial unique index `(user_id) WHERE is_primary` likewise makes "one primary
+   account" structural rather than enforced in application code.
+3. **`enforce_wealth_account_movement`** (BEFORE INSERT OR UPDATE) forces
+   `user_id` from `auth.uid()` and inherits `currency` from the parent account,
+   raising `42501` if the account is not the caller's. One account has one
+   currency, so a movement can never introduce an FX event of its own.
+
+**Relationship to `balance_checkpoints`.** Checkpoints stay the reconciliation
+tool and are **not** summed into `totalAssets`, so net worth is not
+double-counted. `wealth_accounts.is_primary` exists so the Settings
+reconciliation can later target a real account; until then the app can present
+two different figures for liquid cash.
+
+Also changed: `investment_savings_transfers.amount` was relaxed from
+`CHECK (amount > 0)` to `CHECK (amount <> 0)`. Savings previously could only
+ratchet up — there was no withdrawal path in the schema, the API or the UI —
+which a balance sheet cannot support. Negative now means a withdrawal, mirroring
+`liability_payments.amount`.
+
 ---
 
 ## 3.7 Security model
 
 ### Row Level Security
 
-All 25 tables run `ENABLE ROW LEVEL SECURITY` with policies of the form:
+All 28 tables run `ENABLE ROW LEVEL SECURITY` with policies of the form:
 
 ```sql
 CREATE POLICY "Users can view own loans"
@@ -378,6 +455,24 @@ only sequencing.
 | 2026-07-22 | `loan-category` | Loan category + banknote icon |
 | 2026-07-22 | `income-categories-loan-people` | `income_entries.category_id`, `loan_people` |
 | 2026-07-24 | `palette-v2-category-colors` | Clarity category hex update by known EN/ES names (Housing yellow `#EAB308`) |
+| 2026-07-24 | `fix-replace-custom-budget-set-category-ids` | RPC uses `jsonb_array_elements_text` so category UUIDs cast correctly |
+| 2026-07-24 | `category-budget-roles` | `categories.budget_role` + Insurance / Cash / Savings / Investments defaults |
+| 2026-07-24 | `reclassify-insurance-cash` | Generali / Mutua → Insurance; ATM → Cash |
+| 2026-07-24 | `custom-budget-kinds` | `custom_budgets.kind` (`spending_limit` \| `contribution_goal`) + copy/seed RPCs |
+| 2026-07-24 | `month-snapshot-budget-kind` | `prepare_month_snapshot` includes `custom_budgets.kind` |
+| 2026-07-23 | `20260723000000_performance_data_contracts` | `get_app_bootstrap`, `prepare_month_snapshot`, `get_household_insights` |
+| 2026-07-25 | `20260725000000_budget_warn_threshold_and_repeat` | `custom_budgets.warn_threshold` + `repeats_monthly` |
+| 2026-07-26 | `20260726000000_wealth_accounts` | `wealth_accounts` + `wealth_account_movements` |
+| 2026-07-26 | `20260726000001_net_worth_snapshots` | `net_worth_snapshots` |
+| 2026-07-26 | `20260726000002_savings_withdrawals` | Savings transfers may be negative |
+| 2026-07-26 | `20260726000003_wealth_updated_at_triggers` | `updated_at` + movement guard triggers |
+
+**Two filename conventions, two apply paths.** Date-named files
+(`2026-07-24-*.sql`) do **not** match the Supabase CLI's
+`<timestamp>_name.sql` pattern, so `supabase db push` silently *skips* them —
+they are applied by hand with `apply-sql.mjs` and are invisible to
+`supabase migration list`. Timestamp-named files are CLI-tracked and applied
+with `supabase db push --linked`. New migrations should use the timestamp form.
 
 Several migrations carry headers reading *"Apply to BOTH Supabase projects"* — an
 artifact of the retired two-project era. Those instructions are now obsolete but

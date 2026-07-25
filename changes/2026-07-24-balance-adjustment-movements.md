@@ -23,3 +23,9 @@
 
 - Added unit coverage for surplus/deficit label selection and bilingual translation.
 - `npm run test:balance` and targeted TypeScript/lint checks for touched files.
+
+## Documentation
+
+Product and architecture docs were synced in
+`changes/2026-07-24-document-balance-adjustment-movements.md`
+(`docs/APP.md`, `Architecture/` §§ 03, 04, 06, 10, README).
