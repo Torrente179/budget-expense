@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -275,7 +276,12 @@ function LiabilityRow({
     <li className="space-y-2 rounded-lg bg-card p-3 ring-1 ring-border">
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{liability.name}</p>
+          <Link
+            href={`/wealth/liabilities/${liability.id}`}
+            className="block truncate text-sm font-medium hover:underline"
+          >
+            {liability.name}
+          </Link>
           <p className="text-xs text-muted-foreground">
             {liabilityKindLabel(liability.kind, t)}
             {liability.interest_rate_percent != null &&

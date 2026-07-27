@@ -26,6 +26,7 @@ import {
   type WizardStep,
 } from "@/components/patterns/wizard-modal";
 import { FinancialImpact } from "@/components/wealth/financial-impact";
+import { OverlapNotice } from "@/components/wealth/wizards/overlap-notice";
 import { CURRENCIES } from "@/lib/constants";
 import { PALETTE } from "@/lib/palette";
 import { cn, formatCurrency, parseDecimalInput } from "@/lib/utils";
@@ -319,6 +320,17 @@ export function AccountWizard({
             </span>
           </span>
         </label>
+
+        {kind === "savings" && (
+          <OverlapNotice
+            href="/wealth/savings"
+            linkLabel={t("Savings", "Ahorros")}
+            message={t(
+              "A savings pot with a goal belongs in",
+              "Un fondo con objetivo va en"
+            )}
+          />
+        )}
       </div>
 
       <div className="lg:sticky lg:top-0">

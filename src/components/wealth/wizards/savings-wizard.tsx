@@ -18,6 +18,7 @@ import {
   type WizardStep,
 } from "@/components/patterns/wizard-modal";
 import { FinancialImpact } from "@/components/wealth/financial-impact";
+import { OverlapNotice } from "@/components/wealth/wizards/overlap-notice";
 import {
   ReviewRow,
   ReviewTable,
@@ -287,6 +288,17 @@ export function SavingsWizard({
             </span>
           </span>
         </label>
+
+        {kind === "account" && (
+          <OverlapNotice
+            href="/wealth/accounts"
+            linkLabel={t("Accounts & cash", "Cuentas y efectivo")}
+            message={t(
+              "A plain bank account with no goal belongs in",
+              "Una cuenta del banco sin objetivo va en"
+            )}
+          />
+        )}
       </div>
 
       <div className="lg:sticky lg:top-0">

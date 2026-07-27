@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { Plus, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Screen } from "@/components/patterns/screen";
@@ -165,9 +166,12 @@ export function AccountsScreen() {
                         </span>
 
                         <div className="min-w-0 flex-1">
-                          <p className="truncate text-body font-medium">
+                          <Link
+                            href={`/wealth/accounts/${account.id}`}
+                            className="block truncate text-body font-medium hover:underline"
+                          >
                             {account.name}
-                          </p>
+                          </Link>
                           <p className="truncate text-caption text-muted-foreground">
                             {kindLabel
                               ? t(kindLabel.en, kindLabel.es)

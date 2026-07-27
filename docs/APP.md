@@ -607,10 +607,21 @@ in their own card so it is clear which figures come from a feed.
 
 ### Item detail
 
-`/wealth/accounts/[id]` and `/wealth/investments/[id]` share
-`WealthItemDetail`. The destructive action is **archive**, never delete: these
-rows feed historical net worth, and hard-deleting one silently rewrites months
-of the Evolución chart.
+All four categories have detail pages — `/wealth/accounts/[id]`,
+`/wealth/investments/[id]`, `/wealth/loans/[id]`, `/wealth/liabilities/[id]` —
+sharing `WealthItemDetail`. The destructive action is **archive** (or
+`is_active: false` for loans and debts), never delete: these rows feed
+historical net worth, and hard-deleting one silently rewrites months of the
+Evolución chart while orphaning its payments.
+
+### The one genuine overlap
+
+A bank savings account can be entered as a `wealth_accounts` row of kind
+`savings` **or** as a savings fund; the product offers both because a fund with
+a goal is not a current account. Both count toward net worth, so
+`wizards/overlap-notice.tsx` warns inline and links to the other place —
+non-blocking, matching how `BudgetWizard` handles two envelopes sharing a
+category.
 
 ### One cash figure
 
