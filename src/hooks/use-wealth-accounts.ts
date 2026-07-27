@@ -88,8 +88,44 @@ export function useWealthAccounts() {
     onSuccess: invalidate,
   });
 
+  /**
+   * Archive, not delete. Movements cascade on delete, so removing an account
+   * with history silently rewrites past net worth.
+   */
+  const archiveAccount = useMutation({
+    mutationFn: (id: string) =>
+      authorizedFetch<{ account: WealthAccount }>(
+        `/api/wealth/accounts/${id}`,
+        { method: "PATCH", body: JSON.stringify({ status: "archived" }) }
+      ),
+    onSuccess: invalidate,
+  });
+
+  /**
+   * Exactly one account can be primary — a partial unique index enforces it —
+   * so promoting one demotes the incumbent first, or the insert 409s.
+   */
+  const setPrimaryAccount = useMutation({
+    mutationFn: async (id: string) => {
+      const current = resolved.find((account) => account.is_primary);
+      if (current && current.id !== id) {
+        await authorizedFetch(`/api/wealth/accounts/${current.id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ is_primary: false }),
+        });
+      }
+      return authorizedFetch(`/api/wealth/accounts/${id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ is_primary: true }),
+      });
+    },
+    onSuccess: invalidate,
+  });
+
   return {
     accounts: resolved,
+    archiveAccount,
+    setPrimaryAccount,
     activeAccounts: active,
     movements: data?.movements ?? [],
     totalBase,

@@ -51,6 +51,7 @@ export function AccountsScreen() {
     availableBase,
     loading,
     createAccount,
+    setPrimaryAccount,
   } = useWealthAccounts();
 
   const [wizardOpen, setWizardOpen] = useState(false);
@@ -184,6 +185,21 @@ export function AccountsScreen() {
                               account.currency
                             )}
                           </p>
+                          {account.is_primary ? (
+                            <StatusTag tone="info" className="mt-0.5">
+                              {t("Reconciled", "Conciliada")}
+                            </StatusTag>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setPrimaryAccount.mutate(account.id)
+                              }
+                              className="mt-0.5 text-caption text-primary hover:underline"
+                            >
+                              {t("Make primary", "Hacer principal")}
+                            </button>
+                          )}
                           {!account.include_in_available && (
                             <StatusTag tone="neutral" className="mt-0.5">
                               {t("Not spendable", "No disponible")}

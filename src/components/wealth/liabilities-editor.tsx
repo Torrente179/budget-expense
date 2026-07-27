@@ -2,26 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Landmark, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { EmptyState } from "@/components/shared/empty-state";
-import { CURRENCIES } from "@/lib/constants";
-import { liabilityKindLabel, liabilityKindOptions } from "@/lib/liability-kinds";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { queryKeys } from "@/lib/query/keys";
 import { WealthCategoryHero } from "@/components/wealth/wealth-category-hero";
-import { CreditCard } from "lucide-react";
+import {
+  DebtWizard,
+  type DebtWizardValues,
+} from "@/components/wealth/wizards/debt-wizard";
+import { CreditCard, Landmark, Plus, Trash2 } from "lucide-react";
+import { liabilityKindLabel } from "@/lib/liability-kinds";
 import { formatCurrency, parseDecimalInput } from "@/lib/utils";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -52,54 +46,32 @@ export function LiabilitiesEditor() {
       queryClient.invalidateQueries({ queryKey: queryKeys.householdInsights }),
     ]);
 
-  const [showForm, setShowForm] = useState(false);
-  const [name, setName] = useState("");
-  const [kind, setKind] = useState("loan");
-  const [balance, setBalance] = useState("");
-  const [currency, setCurrency] = useState(baseCurrency);
-  const [rate, setRate] = useState("");
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const addLiability = useMutation({
-    mutationFn: () => {
-      const parsedBalance = parseDecimalInput(balance);
-      if (
-        typeof parsedBalance !== "number" ||
-        !Number.isFinite(parsedBalance) ||
-        parsedBalance < 0
-      ) {
-        throw new Error(t("Invalid balance", "Saldo inválido"));
-      }
-      const parsedRate = rate.trim()
-        ? Number(rate.replace(",", "."))
-        : null;
-      return authorizedFetch("/api/liabilities", {
+    mutationFn: (values: DebtWizardValues) =>
+      authorizedFetch("/api/liabilities", {
         method: "POST",
         body: JSON.stringify({
-          name: name.trim(),
-          kind,
-          original_balance: parsedBalance,
-          currency,
-          interest_rate_percent: parsedRate,
+          name: values.name,
+          kind: values.kind,
+          original_balance: values.original_balance,
+          currency: values.currency,
+          interest_rate_percent: values.interest_rate_percent,
+          notes: values.notes,
         }),
-      });
-    },
+      }),
     onSuccess: async () => {
       await invalidate();
-      setShowForm(false);
-      setName("");
-      setBalance("");
-      setRate("");
-      toast.success(t("Liability added", "Pasivo añadido"));
+      toast.success(t("Debt added", "Deuda añadida"));
     },
     onError: (error) =>
       toast.error(
         error instanceof Error
           ? error.message
-          : t("Could not add the liability", "No se pudo añadir el pasivo")
+          : t("Could not add the debt", "No se pudo añadir la deuda")
       ),
   });
-
-  const kinds = liabilityKindOptions(t);
 
   const activeLiabilities = (data?.liabilities ?? []).filter(
     (liability) => liability.is_active
@@ -184,7 +156,7 @@ export function LiabilitiesEditor() {
           </p>
         ) : isPending ? (
           <div className="h-16 animate-pulse rounded-xl bg-muted" />
-        ) : data && data.liabilities.length === 0 && !showForm ? (
+        ) : data && data.liabilities.length === 0 ? (
           <EmptyState
             icon={Landmark}
             title={t("Debt-free", "Sin deudas")}
@@ -210,115 +182,20 @@ export function LiabilitiesEditor() {
           </ul>
         )}
 
-        {showForm ? (
-          <div className="space-y-3 rounded-lg bg-secondary/40 p-3 ring-1 ring-border">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="liability-name">{t("Name", "Nombre")}</Label>
-                <Input
-                  id="liability-name"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
-                  placeholder={t("e.g. Car loan", "p. ej. Préstamo del coche")}
-                />
-              </div>
-              <div className="space-y-1.5">
-                <Label>{t("Type", "Tipo")}</Label>
-                {/* Base UI shows the raw value unless `items` supplies labels. */}
-                <Select
-                  value={kind}
-                  onValueChange={(v) => v && setKind(v)}
-                  items={kinds}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {kinds.map((item) => (
-                      <SelectItem key={item.value} value={item.value}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="liability-balance">
-                  {t("Current balance", "Saldo actual")}
-                </Label>
-                <div className="flex gap-2">
-                  <Input
-                    id="liability-balance"
-                    inputMode="decimal"
-                    value={balance}
-                    onChange={(event) => setBalance(event.target.value)}
-                    className="font-mono tabular-nums"
-                  />
-                  <Select
-                    value={currency}
-                    onValueChange={(v) => v && setCurrency(v as typeof currency)}
-                  >
-                    <SelectTrigger className="w-24 font-mono text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CURRENCIES.map((item) => (
-                        <SelectItem key={item.code} value={item.code}>
-                          {item.code}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="liability-rate">
-                  {t("Interest % (optional)", "Interés % (opcional)")}
-                </Label>
-                <Input
-                  id="liability-rate"
-                  inputMode="decimal"
-                  value={rate}
-                  onChange={(event) => setRate(event.target.value)}
-                  className="font-mono tabular-nums"
-                />
-              </div>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => addLiability.mutate()}
-                disabled={addLiability.isPending || !name.trim() || !balance.trim()}
-              >
-                {addLiability.isPending && (
-                  <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                )}
-                {t("Add liability", "Añadir pasivo")}
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setShowForm(false)}
-              >
-                {t("Cancel", "Cancelar")}
-              </Button>
-            </div>
-          </div>
-        ) : (
-          !isError && (
-            <Button size="sm" variant="outline" onClick={() => setShowForm(true)}>
-              <Plus />
-              {t("Add liability", "Añadir pasivo")}
-            </Button>
-          )
+        {!isError && (
+          <Button size="sm" variant="outline" onClick={() => setWizardOpen(true)}>
+            <Plus />
+            {t("Add debt", "Añadir deuda")}
+          </Button>
         )}
-
-        <p className="text-xs text-muted-foreground">
-          {t("Balances shown in", "Saldos mostrados en")} {baseCurrency}{" "}
-          {t("where converted.", "cuando se convierten.")}
-        </p>
       </CardContent>
       </Card>
+
+      <DebtWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        onSubmit={(values) => addLiability.mutateAsync(values)}
+      />
     </>
   );
 }

@@ -17,6 +17,10 @@ import { Screen } from "@/components/patterns/screen";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { WealthBreadcrumb } from "@/components/wealth/wealth-breadcrumb";
 import { WealthCategoryHero } from "@/components/wealth/wealth-category-hero";
+import {
+  SavingsWizard,
+  type SavingsWizardValues,
+} from "@/components/wealth/wizards/savings-wizard";
 import { SavingsTransferTable } from "@/components/wealth/savings-transfer-table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -67,6 +71,44 @@ export default function InvestmentSavingsPage() {
   });
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [wizardOpen, setWizardOpen] = useState(false);
+
+  /**
+   * The wizard speaks in plain terms (name, where it is held, balance); the
+   * table underneath needs a bank/product shape. Map once, here, so the wizard
+   * never has to know about `country_code` or `product_type`.
+   */
+  async function handleCreateFund(values: SavingsWizardValues) {
+    const created = await addSavingsAccount({
+      country_code: values.currency === "COP" ? "CO" : "ES",
+      bank_code: values.bank.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 48) || "other",
+      bank_name: values.bank,
+      product_type: "savings_account",
+      product_name: values.name,
+      account_name: values.name,
+      currency: values.currency,
+      target_amount: values.target,
+      include_in_available: values.includeInAvailable,
+    });
+
+    // runMutation resolves to an Error rather than throwing, so a failed
+    // create must not be followed by an orphan movement.
+    if (created instanceof Error) return;
+
+    // An opening balance is recorded as the fund's first movement, so the
+    // balance and its history agree from the start.
+    if (values.balance > 0 && created?.id) {
+      await addSavingsTransfer({
+        savings_account_id: created.id,
+        transfer_date: new Date().toISOString().slice(0, 10),
+        amount: values.balance,
+        direction: "deposit",
+        currency: values.currency,
+        notes: t("Opening balance", "Saldo inicial"),
+        source_kind: "manual",
+      });
+    }
+  }
 
   /** Net movement this month — deposits minus withdrawals, in base currency. */
   const movedThisMonth = useMemo(() => {
@@ -106,7 +148,7 @@ export default function InvestmentSavingsPage() {
       backHref="/wealth"
       actions={
         <>
-          <Button size="sm" className="gap-1.5" onClick={() => openAccountForm()}>
+          <Button size="sm" className="gap-1.5" onClick={() => setWizardOpen(true)}>
             <Plus className="h-4 w-4" />
             <span className="hidden md:inline">
               {t("Add account", "Agregar cuenta")}
@@ -302,6 +344,12 @@ export default function InvestmentSavingsPage() {
           }}
         />
       ) : null}
+      <SavingsWizard
+        open={wizardOpen}
+        onOpenChange={setWizardOpen}
+        onSubmit={handleCreateFund}
+      />
+
       <ConfirmDialog
         open={pendingDeleteId !== null}
         onOpenChange={(open) => {

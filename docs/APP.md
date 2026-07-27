@@ -589,9 +589,36 @@ wrong: an opening balance is not income, a transfer is not an expense, a market
 gain is not salary, recovered principal is not income. The preview and the
 write read the same function so they cannot drift.
 
-`AccountWizard` (`/wealth/accounts`) is the reference implementation. The
-savings, investment, loan and debt wizards are not built yet — those categories
-keep their existing single-step forms.
+All five wizards are built: **cuenta · ahorro · inversión · dinero prestado ·
+deuda**, sharing `wizards/wizard-parts.tsx` for the type step and review table.
+
+The loan wizard's type step changes *behaviour*, not just copy: "ya fue
+prestado" is an opening snapshot and writes no movement, while "voy a prestarlo
+ahora" sets `create_movement` so a Loan expense appears in Movements.
+
+### Two investment models
+
+The trade-based model (`brokerage_accounts → investment_assets →
+investment_trades`) prices positions from FIFO lots and live quotes. It cannot
+express "my pension is worth 10.000 € and I put in 9.550 €" — no quantity, no
+ticker. `wealth_investments` holds that second kind, priced by hand. Net worth
+sums both; they never overlap, and the Inversiones page lists manual holdings
+in their own card so it is clear which figures come from a feed.
+
+### Item detail
+
+`/wealth/accounts/[id]` and `/wealth/investments/[id]` share
+`WealthItemDetail`. The destructive action is **archive**, never delete: these
+rows feed historical net worth, and hard-deleting one silently rewrites months
+of the Evolución chart.
+
+### One cash figure
+
+Saving a reconciliation in Settings also writes an `adjustment` movement on
+`wealth_accounts.is_primary`, so the account balance matches the reconciled
+figure. Balances are derived from movements, so recording the difference is the
+only honest way to move one. Accounts are promoted to primary from the list; a
+partial unique index allows exactly one.
 
 Change notes: `changes/2026-07-25-patrimonio-net-worth-foundation.md`,
 `changes/2026-07-18-premium-sweep-wealth-insights.md`.
@@ -708,8 +735,10 @@ Project `awpygbfocmynxpadpsji`. As of 2026-07-24 **all of these are applied**:
 | `20260726000001_net_worth_snapshots.sql` | `net_worth_snapshots`, `UNIQUE (user_id, as_of_date)` |
 | `20260726000002_savings_withdrawals.sql` | `investment_savings_transfers.amount` relaxed from `> 0` to `<> 0` so savings can be withdrawn |
 | `20260726000003_wealth_updated_at_triggers.sql` | `updated_at` trigger on `wealth_accounts`; movement trigger forcing `user_id` and inheriting the account currency |
+| `20260726000004_wealth_investments.sql` | `wealth_investments` — manually valued holdings with no trade history |
+| `20260726000005_savings_targets.sql` | `investment_savings_accounts.target_amount`, `target_date`, `include_in_available` |
 
-All four applied **2026-07-26 via `supabase db push --linked`**.
+All six applied **2026-07-26 via `supabase db push --linked`**.
 
 Verify:
 
@@ -779,7 +808,9 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Accounts screen | `src/components/wealth/accounts-screen.tsx` |
 | Shared wizard shell | `src/components/patterns/wizard-modal.tsx` (`WizardModal`, `useDiscardPanel`) |
 | Wizard consequence rules | `src/lib/wealth/transaction-effects.ts` + `src/components/wealth/financial-impact.tsx` |
-| Account wizard | `src/components/wealth/wizards/account-wizard.tsx` |
+| Wizards | `src/components/wealth/wizards/` — `account`, `savings`, `investment`, `loan`, `debt`, plus shared `wizard-parts.tsx` |
+| Manual investments | `src/hooks/use-wealth-investments.ts`, `src/app/api/wealth/investments/` |
+| Item detail | `src/components/wealth/wealth-item-detail.tsx` |
 | Category page hero | `src/components/wealth/wealth-category-hero.tsx` |
 | In-app confirm | `src/components/shared/confirm-dialog.tsx` |
 | Patrimonio accents | `WEALTH_ACCENTS` in `src/lib/palette.ts` |

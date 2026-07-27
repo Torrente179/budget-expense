@@ -306,11 +306,11 @@ export function useInvestments(options: UseInvestmentsOptions = {}) {
     errorMessage: string
   ) {
     try {
-      await requestInvestmentMutation(method, body);
+      const result = await requestInvestmentMutation(method, body);
       void queryClient.invalidateQueries({
         queryKey: queryKeys.investmentsAll,
       });
-      return null;
+      return result?.id ? { id: result.id } : null;
     } catch (error) {
       toast.error(
         error instanceof Error && error.message.length > 0

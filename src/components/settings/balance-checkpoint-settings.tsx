@@ -12,7 +12,11 @@ import { Label } from "@/components/ui/label";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { queryKeys } from "@/lib/query/keys";
+import { useWealthAccounts } from "@/hooks/use-wealth-accounts";
 import { getBalanceAdjustmentLabel } from "@/lib/balance-checkpoint";
+
+/** Cent-safe so a float tail never writes a 0.0000001 adjustment. */
+const roundToCents = (value: number) => Math.round(value * 100) / 100;
 import {
   formatCurrency,
   parseLocalizedCurrencyInput,
@@ -34,6 +38,8 @@ export function BalanceCheckpointSettings() {
   const today = format(now, "yyyy-MM-dd");
   const monthStart = `${year}-${String(month).padStart(2, "0")}-01`;
   const { summary, loading } = useMonthlySummary({ month, year });
+  const { activeAccounts } = useWealthAccounts();
+  const primaryAccount = activeAccounts.find((account) => account.is_primary);
   const [balanceInput, setBalanceInput] = useState("");
   const [saving, setSaving] = useState(false);
 
@@ -91,6 +97,41 @@ export function BalanceCheckpointSettings() {
             : "monthly_net",
         }),
       });
+      // Keep the primary account in step with the reconciled figure. Without
+      // this the app carries two different numbers for the same cash: the
+      // checkpoint here, and `wealth_accounts` on Patrimonio. The account
+      // balance is derived from movements, so the only honest way to move it
+      // is to record the difference as an adjustment.
+      if (primaryAccount && primaryAccount.currency === baseCurrency) {
+        const drift = roundToCents(enteredBalance - primaryAccount.balance);
+        if (Math.abs(drift) >= 0.01) {
+          try {
+            await authorizedFetch(
+              `/api/wealth/accounts/${primaryAccount.id}/movements`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  movement_type: "adjustment",
+                  amount: drift,
+                  occurred_on: today,
+                  note: t("Balance reconciliation", "Conciliación de saldo"),
+                }),
+              }
+            );
+          } catch (error) {
+            // The checkpoint already saved; a failed sync must not look like a
+            // failed reconciliation.
+            console.error("Failed to sync the primary account", error);
+            toast.warning(
+              t(
+                "Balance reconciled, but the primary account could not be updated",
+                "Saldo conciliado, pero no se pudo actualizar la cuenta principal"
+              )
+            );
+          }
+        }
+      }
+
       setBalanceInput("");
       await Promise.all([
         queryClient.invalidateQueries({
@@ -98,6 +139,7 @@ export function BalanceCheckpointSettings() {
         }),
         queryClient.invalidateQueries({ queryKey: queryKeys.expensesAll }),
         queryClient.invalidateQueries({ queryKey: queryKeys.incomesAll }),
+        queryClient.invalidateQueries({ queryKey: queryKeys.wealthAccounts }),
       ]);
       toast.success(t("Balance reconciled", "Saldo conciliado"));
     } catch (error) {

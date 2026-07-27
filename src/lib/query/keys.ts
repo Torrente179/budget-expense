@@ -55,6 +55,7 @@ export const queryKeys = {
   loans: ["loans"] as const,
   liabilities: ["liabilities"] as const,
   wealthAccounts: ["wealth-accounts"] as const,
+  wealthInvestments: ["wealth-investments"] as const,
   netWorthSnapshots: ["net-worth-snapshots"] as const,
 
   onboardingProfile: ["onboarding-profile"] as const,

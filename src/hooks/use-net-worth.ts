@@ -18,6 +18,7 @@ import {
 import { useHouseholdInsights } from "@/hooks/use-household-insights";
 import { useInvestments } from "@/hooks/use-investments";
 import { useWealthAccounts } from "@/hooks/use-wealth-accounts";
+import { useWealthInvestments } from "@/hooks/use-wealth-investments";
 import { useCurrency } from "@/providers/currency-provider";
 import type { Database } from "@/types/database";
 
@@ -78,6 +79,11 @@ export function useNetWorth(): NetWorthResult {
     count: accountsCount,
     loading: accountsLoading,
   } = useWealthAccounts();
+  const {
+    totals: manualInvestments,
+    count: manualInvestmentCount,
+    loading: manualInvestmentsLoading,
+  } = useWealthInvestments();
 
   const { data: loansData, isPending: loansLoading } = useQuery({
     queryKey: queryKeys.loans,
@@ -121,7 +127,12 @@ export function useNetWorth(): NetWorthResult {
       computeNetWorth({
         accountsAndCash: accountsBase,
         savings: totalSavingsBalance,
-        investments: overview.totalMarketValue + overview.estimatedCash,
+        // Two investment models, never overlapping: trade-tracked positions
+        // (FIFO lots + live quotes) and manually valued holdings.
+        investments:
+          overview.totalMarketValue +
+          overview.estimatedCash +
+          manualInvestments.value,
         moneyLent,
         debts: insights?.totalLiabilitiesBase ?? 0,
       }),
@@ -130,6 +141,7 @@ export function useNetWorth(): NetWorthResult {
       totalSavingsBalance,
       overview.totalMarketValue,
       overview.estimatedCash,
+      manualInvestments.value,
       moneyLent,
       insights?.totalLiabilitiesBase,
     ]
@@ -172,7 +184,7 @@ export function useNetWorth(): NetWorthResult {
     () => ({
       accounts: accountsCount,
       savings: savingsAccountSummaries?.length ?? 0,
-      investments: overview.openPositionsCount,
+      investments: overview.openPositionsCount + manualInvestmentCount,
       loans: loansData?.loans.filter((loan) => loan.is_active).length ?? 0,
       debts: insights?.liabilities.filter((l) => l.isActive).length ?? 0,
     }),
@@ -180,6 +192,7 @@ export function useNetWorth(): NetWorthResult {
       accountsCount,
       savingsAccountSummaries,
       overview.openPositionsCount,
+      manualInvestmentCount,
       loansData,
       insights?.liabilities,
     ]
@@ -189,6 +202,7 @@ export function useNetWorth(): NetWorthResult {
     insightsLoading ||
     investmentsLoading ||
     accountsLoading ||
+    manualInvestmentsLoading ||
     loansLoading ||
     snapshotsLoading;
 

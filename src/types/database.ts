@@ -758,6 +758,57 @@ export interface Database {
           },
         ];
       };
+      wealth_investments: {
+        Row: {
+          id: string;
+          user_id: string;
+          kind: string;
+          name: string;
+          institution: string | null;
+          currency: string;
+          current_value: number;
+          contributed_cost: number;
+          reference: string | null;
+          notes: string | null;
+          valued_on: string;
+          status: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          kind?: string;
+          name: string;
+          institution?: string | null;
+          currency?: string;
+          current_value?: number;
+          contributed_cost?: number;
+          reference?: string | null;
+          notes?: string | null;
+          valued_on?: string;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          kind?: string;
+          name?: string;
+          institution?: string | null;
+          currency?: string;
+          current_value?: number;
+          contributed_cost?: number;
+          reference?: string | null;
+          notes?: string | null;
+          valued_on?: string;
+          status?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
       net_worth_snapshots: {
         Row: {
           id: string;
@@ -1296,6 +1347,9 @@ export interface Database {
           product_name: string;
           account_name: string;
           currency: string;
+          target_amount: number | null;
+          target_date: string | null;
+          include_in_available: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -1309,6 +1363,9 @@ export interface Database {
           product_name: string;
           account_name: string;
           currency: string;
+          target_amount?: number | null;
+          target_date?: string | null;
+          include_in_available?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -1322,6 +1379,9 @@ export interface Database {
           product_name?: string;
           account_name?: string;
           currency?: string;
+          target_amount?: number | null;
+          target_date?: string | null;
+          include_in_available?: boolean;
           created_at?: string;
           updated_at?: string;
         };

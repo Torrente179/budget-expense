@@ -182,4 +182,9 @@ export async function requestInvestmentMutation(
       )
     );
   }
+
+  // Creates return `{ ok, id }` so a caller can chain (the savings wizard
+  // records an opening movement against the fund it just made).
+  const text = await response.text();
+  return text ? (JSON.parse(text) as { ok?: boolean; id?: string | null }) : null;
 }

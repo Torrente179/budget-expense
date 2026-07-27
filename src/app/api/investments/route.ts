@@ -790,6 +790,9 @@ export async function POST(request: NextRequest) {
     return jsonError("Invalid investment payload", 400);
   }
 
+  /** Only savingsAccount returns an id today; the rest stay fire-and-forget. */
+  let createdId: string | null = null;
+
   try {
     switch (parsed.data.resource) {
       case "brokerageAccount": {
@@ -821,16 +824,21 @@ export async function POST(request: NextRequest) {
         );
         break;
       case "savingsAccount": {
+        // Returns the row: the savings wizard needs the new id to record the
+        // opening balance as the fund's first movement.
         const result = await context.supabase
           .from("investment_savings_accounts")
           .insert({
             ...parsed.data.values,
             user_id: context.userId,
-          });
+          })
+          .select("id")
+          .single();
 
         if (result.error) {
           throw new Error(result.error.message);
         }
+        createdId = result.data?.id ?? null;
         break;
       }
       case "savingsTransfer": {
@@ -853,7 +861,7 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    return NextResponse.json({ ok: true }, { status: 201 });
+    return NextResponse.json({ ok: true, id: createdId }, { status: 201 });
   } catch (error) {
     console.error("Failed to create investment record", error);
     return jsonError(

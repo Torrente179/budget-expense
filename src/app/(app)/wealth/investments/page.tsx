@@ -10,6 +10,12 @@ import { Screen } from "@/components/patterns/screen";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
 import { WealthBreadcrumb } from "@/components/wealth/wealth-breadcrumb";
 import { WealthCategoryHero } from "@/components/wealth/wealth-category-hero";
+import {
+  InvestmentWizard,
+  type InvestmentWizardValues,
+} from "@/components/wealth/wizards/investment-wizard";
+import { useWealthInvestments } from "@/hooks/use-wealth-investments";
+import { ManualHoldingsCard } from "@/components/wealth/manual-holdings-card";
 import { TrendingUp } from "lucide-react";
 import { InvestmentOverviewCards } from "@/components/wealth/investment-overview-cards";
 import { HoldingsTable } from "@/components/wealth/holdings-table";
@@ -86,6 +92,12 @@ export default function InvestmentStocksPage() {
     useState<BrokerageAccountRow | null>(null);
   const deferredSearch = useDeferredValue(search);
   const { baseCurrency } = useCurrency();
+  const [investmentWizardOpen, setInvestmentWizardOpen] = useState(false);
+  const {
+    investments: manualInvestments,
+    totals: manualTotals,
+    createInvestment,
+  } = useWealthInvestments();
 
   const {
     accounts,
@@ -202,6 +214,16 @@ export default function InvestmentStocksPage() {
             <Plus className="h-4 w-4" />
             <span className="hidden md:inline">{t("Add broker", "Agregar broker")}</span>
           </Button>
+          <Button
+            size="sm"
+            className="gap-1.5"
+            onClick={() => setInvestmentWizardOpen(true)}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="hidden md:inline">
+              {t("Add investment", "Añadir inversión")}
+            </span>
+          </Button>
         </>
       }
       subheader={<WealthBreadcrumb current={t("Investments", "Inversiones")} />}
@@ -209,7 +231,11 @@ export default function InvestmentStocksPage() {
       {accounts.length > 0 || loading ? (
         <WealthCategoryHero
           eyebrow={t("Portfolio value", "Valor de tus inversiones")}
-          amount={overview.totalMarketValue + overview.estimatedCash}
+          amount={
+            overview.totalMarketValue +
+            overview.estimatedCash +
+            manualTotals.value
+          }
           icon={TrendingUp}
           delta={
             overview.totalUnrealizedPnl !== 0
@@ -280,6 +306,10 @@ export default function InvestmentStocksPage() {
 
       {tab === "overview" && (
         <div className="space-y-5">
+          {manualInvestments.length > 0 && (
+            <ManualHoldingsCard investments={manualInvestments} />
+          )}
+
           <InvestmentOverviewCards
             totalMarketValue={overview.totalMarketValue}
             totalUnrealizedPnl={overview.totalUnrealizedPnl}
@@ -603,6 +633,13 @@ export default function InvestmentStocksPage() {
           }}
         />
       ) : null}
+      <InvestmentWizard
+        open={investmentWizardOpen}
+        onOpenChange={setInvestmentWizardOpen}
+        onSubmit={(values: InvestmentWizardValues) =>
+          createInvestment.mutateAsync(values)
+        }
+      />
     </Screen>
   );
 }

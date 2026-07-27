@@ -216,6 +216,11 @@ export const investmentSavingsAccountSchema = z.object({
   product_name: z.string().min(1).max(140),
   account_name: z.string().min(1).max(140),
   currency: z.string().min(3).max(3),
+  /** Optional goal. Null means the fund shows no progress bar. */
+  target_amount: z.coerce.number().nonnegative().nullable().optional(),
+  target_date: isoDate.nullable().optional(),
+  /** Spendable money only — net worth counts the fund either way. */
+  include_in_available: z.boolean().optional(),
 });
 
 export type InvestmentSavingsAccountFormValues = z.output<
