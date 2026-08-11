@@ -233,11 +233,22 @@ Keys are hierarchical so prefix invalidation works:
 ```ts
 expenses: (f) => ["expenses", f.year, f.month, f.categoryId ?? null, f.search ?? null]
 expensesAll: ["expenses"]
+monthSnapshot: (month, year, asOfDate) => ["month-snapshot", year, month, asOfDate]
+monthSnapshotAll: ["month-snapshot"]
 ```
 
-`useCapture` invalidates `expensesAll` + `monthlySummaryAll`, and every month,
-category, and search variant refetches correctly. Optimistic updates target the
-narrower `["expenses", year, month]` prefix via `setQueriesData`.
+`useCapture` invalidates the expense/income and month-snapshot prefixes for the
+movement's dated month. Optimistic updates target the narrower
+`["expenses", year, month]` or `["incomes", year, month]` prefix via
+`setQueriesData`. Import commits and balance reconciliation invalidate
+`monthSnapshotAll`.
+
+The checkpoint-backed Home balance adds a cross-month dependency: a historical
+post-checkpoint edit can change every later balance projection. Ordinary
+movement and savings-transfer hooks currently invalidate only the dated month,
+so a later warm snapshot may remain stale until refetch, reload, or cache expiry.
+This is a documented hardening gap; see
+[`docs/balance-carryover.md`](../docs/balance-carryover.md#10-cache-and-refresh-behavior).
 
 ### Optimistic update pattern
 

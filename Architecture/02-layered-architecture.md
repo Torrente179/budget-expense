@@ -94,16 +94,18 @@ convention.
 
 Every module in `src/lib/` outside `lib/query/` and `lib/supabase/` is a pure
 function library. `budgeting.ts`, `giving.ts`, `balance-checkpoint.ts`,
-`ledger/normalize.ts`, `ledger/dedupe.ts`, `insights/anomalies.ts`,
+`home/month-cashflow.ts`, `wealth/net-worth.ts`, `ledger/normalize.ts`,
+`ledger/dedupe.ts`, `insights/anomalies.ts`,
 `onboarding/personalize.ts`, and `import/*` import only:
 
 - TypeScript types from `@/types/database`
 - each other
 - occasionally `date-fns`
 
-This is why `balance-checkpoint.ts` has a plain Node test suite
-(`npm run test:balance`) with no test framework, no JSDOM, and no mocking, and why
-the normalizers could be ported to Python and kept in parity.
+This is why balance checkpoints, Home carryover, recurring start dates, and net
+worth have plain Node test suites (`test:balance`, `test:home`, `test:wealth`,
+plus the recurring-expense test) with no browser, JSDOM, or mocking, and why the
+normalizers could be ported to Python and kept in parity.
 
 Dependency injection is done by **passing `convert` as a parameter** rather than
 importing the currency context:
@@ -210,9 +212,12 @@ Four files define how all server state behaves:
 - **`authorized-fetch.ts`** — Bearer attachment, `Content-Type` when a body is
   present, throw on non-2xx.
 
-The prefix-invalidation design is what makes the write path simple: `useCapture`
-invalidates `expensesAll` and `monthlySummaryAll` and every month, filter, and
-search variant refetches correctly.
+The prefix-invalidation design keeps the write path simple: `useCapture`
+invalidates the dated expense/income prefix plus the corresponding
+`["month-snapshot", year, month]` prefix. Import and checkpoint reconciliation
+use `monthSnapshotAll`. Historical post-checkpoint edits can also affect later
+month projections, so the narrower ordinary invalidation has a documented
+cross-month cache edge.
 
 ### `lib/import/` and `lib/ledger/` — a two-package pipeline
 
@@ -233,9 +238,11 @@ the fact that domain modules take `convert` as an argument rather than reaching
 for context. This is the property that makes the balance-checkpoint math unit
 testable with zero infrastructure.
 
-**One write path, centrally invalidated.** Because `useCapture` is the only
-movement writer and `queryKeys` is the only key source, cache coherence is a
-solved problem rather than a recurring bug class.
+**One interactive write path, centrally keyed.** Because `useCapture` owns
+interactive movement writes and `queryKeys` owns cache identity, normal
+same-month coherence is predictable. The carried balance introduces one wider
+dependency: a historical post-checkpoint edit can affect later month snapshots,
+so dated-month invalidation alone is a documented hardening gap.
 
 **The design system has teeth.** Enforcement by grep is crude, but it is real
 enforcement, and the token coverage (`globals.css` defines ~120 custom properties

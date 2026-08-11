@@ -214,30 +214,31 @@ This is the thinnest part of the system, and it should be stated plainly.
 
 | Gate | Command | Coverage |
 |---|---|---|
-| Balance math | `npm run test:balance` | `balance-checkpoint.ts` only |
+| Balance math | `npm run test:balance` | Checkpoint ordering, cent aggregation, tracked balance, adjustment labels |
+| Home cash/plan selection | `npm run test:home` | Cross-month priority, fallback, negative safety, unavailable state |
+| Net worth | `npm run test:wealth` | Wealth composition and invariants |
+| Recurring start date | `npx tsx --test src/lib/recurring-expenses.test.ts` | Charge-day and year-boundary rules |
 | Import parity | `npm run check:parity` | Normalizers + import pipeline |
 | Lint | `npm run lint` | ESLint (next/core-web-vitals + TS) |
 | Types | `npm run build` | Full TypeScript check |
 | Design system | Manual grep, 5 rules in `design.md` §7 | UI conventions |
 
-**There is exactly one unit-test file in the repository**
-(`src/lib/balance-checkpoint.test.ts`), run through Node's built-in test runner via
-`tsx --test`. There are no component tests, no integration tests, no end-to-end
-tests, and no CI configuration that runs any of them.
+There are four pure-domain unit-test files, run through Node's built-in test
+runner via `tsx --test`: balance checkpoints, Home cashflow/carryover, net worth,
+and recurring-expense start dates. There are no component tests, integration
+tests, end-to-end tests, or CI configuration that runs the gates automatically.
 
 What partially compensates:
 
 - TypeScript strict mode plus generated database types catch a large class of
   shape errors at build time.
 - Zod schemas shared between forms and routes make contract drift impossible.
-- The two areas with the highest correctness stakes and the least type-checkable
-  logic — balance arithmetic and import parity — are precisely the two that *do*
-  have automated checks.
+- Balance arithmetic, Home's cash-vs-plan selection, net-worth composition,
+  recurring date rules, and import parity all have targeted automated checks.
 
-That targeting is deliberate and sensible. But the absence of CI means even those
-gates depend on someone remembering to run them. Making `npm run lint`,
-`npm run build`, `test:balance`, and `check:parity` a GitHub Action would be the
-highest-value operational improvement available, at very low cost.
+That targeting is deliberate and sensible. But the absence of CI means every
+gate still depends on someone remembering to run it. A GitHub Action should run
+lint, build, all four pure-domain suites, and both import-parity checks.
 
 ---
 
@@ -248,6 +249,7 @@ The project maintains an unusually disciplined documentation system.
 | Document | Owns |
 |---|---|
 | `docs/APP.md` | Product handbook — IA, onboarding rules, capture rules, giving model, alerts, per-section composition, applied migrations, code map |
+| `docs/balance-carryover.md` | Canonical Home available-cash formula, date semantics, fallback/status matrix, data flow, cache edges, tests, troubleshooting |
 | `design.md` | Visual system of record — tokens, patterns, mobile rules, gates |
 | `docs/vercel-supabase-handoff.md` | Infrastructure, env vars, recovery runbooks |
 | `docs/pending-migrations-runbook.md` | Migration apply status and verification |

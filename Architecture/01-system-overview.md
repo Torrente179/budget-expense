@@ -18,7 +18,7 @@ enforced by a single navigation source of truth
 
 | Section | Route | Owns | Editorial rule |
 |---|---|---|---|
-| **Home** | `/home` | Compact blue hero (`remaining = income − spent`); Presupuesto cards only (`spending_limit`); category donut; recent movements | *Now + actionable* |
+| **Home** | `/home` | Compact black hero (checkpoint-backed carried available cash headline; month-only plan pace as support); Presupuesto cards only (`spending_limit`); category donut; recent movements | *Now + actionable* |
 | **Movements** | `/movements`, `/movements/recurring` | Unified expense + income ledger, filters, search, swipe-delete, recurring charges | The ledger itself |
 | **Budget** | `/budget` | Dual engines: Presupuestos (ceilings) + Metas (floors); compact hero; methods seed by `budget_role` → `kind` | Planning |
 | **Wealth** | `/wealth` + `/investments`, `/savings`, `/liabilities`, `/loans` | Net worth, allocation, runway, FX exposure, holdings, debts, money lent | *Balances* |
@@ -162,34 +162,27 @@ HomeScreen
   ├─ useMonth()      → { month, year }        (global, survives section switches)
   ├─ useCurrency()   → { baseCurrency, convert, rates }
   └─ useMonthlySummary({ month, year })
-       └─ useQuery(queryKeys.monthlySummary(month, year, asOfDate))
-            └─ fetchMonthlySummaryRaw()
-                 └─ authorizedFetch("/api/dashboard/summary?…")
-                      ├─ supabase.auth.getSession() → Bearer token
-                      └─ fetch(credentials: "include")
-                           │
-                           ▼
-                    GET /api/dashboard/summary
-                      ├─ Zod: { month 1-12, year 2020-2100, asOf? ISO }
-                      ├─ createRequestClient(request)
-                      │    ├─ Authorization: Bearer … → verify → accessToken client
-                      │    └─ else cookie-based server client
-                      ├─ createServiceRoleClient() + resolveServiceRoleUserByEmail()
-                      │    → effective (ledger) user id, 5-min in-memory cache
-                      └─ Promise.all([
-                           expenses(+categories join), incomes, prev-month expenses,
-                           budgets, monthly plan, investment transfers,
-                           prev investment transfers
-                         ]) + latest balance_checkpoint ≤ target date
-                      → raw, UNCONVERTED rows
+       └─ useMonthSnapshot({ month, year, asOfDate: localToday })
+            └─ useQuery(queryKeys.monthSnapshot(month, year, asOfDate))
+                 └─ getMonthSnapshot()
+                      ├─ primary: Supabase RPC prepare_month_snapshot(...)
+                      │    ├─ aggregate current + previous month data
+                      │    ├─ latest checkpoint ≤ balance target date
+                      │    └─ post-checkpoint totals grouped by currency
+                      └─ compatibility fallback when RPC is missing/forced:
+                           GET /api/dashboard/summary + direct budget reads
+                           → adapted into the same MonthSnapshot contract
 ```
 
-The response is deliberately raw. `useMonthlySummary` then derives roughly twenty
-metrics in a `useMemo` — total spent, total income, net flow, month-to-date flow,
-tracked balance, giving spent, category breakdown, daily spending, previous-month
-comparison — applying `convert()` per row. Because conversion is client-side, a
-change to the base currency or to FX rates recomputes everything **without a
-network request**.
+`useMonthlySummary` derives roughly twenty metrics in a `useMemo` — total spent,
+total income, net flow, month-to-date flow, tracked balance, giving spent,
+category breakdown, daily spending, and previous-month comparison — applying
+`convert()` to the original-currency aggregates. `HomeScreen` then keeps two
+layers: month-only plan pace from `resolveMonthCashflow`, and a headline that
+prefers the checkpoint-backed value through `resolveHomeAvailableBalance`.
+Because conversion is client-side, a base-currency or FX-rate change recomputes
+the display without a data refetch. See the full
+[carryover contract](../docs/balance-carryover.md).
 
 ### Phase C — Write
 
@@ -197,24 +190,26 @@ network request**.
 User taps FAB → CaptureSheet (mounted, stays mounted while open)
   └─ submit → useCapture().addExpense(values, category)
        ├─ onMutate:  optimistic row inserted into ["expenses", year, month]
-       ├─ POST /api/expenses
-       │    ├─ Zod expenseSchema
-       │    ├─ createRequestClient → user
-       │    ├─ service-role client + email-resolved user id
-       │    └─ insert(...).select("*, categories(*)").single()
+       ├─ createExpense()
+       │    ├─ primary: create_expense_with_envelope_status RPC
+       │    ├─ missing-RPC fallback: RLS-scoped direct insert
+       │    └─ forced legacy path: POST /api/expenses
        ├─ onError:   invalidate month key, toast error, SHEET STAYS OPEN
        └─ onSuccess:
-            ├─ invalidate expensesAll + monthlySummaryAll
-            ├─ toast "Expense added" with 5s Undo → DELETE /api/expenses/:id
+            ├─ invalidate dated expenses + month-snapshot prefixes
+            ├─ toast "Expense added" with 5s Undo
             └─ notifyEnvelopeLimitsAfterExpense()
                  └─ recompute envelopes for that month
                       └─ ≥75/90/100% → toast.warning/error, action → /budget
                            (deduped per envelope+threshold in sessionStorage)
 ```
 
-The invalidation of `monthlySummaryAll` is what makes Home update: the summary
-query refetches, `useMonthlySummary` re-derives, and every dependent surface
-(stat row, donut, pace bar, attention feed) updates from one source.
+The dated `month-snapshot` invalidation is what makes the active month on Home
+update: the snapshot refetches and every dependent surface re-derives from one
+source. Import reconciliation and checkpoint writes invalidate all month
+snapshots. Historical edits have a wider cross-month balance impact than their
+current dated-month invalidation; that known cache edge is recorded in the
+[carryover contract](../docs/balance-carryover.md#10-cache-and-refresh-behavior).
 
 ---
 
@@ -284,7 +279,7 @@ Budget & Expense/
 | Files | kebab-case everywhere | `capture-sheet.tsx`, `balance-checkpoint.ts` |
 | Components | PascalCase export, kebab-case file | `CaptureSheet` in `capture-sheet.tsx` |
 | Hooks | `use-` prefix, one domain per file | `use-monthly-summary.ts` |
-| Query keys | Only from `lib/query/keys.ts` | `queryKeys.monthlySummary(m, y, asOf)` |
+| Query keys | Only from `lib/query/keys.ts` | `queryKeys.monthSnapshot(m, y, asOf)` |
 | Imports | `@/` alias, never deep relative paths | `@/lib/supabase/server` |
 | Database types | Always via `Database["public"]["Tables"][…]` | `type ExpenseRow = …["expenses"]["Row"]` |
 | Bilingual strings | `t("English", "Español")` inline, no keys | `t("Home", "Inicio")` |

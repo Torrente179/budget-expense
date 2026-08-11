@@ -77,9 +77,14 @@ comment in `/api/expenses` records why:
 
 ### Aggregation
 
+Home's primary aggregation path is the RLS-protected Supabase RPC
+`prepare_month_snapshot(year, month, as_of)`, called by
+`src/lib/data/client.ts`. The route below is the compatibility adapter used
+when that RPC is missing or `NEXT_PUBLIC_USE_LEGACY_DATA_API=true`.
+
 | Route | Methods | Lines | Behavior |
 |---|---|---|---|
-| `/api/dashboard/summary` | GET | 458 | The Home engine. Seven parallel queries plus a checkpoint lookup; returns raw unconverted rows |
+| `/api/dashboard/summary` | GET | 458 | Legacy Home snapshot source. Seven parallel queries plus a checkpoint lookup; returns raw unconverted rows that the client adapts to `MonthSnapshot` |
 | `/api/insights/household` | GET | 385 | 12-month aggregates via three RPCs, with paginated-scan fallback |
 | `/api/insights/review` | GET | 32 | Expenses flagged `needs_review` |
 | `/api/insights/review/count` | GET | 28 | Count only — split out so the nav badge stays cheap |
@@ -99,11 +104,16 @@ const [
 
 It computes three date-window facts before querying — `isFuturePeriod`,
 `isCurrentPeriod`, and `balanceTargetDate` (the earlier of the period end and
-"as of" date) — so a future month does no checkpoint work at all. The comment
+"as of" date) — so a future month does no checkpoint work at all. For a past or
+current month it chooses the latest checkpoint on/before that target, even if
+the checkpoint belongs to an earlier month, then aggregates qualifying later
+movements through the target. This is why tracked available cash carries across
+month boundaries without a rollover write. The comment
 retained from the two-project era ("Expenses and incomes live in the ledger
 project; budgets, plans, and investment transfers remain in the app project")
 explains why the route keeps two client handles even though both now point at the
-same database.
+same database. The primary RPC implements the same balance contract; see
+[`docs/balance-carryover.md`](../docs/balance-carryover.md).
 
 ### Budgeting
 

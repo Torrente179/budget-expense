@@ -34,6 +34,7 @@ Use this template:
 ```
 
 ## Current Entries
+- `2026-08-11-document-balance-carryover-contract.md`
 - `2026-08-11-carry-available-balance-across-months.md`
 - `2026-04-01-initial-build.md`
 - `2026-04-01-fix-client-env-crash.md`

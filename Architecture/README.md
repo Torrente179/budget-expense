@@ -39,7 +39,7 @@ read on demand.
 | 03 | [Data Model](03-data-model.md) | All 25 Postgres tables by domain, relationships, RLS model, triggers, aggregate RPCs, and the migration history |
 | 04 | [API Surface](04-api-surface.md) | Every one of the 28 route handlers: methods, contracts, auth, validation, and behavior |
 | 05 | [Frontend Architecture](05-frontend-architecture.md) | App Router structure, the provider tree, component taxonomy, the design-token system, and mobile/responsive strategy |
-| 06 | [Domain Logic](06-domain-logic.md) | The business rules: income + envelopes, method seeding by `budget_role`, envelope alerts, giving, balance checkpoints, loans, category suggest ranking, onboarding, investments |
+| 06 | [Domain Logic](06-domain-logic.md) | The business rules: income + envelopes, method seeding by `budget_role`, envelope alerts, giving, cross-month available balance, checkpoints, loans, category suggest ranking, onboarding, investments |
 | 07 | [Import Pipeline](07-import-pipeline.md) | Bank-statement ingestion, the two-path architecture, deduplication identity, and the load-bearing parity contract |
 | 08 | [Cross-Cutting Concerns](08-cross-cutting-concerns.md) | Authentication, internationalization, multi-currency, state & caching, error handling, performance |
 | 09 | [Operations](09-operations.md) | Infrastructure, environment variables, the migration workflow, known operational hazards, testing and gates |
@@ -75,10 +75,10 @@ If you only remember ten facts about this architecture, make them these.
    is the exception: `POST /api/balance-checkpoints` may also insert a surplus
    income or deficit expense with a standard bilingual name.
 
-5. **One endpoint powers Home.** `GET /api/dashboard/summary` runs seven parallel
-   queries plus a checkpoint lookup and returns raw, unconverted rows;
-   `useMonthlySummary` derives ~20 metrics client-side. FX rate changes therefore
-   never trigger a refetch.
+5. **One month-snapshot contract powers Home.** The primary read is the
+   RLS-protected `prepare_month_snapshot` RPC; `GET /api/dashboard/summary` is
+   the compatibility fallback. `useMonthlySummary` derives display metrics and
+   tracked cash client-side, so FX-rate changes do not require a data refetch.
 
 6. **Giving is a share of income, structurally.** `resolveGivingTarget` takes plan
    income first, recorded income second, and never expenses. Monthly plans store
@@ -91,9 +91,11 @@ If you only remember ten facts about this architecture, make them these.
 
 8. **Balance is reconciled, not computed from zero.** Users record real bank
    balances as checkpoints; the app replays only movements dated after the
-   checkpoint (with a `created_at` tiebreak and integer-cent arithmetic). A
+   checkpoint (with a `created_at` tiebreak and exact decimal/cent arithmetic). A
    non-zero reconciliation delta is stored on the checkpoint *and* booked as
-   a dated surplus/deficit movement so it appears in the ledger.
+   a dated surplus/deficit movement so it appears in the ledger. Home uses this
+   tracked result as a continuous carried balance; it does not reset at month
+   boundaries. See [`docs/balance-carryover.md`](../docs/balance-carryover.md).
 
 9. **The design system is enforced by grep, not convention.** `design.md` defines
    five gates banning raw status colors, magic values, stale routes, ad-hoc nav
@@ -133,10 +135,11 @@ If you only remember ten facts about this architecture, make them these.
   363 nodes and 1,105 edges across 12 layers, with a 14-step guided tour.
   Explore it with `/understand-dashboard`.
 - **Project's own docs:** [`docs/APP.md`](../docs/APP.md) is the product
-  handbook, [`design.md`](../design.md) is the visual system of record, and
-  [`changes/`](../changes/) holds ~100 per-change implementation notes. This
-  report describes the *architecture*; those describe the *product* and its
-  *history*.
+  handbook, [`docs/balance-carryover.md`](../docs/balance-carryover.md) is the
+  available-cash contract, [`design.md`](../design.md) is the visual system of
+  record, and [`changes/`](../changes/) holds per-change implementation notes.
+  This report describes the *architecture*; those describe the *product* and
+  its *history*.
 
 ---
 

@@ -4,6 +4,8 @@ Living product + engineering handbook for this repository. Visual tokens and UI
 rules live in [`design.md`](../design.md). Infrastructure (Vercel/Supabase) lives
 in [`vercel-supabase-handoff.md`](./vercel-supabase-handoff.md). Schema apply
 status lives in [`pending-migrations-runbook.md`](./pending-migrations-runbook.md).
+Home's carried cash contract lives in
+[`balance-carryover.md`](./balance-carryover.md).
 Per-change history lives in [`changes/`](../changes/).
 
 **Production:** `https://budget-expense-seven.vercel.app`  
@@ -24,7 +26,7 @@ only):
 
 | Section | Route | Job |
 |---|---|---|
-| Home | `/home` | Now + actionable: compact black hero (income − spent remaining, pace, daily); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
+| Home | `/home` | Now + actionable: compact black hero (checkpoint-backed carried available cash for the headline/daily guide; month-only plan pace as support); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
 | Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
 | Budget | `/budget` | Compact hero + dual engines: **Presupuestos** (ceilings) + **Metas de aportación** (floors); plan distribution + recommendation |
 | Patrimonio | `/wealth` (+ accounts / investments / savings / liabilities / loans) | The balance sheet: `netWorth = (accounts + savings + investments + moneyLent) − debts`; net-worth hero, Evolución, Activos y deudas, Colchón financiero, Organiza tu dinero |
@@ -298,6 +300,11 @@ the card still reads as a card. Math in `src/lib/home/month-cashflow.ts`:
 `BudgetSummaryHero` deliberately remains `monthlyIncome − actualOutflows`
 and labels that amount as the remainder in this month's plan. A carried bank
 balance changes cash available, not the month's spending target.
+
+The complete behavioral contract—including target-date rules, fallback/status
+matrix, currency handling, cache edge cases, regression fixture, and
+troubleshooting—is in
+[`docs/balance-carryover.md`](./balance-carryover.md).
 
 ### Presupuestos card
 
@@ -802,6 +809,9 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Capture writes | `src/hooks/use-capture.ts` |
 | Capture defaults | `src/lib/capture/defaults.ts` |
 | Balance checkpoints (math + bilingual labels) | `src/lib/balance-checkpoint.ts` |
+| Home carried-balance selection + month-plan math | `src/lib/home/month-cashflow.ts` |
+| Home carryover integration + display | `src/components/home/home-screen.tsx`, `home-summary-card.tsx` |
+| Home carryover regression tests | `src/lib/home/month-cashflow.test.ts` (`npm run test:home`) |
 | Balance checkpoint API | `src/app/api/balance-checkpoints/route.ts` |
 | Available balance settings UI | `src/components/settings/balance-checkpoint-settings.tsx` |
 | Giving helpers | `src/lib/giving.ts` (`resolveGivingTarget`, `isGivingExpense`) |

@@ -215,11 +215,13 @@ Budget **usage-band** hexes (safe → critical) and category default map live in
 `"og"`) for a controlled revert. Cashflow CSS vars in `globals.css` must stay
 mirrored when flipping.
 
-Home composition (desktop): compact **black** `HomeSummaryCard` (remaining =
-income − spent) beside Presupuestos + spending donut; movements under the hero
-column. Home Presupuestos shows **`spending_limit` only** (`BudgetPaceChart`),
-as a row of up to three tiles that pages three at a time beyond that. Metas
-never appear on Home.
+Home composition (desktop): compact **black** `HomeSummaryCard` whose headline
+and daily guide prefer checkpoint-backed carried cash; its ring/bar remains the
+selected month's `income − spent` plan pace. Presupuestos + spending donut sit
+beside the movements column. Home Presupuestos shows **`spending_limit` only**
+(`BudgetPaceChart`), as a row of up to three tiles that pages three at a time
+beyond that. Metas never appear on Home. The two-layer number contract is
+documented in [`docs/balance-carryover.md`](../docs/balance-carryover.md).
 
 Budget screen: compact `BudgetSummaryHero`, then **Presupuestos** +
 **Metas de aportación** (`EnvelopeListCard` dual engines), plan distribution,

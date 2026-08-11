@@ -295,6 +295,13 @@ inserts — required for same-day movement ordering against the checkpoint.
 Index `idx_balance_checkpoints_latest` supports the hot query: the most recent
 checkpoint at or before a target date, ordered by `as_of_date DESC, created_at DESC`.
 
+**Cross-month projection, not monthly rollover.** No table stores an opening or
+closing balance per month. `prepare_month_snapshot` chooses the latest eligible
+checkpoint and aggregates later income, expenses, and signed investment/savings
+transfers through the selected target date. A checkpoint from July can therefore
+anchor the August Home balance without copying or mutating data at month-end.
+See the canonical [available balance carryover contract](../docs/balance-carryover.md).
+
 **Companion ledger write (no schema change).** Since 2026-07-24,
 `POST /api/balance-checkpoints` also books a non-zero `reconciliation_delta` as
 a normal `income_entries` (surplus) or `expenses` (deficit) row dated

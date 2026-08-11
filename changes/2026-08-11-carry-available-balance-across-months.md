@@ -26,6 +26,12 @@
 - No schema or live-data rewrite. The fix consumes the existing immutable
   `balance_checkpoints` record and existing post-checkpoint movement totals.
 
+## Documentation
+
+- Canonical behavior, formulas, date windows, fallbacks, data flow, cache edge
+  cases, and troubleshooting now live in
+  [`docs/balance-carryover.md`](../docs/balance-carryover.md).
+
 ## Validation
 
 - Added pure tests for tracked-balance priority, untracked fallback, negative
@@ -40,3 +46,10 @@
   and Spanish. The tracked-balance label, plan context, and daily guide fit
   without document-level horizontal overflow; the fresh render logged no
   errors.
+
+## Deployment
+
+- Commit `5956be7` (`Carry available balance across months`) was pushed to
+  `main`.
+- The Vercel deployment completed successfully; the production URL returned
+  HTTP 200 and redirected unauthenticated requests to `/login` as expected.

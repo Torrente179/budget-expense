@@ -68,18 +68,22 @@ but that is not this product.
 
 ---
 
-### AD-3 — One aggregation endpoint for Home
+### AD-3 — One aggregation contract for Home
 
-**Decision.** `GET /api/dashboard/summary` performs seven parallel queries plus a
-checkpoint lookup and returns raw rows; the client derives ~20 metrics.
+**Decision.** Home consumes one `MonthSnapshot` contract. The primary producer is
+the RLS-protected `prepare_month_snapshot` RPC; the older
+`GET /api/dashboard/summary` fan-out remains a compatibility source that
+`getMonthSnapshot` adapts into the same shape.
 
-**Consequences.** Home makes one request instead of seven. FX and base-currency
-changes are free. The cost is a 458-line route handler that knows about six
-domains, and a single point of failure for the app's primary screen.
+**Consequences.** Home makes one aggregate request rather than a request per
+domain. FX and base-currency changes remain client-side. The primary RPC also
+materializes recurring rows atomically. The cost is a broad contract spanning
+ledger, budget, recurrence, and checkpoint concerns, plus two producers that
+must stay behaviorally compatible during the fallback window.
 
 **Assessment.** A justified trade for a mobile app where request count dominates
-perceived latency. The route is long but linear and well-commented; it computes its
-date windows up front and skips checkpoint work entirely for future periods.
+perceived latency. New consumers should depend on `MonthSnapshot`, not on either
+producer's raw shape.
 
 ---
 
@@ -88,11 +92,12 @@ date windows up front and skips checkpoint work entirely for future periods.
 **Decision.** `src/lib/` modules import no React. Money-aware functions receive
 `convert` as a parameter.
 
-**Assessment.** This is the best structural decision in the codebase. It is what
-makes `balance-checkpoint.ts` testable with Node's built-in runner and no mocking,
-what let the normalizers be ported to Python and held in parity, and what keeps
-currency — an inherently stateful, network-dependent concern — out of pure
-arithmetic. It should be defended in review.
+**Assessment.** This is the best structural decision in the codebase. It makes
+balance checkpoints, Home carryover, recurring dates, and net worth testable with
+Node's built-in runner and no mocking; it also let the normalizers be ported to
+Python and held in parity. Currency — an inherently stateful, network-dependent
+concern — stays out of pure arithmetic. This boundary should be defended in
+review.
 
 ---
 
@@ -101,9 +106,10 @@ arithmetic. It should be defended in review.
 **Decision.** `CaptureSheet` + `useCapture` is the only way to create or edit an
 expense or income.
 
-**Consequences.** Optimistic updates, Undo, currency defaults, envelope alerts, and
-loan dual-writes are implemented once. Cache coherence is a solved problem because
-one function owns invalidation.
+**Consequences.** Optimistic updates, Undo, currency defaults, envelope alerts,
+and loan dual-writes are implemented once. Same-month invalidation is centralized.
+The checkpoint projection's wider dependency means historical edits still need a
+future `monthSnapshotAll` invalidation hardening pass.
 
 The rules around it are unusually precise, recorded in `docs/APP.md` §4: await save
 before close; keep the sheet mounted while open; seed currency only on the open
@@ -189,16 +195,39 @@ the ambiguity at near-zero cost.
 
 ---
 
+### AD-11 — Carried cash and monthly plan are separate Home layers
+
+**Context.** Home historically used `income − spent` for its largest number.
+That is a valid monthly-plan remainder but resets at every month boundary, so it
+discarded the prior month's real closing cash and understated what was actually
+available.
+
+**Decision.** When tracking is valid, Home's headline and daily guide use the
+checkpoint-backed continuous balance. The Home meter and Budget hero remain
+month-only plan views. If tracking is unavailable, Home falls back to the old
+monthly figure instead of failing.
+
+**Consequences.** One screen intentionally shows two related but non-identical
+figures: carried cash as the headline, plan pace as supporting context. Copy must
+identify which is which. No schema, rollover record, cron, or month-end mutation
+is required because checkpoint replay naturally crosses the boundary.
+
+**Assessment.** This is the correct separation of cash position from planning.
+It also creates a cross-month cache dependency for historical edits, documented
+as a hardening gap in the
+[canonical carryover contract](../docs/balance-carryover.md).
+
+---
+
 ## Part II — Assessment
 
 ### What this architecture does exceptionally well
 
 **The domain core is genuinely pure and genuinely tested where it matters.**
 Dependency injection of `convert` is not a pattern applied for its own sake; it is
-what makes the money math independent of the network. The two subsystems with the
-highest correctness stakes — balance arithmetic and import parity — are precisely
-the two with automated verification. That targeting shows real engineering
-judgment.
+what makes the money math independent of the network. Balance arithmetic, Home
+carryover selection, net worth, recurring-date rules, and import parity all have
+targeted automated verification. That targeting shows real engineering judgment.
 
 **Single sources of truth are actually single.** Navigation, query keys, design
 tokens, the movement write path, the giving calculation, the dedupe key. Each has
@@ -239,17 +268,18 @@ suggests this has already produced confusion.
 single-category `custom_budgets` and delete the table and its code paths. This is
 the highest-value simplification available.
 
-#### Risk 2 — No CI, one test file
+#### Risk 2 — No CI and narrow test coverage
 
-There is a single unit-test file and no automated pipeline. `npm run lint`,
-`npm run build`, `test:balance`, and `check:parity` all exist and all depend on
-someone remembering to run them.
+There are four pure-domain test files and no automated pipeline. Lint, build,
+balance, Home carryover, wealth, recurrence, and import-parity gates all depend
+on someone remembering to run them.
 
 **Impact.** The parity gate — protecting against silent duplicate financial records
 — can be bypassed by forgetting.
 
-**Recommendation.** A GitHub Action running those four commands on every push.
-Perhaps thirty minutes of work for a disproportionate reduction in risk.
+**Recommendation.** A GitHub Action running lint, build, all four domain suites,
+and both parity checks on every push. This is a small change for a
+disproportionate reduction in risk.
 
 #### Risk 3 — The email-resolution scan
 
@@ -320,7 +350,7 @@ values, nav imports) into ESLint rules.
 If the goal were to reduce risk with the least disruption, this order maximizes
 value per unit of effort:
 
-1. **Add CI** running lint, build, `test:balance`, and `check:parity`. *(~30 min, removes Risk 2.)*
+1. **Add CI** running lint, build, all domain tests, and `check:parity`. *(Removes Risk 2.)*
 2. **Add a Supabase keep-alive.** *(~30 min, removes Risk 5.)*
 3. **Delete email resolution and service-role usage**, using the authenticated
    user's client directly. *(Removes Risk 3, most of Risk 4, and the bulk of AD-1.)*
@@ -335,9 +365,9 @@ value per unit of effort:
 
 This is a **well-architected application** — notably so for a single-author
 personal project. The layering is real rather than nominal, the domain core is
-pure and injectable, single sources of truth are respected, and the two areas where
-correctness genuinely matters (money arithmetic and import identity) have both
-explicit reasoning and automated verification.
+pure and injectable, single sources of truth are respected, and core money,
+date, and import-identity rules have both explicit reasoning and automated
+verification.
 
 Its weaknesses are almost entirely **the scars of a production incident** rather
 than design failures: the ledger-bridge ghost, the dual data paths, and the vestigial
