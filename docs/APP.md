@@ -282,14 +282,22 @@ top-edge sheen, `white/55` labels against white numbers, and `HERO_ACCENT`
 the card still reads as a card. Math in `src/lib/home/month-cashflow.ts`:
 
 - **Income base:** plan income when set, else recorded income.
-- **Remaining (“Te quedan …”):** `monthlyIncome − actualOutflows` (spent).
-  Not the checkpoint bank balance (that stays Settings / Wealth).
+- **Available balance (“Te quedan …”):** when balance tracking is active,
+  latest checkpoint + later income − later expenses − later investment
+  transfers, capped at the selected month's end / today's local date. This is
+  continuous cash, so the July closing balance becomes August's opening cash.
+  Without a usable checkpoint it falls back to `monthlyIncome − actualOutflows`.
 - **Used %:** `outflows / income`; circular ring (~88px) on desktop; mobile bar
-  shows % spent / % available.
+  shows the month-plan % spent / remaining. This stays month-only and is not
+  presented as the carried cash balance.
 - **Pace marker:** vertical tick at `currentDay / daysInMonth`.
-- **Daily guide:** `max(remaining, 0) / max(daysInMonth − currentDay, 1)`
-  (excludes today; floors at 1 day).
+- **Daily guide:** `max(headlineAvailable, 0) /
+  max(daysInMonth − currentDay, 1)` (excludes today; floors at 1 day).
 - **Pace status:** over plan / on track / slightly ahead / high pace.
+
+`BudgetSummaryHero` deliberately remains `monthlyIncome − actualOutflows`
+and labels that amount as the remainder in this month's plan. A carried bank
+balance changes cash available, not the month's spending target.
 
 ### Presupuestos card
 
@@ -324,6 +332,7 @@ the card still reads as a card. Math in `src/lib/home/month-cashflow.ts`:
 - Primary navigation + FAB cover Movements / Budget / Import / Review.
 
 Change notes: `changes/2026-07-24-home-hero-and-presupuesto-cards.md`,
+`changes/2026-08-11-carry-available-balance-across-months.md`,
 `changes/2026-07-24-home-presupuestos-only-metas-on-budget.md`,
 `changes/2026-07-24-compact-month-hero-cards.md`,
 `changes/2026-07-24-document-dual-engine-home-budget-session.md`,

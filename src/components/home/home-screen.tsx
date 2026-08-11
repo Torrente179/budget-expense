@@ -12,7 +12,10 @@ import {
   budgetUsageRatio,
 } from "@/lib/budgeting";
 import { resolveBudgetKind } from "@/lib/budgeting/envelope-kinds";
-import { resolveMonthCashflow } from "@/lib/home/month-cashflow";
+import {
+  resolveHomeAvailableBalance,
+  resolveMonthCashflow,
+} from "@/lib/home/month-cashflow";
 import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
@@ -77,6 +80,24 @@ export function HomeScreen() {
         isCurrentMonth,
       }),
     [monthlyIncome, summary.totalSpent, daysInMonth, dayOfMonth, isCurrentMonth]
+  );
+
+  const availableBalance = useMemo(
+    () =>
+      resolveHomeAvailableBalance({
+        trackedBalance:
+          summary.balanceTrackingStatus === "tracked"
+            ? summary.trackedBalance
+            : null,
+        monthlyRemaining: cashflow.remaining,
+        daysRemaining: cashflow.daysRemaining,
+      }),
+    [
+      cashflow.daysRemaining,
+      cashflow.remaining,
+      summary.balanceTrackingStatus,
+      summary.trackedBalance,
+    ]
   );
 
   const monthEndLabel = new Intl.DateTimeFormat(intlLocale, {
@@ -216,6 +237,7 @@ export function HomeScreen() {
               <div className="order-1 min-w-0 lg:order-none">
                 <HomeSummaryCard
                   cashflow={cashflow}
+                  availableBalance={availableBalance}
                   monthEndLabel={monthEndLabel}
                 />
               </div>

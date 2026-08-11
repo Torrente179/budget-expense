@@ -24,7 +24,7 @@ interface BudgetSummaryHeroProps {
 }
 
 /**
- * Budget tab hero: remaining for the rest of the month + daily/pace chips.
+ * Budget tab hero: remaining inside this month's plan + daily/pace chips.
  */
 export function BudgetSummaryHero({
   cashflow,
@@ -108,8 +108,8 @@ export function BudgetSummaryHero({
           <div>
             <p className="text-[0.8125rem] font-medium text-white/55">
               {t(
-                "Available for the rest of the month",
-                "Disponible para el resto del mes"
+                "Remaining in this month's plan",
+                "Restante en el plan de este mes"
               )}
             </p>
             <p className="mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">

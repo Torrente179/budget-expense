@@ -148,8 +148,10 @@ font-size values in components** except:
 - Home: cards link to `/budget`. Budget tab: pass `onSelect` to open the
   edit sheet; a compact manage list below carries delete.
 - Hero math: `src/lib/home/month-cashflow.ts` + `HomeSummaryCard`.
-  `remaining = monthlyIncome − actualOutflows` (plan income when set, else
-  recorded). Daily = `max(remaining, 0) / max(daysInMonth − currentDay, 1)`.
+  Home's headline prefers the tracked cash balance (latest checkpoint plus all
+  later movements), so a month-end balance carries forward. Without tracking,
+  it falls back to `monthlyIncome − actualOutflows`. The daily guide uses the
+  same headline amount. Budget's hero remains month-only plan pace.
 - Budget desktop layout: budgets column left (`lg:col-span-3`); plan column
   right (`lg:col-span-2`). Plan meters use `max-w-xs` — never full-bleed.
 

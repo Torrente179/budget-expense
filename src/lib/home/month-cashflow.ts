@@ -1,9 +1,13 @@
 /**
- * Home hero month-cashflow math.
+ * Monthly plan pace math shared by Home and Budget.
  *
  * remaining = income − outflows
  * usedRatio = outflows / income
  * daily = remaining / days left (excludes today; floors at 1 day)
+ *
+ * Home separately prefers the tracked cash balance for its headline so cash
+ * left at month-end carries into the next month. Budget keeps using the
+ * month-only plan figures below.
  *
  * Money helpers round via integer cents for stable % / remaining.
  */
@@ -35,6 +39,12 @@ export interface MonthCashflow {
   daysRemaining: number;
   dailyAvailable: number | null;
   paceStatus: MonthPaceStatus;
+}
+
+export interface HomeAvailableBalance {
+  amount: number | null;
+  dailyAvailable: number | null;
+  source: "tracked" | "monthly_cashflow" | "unavailable";
 }
 
 export function toCents(amount: number): number {
@@ -107,6 +117,51 @@ export function resolveMonthCashflow(input: MonthCashflowInput): MonthCashflow {
     dailyAvailable,
     paceStatus,
   };
+}
+
+/**
+ * Resolve the Home headline without changing the monthly budget engine.
+ *
+ * A tracked balance is a real cash position anchored by the latest checkpoint
+ * and adjusted by every later movement, so it naturally crosses month
+ * boundaries. Until tracking is configured, Home falls back to the existing
+ * month-only income-minus-outflows figure.
+ */
+export function resolveHomeAvailableBalance({
+  trackedBalance,
+  monthlyRemaining,
+  daysRemaining,
+}: {
+  trackedBalance: number | null;
+  monthlyRemaining: number | null;
+  daysRemaining: number;
+}): HomeAvailableBalance {
+  const hasTrackedBalance =
+    trackedBalance != null && Number.isFinite(trackedBalance);
+  const hasMonthlyRemaining =
+    monthlyRemaining != null && Number.isFinite(monthlyRemaining);
+
+  const source = hasTrackedBalance
+    ? "tracked"
+    : hasMonthlyRemaining
+      ? "monthly_cashflow"
+      : "unavailable";
+  const amount = hasTrackedBalance
+    ? fromCents(toCents(trackedBalance))
+    : hasMonthlyRemaining
+      ? fromCents(toCents(monthlyRemaining))
+      : null;
+
+  if (amount == null) {
+    return { amount: null, dailyAvailable: null, source };
+  }
+
+  const divisor = Math.max(Math.floor(daysRemaining), 1);
+  const dailyAvailable = fromCents(
+    Math.max(toCents(amount), 0) / divisor
+  );
+
+  return { amount, dailyAvailable, source };
 }
 
 export function formatUsagePercent(ratio: number | null): string {

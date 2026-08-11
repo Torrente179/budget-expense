@@ -3,6 +3,7 @@
 import { ArrowDownLeft, ArrowUpRight, CalendarDays, Wallet } from "lucide-react";
 import {
   formatUsagePercent,
+  type HomeAvailableBalance,
   type MonthCashflow,
   type MonthPaceStatus,
 } from "@/lib/home/month-cashflow";
@@ -20,6 +21,7 @@ import { useLocale } from "@/providers/locale-provider";
 
 interface HomeSummaryCardProps {
   cashflow: MonthCashflow;
+  availableBalance: HomeAvailableBalance;
   /** Last calendar day label, e.g. "31 de julio" / "July 31". */
   monthEndLabel: string;
   className?: string;
@@ -108,11 +110,13 @@ function HeroRing({
 }
 
 /**
- * Home hero: month remaining = income − outflows, with pace bar + daily guide.
- * Mobile matches the stacked mockup; desktop keeps the horizontal metrics row.
+ * Home hero: real carried cash when tracked, with month-only plan pace kept as
+ * supporting context. Mobile matches the stacked mockup; desktop keeps the
+ * horizontal metrics row.
  */
 export function HomeSummaryCard({
   cashflow,
+  availableBalance,
   monthEndLabel,
   className,
 }: HomeSummaryCardProps) {
@@ -120,9 +124,9 @@ export function HomeSummaryCard({
   const { baseCurrency } = useCurrency();
 
   const remainingLabel =
-    cashflow.remaining == null
+    availableBalance.amount == null
       ? "—"
-      : formatCurrency(cashflow.remaining, baseCurrency, intlLocale);
+      : formatCurrency(availableBalance.amount, baseCurrency, intlLocale);
   const incomeLabel =
     cashflow.monthlyIncome == null
       ? "—"
@@ -133,14 +137,22 @@ export function HomeSummaryCard({
     intlLocale
   );
   const dailyLabel =
-    cashflow.dailyAvailable == null
+    availableBalance.dailyAvailable == null
       ? null
       : new Intl.NumberFormat(intlLocale, {
           style: "currency",
           currency: baseCurrency,
           maximumFractionDigits: 0,
           minimumFractionDigits: 0,
-        }).format(Math.round(cashflow.dailyAvailable));
+        }).format(Math.round(availableBalance.dailyAvailable));
+
+  const usesTrackedBalance = availableBalance.source === "tracked";
+  const balanceCaption = usesTrackedBalance
+    ? t(
+        "carried available balance",
+        "saldo disponible acumulado"
+      )
+    : t("available this month", "disponibles este mes");
 
   const usedPct = formatUsagePercent(cashflow.usedRatio);
   const availablePct =
@@ -174,7 +186,7 @@ export function HomeSummaryCard({
             {remainingLabel}
           </p>
           <p className="mt-1 text-[0.8125rem] font-medium text-white/55">
-            {t("available this month", "disponibles este mes")}
+            {balanceCaption}
           </p>
         </div>
 
@@ -199,8 +211,8 @@ export function HomeSummaryCard({
             <span>
               {availablePct != null
                 ? t(
-                    `${availablePct}% available`,
-                    `${availablePct}% disponible`
+                    `${availablePct}% left in plan`,
+                    `${availablePct}% restante del plan`
                   )
                 : t("Available", "Disponible")}
             </span>
@@ -263,10 +275,15 @@ export function HomeSummaryCard({
               <CalendarDays className="h-3.5 w-3.5 text-white" />
             </span>
             <p className="text-[0.75rem] leading-snug text-white/70">
-              {t(
-                `${dailyLabel} / day until ${monthEndLabel}`,
-                `${dailyLabel} al día hasta el ${monthEndLabel}`
-              )}
+              {usesTrackedBalance
+                ? t(
+                    `${dailyLabel} / day from this balance until ${monthEndLabel}`,
+                    `${dailyLabel} al día de este saldo hasta el ${monthEndLabel}`
+                  )
+                : t(
+                    `${dailyLabel} / day until ${monthEndLabel}`,
+                    `${dailyLabel} al día hasta el ${monthEndLabel}`
+                  )}
             </p>
           </div>
         )}
@@ -283,7 +300,7 @@ export function HomeSummaryCard({
               {remainingLabel}
             </p>
             <p className="mt-1 text-[0.8125rem] font-medium text-white/55">
-              {t("available this month", "disponibles este mes")}
+              {balanceCaption}
             </p>
           </div>
 
@@ -378,10 +395,15 @@ export function HomeSummaryCard({
                 <CalendarDays className="h-3.5 w-3.5 text-white" />
               </span>
               <span>
-                {t(
-                  `About ${dailyLabel} / day until ${monthEndLabel}`,
-                  `Aproximadamente ${dailyLabel} al día hasta el ${monthEndLabel}`
-                )}
+                {usesTrackedBalance
+                  ? t(
+                      `About ${dailyLabel} / day from this balance until ${monthEndLabel}`,
+                      `Aproximadamente ${dailyLabel} al día de este saldo hasta el ${monthEndLabel}`
+                    )
+                  : t(
+                      `About ${dailyLabel} / day until ${monthEndLabel}`,
+                      `Aproximadamente ${dailyLabel} al día hasta el ${monthEndLabel}`
+                    )}
               </span>
             </p>
           )}

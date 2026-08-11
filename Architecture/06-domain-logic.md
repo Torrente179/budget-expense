@@ -88,20 +88,22 @@ There is **no transfer concept and no goal id on a transaction**: `expenses`
 carries `category_id` only, and `investment_savings_transfers` belongs to Wealth
 and is not wired to envelopes. So "moving €300 to savings" is recorded as an
 expense in a savings-classified category — which is why tithe, savings and
-investing contributions all reduce `Te quedan` today.
+investing contributions all reduce the tracked cash shown by `Te quedan` once
+they occur.
 
 Consequence for anyone proposing a stricter available-to-spend number: an
 "unfunded goals" reservation must be computed as
 `max(target − contributed, 0)`, never as `expenses + transfersToGoals`. The
 latter double-subtracts, because those contributions are *already* in
-`expenses`. Any reservation would also change the headline on Home, since
-`resolveMonthCashflow` feeds both heroes — see the `Te quedan` definition in
-[`docs/APP.md` §9](../docs/APP.md). No reservation exists today; the create
-wizard deliberately ships without one.
+`expenses`. A future reservation would change month-plan pace, but must not be
+subtracted a second time from Home's tracked cash headline. No reservation
+exists today; the create wizard deliberately ships without one.
 
-Month cashflow hero math (`income − spent`, pace, daily guide) lives in
-[`month-cashflow.ts`](../src/lib/home/month-cashflow.ts) and is shared by
-`HomeSummaryCard` and `BudgetSummaryHero`.
+[`month-cashflow.ts`](../src/lib/home/month-cashflow.ts) deliberately exposes
+two layers: `resolveMonthCashflow` owns month-only `income − spent` pace for
+Home's supporting meter and `BudgetSummaryHero`; `resolveHomeAvailableBalance`
+prefers the checkpoint-backed tracked balance for Home's headline and daily
+guide, falling back to the month-only remainder when tracking is unavailable.
 
 ### UI usage bands (Home rings)
 
@@ -321,9 +323,10 @@ React and is unit-tested directly (`npm run test:wealth`).
 receivables and reserved savings belong to the user but cannot necessarily be
 spent today, so a €9.950 net worth can sit beside €2.500 of available money.
 `computeAvailableMoney` exists so `include_in_available` has meaning, but under
-the editorial rule (Home = now, Wealth = balances) **Patrimonio renders nothing
-from it** — otherwise "Te quedan", "Available balance" and "Disponible" would be
-three numbers competing for one word.
+the editorial rule (Home = spendable cash, Wealth = balance sheet)
+**Patrimonio renders nothing from it**. Home owns the checkpoint-backed
+available-balance figure; rendering another Wealth-derived "Disponible" would
+create a competing cash total.
 
 ### Transfers are not expenses
 
