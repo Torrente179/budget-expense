@@ -8,7 +8,6 @@ import {
   HERO_ICON_TILE,
   HERO_RULE,
   HERO_SURFACE,
-  HERO_TRACK,
 } from "@/components/patterns/hero-surface";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useCurrency } from "@/providers/currency-provider";
@@ -57,7 +56,7 @@ export function WealthCategoryHero({
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1.5">
             <p className="label-caps text-white/55">{eyebrow}</p>
-            <p className="font-mono text-display tabular-nums tracking-tight text-white">
+            <p className="chrome-figure font-mono text-display tabular-nums tracking-tight">
               {formatCurrency(amount, baseCurrency)}
             </p>
             {delta && (
@@ -100,9 +99,9 @@ export function WealthCategoryHero({
                 {Math.round(Math.min(Math.max(progress.ratio, 0), 1) * 100)}%
               </span>
             </div>
-            <div className={cn("h-1.5 overflow-hidden rounded-full", HERO_TRACK)}>
+            <div className="groove-dark h-1 overflow-hidden rounded-sm">
               <div
-                className="h-full rounded-full transition-[width] duration-500 ease-out"
+                className="h-full rounded-sm transition-[width] duration-500 ease-out"
                 style={{
                   width: `${Math.min(Math.max(progress.ratio, 0), 1) * 100}%`,
                   backgroundColor: HERO_ACCENT,

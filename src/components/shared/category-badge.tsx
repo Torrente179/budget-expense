@@ -115,13 +115,14 @@ export function CategoryIcon({
   className?: string;
 }) {
   const Icon = iconMap[icon] || MoreHorizontal;
+  /* Hybrid: the chip is neutral, the glyph keeps its category colour.
+     Drops the tinted-square look without losing the colour cue. */
   return (
     <div
       className={cn(
-        "flex h-8 w-8 items-center justify-center rounded-xl border shadow-1",
+        "flex h-8 w-8 items-center justify-center rounded-xl border border-border bg-muted",
         className
       )}
-      style={{ backgroundColor: `${color}15`, borderColor: `${color}24` }}
     >
       <Icon className="h-4 w-4" style={{ color }} />
     </div>

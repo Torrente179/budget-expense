@@ -12,7 +12,6 @@ import {
   HERO_ICON_TILE,
   HERO_SURFACE,
   HERO_TILE,
-  HERO_TRACK,
 } from "@/components/patterns/hero-surface";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
@@ -112,20 +111,15 @@ export function BudgetSummaryHero({
                 "Restante en el plan de este mes"
               )}
             </p>
-            <p className="mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+            <p className="chrome-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
               {remainingLabel}
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <div
-              className={cn(
-                "relative h-2 overflow-hidden rounded-full",
-                HERO_TRACK
-              )}
-            >
+            <div className="groove-dark relative h-1 overflow-hidden rounded-sm">
               <div
-                className="absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ease-out"
+                className="absolute inset-y-0 left-0 rounded-sm transition-[width] duration-700 ease-out"
                 style={{ width: `${barFill}%`, backgroundColor: barColor }}
               />
             </div>

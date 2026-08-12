@@ -6,10 +6,10 @@
  * consumed from this module so rings stay in sync with one flip.
  */
 
-export type PaletteId = "v2" | "og";
+export type PaletteId = "hybrid" | "v2" | "og";
 
-/** Flip to `"og"` to restore the previous semantic colors. */
-export const ACTIVE_PALETTE: PaletteId = "v2";
+/** Flip to `"v2"` to restore full-chroma categories, `"og"` for the originals. */
+export const ACTIVE_PALETTE: PaletteId = "hybrid";
 
 export type BudgetUsageTone =
   | "safe"
@@ -158,10 +158,42 @@ export const PALETTE_V2: Palette = {
   },
 };
 
+/**
+ * Hybrid — v2 semantics with the category hues pulled toward steel.
+ *
+ * Cashflow, usage bands and wealth accents are unchanged: those carry
+ * meaning and must not move for aesthetic reasons. Only `categories`
+ * drops chroma, so the donut and the ledger marks read as one material
+ * instead of seven unrelated picker choices.
+ */
+export const PALETTE_HYBRID: Palette = {
+  ...PALETTE_V2,
+  id: "hybrid",
+  categories: {
+    housing: "#C9A227",
+    titheCharity: "#3E8FA0",
+    restaurants: "#B5545F",
+    groceries: "#5E8C57",
+    travel: "#3E8FA0",
+    services: "#7E8C4E",
+    shopping: "#8B6FB0",
+    health: "#C0784A",
+    subscriptions: "#6068A8",
+    other: "#7C838C",
+    income: "#059669",
+    expenses: "#B5545F",
+    transportation: "#4A7FB5",
+    entertainment: "#8B6FB0",
+    education: "#6068A8",
+    loan: "#3E7A70",
+  },
+};
+
 export const PALETTE: Palette = (
   {
     og: PALETTE_OG,
     v2: PALETTE_V2,
+    hybrid: PALETTE_HYBRID,
   } as const satisfies Record<PaletteId, Palette>
 )[ACTIVE_PALETTE];
 

@@ -95,7 +95,7 @@ export function AccountsScreen() {
                 <p className="label-caps text-white/55">
                   {t("Total liquid", "Total líquido")}
                 </p>
-                <p className="font-mono text-display tabular-nums tracking-tight text-white">
+                <p className="chrome-figure font-mono text-display tabular-nums tracking-tight">
                   {formatCurrency(totalBase, baseCurrency)}
                 </p>
               </div>

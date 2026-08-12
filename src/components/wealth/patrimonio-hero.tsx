@@ -90,7 +90,9 @@ export function PatrimonioHero({
             <p
               className={cn(
                 "font-mono text-display tabular-nums tracking-tight",
-                negative ? "text-white/90" : "text-white"
+                /* Chrome only reads as an achievement. A negative net worth
+                   keeps flat ink so the state is not dressed up. */
+                negative ? "text-white/90" : "chrome-figure"
               )}
             >
               {formatCurrency(totals.netWorth, baseCurrency)}
