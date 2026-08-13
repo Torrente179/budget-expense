@@ -1,17 +1,18 @@
 import { cn } from "@/lib/utils";
 import {
-  Utensils,
-  Car,
+  UtensilsCrossed,
+  CarFront,
   Home,
   Zap,
-  Film,
+  Clapperboard,
   ShoppingBag,
-  HeartPulse,
+  Stethoscope,
   GraduationCap,
-  Plane,
+  PlaneTakeoff,
   Repeat,
+  MonitorPlay,
   ShoppingCart,
-  MoreHorizontal,
+  CircleEllipsis,
   Receipt,
   TrendingUp,
   Church,
@@ -22,33 +23,138 @@ import {
   HandHeart,
   Banknote,
   CircleDollarSign,
+  Wallet,
+  Scissors,
+  ShieldCheck,
+  Coins,
+  PiggyBank,
+  ChartLine,
+  Dumbbell,
+  Wifi,
+  Fuel,
+  PawPrint,
+  Gift,
+  CreditCard,
   type LucideIcon,
 } from "lucide-react";
 
+/**
+ * Category pictograms.
+ *
+ * Up draws these as single-weight line art — a cart, crossed cutlery, a pair of
+ * scissors — so the glyph reads instantly at 18px without any fill. Choices
+ * favour the most literal object for the category over an abstract symbol.
+ *
+ * Legacy keys are kept pointing at their replacements so rows already stored in
+ * the database keep resolving; nothing here may be deleted, only re-aimed.
+ */
 const iconMap: Record<string, LucideIcon> = {
-  utensils: Utensils,
-  car: Car,
+  // Spending
+  utensils: UtensilsCrossed,
+  "utensils-crossed": UtensilsCrossed,
+  car: CarFront,
+  "car-front": CarFront,
+  fuel: Fuel,
   home: Home,
+  house: Home,
   zap: Zap,
-  film: Film,
+  wifi: Wifi,
+  film: Clapperboard,
+  clapperboard: Clapperboard,
+  "monitor-play": MonitorPlay,
   "shopping-bag": ShoppingBag,
-  "heart-pulse": HeartPulse,
-  "graduation-cap": GraduationCap,
-  plane: Plane,
-  repeat: Repeat,
   "shopping-cart": ShoppingCart,
-  "more-horizontal": MoreHorizontal,
+  "heart-pulse": Stethoscope,
+  stethoscope: Stethoscope,
+  dumbbell: Dumbbell,
+  "graduation-cap": GraduationCap,
+  plane: PlaneTakeoff,
+  "plane-takeoff": PlaneTakeoff,
+  repeat: Repeat,
+  scissors: Scissors,
+  "paw-print": PawPrint,
+  gift: Gift,
+  "shield-check": ShieldCheck,
   receipt: Receipt,
+  "credit-card": CreditCard,
+
+  // Money in / balances
   "trending-up": TrendingUp,
-  church: Church,
+  wallet: Wallet,
+  banknote: Banknote,
+  coins: Coins,
+  "piggy-bank": PiggyBank,
+  "chart-line": ChartLine,
+  "circle-dollar-sign": CircleDollarSign,
   landmark: Landmark,
   briefcase: Briefcase,
+
+  // Giving
+  church: Church,
+  "hand-heart": HandHeart,
   "heart-handshake": HeartHandshake,
   sparkles: Sparkles,
-  "hand-heart": HandHeart,
-  banknote: Banknote,
-  "circle-dollar-sign": CircleDollarSign,
+
+  // Fallbacks
+  "more-horizontal": CircleEllipsis,
+  "circle-ellipsis": CircleEllipsis,
 };
+
+/**
+ * Name → icon, for categories whose stored `icon` is empty or unknown. Matched
+ * case-insensitively against both the English and Spanish name, so a row typed
+ * as "Supermercado" still gets a cart.
+ */
+const iconByName: Record<string, LucideIcon> = {
+  "food & dining": UtensilsCrossed,
+  "alimentación y restaurantes": UtensilsCrossed,
+  restaurants: UtensilsCrossed,
+  groceries: ShoppingCart,
+  supermercado: ShoppingCart,
+  transportation: CarFront,
+  transporte: CarFront,
+  housing: Home,
+  vivienda: Home,
+  utilities: Zap,
+  servicios: Zap,
+  entertainment: Clapperboard,
+  entretenimiento: Clapperboard,
+  shopping: ShoppingBag,
+  compras: ShoppingBag,
+  healthcare: Stethoscope,
+  salud: Stethoscope,
+  education: GraduationCap,
+  educación: GraduationCap,
+  travel: PlaneTakeoff,
+  viajes: PlaneTakeoff,
+  subscriptions: MonitorPlay,
+  suscripciones: MonitorPlay,
+  loan: Banknote,
+  préstamo: Banknote,
+  salary: Wallet,
+  nómina: Wallet,
+  "other income": TrendingUp,
+  "otros ingresos": TrendingUp,
+  taxes: Landmark,
+  impuestos: Landmark,
+  "professional services": Briefcase,
+  "servicios profesionales": Briefcase,
+  donations: HandHeart,
+  donaciones: HandHeart,
+  "personal care": Scissors,
+  "cuidado personal": Scissors,
+  tithe: Church,
+  diezmo: Church,
+  insurance: ShieldCheck,
+  seguros: ShieldCheck,
+  cash: Coins,
+  efectivo: Coins,
+  savings: PiggyBank,
+  ahorro: PiggyBank,
+  investments: ChartLine,
+  inversiones: ChartLine,
+};
+
 
 /**
  * Bare category glyph — no badge chrome. For callers that draw their own
@@ -56,12 +162,18 @@ const iconMap: Record<string, LucideIcon> = {
  */
 export function CategoryGlyph({
   icon,
+  name,
   className,
 }: {
   icon: string;
+  /** Used when `icon` is empty or unknown. */
+  name?: string;
   className?: string;
 }) {
-  const Icon = iconMap[icon] || MoreHorizontal;
+  const Icon =
+    (icon ? iconMap[icon] : undefined) ??
+    (name ? iconByName[name.trim().toLowerCase()] : undefined) ??
+    CircleEllipsis;
   return <Icon className={className} />;
 }
 
@@ -84,7 +196,10 @@ export function CategoryBadge({
   className,
   size = "sm",
 }: CategoryBadgeProps) {
-  const Icon = iconMap[icon] || MoreHorizontal;
+  const Icon =
+    (icon ? iconMap[icon] : undefined) ??
+    (name ? iconByName[name.trim().toLowerCase()] : undefined) ??
+    CircleEllipsis;
   const iconSize = size === "sm" ? "h-3 w-3" : "h-4 w-4";
 
   return (
@@ -108,13 +223,19 @@ export function CategoryBadge({
 export function CategoryIcon({
   icon,
   color,
+  name,
   className,
 }: {
   icon: string;
   color: string;
+  /** Used when `icon` is empty or unknown. */
+  name?: string;
   className?: string;
 }) {
-  const Icon = iconMap[icon] || MoreHorizontal;
+  const Icon =
+    (icon ? iconMap[icon] : undefined) ??
+    (name ? iconByName[name.trim().toLowerCase()] : undefined) ??
+    CircleEllipsis;
   /* Hybrid: the chip is neutral, the glyph keeps its category colour.
      Drops the tinted-square look without losing the colour cue. */
   return (

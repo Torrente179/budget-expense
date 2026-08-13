@@ -28,18 +28,18 @@ export type CurrencyCode = (typeof CURRENCIES)[number]["code"];
 export const DEFAULT_CURRENCY: CurrencyCode = "EUR";
 
 export const DEFAULT_CATEGORIES = [
-  { name: "Food & Dining", icon: "utensils", color: PALETTE.categories.restaurants },
-  { name: "Transportation", icon: "car", color: PALETTE.categories.transportation },
+  { name: "Food & Dining", icon: "utensils-crossed", color: PALETTE.categories.restaurants },
+  { name: "Transportation", icon: "car-front", color: PALETTE.categories.transportation },
   { name: "Housing", icon: "home", color: PALETTE.categories.housing },
   { name: "Utilities", icon: "zap", color: PALETTE.categories.services },
-  { name: "Entertainment", icon: "film", color: PALETTE.categories.entertainment },
+  { name: "Entertainment", icon: "clapperboard", color: PALETTE.categories.entertainment },
   { name: "Shopping", icon: "shopping-bag", color: PALETTE.categories.shopping },
-  { name: "Healthcare", icon: "heart-pulse", color: PALETTE.categories.health },
+  { name: "Healthcare", icon: "stethoscope", color: PALETTE.categories.health },
   { name: "Education", icon: "graduation-cap", color: PALETTE.categories.education },
-  { name: "Travel", icon: "plane", color: PALETTE.categories.travel },
-  { name: "Subscriptions", icon: "repeat", color: PALETTE.categories.subscriptions },
+  { name: "Travel", icon: "plane-takeoff", color: PALETTE.categories.travel },
+  { name: "Subscriptions", icon: "monitor-play", color: PALETTE.categories.subscriptions },
   { name: "Groceries", icon: "shopping-cart", color: PALETTE.categories.groceries },
-  { name: "Other", icon: "more-horizontal", color: PALETTE.categories.other },
+  { name: "Other", icon: "circle-ellipsis", color: PALETTE.categories.other },
   { name: "Loan", icon: "banknote", color: PALETTE.categories.loan },
 ] as const;
 

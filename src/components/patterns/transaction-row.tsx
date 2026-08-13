@@ -14,6 +14,8 @@ interface TransactionRowProps {
   kind: "expense" | "income";
   /** Category visual for expenses; income rows get a standard income icon. */
   category?: { icon: string; color: string } | null;
+  /** Category name, so the glyph still resolves when `icon` is empty. */
+  categoryName?: string;
   /** Marks rows awaiting categorization/review. */
   needsReview?: boolean;
   onClick?: () => void;
@@ -39,6 +41,7 @@ export function TransactionRow({
   currency,
   kind,
   category,
+  categoryName,
   needsReview = false,
   onClick,
   className,
@@ -50,6 +53,8 @@ export function TransactionRow({
       <MerchantMark
         title={title}
         color={category?.color}
+        icon={category?.icon}
+        categoryName={categoryName}
         round={kind === "income"}
       />
       <div className="min-w-0 flex-1">

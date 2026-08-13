@@ -1,18 +1,20 @@
 "use client";
 
 import { cn } from "@/lib/utils";
+import { CategoryGlyph } from "@/components/shared/category-badge";
 
 /**
  * The square mark that opens every feed row.
  *
- * Up puts **merchant identity** first — a real brand logo, not a category
- * glyph — because that is what you actually scan a statement for. We have no
- * logo assets, so the honest equivalent is the merchant's initial on a tile
- * tinted with its category colour: the letter carries the identity, the colour
- * keeps the category signal that `CategoryBadge` used to carry alone.
+ * Up's feed marks are saturated tiles carrying a pictogram — a real brand logo
+ * where one exists. We have no logo assets, so the tile is filled with the
+ * category colour and carries the category's line-art glyph in white. That
+ * keeps the category legible at a glance, which is what the glyph is for, while
+ * the colour still distinguishes rows down the column.
  *
- * Colour falls back to a stable hash of the title so uncategorised rows still
- * differ from one another instead of turning into a column of grey squares.
+ * With no category at all, it falls back to the merchant's initial on a tile
+ * coloured by a stable hash of the title — so uncategorised rows still differ
+ * from one another instead of forming a column of identical grey squares.
  */
 
 /** Category-free fallback hues, spaced around the wheel and legible at 34px. */
@@ -50,6 +52,10 @@ interface MerchantMarkProps {
   title: string;
   /** Category colour, when the movement has one. */
   color?: string | null;
+  /** Category icon key — draws the pictogram instead of the initial. */
+  icon?: string | null;
+  /** Category name, used to resolve a pictogram when `icon` is missing. */
+  categoryName?: string | null;
   /** Circular instead of squircle — used for people (transfers, splits). */
   round?: boolean;
   className?: string;
@@ -58,11 +64,13 @@ interface MerchantMarkProps {
 export function MerchantMark({
   title,
   color,
+  icon,
+  categoryName,
   round = false,
   className,
 }: MerchantMarkProps) {
   const bg = color || hashHue(title);
-  const glyph = initial(title);
+  const hasCategory = Boolean(icon || categoryName);
 
   return (
     <span
@@ -74,7 +82,15 @@ export function MerchantMark({
       )}
       style={{ backgroundColor: bg }}
     >
-      {glyph}
+      {hasCategory ? (
+        <CategoryGlyph
+          icon={icon ?? ""}
+          name={categoryName ?? undefined}
+          className="h-[1.125rem] w-[1.125rem] stroke-[1.9]"
+        />
+      ) : (
+        initial(title)
+      )}
     </span>
   );
 }
