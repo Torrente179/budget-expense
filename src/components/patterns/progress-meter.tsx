@@ -40,9 +40,9 @@ export function ProgressMeter({
       aria-valuemin={0}
       aria-valuemax={100}
       aria-valuenow={Math.round(Math.min(Math.max(ratio, 0), 9.99) * 100)}
-      /* Hybrid: an inset groove rather than a painted bar. */
+      /* Up: a flat painted bar. No machined material anywhere in Up. */
       className={cn(
-        "groove-light h-1 w-full overflow-hidden rounded-sm",
+        "up-track h-1 w-full overflow-hidden rounded-sm",
         className
       )}
     >

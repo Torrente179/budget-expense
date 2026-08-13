@@ -7,18 +7,27 @@
 > canonical token definitions in [`src/app/globals.css`](src/app/globals.css)
 > win; update this file to match.
 >
-> **Superseded 2026-07-17** by the five-section IA rework. The previous version
-> described the pre-rework system (10 nav items across 5 divergent menus,
-> ad-hoc status colors, magic values); this version describes the strict token
-> system that replaced it.
+> **Superseded 2026-08-13** by the Up design pass. The previous version
+> described the Hybrid v1 system (light-first, machined chrome figures, groove
+> meters, percentage rings, a liquid-glass bottom tab bar). This version
+> describes the Up system that replaced it. Reference: captures of the real Up
+> app (up.com.au), extracted in
+> [`changes/2026-08-13-up-true-mockups.md`](changes/2026-08-13-up-true-mockups.md);
+> mockups in [`mockups/up-true/`](mockups/up-true/).
 
 - **Product:** Budget & Expense — a bilingual (EN/ES) personal stewardship,
   budgeting, and expense-tracking app.
 - **Stack:** Next.js 16 (App Router) · React 19 · Tailwind CSS v4 (CSS-first
   config) · Base UI primitives · shadcn (`base-nova`) · Framer Motion ·
   Recharts · Supabase · Vercel.
-- **Theme model:** class-based light/dark via `next-themes`, **light by
-  default**, system preference enabled.
+- **Theme model:** **one appearance.** Up has no light/dark duality, so
+  `next-themes` is gone along with every toggle. The `dark` variant is still
+  declared in `globals.css` so existing `dark:` utilities compile, but nothing
+  sets the class and they never match.
+- **Surface model:** **dark chrome over a white sheet.** The page ground and
+  `--foreground` stay light/ink so text inside cards reads normally; the dark
+  layer is applied per surface (`up-chrome`, `up-canvas`, `HERO_SURFACE`, the
+  desktop sidebar). This is the single most identity-carrying rule here.
 
 ---
 
@@ -62,17 +71,18 @@ font-size values in components** except:
 
 1. Dynamic **category color** (DB hex via `CategoryBadge` / donut inline style).
 2. **Budget usage-band** hex from [`src/lib/palette.ts`](src/lib/palette.ts)
-   (Home Presupuesto cards / Budget meters). Cashflow amounts use CSS vars
+   (Presupuesto trackers). Cashflow amounts use CSS vars
    (`income` / `available` / `expense`). **Patrimonio category accents** come
    from `WEALTH_ACCENTS` in the same file (accounts / savings / investments /
-   lent / debts). The **black hero surface** is the summary chrome for the three
+   lent / debts). The **ink chrome surface** is the summary chrome for the three
    screens that lead with one headline figure — **Home, Budget and
    Patrimonio** — import it from
    [`src/components/patterns/hero-surface.tsx`](src/components/patterns/hero-surface.tsx)
    (`HERO_SURFACE`, `HERO_TILE`, `HERO_ICON_TILE`, `HERO_RULE`, `HERO_TRACK`,
-   `HERO_ACCENT`, `HERO_ACCENT_NEGATIVE`, `HERO_ACCENT_WARNING`, `HeroSheen`)
-   rather than writing ad-hoc `white/xx` values, and do not reuse the surface on
-   ordinary cards.
+   `HERO_ACCENT`, `HERO_ACCENT_NEGATIVE`, `HERO_ACCENT_WARNING`) rather than
+   writing ad-hoc `white/xx` values, and do not reuse the surface on ordinary
+   cards. It is full-bleed and square on mobile so it continues the rail's ink
+   band, and a rounded card on desktop. `HeroSheen` is **gone** — Up is flat.
 3. **Insights spend series** `SPEND_CHART_COLOR` (`#EC4899`) in
    [`src/components/charts/chart-theme.tsx`](src/components/charts/chart-theme.tsx)
    — soft magenta for bar fills (matches clarity Health); not `--expense`
@@ -89,29 +99,38 @@ font-size values in components** except:
   - `warning` — needs attention, review queue
   - `danger` — destructive intent (hue-aligned with `destructive`)
   - `info` — neutral information, upcoming bills
+- **Up hues** are exposed directly as `--coral` / `--coral-deep` / `--lemon` /
+  `--ink` / `--ink-2` / `--ink-3`, usable as `bg-ink`, `text-coral`, etc.
+  **Coral `#FF7A64` is both the action colour and the money colour** — that
+  double duty is a large part of why the app reads as Up. It is `--primary`,
+  so every default Button, focus ring and FAB is coral.
 - **Cashflow tokens** (Home stats; also aliased into amount semantics):
-  - `income` — `#059669` (Emerald) — money in
-  - `available` — `#06B6D4` (Cyan) — checkpoint balance
-  - `expense` — `#E11D48` (Raspberry) — money out
+  - `income` — `#16A56A` (mint) — money in
+  - `available` — `#FF7A64` (coral) — the spendable headline, matching Up's hero
+  - `expense` — `#1A1B23` (**ink**) — money out
   - `positive` → `var(--income)`; `negative` → `var(--expense)`
   - Utilities: `text-income`, `text-available`, `text-expense`, `bg-income`, etc.
-  - OG cashflow values are documented in `src/lib/palette.ts` (`PALETTE_OG`)
-    and comments in `globals.css` for a one-flip revert.
-- **Budget usage bands** (Home rings + Budget tab meters; source of truth
+  - **Outflows are ink, not red.** Up renders money leaving as plain text and
+    spends red only on a tracker actually over its limit. Do not "restore" a red
+    expense colour — it makes every ordinary purchase read as an alarm.
+  - Earlier palettes (`PALETTE_OG` / `PALETTE_V2` / `PALETTE_HYBRID`) remain in
+    `src/lib/palette.ts` for a one-flip revert via `ACTIVE_PALETTE`.
+- **Budget usage bands** (Presupuesto trackers; source of truth
   `src/lib/palette.ts`, not month-pace):
 
   | Band | Ratio | Hex |
   |---|---|---|
-  | Safe | 0–69% | `#22C55E` |
-  | Watch | 70–84% | `#F59E0B` |
-  | Near limit | 85–99% | `#F97316` |
-  | Exceeded | 100–119% | `#EF4444` |
-  | Critical | 120%+ | `#BE123C` |
+  | Safe | 0–69% | `#FF7A64` |
+  | Watch | 70–84% | `#FF7A64` |
+  | Near limit | 85–99% | `#FF7A64` |
+  | Exceeded | 100–119% | `#F0453A` |
+  | Critical | 120%+ | `#F0453A` |
 
-  Flip `ACTIVE_PALETTE` to `"og"` to restore the previous three-tone mapping.
-  Ring **fill** still clamps at 100%; the **% numeral** and band color show
-  overspend. Category-colored rings were considered and rejected (pace/usage
-  signal would be lost).
+  **Up does not grade a tracker on its way to the limit.** The bar holds one
+  colour the whole way and only turns red once the limit is passed. The five
+  bands survive so the API and legends keep working, but the three under-limit
+  tones deliberately resolve to the same coral. Do not reintroduce a
+  safe → watch → near gradient.
 - **Category colors:** data-driven hex on `categories.color` (inline style via
   `CategoryBadge` / donut). Clarity defaults live in `PALETTE.categories` /
   `DEFAULT_CATEGORIES`; Housing is yellow `#EAB308`. Migration
@@ -127,12 +146,19 @@ font-size values in components** except:
 - Usage: `text-success`, `bg-warning-subtle`, `ring-danger/25`, `text-income`,
   etc.
 
-### 2.1.1 Home Presupuesto cards (composition)
+### 2.1.1 Home Presupuesto trackers (composition)
 
 - Component: `src/components/home/budget-pace-chart.tsx` (shared with Budget).
-- Metas-style tiles laid out **side by side, up to 3 per row**. Inside a tile:
-  tinted round icon badge (left) and usage ring with the `%` inside (right) on
-  the top row, then name, `spent`, and `de <limit>` / `of <limit>`.
+- **Remaining-first.** The headline is what is *left* (`€124 left` /
+  `quedan 124 €`) or, past the limit, what it is *over* by (`€38 over` /
+  `38 € de más`). **Up never shows a bare percentage**, so the usage ring, the
+  `%` numeral and the month-pace mark on the ring are all gone. The only
+  quantity on a tracker is an amount.
+- Up **Tracker** tiles laid out **side by side, up to 3 per row**: dark
+  (`bg-ink-2`) card, category-accent glyph top-left, name in small grey, the
+  remaining amount in bold, and a thin accent bar **hugging the card's bottom
+  edge, full-bleed to its corners** — not inset. The bar turns red past the
+  limit.
 - Tile glyph = the `icon` of the category carrying most of that budget's spend;
   no linked categories falls back to `Target`.
 - Tiles size themselves off their own width (`@container/budget-card`), so the
@@ -141,10 +167,8 @@ font-size values in components** except:
   `/budget`.
 - More than 3 → **swipe pages of 3** (snap + dots); pages keep a fixed
   3-column grid so card width never jumps between pages.
-- Month-progress mark (dot on the ring) remains; color is **usage band only**
-  (safe → critical). Never treat 100% as success green — that is reserved for
-  Metas on the Budget tab. The `%` label is `foreground` until the budget is
-  over its limit, where it takes the band color (as does the spent amount).
+- Never treat 100% as success green — that is reserved for Metas on the Budget
+  tab. Past the limit the headline amount takes the band colour (red).
 - Home: cards link to `/budget`. Budget tab: pass `onSelect` to open the
   edit sheet; a compact manage list below carries delete.
 - Hero math: `src/lib/home/month-cashflow.ts` + `HomeSummaryCard`.
@@ -157,8 +181,19 @@ font-size values in components** except:
 
 ### 2.2 Typography
 
-Geist (UI) + Geist Mono (all numerals, always `tabular-nums`). The scale is
-tokenized; arbitrary `text-[…rem]` values are banned outside `components/ui/`:
+**Inter** throughout, loaded via `next/font` in
+[`src/app/layout.tsx`](src/app/layout.tsx) as `--font-inter`. `font-sans`,
+`font-mono` and `font-heading` all resolve to it; `font-mono` survives as a
+semantic marker for numerals, whose alignment comes from `tabular-nums`.
+
+> **Inter is a STAND-IN.** Up's real typeface is unconfirmed — Brandfetch
+> returns 403 and Up's design blog never names it. From the captures it is a
+> tight geometric sans with heavy, negatively-tracked numerals. Swap the three
+> `--font-*` lines in `globals.css` and the `next/font` import when the real
+> family is identified. Do not present Inter as the chosen face.
+
+The scale is tokenized; arbitrary `text-[…rem]` values are banned outside
+`components/ui/`:
 
 | Token | Size | Use |
 |---|---|---|
@@ -175,16 +210,22 @@ uppercase micro-badges. Arbitrary `tracking-[…]` values are banned.
 
 ### 2.3 Elevation
 
-Three theme-aware shadows (`--elevation-1/2/3`, exposed as `shadow-1/2/3`):
-**1** resting cards · **2** raised (popovers, sticky headers, hover) ·
-**3** modal/sheet/FAB. One-off `shadow-[…]` values are banned.
+**Up is flat.** Cards separate from the ground by contrast, not by lift. The
+three shadows (`--elevation-1/2/3`, exposed as `shadow-1/2/3`) survive but are
+now nearly imperceptible: **1** resting · **2** raised (popovers, sticky
+headers) · **3** modal/sheet. `<Card>` no longer carries a shadow at all, and
+buttons have no drop shadow and no hover lift. The FAB uses the `up-fab-glow`
+utility — a halo in coral's own hue, not a neutral drop shadow. One-off
+`shadow-[…]` values are banned.
 
 ### 2.4 Radius & spacing
 
-Radius derives from `--radius: 1rem`: `rounded-lg` (1rem) for inputs/nav rows,
-`rounded-xl` (1.4rem) for cards, `rounded-2xl`/`rounded-3xl` for
-sheets/modals, `rounded-full` for round icon buttons and dots only —
-**never for status pills or tab chips** (use `StatusTag` / `UnderlineTabs`).
+Radius derives from `--radius: 0.75rem`: `rounded-lg` (0.75rem) for inputs/nav
+rows, `rounded-xl` (1.05rem) for cards, `rounded-2xl`/`rounded-3xl` for
+sheets/modals. **Buttons are full pills** (`rounded-full` in the base variant)
+and icon buttons are circles — that is Up's control shape. `rounded-full`
+remains banned for status pills and tab chips (use `StatusTag` /
+`UnderlineTabs`).
 Arbitrary `rounded-[…rem]` is banned. Spacing uses Tailwind's 4px scale;
 screen gutters are
 `px-4 sm:px-5 lg:px-8`, matched by `Screen`'s negative margins for full-bleed
@@ -205,6 +246,13 @@ superellipse with a restrained graphite rim. It carries the reference logo's
 speed and contrast while remaining recognizable at browser-favicon size. The
 slash uses the product's success green (`#18b986`); it signals positive
 progress and must remain subordinate to the letter.
+
+> **Open conflict, deliberately not resolved.** The mark's emerald slash
+> (`#18b986`) predates the Up pass and no longer belongs to this palette, where
+> green means money arriving and coral carries the brand. The mark has been left
+> exactly as it is: the identity is the owner's call, not a design pass's, and
+> regenerating six icon assets is a separate decision. Raise it; don't quietly
+> recolour it.
 
 The mark is a flat, front-facing asset. Do not add the former serif `BE`
 monogram, photographic perspective, leather texture, gold accents, finance
@@ -248,7 +296,8 @@ src/components/
               amount-text.tsx     THE way to render money (converts via the
                                   currency provider, tabular mono, tone, sign)
               transaction-row.tsx canonical ledger row
-              progress-meter.tsx  budget/tithe bar, ok→warning→over tones
+              progress-meter.tsx  budget/tithe bar (flat painted `up-track`,
+                                  ok→over tones — no machined groove)
               status-tag.tsx      quiet status indicator (tone dot + label in
                                   ink). THE way to show state — never an
                                   uppercase tinted pill.
@@ -269,11 +318,12 @@ src/components/
               (see §9).
   onboarding/ First-run wizard + soft client gate (`OnboardingGate` in the
               app layout). Not primary nav.
-  layout/     sidebar (desktop), topbar (desktop-only), tab-bar (mobile,
-              5 tabs), profile-sheet (mobile secondary nav + language row +
-              logout), command-menu (⌘K), site-brand. All consume
-              lib/navigation.ts. Chrome (Sidebar/Topbar/TabBar/CaptureFab)
-              is hidden on `/onboarding`.
+  layout/     sidebar (desktop, dark chrome), topbar (desktop-only),
+              nav-rail (mobile top tab rail — replaced the bottom tab-bar),
+              profile-sheet (mobile secondary nav + language row + logout),
+              command-menu (⌘K), site-brand. All consume lib/navigation.ts;
+              the rail uses `RAIL_NAV`, the same items in rail order. Chrome
+              (Sidebar/Topbar/NavRail/CaptureFab) is hidden on `/onboarding`.
   home/ movements/ budget/ wealth/ insights/   feature modules per section
   review/ import/ settings/ auth/ shared/      kept modules
 ```
@@ -292,11 +342,20 @@ error states. No blank areas while fetching.
 
 ## 4. Mobile-native rules
 
-- `< md`: no topbar. Each screen renders its own sticky translucent header via
-  `patterns/screen.tsx` — avatar (profile sheet) on root screens, back chevron
-  on pushed screens. Bottom `TabBar` with the 5 sections + floating capture
-  FAB bottom-right (thumb zone). Main content padding clears the bar +
-  `env(safe-area-inset-bottom)`.
+- `< md`: no topbar. **`NavRail`** is pinned to the top of the viewport,
+  outside `main`'s gutters so it is full-bleed, carrying the 5 sections on the
+  ink chrome band. The active section is **centred and its neighbours clip at
+  the screen edges** — that clipping is the affordance, and it is why the rail
+  uses `RAIL_NAV` order (Net worth · Insights · **Home** · Movements · Budget)
+  rather than `PRIMARY_NAV`: with Home first there is never anything to its
+  left. Up rejected bottom tab bars for this; **do not reinstate one.**
+- Below the rail, each screen renders its own sticky header via
+  `patterns/screen.tsx`, also on the ink band so rail + header + hero read as
+  one continuous chrome surface — avatar (profile sheet) on root screens, back
+  chevron on pushed screens. The header reverts to the light translucent
+  treatment at `md`, where the sidebar carries the chrome instead.
+- Floating capture FAB bottom-right (thumb zone). With no tab bar under it, it
+  sits at the normal safe-area offset.
 - **Back** on pushed screens = previous page (`router.back()`), with
   `backHref` as the safe fallback when there is no history (refresh / deep
   link). Do not replace this with a hardcoded `/home` Link.
@@ -347,20 +406,20 @@ error states. No blank areas while fetching.
 | Pushed-screen back | `<Screen backHref="/safe-fallback">` (history first) |
 | Surface / panel | `<Card>` (unmodified) |
 | Section/metric label | `label-caps` |
-| Big number | `font-mono text-display tabular-nums` |
+| Big number | `up-figure font-mono text-display tabular-nums` (coral, chrome only) |
 | Money | `<AmountText amount currency tone signed>` |
 | Ledger row | `<TransactionRow>` |
 | Stat tile | `<StatCard label value detail href?>` |
 | Budget/tithe progress | `<ProgressMeter ratio>` — default colors = usage bands; pass `tone` to override (Giving) |
-| Home Presupuesto cards | `BudgetPaceChart` — Metas-style cards, swipe pages; optional `onSelect` |
+| Home Presupuesto trackers | `BudgetPaceChart` — Up Trackers, remaining-first, swipe pages; optional `onSelect` |
 | Create / edit a budget | `<BudgetWizard mode="create" \| "edit">` — centered modal (bottom sheet on mobile), 3 steps branching by kind |
 | Any 3-step creation flow | `<WizardModal>` in `patterns/wizard-modal.tsx` — Dialog/Sheet switch, step indicator, footer; `useDiscardPanel()` for the discard guard |
 | Wizard consequence block | `<FinancialImpact>` + `lib/wealth/transaction-effects.ts` — step 3 must state what the write does |
 | Confirm a destructive action | `<ConfirmDialog>` — `window.confirm` is banned |
-| Patrimonio category hero | `<WealthCategoryHero>` (black `HERO_SURFACE`) |
+| Patrimonio category hero | `<WealthCategoryHero>` (ink `HERO_SURFACE`) |
 | Home month hero | `HomeSummaryCard` + `lib/home/month-cashflow.ts` |
 | Net worth math | `lib/wealth/net-worth.ts` (pure) + `useNetWorth()` — never re-derive a total in a screen |
-| Patrimonio hero | `<PatrimonioHero>` (black `HERO_SURFACE`) |
+| Patrimonio hero | `<PatrimonioHero>` (ink `HERO_SURFACE`) |
 | Patrimonio category accent | `WEALTH_ACCENTS` in `lib/palette.ts` |
 | Cushion / goal meter | `<ProgressMeter tone="…">` — **always pass `tone`** when a full bar is good; the default bands read high as bad |
 | Stat tile swatch | `<StatCard swatchClassName="bg-income" …>` |
@@ -389,8 +448,13 @@ error states. No blank areas while fetching.
 2. No magic values outside `components/ui/`: `rounded-[…rem]`, `text-[…rem]`,
    `tracking-[…]`, `shadow-[0_…]`, `bg-card/96`.
 3. No stale route strings outside their redirect stubs.
-4. Nav items come only from `lib/navigation.ts`.
+4. Nav items come only from `lib/navigation.ts` (the rail's order lives there
+   too, as `RAIL_NAV`).
 5. No language switcher in `Screen` headers — Settings / profile sheet only.
+6. No theme switching: `next-themes`, `useTheme`, or an appearance toggle
+   anywhere in `src/` means the one-appearance rule has been broken.
+7. No percentage as a budget headline: a bare `%` numeral on a Presupuesto
+   tracker contradicts remaining-first (§2.1.1).
 
 ---
 

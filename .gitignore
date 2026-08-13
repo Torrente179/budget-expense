@@ -50,3 +50,7 @@ __pycache__/
 
 # claude local-only settings (launch.json is shared, settings.local is not)
 .claude/settings.local.json
+
+# Up reference captures — screenshots of a third-party app, kept local.
+# Remove this line if you want them tracked in the repo.
+mockups/**/references/

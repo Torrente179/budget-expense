@@ -5,7 +5,6 @@ import type { MonthCashflow } from "@/lib/home/month-cashflow";
 import { formatUsagePercent } from "@/lib/home/month-cashflow";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
-  HeroSheen,
   HERO_ACCENT,
   HERO_ACCENT_NEGATIVE,
   HERO_ACCENT_WARNING,
@@ -101,7 +100,6 @@ export function BudgetSummaryHero({
 
   return (
     <section className={HERO_SURFACE}>
-      <HeroSheen />
       <div className="relative grid gap-3.5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(14rem,0.85fr)] lg:items-center lg:gap-5">
         <div className="min-w-0 space-y-3">
           <div>
@@ -111,13 +109,13 @@ export function BudgetSummaryHero({
                 "Restante en el plan de este mes"
               )}
             </p>
-            <p className="chrome-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+            <p className="up-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
               {remainingLabel}
             </p>
           </div>
 
           <div className="space-y-1.5">
-            <div className="groove-dark relative h-1 overflow-hidden rounded-sm">
+            <div className="up-track-dark relative h-1 overflow-hidden rounded-sm">
               <div
                 className="absolute inset-y-0 left-0 rounded-sm transition-[width] duration-700 ease-out"
                 style={{ width: `${barFill}%`, backgroundColor: barColor }}

@@ -6,10 +6,10 @@
  * consumed from this module so rings stay in sync with one flip.
  */
 
-export type PaletteId = "hybrid" | "v2" | "og";
+export type PaletteId = "up" | "hybrid" | "v2" | "og";
 
-/** Flip to `"v2"` to restore full-chroma categories, `"og"` for the originals. */
-export const ACTIVE_PALETTE: PaletteId = "hybrid";
+/** Flip to `"hybrid"`/`"v2"`/`"og"` to restore an earlier palette. */
+export const ACTIVE_PALETTE: PaletteId = "up";
 
 export type BudgetUsageTone =
   | "safe"
@@ -189,11 +189,65 @@ export const PALETTE_HYBRID: Palette = {
   },
 };
 
+/**
+ * Up — measured off captures of the real app.
+ *
+ * The important departure is `budgetUsage`. Up does **not** grade a tracker
+ * through safe → watch → near: the bar stays one colour the whole way and
+ * only turns red once the limit is actually passed. The five bands survive
+ * so the API and legends keep working, but the three under-limit tones
+ * resolve to the same coral, which is the behaviour the captures show.
+ *
+ * `expense` is ink, not red — Up renders outflows as plain text and reserves
+ * red for a tracker over its limit.
+ */
+export const PALETTE_UP: Palette = {
+  id: "up",
+  cashflow: {
+    income: "#16A56A",
+    available: "#FF7A64",
+    expense: "#1A1B23",
+  },
+  budgetUsage: {
+    safe: "#FF7A64",
+    watch: "#FF7A64",
+    near: "#FF7A64",
+    exceeded: "#F0453A",
+    critical: "#F0453A",
+  },
+  categories: {
+    housing: "#F5A623",
+    titheCharity: "#B565D8",
+    restaurants: "#FFE14D",
+    groceries: "#3DDC97",
+    travel: "#28C4D8",
+    services: "#8FD14F",
+    shopping: "#B565D8",
+    health: "#FF7A64",
+    subscriptions: "#B565D8",
+    other: "#8B8D98",
+    income: "#16A56A",
+    expenses: "#1A1B23",
+    transportation: "#28C4D8",
+    entertainment: "#FFE14D",
+    education: "#6C8CE8",
+    loan: "#3DDC97",
+  },
+  wealth: {
+    accounts: "#28C4D8",
+    savings: "#3DDC97",
+    investments: "#B565D8",
+    lent: "#F5A623",
+    debts: "#F0453A",
+  },
+};
+
 export const PALETTE: Palette = (
   {
     og: PALETTE_OG,
     v2: PALETTE_V2,
     hybrid: PALETTE_HYBRID,
+    up: PALETTE_UP,
   } as const satisfies Record<PaletteId, Palette>
 )[ACTIVE_PALETTE];
 

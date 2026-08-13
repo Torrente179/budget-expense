@@ -1,0 +1,729 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
+
+/* ---------------------------------------------------------------------------
+   Up, as read off JP's captures (2026-08-13).
+
+   Two-layer surface: near-black chrome carrying the tab rail and one coral
+   hero number, with a white content sheet riding over it. That stack is the
+   identity — it is NOT "dark mode".
+
+   Colour values are MEASURED FROM SCREENSHOTS, not taken from an official
+   brand sheet. Treat them as approximately right, not authoritative.
+--------------------------------------------------------------------------- */
+
+:root {
+  --coral: #ff7a64;
+  --coral-deep: #f2664f;
+  --lemon: #ffe14d;
+
+  --ink: #1a1b23;         /* chrome */
+  --ink-2: #24262f;       /* raised dark cards (trackers) */
+  --ink-3: #2f313c;       /* tracker bar track */
+
+  --sheet: #ffffff;
+  --stripe: #f7f7f9;      /* alternating feed row tint */
+  --press: #eceef1;       /* pressed row fill */
+
+  --mute: #8b8d98;        /* secondary text on white */
+  --mute-dark: #85889a;   /* secondary text on ink */
+  --hair: rgba(26, 27, 35, 0.08);
+  --hair-dark: rgba(255, 255, 255, 0.09);
+
+  --mint: #3ddc97;
+  --teal: #28c4d8;
+  --red: #f0453a;
+  --purple: #b565d8;
+  --amber: #f5a623;
+
+  /* STAND-IN TYPEFACE. Up's real face is unconfirmed — Brandfetch returns 403
+     and their design blog never names it. From the captures it is a tight
+     geometric sans with heavy, negatively-tracked numerals. Swap this one
+     line when the real family is identified. */
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.4;
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; text-decoration: none; }
+
+.money,
+.fig,
+.amt,
+.tnum {
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.02em;
+}
+
+/* --- studio: the page around the simulated device ------------------------ */
+
+.studio {
+  background: #0d0e12;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px 0 12px;
+  gap: 6px;
+}
+
+.studio .back {
+  color: var(--mute-dark);
+  font-size: 13px;
+  font-weight: 600;
+}
+.studio .back:hover { color: #fff; }
+
+.device {
+  width: 390px;
+  height: 844px;
+  border-radius: 46px;
+  background: var(--ink);
+  border: 9px solid #303240;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.55);
+}
+
+.statusbar {
+  height: 46px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 26px 0 30px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  flex: none;
+}
+.statusbar .dots { letter-spacing: 2px; opacity: 0.9; font-size: 11px; }
+
+.phone-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* --- chrome: dark band holding the rail + hero --------------------------- */
+
+.chrome {
+  background: var(--ink);
+  flex: none;
+  padding-bottom: 16px;
+}
+
+/* Tab rail. The active item is scrolled to centre by up.js, so its neighbours
+   are clipped by the screen edges — that clipping is the whole affordance. */
+.rail {
+  display: flex;
+  gap: 30px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 2px 50%;
+  scroll-snap-type: x mandatory;
+}
+.rail::-webkit-scrollbar { display: none; }
+
+.rail a {
+  flex: none;
+  scroll-snap-align: center;
+  color: var(--mute-dark);
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  padding: 6px 0;
+}
+.rail a.on {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* --- hero: one big coral number, centred --------------------------------- */
+
+.hero {
+  text-align: center;
+  padding: 26px 20px 0;
+}
+.hero .fig {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  color: var(--coral);
+  line-height: 1.05;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.hero .fig .sync {
+  width: 15px;
+  height: 15px;
+  opacity: 0.75;
+  flex: none;
+}
+.hero .lab {
+  margin-top: 2px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--mute-dark);
+}
+.hero .lab.warm { color: var(--coral); opacity: 0.95; }
+
+/* Foreign-currency wallet pill */
+.fxpill {
+  margin: 14px auto 0;
+  display: flex;
+  width: fit-content;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 999px;
+  padding: 7px 15px;
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+/* --- sheet: white content riding over the chrome ------------------------- */
+
+.sheet {
+  background: var(--sheet);
+  border-radius: 18px 18px 0 0;
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.sheet::-webkit-scrollbar { display: none; }
+
+/* Not every screen gets the white sheet. In the captures, Activity, Regulars
+   and the Saver's activity list ride on white — but Savers and Trackers are
+   dark all the way down, with cards floating on the chrome colour. */
+.sheet.dark {
+  background: var(--ink);
+  border-radius: 0;
+  color: #fff;
+}
+.sheet.dark .row { border-bottom-color: var(--hair-dark); }
+.sheet.dark .row .sub { color: var(--mute-dark); }
+.sheet.dark .row .chev { color: var(--mute-dark); }
+.sheet.dark .split { border-bottom-color: var(--hair-dark); }
+.sheet.dark .stats { border-bottom-color: var(--hair-dark); }
+.sheet.dark .stats > div + div { border-left-color: var(--hair-dark); }
+.sheet.dark .stats span { color: var(--mute-dark); }
+
+/* Sub-tabs sitting directly under the hero on a dark screen */
+.subtabs {
+  display: flex;
+  gap: 22px;
+  padding: 4px 18px 14px;
+}
+.subtabs a {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--mute-dark);
+}
+.subtabs a.on { color: #fff; font-weight: 700; }
+
+/* Collapsed "Upcoming" drawer peeking at the top of the sheet */
+.drawer {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--hair);
+}
+.drawer b { font-size: 15px; font-weight: 600; }
+.drawer .marks { display: flex; gap: 5px; margin-left: 2px; }
+.drawer .chev {
+  margin-left: auto;
+  color: #b6b8c2;
+  font-size: 19px;
+  line-height: 1;
+}
+
+/* Month | Insights split row */
+.split {
+  display: flex;
+  align-items: stretch;
+  border-bottom: 1px solid var(--hair);
+}
+.split .l,
+.split .r {
+  padding: 13px 18px;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.split .l { flex: 1; }
+.split .r { border-left: 1px solid var(--hair); }
+.minibar {
+  display: flex;
+  height: 9px;
+  width: 46px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.minibar i { display: block; height: 100%; }
+
+/* --- feed ---------------------------------------------------------------- */
+
+.day {
+  padding: 9px 18px 5px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--mute);
+  background: var(--stripe);
+}
+
+.tx {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 18px;
+  border-bottom: 1px solid var(--hair);
+  transition: background 0.12s;
+}
+/* Striping alternates across feed rows only — day separators must not consume
+   a step, or the rhythm breaks at every date boundary. Set in build.py. */
+.tx.alt { background: var(--stripe); }
+.tx.is-down { background: var(--press); }
+
+.mark {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  overflow: hidden;
+}
+.mark.round { border-radius: 50%; }
+
+.tx .body { flex: 1; min-width: 0; }
+.tx .name {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx .sub {
+  font-size: 12.5px;
+  color: var(--mute);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.tx .tail { text-align: right; flex: none; }
+.tx .amt {
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 4px;
+}
+.tx .amt.in { color: #16a56a; }
+.tx .meta {
+  font-size: 11.5px;
+  color: var(--mute);
+}
+
+/* Round-up triangle glyph — coral triangle with a dot, inline beside amounts */
+.ru {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+/* --- saver / meta cards -------------------------------------------------- */
+
+.cards { padding: 16px 16px 100px; display: grid; gap: 11px; }
+
+.saver {
+  background: #fff;
+  border-radius: 13px;
+  overflow: hidden;          /* lets the bar reach the card's corners */
+  display: block;
+  transition: transform 0.12s;
+  color: var(--ink);         /* white card sits inside a dark sheet — don't inherit */
+}
+.saver.is-down { transform: scale(0.985); }
+
+.saver .top {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 14px 15px;
+}
+.saver .emo { font-size: 19px; flex: none; }
+.saver .nm {
+  font-size: 15.5px;
+  font-weight: 600;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.saver .val { text-align: right; }
+.saver .val b { font-size: 15.5px; font-weight: 600; }
+.saver .val em {
+  display: block;
+  font-style: normal;
+  font-size: 11.5px;
+  color: var(--mute);
+}
+
+/* Bar hugs the card's bottom edge, full-bleed to its corners. Not inset. */
+.bar {
+  height: 5px;
+  background: #dfe1e6;
+  display: block;
+}
+.bar i {
+  display: block;
+  height: 100%;
+  background: var(--coral);
+}
+
+/* --- trackers ------------------------------------------------------------ */
+
+.trk-grid { padding: 4px 16px 16px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.trk {
+  background: var(--ink-2);
+  border-radius: 12px;
+  overflow: hidden;
+  color: #fff;
+  display: block;
+}
+.trk .in { padding: 12px 13px 11px; }
+.trk .ico { width: 22px; height: 22px; margin-bottom: 8px; }
+.trk .nm { font-size: 12.5px; font-weight: 500; color: #c9cbd4; }
+.trk .amt { font-size: 16px; font-weight: 700; margin-top: 1px; }
+.trk .bar { height: 4px; background: var(--ink-3); }
+
+/* Stat strip above the trackers */
+.stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--hair);
+}
+.stats > div { padding: 14px 18px; }
+.stats > div + div { border-left: 1px solid var(--hair); }
+.stats b { font-size: 21px; font-weight: 700; display: block; letter-spacing: -0.02em; }
+.stats span { font-size: 12.5px; color: var(--mute); }
+.stats b.in { color: #16a56a; }
+
+.sec {
+  padding: 16px 18px 8px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* --- pushed-screen header ------------------------------------------------ */
+
+.pushed {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 18px 0;
+  color: #fff;
+}
+.pushed .t { flex: 1; text-align: center; font-size: 15.5px; font-weight: 600; }
+.pushed .g { font-size: 17px; color: #fff; opacity: 0.8; }
+
+/* --- particle fill (Saver Pool) ------------------------------------------
+   Up's Saver detail replaced a ring meter with a volumetric pool: hundreds of
+   coral particles settled like liquid, the Saver's emoji floating in them.
+   Their design blog confirms the real one is accelerometer-driven with haptics.
+   Dot placement here is generated in up.js.
+------------------------------------------------------------------------- */
+
+.pool {
+  position: relative;
+  height: 248px;
+  margin: 10px 0 0;
+  overflow: hidden;
+  background: var(--ink);
+}
+.pool canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.pool .mid {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  z-index: 2;
+}
+.pool .mid b {
+  font-size: 30px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.03em;
+}
+.pool .mid em {
+  font-style: normal;
+  display: block;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.pool .pct {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2;
+  background: var(--coral);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 3px 10px;
+}
+/* Vertical position is set by up.js from the fill level so the emoji rides
+   the surface of the pile. */
+.pool .float {
+  position: absolute;
+  z-index: 2;
+  font-size: 26px;
+  margin-bottom: -6px;
+  animation: bob 3.4s ease-in-out infinite;
+}
+
+/* INVENTED — the captures show that the emoji floats, not how fast. */
+@keyframes bob {
+  0%, 100% { transform: translateY(0) rotate(-4deg); }
+  50% { transform: translateY(-9px) rotate(4deg); }
+}
+
+/* --- list rows on white -------------------------------------------------- */
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--hair);
+  transition: background 0.12s;
+}
+.row.is-down { background: var(--press); }
+.row .body { flex: 1; }
+.row b { font-size: 15px; font-weight: 600; display: block; }
+.row .sub { font-size: 12.5px; color: var(--mute); }
+.row .chev { color: var(--mute); font-size: 14px; }
+
+/* Setting rows sitting on the dark chrome (Saver detail, under the pool) */
+.chrome .row { border-bottom-color: var(--hair-dark); color: #fff; }
+.chrome .row .sub,
+.chrome .row .chev { color: var(--mute-dark); }
+
+/* Full-width coral action bar pinned to the bottom of a detail screen */
+.action {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--coral);
+  color: #fff;
+  text-align: center;
+  padding: 17px 0 26px;
+  font-size: 15.5px;
+  font-weight: 600;
+  z-index: 5;
+}
+
+/* --- recurring / day-of-month rail --------------------------------------- */
+
+.reg {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 18px;
+  position: relative;
+}
+.reg .dom {
+  width: 30px;
+  flex: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--mute);
+  text-align: right;
+}
+.reg .body { flex: 1; }
+.reg .nm { font-size: 15px; font-weight: 600; }
+.reg .tail { text-align: right; }
+.reg .amt { font-size: 15px; font-weight: 600; }
+.reg .fx { font-size: 11.5px; color: var(--mute); }
+/* the hairline timeline connecting the day markers */
+.reg::before {
+  content: "";
+  position: absolute;
+  left: 55px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--hair);
+}
+
+/* --- FAB ----------------------------------------------------------------- */
+
+.fab {
+  position: absolute;
+  right: 20px;
+  bottom: 26px;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--coral);
+  color: #fff;
+  font-size: 28px;
+  font-weight: 400;
+  display: grid;
+  place-items: center;
+  z-index: 6;
+  box-shadow: 0 8px 22px rgba(255, 122, 100, 0.4);
+  transition: transform 0.12s;
+}
+.fab.is-down { transform: scale(0.93); }
+
+/* --- bottom sheet -------------------------------------------------------- */
+
+/* Behind a sheet Up dims AND desaturates — both, not just a scrim. */
+.dimmed {
+  filter: saturate(0.35) brightness(0.72);
+  transition: filter 0.24s;
+}
+.veil {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 10, 14, 0.4);
+  z-index: 8;
+}
+.modal {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  z-index: 9;
+  padding-bottom: 22px;
+  max-height: 78%;
+  overflow-y: auto;
+  animation: sheet 0.28s cubic-bezier(0.2, 0.85, 0.2, 1) both;
+}
+.grab {
+  width: 38px;
+  height: 5px;
+  border-radius: 3px;
+  background: #d6d8de;
+  margin: 9px auto 4px;
+}
+.modal h3 {
+  margin: 6px 0 2px;
+  padding: 0 18px;
+  font-size: 15.5px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.modal .info {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.4px solid var(--mute);
+  color: var(--mute);
+  font-size: 10px;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+}
+/* The row you acted on is pinned to the top of the sheet so context survives */
+.pinned {
+  margin: 8px 12px 6px;
+  border-radius: 11px;
+  background: var(--stripe);
+  border-bottom: 0;
+}
+
+/* INVENTED timing — the captures show the sheet slides up, not how fast. */
+@keyframes sheet {
+  from { opacity: 0; transform: translateY(26px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --- gallery ------------------------------------------------------------- */
+
+.gallery {
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 64px 24px 90px;
+  color: #fff;
+}
+.gallery h1 {
+  font-size: 42px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  margin: 0 0 10px;
+}
+.gallery h1 span { color: var(--coral); }
+.gallery p { color: #9a9dab; font-size: 16px; margin: 0 0 30px; max-width: 60ch; }
+.gallery h2 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #6e7180;
+  margin: 30px 0 12px;
+}
+.g-grid { display: grid; gap: 1px; background: rgba(255, 255, 255, 0.08); border-radius: 12px; overflow: hidden; }
+.g-grid a {
+  background: #14151a;
+  padding: 15px 17px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.g-grid a:hover { background: #1c1e25; }
+.g-grid b { font-size: 15px; font-weight: 600; }
+.g-grid em { font-style: normal; color: #83869a; font-size: 13px; margin-left: auto; text-align: right; }
+
+.note {
+  margin-top: 34px;
+  padding: 16px 18px;
+  border-radius: 12px;
+  background: rgba(255, 122, 100, 0.1);
+  border: 1px solid rgba(255, 122, 100, 0.25);
+  color: #ffb9a9;
+  font-size: 13.5px;
+  line-height: 1.55;
+}
+
+/* --- a11y ---------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

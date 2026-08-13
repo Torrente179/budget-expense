@@ -105,6 +105,31 @@ export const SECONDARY_NAV: NavItem[] = [
   },
 ];
 
+/**
+ * Display order for the mobile tab rail.
+ *
+ * The rail centres the active section and lets its neighbours clip at the
+ * screen edges — that clipping is what says "there is more sideways". With
+ * Home first in `PRIMARY_NAV` there is never anything to its left, so the
+ * affordance only works on one side and the default screen looks like the end
+ * of the list. Up solves this the same way: its home surface (Activity) sits
+ * in the middle of the rail, not at the start.
+ *
+ * Same items, same source of truth — only the order differs. The sidebar and
+ * command menu keep `PRIMARY_NAV` order.
+ */
+const RAIL_ORDER: NavKey[] = [
+  "wealth",
+  "insights",
+  "home",
+  "movements",
+  "budget",
+];
+
+export const RAIL_NAV: NavItem[] = RAIL_ORDER.map(
+  (key) => PRIMARY_NAV.find((item) => item.key === key)!
+);
+
 export function isNavItemActive(item: NavItem, pathname: string) {
   return item.match.test(pathname);
 }

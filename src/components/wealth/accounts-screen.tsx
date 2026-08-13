@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
 import {
-  HeroSheen,
   HERO_ACCENT,
   HERO_RULE,
   HERO_SURFACE,
@@ -89,13 +88,12 @@ export function AccountsScreen() {
       ) : (
         <>
           <section className={cn(HERO_SURFACE, "px-5 py-5 sm:px-6")}>
-            <HeroSheen />
             <div className="relative space-y-4">
               <div className="space-y-1.5">
                 <p className="label-caps text-white/55">
                   {t("Total liquid", "Total líquido")}
                 </p>
-                <p className="chrome-figure font-mono text-display tabular-nums tracking-tight">
+                <p className="up-figure font-mono text-display tabular-nums tracking-tight">
                   {formatCurrency(totalBase, baseCurrency)}
                 </p>
               </div>

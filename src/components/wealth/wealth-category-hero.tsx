@@ -2,7 +2,6 @@
 
 import type { ReactNode } from "react";
 import {
-  HeroSheen,
   HERO_ACCENT,
   HERO_ACCENT_NEGATIVE,
   HERO_ICON_TILE,
@@ -51,12 +50,11 @@ export function WealthCategoryHero({
 
   return (
     <section className={cn(HERO_SURFACE, "px-5 py-5 sm:px-6 sm:py-6")}>
-      <HeroSheen />
       <div className="relative space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1.5">
             <p className="label-caps text-white/55">{eyebrow}</p>
-            <p className="chrome-figure font-mono text-display tabular-nums tracking-tight">
+            <p className="up-figure font-mono text-display tabular-nums tracking-tight">
               {formatCurrency(amount, baseCurrency)}
             </p>
             {delta && (
@@ -99,7 +97,7 @@ export function WealthCategoryHero({
                 {Math.round(Math.min(Math.max(progress.ratio, 0), 1) * 100)}%
               </span>
             </div>
-            <div className="groove-dark h-1 overflow-hidden rounded-sm">
+            <div className="up-track-dark h-1 overflow-hidden rounded-sm">
               <div
                 className="h-full rounded-sm transition-[width] duration-500 ease-out"
                 style={{

@@ -7,11 +7,19 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  /* Hybrid: Helvetica Neue where the OS has it, Arial elsewhere.
-     Numerals stay in the same family and rely on tabular-nums. */
-  --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-mono: "Helvetica Neue", Helvetica, Arial, sans-serif;
-  --font-heading: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  /* Up: a tight geometric sans with heavy, negatively-tracked numerals.
+     STAND-IN — Up's real face is unconfirmed (Brandfetch 403s, their design
+     blog never names it). Inter stands in; swap these three lines when it is
+     identified. Numerals stay in the same family and rely on tabular-nums. */
+  --font-sans: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-mono: var(--font-inter), "Inter", system-ui, sans-serif;
+  --font-heading: var(--font-inter), "Inter", system-ui, sans-serif;
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-coral: var(--coral);
+  --color-coral-deep: var(--coral-deep);
+  --color-lemon: var(--lemon);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -85,169 +93,151 @@
   --text-label--line-height: 1.2;
 }
 
-:root {
-  --background: #f4f6f8;
-  --foreground: #15181f;
-  --card: #ffffff;
-  --card-foreground: #15181f;
-  --popover: #ffffff;
-  --popover-foreground: #15181f;
-  --primary: #111318;
-  --primary-foreground: #f7f8fa;
-  --secondary: #eceff3;
-  --secondary-foreground: #171b24;
-  --muted: #eef1f4;
-  --muted-foreground: #66707f;
-  --accent: #e7eaee;
-  --accent-foreground: #171b24;
-  --destructive: #cb6078;
-  --border: rgba(17, 19, 24, 0.08);
-  --input: rgba(17, 19, 24, 0.08);
-  --ring: #111318;
-  --chart-1: #18b986;
-  --chart-2: #6e7686;
-  --chart-3: #9ba5b4;
-  --chart-4: #cf5b76;
-  --chart-5: #c5ccd6;
-  --chart-grid: rgba(17, 19, 24, 0.06);
-  --chart-axis: #8a93a3;
-  --success: #0e8a63;
-  --success-foreground: #ffffff;
-  --success-subtle: rgba(24, 185, 134, 0.12);
-  --warning: #d49412;
-  --warning-foreground: #ffffff;
-  --warning-subtle: rgba(232, 164, 40, 0.16);
-  --danger: #b13a58;
-  --danger-foreground: #ffffff;
-  --danger-subtle: rgba(203, 96, 120, 0.12);
-  --info: #33619e;
-  --info-foreground: #ffffff;
-  --info-subtle: rgba(76, 128, 197, 0.12);
-  /* Cashflow tokens — mirrored from src/lib/palette.ts (ACTIVE_PALETTE).
-     OG: income #0e8a63 · available ink · expense #b13a58 */
-  --income: #059669;
-  --available: #06b6d4;
-  --expense: #e11d48;
-  --positive: var(--income);
-  --negative: var(--expense);
-  --elevation-1: 0 1px 2px rgba(16, 20, 26, 0.04), 0 12px 32px -20px rgba(16, 20, 26, 0.16);
-  --elevation-2: 0 2px 6px rgba(16, 20, 26, 0.05), 0 16px 44px -20px rgba(16, 20, 26, 0.2);
-  --elevation-3: 0 8px 16px -8px rgba(16, 20, 26, 0.14), 0 32px 80px -32px rgba(16, 20, 26, 0.28);
-  --radius: 1rem;
-  --sidebar: rgba(250, 251, 252, 0.92);
-  --sidebar-foreground: #15181f;
-  --sidebar-primary: #111318;
-  --sidebar-primary-foreground: #f7f8fa;
-  --sidebar-accent: #eceff3;
-  --sidebar-accent-foreground: #171b24;
-  --sidebar-border: rgba(17, 19, 24, 0.08);
-  --sidebar-ring: #111318;
-}
-
-.dark {
-  color-scheme: dark;
-  --background: #070809;
-  --foreground: #f5f7fa;
-  --card: #101114;
-  --card-foreground: #f5f7fa;
-  --popover: #101114;
-  --popover-foreground: #f5f7fa;
-  --primary: #f3f4f6;
-  --primary-foreground: #090a0c;
-  --secondary: #17191d;
-  --secondary-foreground: #eff2f6;
-  --muted: #111318;
-  --muted-foreground: #8a92a2;
-  --accent: #17191d;
-  --accent-foreground: #eff2f6;
-  --destructive: #ec6b86;
-  --border: rgba(255, 255, 255, 0.07);
-  --input: rgba(255, 255, 255, 0.08);
-  --ring: #dde2ea;
-  --chart-1: #18c58f;
-  --chart-2: #6f7786;
-  --chart-3: #97a0af;
-  --chart-4: #d55f79;
-  --chart-5: #c4cad4;
-  --chart-grid: rgba(255, 255, 255, 0.05);
-  --chart-axis: #737c8c;
-  --success: #3bd39f;
-  --success-foreground: #04241a;
-  --success-subtle: rgba(24, 197, 143, 0.13);
-  --warning: #e8b04b;
-  --warning-foreground: #241a04;
-  --warning-subtle: rgba(232, 176, 75, 0.13);
-  --danger: #f2809a;
-  --danger-foreground: #260910;
-  --danger-subtle: rgba(236, 107, 134, 0.13);
-  --info: #82aae4;
-  --info-foreground: #081426;
-  --info-subtle: rgba(122, 165, 232, 0.13);
-  --income: #34d399;
-  --available: #22d3ee;
-  --expense: #fb7185;
-  --positive: var(--income);
-  --negative: var(--expense);
-  --elevation-1: 0 1px 2px rgba(0, 0, 0, 0.45), 0 16px 40px -28px rgba(0, 0, 0, 0.7);
-  --elevation-2: 0 2px 6px rgba(0, 0, 0, 0.5), 0 20px 52px -28px rgba(0, 0, 0, 0.75);
-  --elevation-3: 0 8px 20px -10px rgba(0, 0, 0, 0.6), 0 36px 90px -36px rgba(0, 0, 0, 0.85);
-  --sidebar: #090a0c;
-  --sidebar-foreground: #f5f7fa;
-  --sidebar-primary: #f3f4f6;
-  --sidebar-primary-foreground: #090a0c;
-  --sidebar-accent: #17191d;
-  --sidebar-accent-foreground: #eff2f6;
-  --sidebar-border: rgba(255, 255, 255, 0.06);
-  --sidebar-ring: #dde2ea;
-}
-
 /**
- * Hybrid: the headline figure is polished metal.
+ * Up palette. One appearance — Up has no light/dark duality, so there is no
+ * `.dark` block and no theme provider. `dark:` utilities still compile (the
+ * variant is declared above) but never match, since nothing sets the class.
  *
- * A vertical polish gradient with a dark horizon at the optical centre is
- * how a car badge or a watch bezel reads as metal. Only ever applied on the
- * dark hero surface — on a light ground the bright stops fall below 1.2:1
- * and the glyph dissolves. Never use this on ordinary amounts.
+ * Colour values are measured off captures of the real app, not an official
+ * brand sheet. Treat them as approximately right.
+ *
+ * The surface model is Up's: **dark chrome, white sheet**. Page ground and
+ * `--foreground` stay light/ink so text inside cards reads; the dark layer is
+ * applied per-surface via the `up-chrome` / `up-canvas` utilities below.
  */
-@utility chrome-figure {
-  background: linear-gradient(
-    177deg,
-    #ffffff 0%,
-    #e9edf1 20%,
-    #b6bec6 40%,
-    #6c747c 49.5%,
-    #4e555c 50.5%,
-    #99a2aa 60%,
-    #dde3e9 80%,
-    #fbfdff 100%
-  );
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
-  filter: drop-shadow(0 1px 0 rgba(255, 255, 255, 0.16))
-    drop-shadow(0 -1px 1px rgba(0, 0, 0, 0.6));
+:root {
+  color-scheme: light;
+
+  /* Raw Up hues, exposed to Tailwind as text-coral / bg-ink / etc. */
+  --coral: #ff7a64;
+  --coral-deep: #f2664f;
+  --lemon: #ffe14d;
+  --ink: #1a1b23;
+  --ink-2: #24262f;
+  --ink-3: #2f313c;
+
+  --background: #f4f4f6;
+  --foreground: #1a1b23;
+  --card: #ffffff;
+  --card-foreground: #1a1b23;
+  --popover: #ffffff;
+  --popover-foreground: #1a1b23;
+  /* Coral is Up's action colour as well as its money colour. */
+  --primary: #ff7a64;
+  --primary-foreground: #ffffff;
+  --secondary: #eceef1;
+  --secondary-foreground: #1a1b23;
+  --muted: #f0f1f4;
+  --muted-foreground: #8b8d98;
+  --accent: #e9eaee;
+  --accent-foreground: #1a1b23;
+  --destructive: #f0453a;
+  --border: rgba(26, 27, 35, 0.08);
+  --input: rgba(26, 27, 35, 0.1);
+  --ring: #ff7a64;
+  --chart-1: #ff7a64;
+  --chart-2: #3ddc97;
+  --chart-3: #28c4d8;
+  --chart-4: #b565d8;
+  --chart-5: #f5a623;
+  --chart-grid: rgba(26, 27, 35, 0.06);
+  --chart-axis: #8b8d98;
+  --success: #16a56a;
+  --success-foreground: #ffffff;
+  --success-subtle: rgba(61, 220, 151, 0.16);
+  --warning: #f5a623;
+  --warning-foreground: #1a1b23;
+  --warning-subtle: rgba(245, 166, 35, 0.16);
+  --danger: #f0453a;
+  --danger-foreground: #ffffff;
+  --danger-subtle: rgba(240, 69, 58, 0.12);
+  --info: #28c4d8;
+  --info-foreground: #1a1b23;
+  --info-subtle: rgba(40, 196, 216, 0.14);
+
+  /* Cashflow. Up renders outflows in plain **ink**, not red — red is reserved
+     for a tracker actually over its limit. Inflows are the mint green, and the
+     available/spendable headline is coral, matching Up's hero. */
+  --income: #16a56a;
+  --available: #ff7a64;
+  --expense: #1a1b23;
+  --positive: var(--income);
+  --negative: var(--expense);
+
+  /* Up is flat. Cards separate by ground contrast, not by lift. */
+  --elevation-1: 0 1px 2px rgba(26, 27, 35, 0.04);
+  --elevation-2: 0 2px 8px rgba(26, 27, 35, 0.07);
+  --elevation-3: 0 12px 32px -8px rgba(26, 27, 35, 0.22);
+
+  --radius: 0.75rem;
+
+  /* Desktop sidebar is chrome, so it takes the dark layer. */
+  --sidebar: #1a1b23;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #ff7a64;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgba(255, 255, 255, 0.08);
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: rgba(255, 255, 255, 0.09);
+  --sidebar-ring: #ff7a64;
 }
 
 /**
- * Hybrid: meters are machined grooves, not painted bars.
- * An inset track with a polished fill. `groove-dark` sits on the hero
- * surface, `groove-light` on cards, where the light source stays above
- * so the inset shadow flips sign.
+ * Up: the headline figure is one big coral number.
+ *
+ * Every top-level screen in Up opens with a single centred coral figure and a
+ * small grey label under it — never two figures side by side. Flat colour, no
+ * gradient, no material. Only on a dark chrome surface.
  */
-@utility groove-dark {
-  background: #07080a;
-  box-shadow:
-    inset 0 1px 1px rgba(0, 0, 0, 0.85),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.06);
+@utility up-figure {
+  color: var(--coral);
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums lining-nums;
 }
-@utility groove-light {
-  background: var(--muted);
-  box-shadow:
-    inset 0 1px 2px rgba(22, 25, 29, 0.18),
-    inset 0 -1px 0 rgba(255, 255, 255, 0.9);
+
+/**
+ * Up's two-layer surface stack.
+ *
+ * `up-chrome` is the near-black band that carries the tab rail and the hero.
+ * `up-canvas` is the same colour used as a whole-screen ground, for the
+ * screens that have no white sheet at all (Metas, Presupuestos) and instead
+ * float white cards directly on the chrome colour.
+ *
+ * Both are deliberately dark regardless of anything else — there is no light
+ * variant of this in Up.
+ */
+@utility up-chrome {
+  background: var(--ink);
+  color: #ffffff;
 }
-@utility groove-fill {
-  background: linear-gradient(180deg, #f2f5f8, #aeb6be 55%, #7b838b);
+@utility up-canvas {
+  background: var(--ink);
+  color: #ffffff;
+}
+
+/** Meters are flat painted bars. Up has no machined material anywhere. */
+@utility up-track {
+  background: #dfe1e6;
+}
+@utility up-track-dark {
+  background: var(--ink-3);
+}
+
+/**
+ * The capture FAB's coral glow. Up's FAB is flat colour with a soft halo of
+ * its own hue rather than a neutral drop shadow.
+ */
+@utility up-fab-glow {
+  box-shadow: 0 8px 22px rgba(255, 122, 100, 0.4);
+}
+
+/**
+ * Feed row striping. Up tints alternate rows very slightly; day separators
+ * must not consume a step, so callers pass the parity explicitly rather than
+ * leaving it to :nth-child.
+ */
+@utility up-stripe {
+  background: #f7f7f9;
 }
 
 /* Micro-label used for eyebrow/section labels across the app. */
@@ -268,17 +258,11 @@
     @apply font-sans;
   }
   body {
+    /* Up's ground is flat. The previous system's fixed gradient wash is gone —
+       depth here comes from the dark chrome against white sheets, not from a
+       painted page. */
     @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(circle at top right, rgba(17, 19, 24, 0.04), transparent 20%),
-      linear-gradient(180deg, #f7f9fb 0%, #f4f6f8 52%, #edf1f4 100%);
-    background-attachment: fixed;
     text-rendering: optimizeLegibility;
-  }
-  .dark body {
-    background-image:
-      radial-gradient(circle at 18% 0%, rgba(255, 255, 255, 0.035), transparent 18%),
-      linear-gradient(180deg, #0b0c0f 0%, #08090b 48%, #070809 100%);
   }
   ::selection {
     background: color-mix(in srgb, var(--primary) 18%, transparent);

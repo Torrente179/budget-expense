@@ -1,17 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { ThemeProvider } from "@/providers/theme-provider";
+import { Inter } from "next/font/google";
 import { LocaleProvider } from "@/providers/locale-provider";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+/**
+ * STAND-IN for Up's typeface, which is unconfirmed — Brandfetch returns 403
+ * and Up's design blog never names it. From the captures it is a tight
+ * geometric sans with heavy, negatively-tracked numerals; Inter is the closest
+ * freely-available match. Swap here and in globals.css when identified.
+ */
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
@@ -28,12 +28,11 @@ export const metadata: Metadata = {
   },
 };
 
+/* One appearance — Up has no light/dark duality, so a single theme-color that
+   matches the chrome band at the top of every screen. */
 export const viewport: Viewport = {
   viewportFit: "cover",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f6f8" },
-    { media: "(prefers-color-scheme: dark)", color: "#070809" },
-  ],
+  themeColor: "#1a1b23",
 };
 
 export default function RootLayout({
@@ -42,18 +41,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <ThemeProvider>
-          <LocaleProvider initialLocale="en">
-            {children}
-            <Toaster />
-          </LocaleProvider>
-        </ThemeProvider>
+        <LocaleProvider initialLocale="en">
+          {children}
+          <Toaster />
+        </LocaleProvider>
       </body>
     </html>
   );

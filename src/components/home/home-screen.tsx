@@ -337,11 +337,7 @@ export function HomeScreen() {
                       </Link>
                     </div>
                   ) : (
-                    <BudgetPaceChart
-                      budgets={budgetsView}
-                      monthProgress={cashflow.monthProgress}
-                      isCurrentMonth={isCurrentMonth}
-                    />
+                    <BudgetPaceChart budgets={budgetsView} />
                   )}
                 </CardContent>
               </Card>

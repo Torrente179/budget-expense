@@ -9,7 +9,6 @@ import {
 } from "@/lib/home/month-cashflow";
 import { cn, formatCurrency } from "@/lib/utils";
 import {
-  HeroSheen,
   HERO_ACCENT,
   HERO_ICON_TILE,
   HERO_RULE,
@@ -167,7 +166,6 @@ export function HomeSummaryCard({
 
   return (
     <section className={cn(HERO_SURFACE, className)}>
-      <HeroSheen />
       {/* Mobile wallet watermark */}
       <Wallet
         aria-hidden
@@ -181,7 +179,7 @@ export function HomeSummaryCard({
           <p className="text-[0.8125rem] font-medium text-white/55">
             {t("You have", "Te quedan")}
           </p>
-          <p className="chrome-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+          <p className="up-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
             {remainingLabel}
           </p>
           <p className="mt-1 text-[0.8125rem] font-medium text-white/55">
@@ -190,9 +188,9 @@ export function HomeSummaryCard({
         </div>
 
         <div className="space-y-1.5">
-          <div className="groove-dark relative h-1 overflow-hidden rounded-sm">
+          <div className="up-track-dark relative h-1 overflow-hidden rounded-sm">
             <div
-              className="groove-fill absolute inset-y-0 left-0 rounded-sm transition-[width] duration-700 ease-out"
+              className="absolute inset-y-0 left-0 rounded-sm bg-coral transition-[width] duration-700 ease-out"
               style={{ width: `${barFill}%` }}
             />
           </div>
@@ -290,7 +288,7 @@ export function HomeSummaryCard({
             <p className="text-[0.8125rem] font-medium text-white/55">
               {t("You have", "Te quedan")}
             </p>
-            <p className="chrome-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+            <p className="up-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
               {remainingLabel}
             </p>
             <p className="mt-1 text-[0.8125rem] font-medium text-white/55">
@@ -344,9 +342,9 @@ export function HomeSummaryCard({
         </div>
 
         <div className="space-y-1.5">
-          <div className="groove-dark relative h-1 overflow-visible rounded-sm">
+          <div className="up-track-dark relative h-1 overflow-visible rounded-sm">
             <div
-              className="groove-fill absolute inset-y-0 left-0 rounded-sm transition-[width] duration-700 ease-out"
+              className="absolute inset-y-0 left-0 rounded-sm bg-coral transition-[width] duration-700 ease-out"
               style={{ width: `${barFill}%` }}
             />
             <span

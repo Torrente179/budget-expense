@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { useTheme } from "next-themes";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useCurrency } from "@/providers/currency-provider";
@@ -21,7 +20,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { ArrowRight, Compass, Loader2, Sun, Moon, Monitor } from "lucide-react";
+import { ArrowRight, Compass, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
 import { LanguagePreferenceList } from "@/components/shared/language-switch";
@@ -41,7 +40,6 @@ export default function SettingsPage() {
     currencyPreferenceUpdating,
     setBaseCurrency,
   } = useCurrency();
-  const { theme, setTheme } = useTheme();
   const supabase = createClient();
   const queryClient = useQueryClient();
   const router = useRouter();
@@ -110,11 +108,6 @@ export default function SettingsPage() {
     }
   }
 
-  const themeOptions = [
-    { value: "light", label: t("Light", "Claro"), icon: Sun },
-    { value: "dark", label: t("Dark", "Oscuro"), icon: Moon },
-    { value: "system", label: t("System", "Sistema"), icon: Monitor },
-  ];
 
   return (
     <Screen title={t("Settings", "Ajustes")} backHref="/home">
@@ -255,31 +248,6 @@ export default function SettingsPage() {
         </span>
         <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground" />
       </Link>
-
-      {/* Theme */}
-      <Card className="border-border/50">
-        <CardHeader>
-          <CardTitle className="text-sm font-medium">
-            {t("Appearance", "Apariencia")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-2">
-            {themeOptions.map((opt) => (
-              <Button
-                key={opt.value}
-                variant={theme === opt.value ? "default" : "outline"}
-                size="sm"
-                className="gap-2"
-                onClick={() => setTheme(opt.value)}
-              >
-                <opt.icon className="h-4 w-4" />
-                {opt.label}
-              </Button>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Account deletion */}
       <Card className="border-destructive/30">

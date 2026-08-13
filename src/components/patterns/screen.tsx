@@ -40,7 +40,7 @@ function ScreenBackButton({ fallbackHref }: { fallbackHref: string }) {
         }
         router.push(fallbackHref);
       }}
-      className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+      className="-ml-2 flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white/70 transition-colors hover:bg-white/10 hover:text-white md:text-muted-foreground md:hover:bg-accent md:hover:text-foreground"
     >
       <ChevronLeft className="h-5 w-5" />
     </button>
@@ -67,7 +67,11 @@ export function Screen({
 }: ScreenProps) {
   return (
     <div className={cn("flex min-w-0 flex-col", className)}>
-      <header className="sticky top-0 z-30 -mx-4 mb-4 border-b border-border/60 bg-background/85 px-4 pt-[env(safe-area-inset-top)] backdrop-blur-md sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8">
+      {/* On mobile this continues the dark chrome band started by NavRail, so
+          the rail, the title row and the hero read as one ink surface with the
+          white sheet below — Up's two-layer stack. Desktop keeps the light
+          header, since desktop keeps the sidebar. */}
+      <header className="up-chrome sticky top-0 z-30 -mx-4 mb-4 px-4 sm:-mx-5 sm:px-5 md:border-b md:border-border/60 md:bg-background/85 md:text-foreground md:backdrop-blur-md lg:-mx-8 lg:px-8">
         <div className="flex min-h-14 items-center gap-3 py-2">
           {backHref ? (
             <ScreenBackButton fallbackHref={backHref || "/home"} />
@@ -75,8 +79,12 @@ export function Screen({
             (leading ?? <ProfileSheet className="-ml-2 md:hidden" />)
           )}
           <div className="min-w-0 flex-1">
-            {eyebrow && <p className="label-caps">{eyebrow}</p>}
-            <h1 className="truncate text-title font-semibold text-foreground">
+            {eyebrow && (
+              <p className="label-caps text-white/55 md:text-muted-foreground">
+                {eyebrow}
+              </p>
+            )}
+            <h1 className="truncate text-title font-semibold text-white md:text-foreground">
               {title}
             </h1>
           </div>

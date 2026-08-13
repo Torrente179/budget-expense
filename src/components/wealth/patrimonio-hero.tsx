@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowDownRight, ArrowUpRight, Minus, Plus, Sparkles } from "lucide-react";
 import {
-  HeroSheen,
   HERO_ACCENT,
   HERO_ACCENT_NEGATIVE,
   HERO_ICON_TILE,
@@ -43,7 +42,6 @@ export function PatrimonioHero({
   if (isEmpty) {
     return (
       <section className={cn(HERO_SURFACE, "px-5 py-7 sm:px-7 sm:py-9")}>
-        <HeroSheen />
         <div className="relative max-w-xl space-y-4">
           <span
             className={cn(
@@ -80,7 +78,6 @@ export function PatrimonioHero({
 
   return (
     <section className={cn(HERO_SURFACE, "px-5 py-5 sm:px-6 sm:py-6")}>
-      <HeroSheen />
       <div className="relative space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1.5">
@@ -92,7 +89,7 @@ export function PatrimonioHero({
                 "font-mono text-display tabular-nums tracking-tight",
                 /* Chrome only reads as an achievement. A negative net worth
                    keeps flat ink so the state is not dressed up. */
-                negative ? "text-white/90" : "chrome-figure"
+                negative ? "text-white/90" : "up-figure"
               )}
             >
               {formatCurrency(totals.netWorth, baseCurrency)}
