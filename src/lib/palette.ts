@@ -215,23 +215,32 @@ export const PALETTE_UP: Palette = {
     exceeded: "#F0453A",
     critical: "#F0453A",
   },
+  /**
+   * "Cool" — blues, teals and violets with one warm accent for food.
+   *
+   * Two rules this set exists to satisfy, both broken by the first Up palette:
+   * every hue is distinct (Shopping, Subscriptions and Tithe previously shared
+   * one purple, and three other pairs collided), and every hue is dark enough
+   * to carry a white glyph — the earlier yellows left the icon near-invisible.
+   * Keep both properties if these are ever edited.
+   */
   categories: {
-    housing: "#F5A623",
-    titheCharity: "#B565D8",
-    restaurants: "#FFE14D",
-    groceries: "#3DDC97",
-    travel: "#28C4D8",
-    services: "#8FD14F",
-    shopping: "#B565D8",
-    health: "#FF7A64",
-    subscriptions: "#B565D8",
-    other: "#8B8D98",
+    housing: "#4E9AC7",
+    titheCharity: "#9A5BA8",
+    restaurants: "#E06A4F",
+    groceries: "#2E9E6B",
+    travel: "#2F97AE",
+    services: "#4FA88E",
+    shopping: "#8258B8",
+    health: "#C25E86",
+    subscriptions: "#6D5BC0",
+    other: "#78808C",
     income: "#16A56A",
     expenses: "#1A1B23",
-    transportation: "#28C4D8",
-    entertainment: "#FFE14D",
-    education: "#6C8CE8",
-    loan: "#3DDC97",
+    transportation: "#3A7DC4",
+    entertainment: "#3D8BB5",
+    education: "#5566CC",
+    loan: "#1F8A7A",
   },
   wealth: {
     accounts: "#28C4D8",

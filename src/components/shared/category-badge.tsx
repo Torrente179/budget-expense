@@ -1,5 +1,10 @@
 import { cn } from "@/lib/utils";
 import {
+  CATEGORY_GLYPHS,
+  CATEGORY_GLYPHS_BY_NAME,
+  type CategoryGlyphPaths,
+} from "@/components/shared/category-glyphs";
+import {
   UtensilsCrossed,
   CarFront,
   Home,
@@ -156,6 +161,30 @@ const iconByName: Record<string, LucideIcon> = {
 };
 
 
+/** The hand-drawn family, stroked to match lucide at the same weight. */
+function DrawnGlyph({
+  paths,
+  className,
+}: {
+  paths: CategoryGlyphPaths;
+  className?: string;
+}) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} aria-hidden>
+      <g
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d={paths.d} />
+        {paths.d2 && <path d={paths.d2} />}
+      </g>
+    </svg>
+  );
+}
+
 /**
  * Bare category glyph — no badge chrome. For callers that draw their own
  * container (Home Presupuesto cards) and only need the right pictogram.
@@ -170,11 +199,17 @@ export function CategoryGlyph({
   name?: string;
   className?: string;
 }) {
+  const key = name?.trim().toLowerCase();
+  const drawn =
+    (icon ? CATEGORY_GLYPHS[icon] : undefined) ??
+    (key ? CATEGORY_GLYPHS_BY_NAME[key] : undefined);
+  if (drawn) return <DrawnGlyph paths={drawn} className={className} />;
+
   const Icon =
     (icon ? iconMap[icon] : undefined) ??
-    (name ? iconByName[name.trim().toLowerCase()] : undefined) ??
+    (key ? iconByName[key] : undefined) ??
     CircleEllipsis;
-  return <Icon className={className} />;
+  return <Icon className={className} strokeWidth={1.5} />;
 }
 
 /** Elevated, high-contrast surface for category menus nested inside sheets. */
