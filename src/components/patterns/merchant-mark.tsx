@@ -17,16 +17,20 @@ import { CategoryGlyph } from "@/components/shared/category-badge";
  * from one another instead of forming a column of identical grey squares.
  */
 
-/** Category-free fallback hues, spaced around the wheel and legible at 34px. */
+/**
+ * Hues for rows with no category. Drawn from the same "Cool" family as
+ * `PALETTE.categories` so an uncategorised row sits in the palette rather than
+ * standing out as a stray colour.
+ */
 const FALLBACK_HUES = [
-  "#FF7A64",
-  "#3DDC97",
-  "#28C4D8",
-  "#B565D8",
-  "#F5A623",
-  "#6C8AE4",
-  "#E4699B",
-  "#5EC26A",
+  "#3A7DC4",
+  "#2E9E6B",
+  "#6D5BC0",
+  "#2F97AE",
+  "#8258B8",
+  "#4FA88E",
+  "#C25E86",
+  "#5566CC",
 ];
 
 function hashHue(input: string): string {
