@@ -188,6 +188,39 @@ export function HomeScreen() {
     [summary.recentMovements, t, tc]
   );
 
+  /**
+   * Recent movements grouped into Up's feed: a dated separator per day, with
+   * stripe parity carried across the whole feed so a separator never consumes
+   * a step and resets the rhythm.
+   */
+  const feedDays = useMemo(() => {
+    const days: {
+      date: string;
+      label: string;
+      movements: (typeof recentMovements)[number] & { alt: boolean };
+    }[] = [];
+    const byDate = new Map<string, typeof recentMovements>();
+    for (const movement of recentMovements) {
+      const bucket = byDate.get(movement.date);
+      if (bucket) bucket.push(movement);
+      else byDate.set(movement.date, [movement]);
+    }
+    const fmt = new Intl.DateTimeFormat(intlLocale, {
+      weekday: "short",
+      day: "numeric",
+      month: "short",
+    });
+    let parity = 0;
+    return Array.from(byDate, ([date, movements]) => ({
+      date,
+      label: fmt.format(new Date(`${date}T00:00:00`)),
+      movements: movements.map((movement) => ({
+        ...movement,
+        alt: parity++ % 2 === 1,
+      })),
+    }));
+  }, [recentMovements, intlLocale]);
+
   return (
     <Screen
       title={greeting}
@@ -230,8 +263,10 @@ export function HomeScreen() {
             </Card>
           )}
 
-          {/* Desktop: [Hero + Movimientos] | [Presupuestos + Gastos]
-              Mobile: Hero → Presupuestos → Gastos → Movimientos */}
+          {/* Up's Activity shape: one figure on ink, then the feed as the
+              screen's primary content. Presupuestos and the donut follow it on
+              mobile and sit in the right column on desktop, where there is room
+              for both. */}
           <div className="grid gap-4 lg:grid-cols-5 lg:items-start">
             <div className="contents lg:col-span-3 lg:flex lg:flex-col lg:gap-4">
               <div className="order-1 min-w-0 lg:order-none">
@@ -242,77 +277,87 @@ export function HomeScreen() {
                 />
               </div>
 
-              <Card className="order-4 min-w-0 lg:order-none">
-                <CardHeader>
-                  <SectionHeader
-                    eyebrow={t("Latest", "Recientes")}
-                    title={t("Recent movements", "Movimientos recientes")}
-                    action={
+              <section className="up-sheet order-2 -mx-4 min-w-0 sm:-mx-5 lg:order-none lg:mx-0">
+                <div className="flex items-stretch border-b border-border">
+                  <p className="flex-1 px-4 py-3 text-body font-semibold">
+                    {monthEndLabel}
+                  </p>
+                  <Link
+                    href="/insights"
+                    className="flex items-center gap-2 border-l border-border px-4 py-3 text-body font-semibold transition-colors hover:bg-accent/40"
+                  >
+                    {t("Insights", "Análisis")}
+                    <span aria-hidden className="up-minibar">
+                      <i style={{ width: "58%", background: "var(--lemon)" }} />
+                      <i style={{ width: "26%", background: "var(--coral)" }} />
+                      <i style={{ width: "16%", background: "var(--ink-3)" }} />
+                    </span>
+                  </Link>
+                </div>
+
+                {feedDays.length === 0 ? (
+                  <div className="px-4 py-6">
+                    <EmptyState
+                      icon={ArrowUpDown}
+                      title={t("No movements yet", "Aún sin movimientos")}
+                      description={t(
+                        "Add your first expense with the + button.",
+                        "Agrega tu primer gasto con el botón +."
+                      )}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    {feedDays.map((day) => (
+                      <div key={day.date}>
+                        <p className="up-stripe label-caps px-4 py-1.5">
+                          {day.label}
+                        </p>
+                        {day.movements.map((movement) => (
+                          <TransactionRow
+                            key={`${movement.kind}-${movement.id}`}
+                            title={movement.title}
+                            subtitle={movement.subtitle}
+                            amount={movement.amount}
+                            currency={movement.currency}
+                            kind={movement.kind}
+                            category={movement.category}
+                            needsReview={movement.needsReview}
+                            alt={movement.alt}
+                          />
+                        ))}
+                      </div>
+                    ))}
+                    <Link
+                      href="/movements"
+                      className="flex items-center justify-center px-4 py-3.5 text-body font-semibold text-primary transition-colors hover:bg-accent/40"
+                    >
+                      {t("See all movements", "Ver todos los movimientos")}
+                    </Link>
+                  </>
+                )}
+              </section>
+            </div>
+
+            <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-4">
+              <section className="order-3 min-w-0 lg:order-none">
+                <SectionHeader
+                  eyebrow={t("This month", "Este mes")}
+                  title={t("Presupuestos", "Presupuestos")}
+                  action={
+                    budgetsView.length > 0 ? (
                       <Link
-                        href="/movements"
+                        href="/budget"
                         className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
                       >
                         {t("View all", "Ver todos")}
                       </Link>
-                    }
-                  />
-                </CardHeader>
-                <CardContent className="px-0 pb-0">
-                  {recentMovements.length === 0 ? (
-                    <div className="px-4 pb-4">
-                      <EmptyState
-                        icon={ArrowUpDown}
-                        title={t("No movements yet", "Aún sin movimientos")}
-                        description={t(
-                          "Add your first expense with the + button.",
-                          "Agrega tu primer gasto con el botón +."
-                        )}
-                      />
-                    </div>
-                  ) : (
-                    <div className="divide-y divide-border/40">
-                      {recentMovements.map((movement) => (
-                        <TransactionRow
-                          key={`${movement.kind}-${movement.id}`}
-                          title={movement.title}
-                          subtitle={`${movement.subtitle} · ${new Intl.DateTimeFormat(
-                            intlLocale,
-                            { day: "numeric", month: "short" }
-                          ).format(new Date(`${movement.date}T00:00:00`))}`}
-                          amount={movement.amount}
-                          currency={movement.currency}
-                          kind={movement.kind}
-                          category={movement.category}
-                          needsReview={movement.needsReview}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-
-            <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-4">
-              <Card className="order-2 min-w-0 lg:order-none">
-                <CardHeader>
-                  <SectionHeader
-                    eyebrow={t("This month", "Este mes")}
-                    title={t("Budgets", "Presupuestos")}
-                    action={
-                      budgetsView.length > 0 ? (
-                        <Link
-                          href="/budget"
-                          className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          {t("View all", "Ver todos")}
-                        </Link>
-                      ) : undefined
-                    }
-                  />
-                </CardHeader>
-                <CardContent className="space-y-4">
+                    ) : undefined
+                  }
+                />
+                <div className="mt-3">
                   {budgetsView.length === 0 ? (
-                    <div className="flex flex-col items-start gap-4">
+                    <div className="flex flex-col items-start gap-4 rounded-xl bg-card p-4 ring-1 ring-border">
                       <div className="flex min-w-0 items-start gap-3">
                         <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
                           <Target className="h-5 w-5" />
@@ -331,7 +376,7 @@ export function HomeScreen() {
                       </div>
                       <Link
                         href="/budget"
-                        className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-primary px-3.5 text-caption font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                        className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-caption font-medium text-primary-foreground transition-colors hover:bg-[var(--coral-deep)]"
                       >
                         {t("Set up budgets", "Configurar presupuestos")}
                       </Link>
@@ -339,29 +384,27 @@ export function HomeScreen() {
                   ) : (
                     <BudgetPaceChart budgets={budgetsView} />
                   )}
-                </CardContent>
-              </Card>
+                </div>
+              </section>
 
               {donut.slices.length > 0 && (
-                <Card className="order-3 min-w-0 lg:order-none">
-                  <CardHeader>
-                    <SectionHeader
-                      eyebrow={t("This month", "Este mes")}
-                      title={t(
-                        "Your spending by category",
-                        "Tus gastos por categoría"
-                      )}
-                      action={
-                        <Link
-                          href="/insights"
-                          className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
-                        >
-                          {t("Insights", "Análisis")}
-                        </Link>
-                      }
-                    />
-                  </CardHeader>
-                  <CardContent>
+                <section className="order-4 min-w-0 lg:order-none">
+                  <SectionHeader
+                    eyebrow={t("This month", "Este mes")}
+                    title={t(
+                      "Your spending by category",
+                      "Tus gastos por categoría"
+                    )}
+                    action={
+                      <Link
+                        href="/insights"
+                        className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
+                      >
+                        {t("Insights", "Análisis")}
+                      </Link>
+                    }
+                  />
+                  <div className="mt-3 rounded-xl bg-card p-4 ring-1 ring-border">
                     <BreakdownDonut
                       slices={donut.slices}
                       centerLabel={t("Spent", "Gastado")}
@@ -369,8 +412,8 @@ export function HomeScreen() {
                       onSelect={openCategory}
                       calloutCount={0}
                     />
-                  </CardContent>
-                </Card>
+                  </div>
+                </section>
               )}
             </div>
           </div>

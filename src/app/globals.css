@@ -232,6 +232,30 @@
 }
 
 /**
+ * Up's white content sheet — the layer that rides over the ink chrome and
+ * holds every list. Square-edged and full-bleed on mobile so it meets the
+ * screen edges; a normal rounded card once there is a desktop gutter.
+ */
+@utility up-sheet {
+  background: var(--card);
+  border-radius: 0;
+  overflow: hidden;
+}
+
+/** The stacked-bar peek that stands in for a chart in a list row. */
+@utility up-minibar {
+  display: inline-flex;
+  height: 9px;
+  width: 46px;
+  border-radius: 3px;
+  overflow: hidden;
+}
+.up-minibar > i {
+  display: block;
+  height: 100%;
+}
+
+/**
  * Feed row striping. Up tints alternate rows very slightly; day separators
  * must not consume a step, so callers pass the parity explicitly rather than
  * leaving it to :nth-child.

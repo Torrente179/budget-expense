@@ -1,9 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { CategoryIcon } from "@/components/shared/category-badge";
+import { MerchantMark } from "@/components/patterns/merchant-mark";
 import { AmountText } from "@/components/patterns/amount-text";
-import { TrendingUp } from "lucide-react";
 import type { ReactNode } from "react";
 
 interface TransactionRowProps {
@@ -21,11 +20,17 @@ interface TransactionRowProps {
   className?: string;
   /** Trailing slot after the amount (chevrons, badges). */
   trailing?: ReactNode;
+  /** Alternating feed tint. Set by the list, not the row — see FeedList. */
+  alt?: boolean;
 }
 
 /**
- * The canonical ledger row: category icon, title/subtitle, amount.
- * Full-bleed lists compose it inside swipeable/pressable containers.
+ * The canonical ledger row, in Up's feed shape: merchant mark, name, a small
+ * grey subtitle, amount right-aligned.
+ *
+ * Outflows render in plain ink and inflows in mint with a `+`. Up never puts
+ * ordinary spending in red — red is reserved for a budget actually over its
+ * limit — so `tone` stays `default` for expenses.
  */
 export function TransactionRow({
   title,
@@ -38,23 +43,18 @@ export function TransactionRow({
   onClick,
   className,
   trailing,
+  alt = false,
 }: TransactionRowProps) {
   const content = (
     <>
-      {kind === "income" ? (
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success-subtle text-success ring-1 ring-success/20">
-          <TrendingUp className="h-4 w-4" />
-        </div>
-      ) : (
-        <CategoryIcon
-          icon={category?.icon ?? "more-horizontal"}
-          color={category?.color ?? "var(--muted-foreground)"}
-          className="h-9 w-9 shrink-0"
-        />
-      )}
+      <MerchantMark
+        title={title}
+        color={category?.color}
+        round={kind === "income"}
+      />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-1.5">
-          <p className="truncate text-body font-medium text-foreground">
+          <p className="truncate text-body font-semibold text-foreground">
             {title}
           </p>
           {needsReview && (
@@ -65,14 +65,17 @@ export function TransactionRow({
           )}
         </div>
         {subtitle && (
-          <p className="mt-0.5 truncate text-caption text-muted-foreground">
+          <p className="truncate text-caption text-muted-foreground">
             {subtitle}
           </p>
         )}
       </div>
       <div className="shrink-0 text-right">
+        {/* Outflows carry no sign. In Up a feed is outflows by default, so the
+            minus is noise; inflows earn their "+" precisely because they are
+            the exception. */}
         <AmountText
-          amount={kind === "expense" ? -Math.abs(amount) : amount}
+          amount={Math.abs(amount)}
           currency={currency}
           signed={kind === "income"}
           tone={kind === "income" ? "positive" : "default"}
@@ -84,7 +87,8 @@ export function TransactionRow({
   );
 
   const base = cn(
-    "flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left",
+    "flex min-h-[3.25rem] w-full items-center gap-3 px-4 py-2 text-left",
+    alt && "up-stripe",
     className
   );
 
