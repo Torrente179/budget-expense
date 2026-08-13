@@ -319,11 +319,11 @@ src/components/
   onboarding/ First-run wizard + soft client gate (`OnboardingGate` in the
               app layout). Not primary nav.
   layout/     sidebar (desktop, dark chrome), topbar (desktop-only),
-              nav-rail (mobile top tab rail — replaced the bottom tab-bar),
+              tab-bar (mobile, 5 tabs, floating liquid-glass pill),
               profile-sheet (mobile secondary nav + language row + logout),
-              command-menu (⌘K), site-brand. All consume lib/navigation.ts;
-              the rail uses `RAIL_NAV`, the same items in rail order. Chrome
-              (Sidebar/Topbar/NavRail/CaptureFab) is hidden on `/onboarding`.
+              command-menu (⌘K), site-brand. All consume lib/navigation.ts.
+              Chrome (Sidebar/Topbar/TabBar/CaptureFab) is hidden on
+              `/onboarding`.
   home/ movements/ budget/ wealth/ insights/   feature modules per section
   review/ import/ settings/ auth/ shared/      kept modules
 ```
@@ -342,20 +342,20 @@ error states. No blank areas while fetching.
 
 ## 4. Mobile-native rules
 
-- `< md`: no topbar. **`NavRail`** is pinned to the top of the viewport,
-  outside `main`'s gutters so it is full-bleed, carrying the 5 sections on the
-  ink chrome band. The active section is **centred and its neighbours clip at
-  the screen edges** — that clipping is the affordance, and it is why the rail
-  uses `RAIL_NAV` order (Net worth · Insights · **Home** · Movements · Budget)
-  rather than `PRIMARY_NAV`: with Home first there is never anything to its
-  left. Up rejected bottom tab bars for this; **do not reinstate one.**
-- Below the rail, each screen renders its own sticky header via
-  `patterns/screen.tsx`, also on the ink band so rail + header + hero read as
-  one continuous chrome surface — avatar (profile sheet) on root screens, back
-  chevron on pushed screens. The header reverts to the light translucent
-  treatment at `md`, where the sidebar carries the chrome instead.
-- Floating capture FAB bottom-right (thumb zone). With no tab bar under it, it
-  sits at the normal safe-area offset.
+- `< md`: no topbar. Bottom **`TabBar`** with the 5 sections — a floating
+  liquid-glass pill capsule — plus the floating capture FAB bottom-right
+  (thumb zone), sitting above it. Main content padding clears the bar +
+  `env(safe-area-inset-bottom)`.
+
+  > A top tab rail (Up's own pattern: active section centred, neighbours
+  > clipping at the screen edges) was built and then **removed on 2026-08-13 at
+  > the owner's request** — the pill is the preferred navigation for this app.
+  > Up rejects bottom tab bars; this app does not. Do not "restore" the rail as
+  > a fidelity fix.
+
+- Each screen renders its own sticky translucent header via
+  `patterns/screen.tsx` — avatar (profile sheet) on root screens, back chevron
+  on pushed screens.
 - **Back** on pushed screens = previous page (`router.back()`), with
   `backHref` as the safe fallback when there is no history (refresh / deep
   link). Do not replace this with a hardcoded `/home` Link.
@@ -448,8 +448,7 @@ error states. No blank areas while fetching.
 2. No magic values outside `components/ui/`: `rounded-[…rem]`, `text-[…rem]`,
    `tracking-[…]`, `shadow-[0_…]`, `bg-card/96`.
 3. No stale route strings outside their redirect stubs.
-4. Nav items come only from `lib/navigation.ts` (the rail's order lives there
-   too, as `RAIL_NAV`).
+4. Nav items come only from `lib/navigation.ts`.
 5. No language switcher in `Screen` headers — Settings / profile sheet only.
 6. No theme switching: `next-themes`, `useTheme`, or an appearance toggle
    anywhere in `src/` means the one-appearance rule has been broken.
