@@ -34,9 +34,9 @@ function SidebarLink({
       className={cn(
         // The sidebar is chrome, so it carries the dark layer — these must use
         // sidebar-* tokens, not the light page's foreground/secondary.
-        "relative flex items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors duration-200",
+        "relative flex min-h-11 items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors duration-[var(--motion-standard)]",
         active
-          ? "bg-sidebar-accent text-sidebar-foreground"
+          ? "bg-white/[0.07] text-coral"
           : "text-white/50 hover:bg-white/[0.06] hover:text-white"
       )}
     >
@@ -76,7 +76,7 @@ export function Sidebar() {
   );
 
   return (
-    <aside className="hidden border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex md:w-[268px] md:flex-col">
+    <aside className="hidden shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex md:w-[252px] md:flex-col">
       <div className="border-b border-sidebar-border px-5 py-5">
         <SiteBrand />
       </div>
@@ -92,7 +92,7 @@ export function Sidebar() {
       <div className="border-t border-sidebar-border px-3 py-4">
         <button
           onClick={handleLogout}
-          className="flex w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-white/50 transition-colors duration-150 hover:bg-white/[0.06] hover:text-white"
+          className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-white/50 transition-colors duration-[var(--motion-standard)] hover:bg-white/[0.06] hover:text-white"
         >
           <LogOut className="h-4 w-4" />
           {t("Log out", "Cerrar sesión")}

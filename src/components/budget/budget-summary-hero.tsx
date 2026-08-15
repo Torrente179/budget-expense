@@ -117,7 +117,7 @@ export function BudgetSummaryHero({
           <div className="space-y-1.5">
             <div className="up-track-dark relative h-1 overflow-hidden rounded-sm">
               <div
-                className="absolute inset-y-0 left-0 rounded-sm transition-[width] duration-700 ease-out"
+                className="absolute inset-y-0 left-0 rounded-sm transition-[width] duration-[var(--motion-success)] ease-[var(--ease-out-up)] motion-reduce:transition-none"
                 style={{ width: `${barFill}%`, backgroundColor: barColor }}
               />
             </div>

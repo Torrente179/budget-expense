@@ -48,7 +48,7 @@ export function ProgressMeter({
     >
       <div
         className={cn(
-          "h-full rounded-sm transition-[width] duration-500 ease-out",
+          "h-full rounded-sm transition-[width] duration-[var(--motion-success)] ease-[var(--ease-out-up)] motion-reduce:transition-none",
           tone && toneClass[tone]
         )}
         style={{

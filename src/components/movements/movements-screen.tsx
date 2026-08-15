@@ -27,8 +27,8 @@ import {
 import { cn } from "@/lib/utils";
 import { getTodayIsoDate } from "@/lib/calendar";
 import { Screen } from "@/components/patterns/screen";
-import { AmountText } from "@/components/patterns/amount-text";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
+import { MovementSummaryHero } from "@/components/movements/movement-summary-hero";
 import {
   CategoryOption,
   CATEGORY_SELECT_CONTENT_CLASS,
@@ -416,7 +416,8 @@ export function MovementsScreen() {
   return (
     <Screen
       title={t("Movements", "Movimientos")}
-      className="mx-auto w-full max-w-6xl md:[&>header]:mx-0 md:[&>header]:px-0"
+      mode="chrome-sheet"
+      className="mx-auto w-full max-w-5xl md:[&>header]:mx-0 md:[&>header]:px-0"
       actions={
         <>
           <Button
@@ -424,8 +425,8 @@ export function MovementsScreen() {
             size="icon"
             aria-label={t("Search", "Buscar")}
             className={cn(
-              "h-9 w-9 rounded-full border border-border bg-secondary/80 md:hidden",
-              searchOpen && "bg-foreground text-background"
+              "h-11 w-11 rounded-full border border-white/10 bg-white/[0.07] text-white md:hidden",
+              searchOpen && "bg-coral text-white"
             )}
             onClick={() => {
               setSearchOpen(!searchOpen);
@@ -434,21 +435,11 @@ export function MovementsScreen() {
           >
             <Search className="h-4 w-4" />
           </Button>
-          <div className="relative hidden md:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder={t("Search...", "Buscar...")}
-              className="h-9 w-[200px] rounded-full pl-9 text-sm"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-          </div>
-          <div className="hidden md:block">{renderCategoryFilter()}</div>
           <Button
             variant="ghost"
             size="icon"
             aria-label={t("Recurring expenses", "Gastos recurrentes")}
-            className="h-9 w-9 rounded-full border border-border bg-secondary/80"
+            className="h-11 w-11 rounded-full border border-white/10 bg-white/[0.07] text-white hover:bg-white/10 hover:text-white md:h-9 md:w-9"
             render={<Link href="/movements/recurring" />}
           >
             <Repeat className="h-4 w-4" />
@@ -456,7 +447,7 @@ export function MovementsScreen() {
           <Button
             variant="outline"
             size="sm"
-            className="hidden h-9 gap-1.5 rounded-full md:inline-flex"
+            className="hidden h-9 gap-1.5 rounded-full border-white/10 bg-white/[0.07] text-white hover:bg-white/10 hover:text-white md:inline-flex"
             onClick={() => setCaptureOpen(true)}
           >
             <Plus className="h-4 w-4" />
@@ -465,109 +456,94 @@ export function MovementsScreen() {
         </>
       }
       subheader={
-        <div className="space-y-3">
-          {searchOpen && (
-            <div className="space-y-2 md:hidden">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder={t(
-                    "Search movements...",
-                    "Buscar movimientos..."
-                  )}
-                  className="h-10 rounded-full pl-9 text-sm"
-                  value={search}
-                  onChange={(event) => setSearch(event.target.value)}
-                  autoFocus
-                />
-              </div>
-              {renderCategoryFilter()}
-            </div>
-          )}
-          {!searchOpen && (
-            <div className="md:hidden">{renderCategoryFilter()}</div>
-          )}
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <UnderlineTabs
-              tabs={tabs}
-              value={tab}
-              onChange={setTab}
-              ariaLabel={t("Filter movements", "Filtrar movimientos")}
-              className="border-b-0"
-            />
-            <MonthPicker month={month} year={year} onChange={setMonthYear} />
-          </div>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <UnderlineTabs
+            tabs={tabs}
+            value={tab}
+            onChange={setTab}
+            ariaLabel={t("Filter movements", "Filtrar movimientos")}
+            className="border-b-0 [&_[role=tab]]:text-white/48 [&_[role=tab]:hover]:text-white [&_[role=tab][aria-selected=true]]:text-coral [&_[role=tab][aria-selected=true]>span]:bg-coral"
+          />
+          <MonthPicker
+            month={month}
+            year={year}
+            onChange={setMonthYear}
+            onInk
+          />
         </div>
       }
     >
-      {/* Month totals */}
-      <div className="flex items-center justify-between gap-4 rounded-xl bg-card px-4 py-3 ring-1 ring-border shadow-1">
-        <div className="flex gap-5 text-caption text-muted-foreground">
-          {!categoryId && (
-            <span>
-              {t("Income", "Ingresos")}{" "}
-              <AmountText
-                amount={totalIncome}
-                currency={baseCurrency}
-                tone="positive"
-                size="caption"
-                className="font-medium"
-              />
-            </span>
+      <MovementSummaryHero
+        label={t("Net this month", "Neto de este mes")}
+        netAmount={netBalance}
+        incomeLabel={t("Money in", "Entradas")}
+        incomeAmount={totalIncome}
+        expenseLabel={
+          categoryId && selectedCategory
+            ? tc(selectedCategory.name)
+            : t("Money out", "Salidas")
+        }
+        expenseAmount={totalExpenses}
+        currency={baseCurrency}
+        showIncome={!categoryId}
+      />
+
+      {/* Search remains local state; URL-backed tab/category filters are unchanged. */}
+      <div className="-mx-4 flex min-w-0 items-center gap-2 bg-white px-4 py-3 sm:-mx-5 sm:px-5 md:mx-0 md:mt-4 md:rounded-t-xl">
+        <div
+          className={cn(
+            "relative min-w-0 flex-1 md:block",
+            searchOpen ? "block" : "hidden"
           )}
-          <span>
-            {categoryId && selectedCategory
-              ? tc(selectedCategory.name)
-              : t("Expenses", "Gastos")}{" "}
-            <AmountText
-              amount={totalExpenses}
-              currency={baseCurrency}
-              tone="default"
-              size="caption"
-              className="font-medium"
-            />
-          </span>
+        >
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder={t("Search movements...", "Buscar movimientos...")}
+            className="h-11 rounded-full border-transparent bg-secondary/70 pl-9 text-sm shadow-none focus-visible:border-border md:h-9"
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            autoFocus={searchOpen && isMobile}
+          />
         </div>
-        <AmountText
-          amount={netBalance}
-          currency={baseCurrency}
-          size="heading"
-          tone={netBalance < 0 ? "negative" : "default"}
-        />
+        <div className={cn("min-w-0", searchOpen && "max-md:w-[45%]")}>
+          {renderCategoryFilter("border-transparent bg-secondary/70")}
+        </div>
       </div>
 
       {/* Ledger */}
       {loading ? (
-        <div className="space-y-3">
+        <div className="up-content-sheet -mx-4 space-y-1 px-4 py-3 sm:-mx-5 md:mx-0 md:rounded-b-xl">
           {Array.from({ length: 6 }).map((_, index) => (
-            <Skeleton key={index} className="h-16 rounded-xl" />
+            <Skeleton key={index} className="h-14 rounded-lg" />
           ))}
         </div>
       ) : movements.length === 0 ? (
-        <EmptyState
-          icon={ArrowUpDown}
-          title={
-            categoryId || deferredSearch
-              ? t("No matching movements", "Sin movimientos coincidentes")
-              : t("No movements", "Sin movimientos")
-          }
-          description={
-            categoryId || deferredSearch
-              ? t(
-                  "Try another category or clear search.",
-                  "Prueba otra categoría o limpia la búsqueda."
-                )
-              : t(
-                  "Add your first expense or income to see it here.",
-                  "Agrega tu primer gasto o ingreso para verlo aquí."
-                )
-          }
-        />
+        <div className="up-content-sheet -mx-4 px-4 py-6 sm:-mx-5 md:mx-0 md:rounded-b-xl">
+          <EmptyState
+            icon={ArrowUpDown}
+            title={
+              categoryId || deferredSearch
+                ? t("No matching movements", "Sin movimientos coincidentes")
+                : t("No movements", "Sin movimientos")
+            }
+            description={
+              categoryId || deferredSearch
+                ? t(
+                    "Try another category or clear search.",
+                    "Prueba otra categoría o limpia la búsqueda."
+                  )
+                : t(
+                    "Add your first expense or income to see it here.",
+                    "Agrega tu primer gasto o ingreso para verlo aquí."
+                  )
+            }
+          />
+        </div>
       ) : (
         <PullToRefresh
           onRefresh={() => Promise.all([refetchExpenses(), refetchIncomes()])}
         >
-          <div className="md:overflow-hidden md:rounded-xl md:bg-card md:ring-1 md:ring-border md:shadow-1">
+          <div className="up-content-sheet -mx-4 sm:-mx-5 md:mx-0 md:rounded-b-xl">
             <VirtualizedLedger
               grouped={grouped}
               isMobile={isMobile}

@@ -39,6 +39,10 @@ export async function updateSession(request: NextRequest) {
 
   if (
     !claims &&
+    // `/` is the public landing page — the only route a signed-out visitor is
+    // meant to see besides the auth forms. Matched exactly, since
+    // `startsWith("/")` would open the whole app.
+    request.nextUrl.pathname !== "/" &&
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/signup") &&
     !request.nextUrl.pathname.startsWith("/auth") &&

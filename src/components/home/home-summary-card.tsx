@@ -1,21 +1,27 @@
 "use client";
 
-import { ArrowDownLeft, ArrowUpRight, CalendarDays, Wallet } from "lucide-react";
+import {
+  ArrowDownLeft,
+  ArrowUpRight,
+  CalendarDays,
+  Gauge,
+} from "lucide-react";
 import {
   formatUsagePercent,
   type HomeAvailableBalance,
   type MonthCashflow,
   type MonthPaceStatus,
 } from "@/lib/home/month-cashflow";
-import { cn, formatCurrency } from "@/lib/utils";
+import { cn } from "@/lib/utils";
+import { AmountText } from "@/components/patterns/amount-text";
 import {
   HERO_ACCENT,
-  HERO_ICON_TILE,
   HERO_RULE,
   HERO_SURFACE,
 } from "@/components/patterns/hero-surface";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
+import type { ReactNode } from "react";
 
 interface HomeSummaryCardProps {
   cashflow: MonthCashflow;
@@ -43,74 +49,41 @@ function paceStatusLabel(
   }
 }
 
-function HeroRing({
-  usedRatio,
-  size = 88,
+function SummaryMetric({
+  icon,
+  label,
+  value,
+  detail,
+  className,
 }: {
-  usedRatio: number | null;
-  size?: number;
+  icon: ReactNode;
+  label: string;
+  value: ReactNode;
+  detail?: string;
+  className?: string;
 }) {
-  const strokeWidth = 8;
-  const radius = (size - strokeWidth) / 2;
-  const circumference = 2 * Math.PI * radius;
-  const filled =
-    usedRatio == null || !Number.isFinite(usedRatio)
-      ? 0
-      : Math.min(Math.max(usedRatio, 0), 1);
-  const dashOffset = circumference * (1 - filled);
-  const pct = formatUsagePercent(usedRatio);
-  const { t } = useLocale();
-
   return (
-    <div
-      className="relative shrink-0"
-      style={{ width: size, height: size }}
-      aria-hidden={usedRatio == null}
-    >
-      <svg
-        width={size}
-        height={size}
-        viewBox={`0 0 ${size} ${size}`}
-        className="block -rotate-90"
-      >
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="rgba(255,255,255,0.12)"
-          strokeWidth={strokeWidth}
-        />
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          fill="none"
-          stroke="#ffffff"
-          strokeWidth={strokeWidth}
-          strokeLinecap="butt"
-          strokeDasharray={circumference}
-          strokeDashoffset={dashOffset}
-          className="transition-[stroke-dashoffset] duration-700 ease-out"
-        />
-      </svg>
-      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-2 text-center">
-        <span className="font-mono text-[1.25rem] font-bold leading-none tracking-[-0.03em] tabular-nums text-white">
-          {pct}
-          {pct !== "—" && <span className="text-[0.62em]">%</span>}
+    <div className={cn("min-w-0 px-3 py-3", className)}>
+      <div className="flex items-center gap-1.5 text-caption font-medium text-white/55">
+        <span aria-hidden className="shrink-0">
+          {icon}
         </span>
-        <span className="mt-0.5 max-w-[4.5rem] text-[0.625rem] font-medium leading-tight text-white/55">
-          {t("of budget used", "del presupuesto utilizado")}
-        </span>
+        <span className="truncate">{label}</span>
       </div>
+      <div className="mt-1 truncate font-mono text-body font-bold leading-tight tabular-nums text-white">
+        {value}
+      </div>
+      {detail ? (
+        <p className="mt-0.5 truncate text-label text-white/45">{detail}</p>
+      ) : null}
     </div>
   );
 }
 
 /**
- * Home hero: real carried cash when tracked, with month-only plan pace kept as
- * supporting context. Mobile matches the stacked mockup; desktop keeps the
- * horizontal metrics row.
+ * The Home chrome: one centred available-balance figure, followed by a compact
+ * month-context strip. The carried cash figure and monthly plan pace remain
+ * deliberately separate calculations.
  */
 export function HomeSummaryCard({
   cashflow,
@@ -121,19 +94,21 @@ export function HomeSummaryCard({
   const { t, intlLocale } = useLocale();
   const { baseCurrency } = useCurrency();
 
-  const remainingLabel =
-    availableBalance.amount == null
-      ? "—"
-      : formatCurrency(availableBalance.amount, baseCurrency, intlLocale);
-  const incomeLabel =
-    cashflow.monthlyIncome == null
-      ? "—"
-      : formatCurrency(cashflow.monthlyIncome, baseCurrency, intlLocale);
-  const spentLabel = formatCurrency(
-    cashflow.actualOutflows,
-    baseCurrency,
-    intlLocale
-  );
+  const usesTrackedBalance = availableBalance.source === "tracked";
+  const balanceCaption = usesTrackedBalance
+    ? t("carried available balance", "saldo disponible acumulado")
+    : t("available this month", "disponibles este mes");
+  const usedPct = formatUsagePercent(cashflow.usedRatio);
+  const leftPct =
+    cashflow.usedRatio == null || !Number.isFinite(cashflow.usedRatio)
+      ? null
+      : formatUsagePercent(1 - Math.min(Math.max(cashflow.usedRatio, 0), 1));
+  const barFill =
+    cashflow.usedRatio == null || !Number.isFinite(cashflow.usedRatio)
+      ? 0
+      : Math.min(Math.max(cashflow.usedRatio, 0), 1) * 100;
+  const paceMark = Math.min(Math.max(cashflow.monthProgress, 0), 1) * 100;
+  const status = paceStatusLabel(cashflow.paceStatus, t);
   const dailyLabel =
     availableBalance.dailyAvailable == null
       ? null
@@ -144,261 +119,112 @@ export function HomeSummaryCard({
           minimumFractionDigits: 0,
         }).format(Math.round(availableBalance.dailyAvailable));
 
-  const usesTrackedBalance = availableBalance.source === "tracked";
-  const balanceCaption = usesTrackedBalance
-    ? t(
-        "carried available balance",
-        "saldo disponible acumulado"
-      )
-    : t("available this month", "disponibles este mes");
-
-  const usedPct = formatUsagePercent(cashflow.usedRatio);
-  const availablePct =
-    cashflow.usedRatio == null || !Number.isFinite(cashflow.usedRatio)
-      ? null
-      : formatUsagePercent(1 - Math.min(Math.max(cashflow.usedRatio, 0), 1));
-  const barFill =
-    cashflow.usedRatio == null || !Number.isFinite(cashflow.usedRatio)
-      ? 0
-      : Math.min(Math.max(cashflow.usedRatio, 0), 1) * 100;
-  const paceMark = Math.min(Math.max(cashflow.monthProgress, 0), 1) * 100;
-  const status = paceStatusLabel(cashflow.paceStatus, t);
-
   return (
     <section className={cn(HERO_SURFACE, className)}>
-      {/* Mobile wallet watermark */}
-      <Wallet
-        aria-hidden
-        className="pointer-events-none absolute -right-2 top-2 h-20 w-20 text-white/[0.05] lg:hidden"
-        strokeWidth={1}
-      />
-
-      {/* —— Mobile layout —— */}
-      <div className="relative space-y-3.5 p-4 lg:hidden">
-        <div>
-          <p className="text-[0.8125rem] font-medium text-white/55">
-            {t("You have", "Te quedan")}
-          </p>
-          <p className="up-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
-            {remainingLabel}
-          </p>
-          <p className="mt-1 text-[0.8125rem] font-medium text-white/55">
-            {balanceCaption}
-          </p>
-        </div>
-
-        <div className="space-y-1.5">
-          <div className="up-track-dark relative h-1 overflow-hidden rounded-sm">
-            <div
-              className="absolute inset-y-0 left-0 rounded-sm bg-coral transition-[width] duration-700 ease-out"
-              style={{ width: `${barFill}%` }}
+      <div className="px-4 pb-7 pt-8 text-center sm:px-5 sm:pb-8 sm:pt-10">
+        <div className="flex min-h-11 items-center justify-center">
+          {availableBalance.amount == null ? (
+            <span className="up-figure font-mono text-display font-bold leading-none tabular-nums">
+              —
+            </span>
+          ) : (
+            <AmountText
+              amount={availableBalance.amount}
+              currency={baseCurrency}
+              size="display"
+              className="up-figure text-display font-bold leading-none text-coral"
             />
-          </div>
-          <div className="flex items-center justify-between gap-3 text-[0.6875rem] text-white/55">
-            <span>
-              {usedPct !== "—"
-                ? t(`${usedPct}% spent`, `${usedPct}% gastado`)
-                : t("Spent", "Gastado")}
-            </span>
-            <span>
-              {availablePct != null
-                ? t(
-                    `${availablePct}% left in plan`,
-                    `${availablePct}% restante del plan`
-                  )
-                : t("Available", "Disponible")}
-            </span>
-          </div>
+          )}
         </div>
-
-        <div className={cn("grid grid-cols-2 gap-0 border-t pt-3", HERO_RULE)}>
-          <div className="min-w-0 pr-3">
-            <div className="flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                  HERO_ICON_TILE
-                )}
-              >
-                <ArrowDownLeft
-                  className="h-3 w-3"
-                  style={{ color: HERO_ACCENT }}
-                />
-              </span>
-              <span className="text-[0.75rem] font-medium text-white/55">
-                {t("Income", "Ingresos")}
-              </span>
-            </div>
-            <p
-              className="mt-1 font-mono text-sm font-bold tracking-[-0.02em] tabular-nums"
-              style={{ color: HERO_ACCENT }}
-            >
-              {incomeLabel}
-            </p>
-          </div>
-          <div className={cn("min-w-0 border-l pl-3", HERO_RULE)}>
-            <div className="flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full",
-                  HERO_ICON_TILE
-                )}
-              >
-                <ArrowUpRight className="h-3 w-3 text-white" />
-              </span>
-              <span className="text-[0.75rem] font-medium text-white/55">
-                {t("Spent", "Gastado")}
-              </span>
-            </div>
-            <p className="mt-1 font-mono text-sm font-bold tracking-[-0.02em] tabular-nums text-white">
-              {spentLabel}
-            </p>
-          </div>
-        </div>
-
-        {dailyLabel != null && (
-          <div className={cn("flex items-center gap-2 border-t pt-3", HERO_RULE)}>
-            <span
-              className={cn(
-                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
-                HERO_ICON_TILE
-              )}
-            >
-              <CalendarDays className="h-3.5 w-3.5 text-white" />
-            </span>
-            <p className="text-[0.75rem] leading-snug text-white/70">
-              {usesTrackedBalance
-                ? t(
-                    `${dailyLabel} / day from this balance until ${monthEndLabel}`,
-                    `${dailyLabel} al día de este saldo hasta el ${monthEndLabel}`
-                  )
-                : t(
-                    `${dailyLabel} / day until ${monthEndLabel}`,
-                    `${dailyLabel} al día hasta el ${monthEndLabel}`
-                  )}
-            </p>
-          </div>
-        )}
+        <p className="mt-2 text-body font-semibold text-coral">
+          {t("Available", "Disponible")}
+        </p>
+        <p className="mt-0.5 text-caption text-white/45">{balanceCaption}</p>
       </div>
 
-      {/* —— Desktop layout —— */}
-      <div className="relative hidden space-y-3.5 p-5 lg:block">
-        <div className="flex flex-row items-center">
-          <div className="min-w-0 shrink-0">
-            <p className="text-[0.8125rem] font-medium text-white/55">
-              {t("You have", "Te quedan")}
-            </p>
-            <p className="up-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
-              {remainingLabel}
-            </p>
-            <p className="mt-1 text-[0.8125rem] font-medium text-white/55">
-              {balanceCaption}
-            </p>
-          </div>
-
-          <div
-            aria-hidden
-            className="mx-4 h-10 w-px shrink-0 bg-white/12 xl:mx-5"
-          />
-
-          <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[0.75rem] font-medium text-white/55">
-              <span
-                aria-hidden
-                className="h-1.5 w-1.5 shrink-0 rounded-full"
-                style={{ backgroundColor: HERO_ACCENT }}
+      <div className={cn("border-t", HERO_RULE)}>
+        <div className="grid grid-cols-2 sm:grid-cols-4">
+          <SummaryMetric
+            icon={
+              <ArrowDownLeft
+                className="h-3.5 w-3.5"
+                style={{ color: HERO_ACCENT }}
               />
-              {t("Income received", "Ingresos recibidos")}
-            </p>
-            <p
-              className="mt-1 font-mono text-base font-bold tracking-[-0.02em] tabular-nums"
-              style={{ color: HERO_ACCENT }}
-            >
-              {incomeLabel}
-            </p>
-          </div>
-
-          <div
-            aria-hidden
-            className="mx-4 h-10 w-px shrink-0 bg-white/12 xl:mx-5"
+            }
+            label={t("Income", "Ingresos")}
+            value={
+              cashflow.monthlyIncome == null ? (
+                "—"
+              ) : (
+                <AmountText
+                  amount={cashflow.monthlyIncome}
+                  currency={baseCurrency}
+                  size="body"
+                  className="font-bold text-income"
+                />
+              )
+            }
+            detail={t("this month", "este mes")}
+            className="border-b border-white/10 sm:border-b-0"
           />
-
-          <div className="min-w-0">
-            <p className="flex items-center gap-1.5 text-[0.75rem] font-medium text-white/55">
-              <span
-                aria-hidden
-                className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/70"
+          <SummaryMetric
+            icon={<ArrowUpRight className="h-3.5 w-3.5 text-white/70" />}
+            label={t("Spent", "Gastado")}
+            value={
+              <AmountText
+                amount={cashflow.actualOutflows}
+                currency={baseCurrency}
+                size="body"
+                className="font-bold text-white"
               />
-              {t("You've spent", "Has gastado")}
-            </p>
-            <p className="mt-1 font-mono text-base font-bold tracking-[-0.02em] tabular-nums text-white">
-              {spentLabel}
-            </p>
-          </div>
-
-          <div className="ml-auto shrink-0 pl-3">
-            <HeroRing usedRatio={cashflow.usedRatio} />
-          </div>
+            }
+            detail={t("this month", "este mes")}
+            className="border-b border-l border-white/10 sm:border-b-0"
+          />
+          <SummaryMetric
+            icon={<CalendarDays className="h-3.5 w-3.5 text-white/70" />}
+            label={t("Daily guide", "Guía diaria")}
+            value={dailyLabel ?? "—"}
+            detail={t(`until ${monthEndLabel}`, `hasta el ${monthEndLabel}`)}
+            className="sm:border-l sm:border-white/10"
+          />
+          <SummaryMetric
+            icon={<Gauge className="h-3.5 w-3.5 text-white/70" />}
+            label={t("Plan pace", "Ritmo del plan")}
+            value={usedPct === "—" ? "—" : `${usedPct}%`}
+            detail={status ?? t("No monthly plan", "Sin plan mensual")}
+            className="border-l border-white/10"
+          />
         </div>
 
-        <div className="space-y-1.5">
+        <div className="border-t border-white/10 px-4 pb-4 pt-3 sm:px-5">
           <div className="up-track-dark relative h-1 overflow-visible rounded-sm">
             <div
-              className="absolute inset-y-0 left-0 rounded-sm bg-coral transition-[width] duration-700 ease-out"
+              className="absolute inset-y-0 left-0 rounded-sm bg-coral transition-[width] duration-[var(--motion-success)] ease-[var(--ease-out-up)] motion-reduce:transition-none"
               style={{ width: `${barFill}%` }}
             />
             <span
               aria-hidden
-              className="absolute top-1/2 z-10 h-3.5 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white ring-1 ring-black/60"
+              className="absolute top-1/2 z-10 h-3 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white ring-1 ring-black/60"
               style={{ left: `${paceMark}%` }}
-              title={t("Month progress", "Progreso del mes")}
             />
           </div>
-          <div className="flex items-center justify-between gap-3 text-[0.75rem] text-white/55">
+          <div className="mt-1.5 flex items-center justify-between gap-3 text-label text-white/45">
             <span>
-              {t("Spent", "Gastado")}:{" "}
-              <span className="font-mono tabular-nums text-white">
-                {spentLabel}
-              </span>
+              {usedPct === "—"
+                ? t("Plan unavailable", "Plan no disponible")
+                : t(
+                    `${usedPct}% spent · ${leftPct}% left`,
+                    `${usedPct}% gastado · ${leftPct}% restante`
+                  )}
             </span>
             <span>
-              {t("Month target", "Meta del mes")}:{" "}
-              <span className="font-mono tabular-nums text-white">
-                {incomeLabel}
-              </span>
+              {t(
+                `${Math.round(paceMark)}% of month`,
+                `${Math.round(paceMark)}% del mes`
+              )}
             </span>
           </div>
-        </div>
-
-        <div className={cn("flex flex-wrap items-center gap-2 border-t pt-3", HERO_RULE)}>
-          {dailyLabel != null && (
-            <p className="inline-flex items-center gap-2 text-[0.75rem] text-white/70">
-              <span
-                className={cn(
-                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg",
-                  HERO_ICON_TILE
-                )}
-              >
-                <CalendarDays className="h-3.5 w-3.5 text-white" />
-              </span>
-              <span>
-                {usesTrackedBalance
-                  ? t(
-                      `About ${dailyLabel} / day from this balance until ${monthEndLabel}`,
-                      `Aproximadamente ${dailyLabel} al día de este saldo hasta el ${monthEndLabel}`
-                    )
-                  : t(
-                      `About ${dailyLabel} / day until ${monthEndLabel}`,
-                      `Aproximadamente ${dailyLabel} al día hasta el ${monthEndLabel}`
-                    )}
-              </span>
-            </p>
-          )}
-          {status && (
-            <span className="rounded-full bg-white/[0.08] px-2 py-0.5 text-[0.625rem] font-medium text-white/70 ring-1 ring-white/10">
-              {status}
-            </span>
-          )}
         </div>
       </div>
     </section>

@@ -6,12 +6,17 @@ import { Loader2, Plus, Repeat } from "lucide-react";
 import { toast } from "sonner";
 import { useRecurringExpenses } from "@/hooks/use-recurring-expenses";
 import { useCategories } from "@/hooks/use-categories";
+import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { normalizeDecimalInput, parseDecimalInput } from "@/lib/utils";
 import { CURRENCIES } from "@/lib/constants";
 import { Screen } from "@/components/patterns/screen";
-import { AmountText } from "@/components/patterns/amount-text";
-import { CategoryIcon, CategoryOption, CATEGORY_SELECT_CONTENT_CLASS } from "@/components/shared/category-badge";
+import {
+  CategoryOption,
+  CATEGORY_SELECT_CONTENT_CLASS,
+} from "@/components/shared/category-badge";
+import { RecurringSummaryHero } from "@/components/movements/recurring-summary-hero";
+import { RecurringSchedule } from "@/components/movements/recurring-schedule";
 import { EmptyState } from "@/components/shared/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -63,6 +68,7 @@ const EMPTY_FORM: FormState = {
 /** Manage monthly recurring charges (materialized into expenses on read). */
 export function RecurringScreen() {
   const { t, tc } = useLocale();
+  const { baseCurrency, convert } = useCurrency();
   const {
     recurringExpenses,
     loading,
@@ -80,6 +86,40 @@ export function RecurringScreen() {
     () =>
       [...recurringExpenses].sort((a, b) => a.charge_day - b.charge_day),
     [recurringExpenses]
+  );
+
+  const recurringSummary = useMemo(() => {
+    let total = 0;
+    let activeCount = 0;
+    for (const recurring of sorted) {
+      if (!recurring.is_active) continue;
+      activeCount += 1;
+      total += convert(recurring.amount, recurring.currency);
+    }
+    return {
+      total,
+      activeCount,
+      pausedCount: sorted.length - activeCount,
+    };
+  }, [convert, sorted]);
+
+  const scheduleItems = useMemo(
+    () =>
+      sorted.map((recurring) => {
+        const categoryName = tc(recurring.categories?.name ?? "—");
+        return {
+          id: recurring.id,
+          title: recurring.description || categoryName,
+          categoryName,
+          categoryIcon: recurring.categories?.icon,
+          categoryColor: recurring.categories?.color,
+          amount: recurring.amount,
+          currency: recurring.currency,
+          chargeDay: recurring.charge_day,
+          isActive: recurring.is_active,
+        };
+      }),
+    [sorted, tc]
   );
 
   const parsedAmount = form ? parseDecimalInput(form.amount) : null;
@@ -152,11 +192,13 @@ export function RecurringScreen() {
     <Screen
       title={t("Recurring", "Recurrentes")}
       backHref="/movements"
+      mode="chrome-sheet"
+      className="mx-auto w-full max-w-5xl md:[&>header]:mx-0 md:[&>header]:px-0"
       actions={
         <Button
           variant="outline"
           size="sm"
-          className="h-9 gap-1.5 rounded-full"
+          className="h-11 gap-1.5 rounded-full border-white/10 bg-white/[0.07] text-white hover:bg-white/10 hover:text-white md:h-9"
           onClick={() => setForm({ ...EMPTY_FORM })}
         >
           <Plus className="h-4 w-4" />
@@ -164,55 +206,54 @@ export function RecurringScreen() {
         </Button>
       }
     >
+      <RecurringSummaryHero
+        label={t("Monthly recurring", "Recurrentes mensuales")}
+        totalAmount={recurringSummary.total}
+        currency={baseCurrency}
+        cadenceLabel={t("Expected every month", "Previsto cada mes")}
+        activeCount={recurringSummary.activeCount}
+        activeLabel={t(
+          "active",
+          recurringSummary.activeCount === 1 ? "activo" : "activos"
+        )}
+        pausedCount={recurringSummary.pausedCount}
+        pausedLabel={t(
+          "paused",
+          recurringSummary.pausedCount === 1 ? "pausado" : "pausados"
+        )}
+        loading={loading}
+      />
+
       {loading ? (
-        <div className="space-y-3">
+        <div className="up-content-sheet -mx-4 space-y-1 px-4 py-3 sm:-mx-5 md:mx-0 md:rounded-xl">
           {Array.from({ length: 4 }).map((_, index) => (
-            <Skeleton key={index} className="h-16 rounded-xl" />
+            <Skeleton key={index} className="h-[4.25rem] rounded-lg" />
           ))}
         </div>
       ) : sorted.length === 0 ? (
-        <EmptyState
-          icon={Repeat}
-          title={t("No recurring charges", "Sin cargos recurrentes")}
-          description={t(
-            "Monthly bills you add here are created automatically each month.",
-            "Las facturas mensuales que agregues aquí se crean automáticamente cada mes."
-          )}
-        />
-      ) : (
-        <div className="-mx-4 divide-y divide-border/40 md:mx-0 md:overflow-hidden md:rounded-xl md:bg-card md:ring-1 md:ring-border md:shadow-1">
-          {sorted.map((recurring) => (
-            <button
-              key={recurring.id}
-              type="button"
-              onClick={() => openEdit(recurring)}
-              className="flex min-h-16 w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-accent/50"
-            >
-              <CategoryIcon
-                icon={recurring.categories?.icon ?? "repeat"}
-                color={recurring.categories?.color ?? "var(--muted-foreground)"}
-                className="h-9 w-9 shrink-0"
-              />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-body font-medium">
-                  {recurring.description ||
-                    tc(recurring.categories?.name ?? "—")}
-                </p>
-                <p className="mt-0.5 text-caption text-muted-foreground">
-                  {t("Day", "Día")} {recurring.charge_day} ·{" "}
-                  {recurring.is_active
-                    ? t("Active", "Activo")
-                    : t("Paused", "Pausado")}
-                </p>
-              </div>
-              <AmountText
-                amount={-Math.abs(recurring.amount)}
-                currency={recurring.currency}
-                tone={recurring.is_active ? "negative" : "muted"}
-              />
-            </button>
-          ))}
+        <div className="up-content-sheet -mx-4 px-4 py-6 sm:-mx-5 md:mx-0 md:rounded-xl">
+          <EmptyState
+            icon={Repeat}
+            title={t("No recurring charges", "Sin cargos recurrentes")}
+            description={t(
+              "Monthly bills you add here are created automatically each month.",
+              "Las facturas mensuales que agregues aquí se crean automáticamente cada mes."
+            )}
+          />
         </div>
+      ) : (
+        <RecurringSchedule
+          items={scheduleItems}
+          title={t("Monthly schedule", "Calendario mensual")}
+          rangeLabel={t("Days 1–31", "Días 1–31")}
+          dayLabel={t("Day", "Día")}
+          activeLabel={t("Active", "Activo")}
+          pausedLabel={t("Paused", "Pausado")}
+          onEdit={(id) => {
+            const recurring = sorted.find((item) => item.id === id);
+            if (recurring) openEdit(recurring);
+          }}
+        />
       )}
 
       <Sheet
@@ -393,7 +434,7 @@ export function RecurringScreen() {
                 </label>
               </div>
 
-              <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-popover/96 pb-1 pt-2">
+              <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-white pb-1 pt-2">
                 <Button
                   type="submit"
                   disabled={!canSubmit}

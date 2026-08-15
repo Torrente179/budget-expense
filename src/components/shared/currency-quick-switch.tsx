@@ -12,8 +12,13 @@ import {
 import type { CurrencyCode } from "@/lib/constants";
 import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
+import { cn } from "@/lib/cn";
 
-export function CurrencyQuickSwitch() {
+export function CurrencyQuickSwitch({
+  onInk = false,
+}: {
+  onInk?: boolean;
+}) {
   const {
     baseCurrency,
     currencyPreferenceReady,
@@ -41,7 +46,12 @@ export function CurrencyQuickSwitch() {
       }}
       disabled={!currencyPreferenceReady || currencyPreferenceUpdating}
     >
-      <SelectTrigger className="h-8 w-[90px] text-xs font-mono">
+      <SelectTrigger
+        className={cn(
+          "h-11 w-[90px] font-mono text-xs md:h-9",
+          onInk && "border-white/10 bg-white/[0.07] text-white"
+        )}
+      >
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

@@ -13,6 +13,7 @@ Bilingual (EN/ES) personal stewardship, budgeting, and expense-tracking app.
 | [`docs/balance-carryover.md`](docs/balance-carryover.md) | Canonical Home available-balance contract: formulas, date rules, fallbacks, data flow, edge cases, tests, and troubleshooting |
 | [`docs/performance-and-rebuild-plan.md`](docs/performance-and-rebuild-plan.md) | Performance baseline, recovery contracts, rollout/rollback, and future Vite/Go architecture |
 | [`design.md`](design.md) | Design system: tokens, patterns, mobile rules, visual gates |
+| [`mockups/up-true/references/README.md`](mockups/up-true/references/README.md) | Archived Up screenshots and motion references with provenance notes and hashes |
 | [`docs/vercel-supabase-handoff.md`](docs/vercel-supabase-handoff.md) | Vercel + Supabase connection and ops |
 | [`docs/pending-migrations-runbook.md`](docs/pending-migrations-runbook.md) | Migration apply checklist |
 | [`changes/`](changes/) | Implementation change log |

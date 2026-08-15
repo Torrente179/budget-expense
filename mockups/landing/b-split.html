@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>B &middot; Split &mdash; landing mockup</title>
+  <link rel="stylesheet" href="landing.css" />
+</head>
+<body>
+
+<div class="b-top">
+  <header class="nav nav-coral">
+    <div class="wrap" style="display:flex;align-items:center;gap:26px;width:100%">
+      <a class="brand" href="#"><img src="../../public/icons/budget-expense-app-icon.png" alt="" /><b>Budget &amp; Expense</b></a>
+      <nav class="links">
+        <a href="#screens">Screens</a>
+        <a href="#inside">What&rsquo;s inside</a>
+      </nav>
+      <div class="spacer"></div>
+      <div class="cta">
+        <span class="lang">EN</span>
+        <a class="btn btn-sm btn-ink" href="/login">Log in</a>
+      </div>
+    </div>
+  </header>
+
+  <!-- The account form is ON the page. Signing in is the landing page's
+       primary object, not a link that leads somewhere else. -->
+  <div class="wrap b-hero">
+    <div>
+      <p class="eyebrow on-coral">Money, clearly &middot; Tu dinero, claro</p>
+      <h1>Every euro, in one honest place.</h1>
+      <p class="sub">Spending, plans, savings goals and the full picture of what you own &mdash; kept in one private ledger you actually control.</p>
+      <ul class="ticks">
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg>
+          Available balance that carries across months
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg>
+          Budgets that show what&rsquo;s left, not a percentage
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg>
+          Multi&#8209;currency, bilingual EN&nbsp;/&nbsp;ES, yours alone
+        </li>
+      </ul>
+    </div>
+
+    <div class="b-card">
+      <h2>Create your account</h2>
+      <p class="hint">Two minutes to your first month.</p>
+
+      <label class="b-field">
+        <span>Email</span>
+        <i>you@email.com</i>
+      </label>
+      <label class="b-field">
+        <span>Password</span>
+        <i>&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;&bull;</i>
+      </label>
+
+      <a class="btn btn-coral" href="/signup">Continue</a>
+
+      <div class="b-or">or</div>
+      <a class="b-oauth" href="/login">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="#4285F4" d="M23 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.2a5.3 5.3 0 0 1-2.3 3.5v2.9h3.7c2.2-2 3.4-5 3.4-8.6z"/><path fill="#34A853" d="M12 24c3.1 0 5.7-1 7.6-2.8l-3.7-2.9c-1 .7-2.3 1.1-3.9 1.1-3 0-5.5-2-6.4-4.7H1.8v3a12 12 0 0 0 10.2 6.3z"/><path fill="#FBBC05" d="M5.6 14.3a7.2 7.2 0 0 1 0-4.6v-3H1.8a12 12 0 0 0 0 10.6l3.8-3z"/><path fill="#EA4335" d="M12 4.8c1.7 0 3.2.6 4.4 1.7l3.3-3.3A11.6 11.6 0 0 0 12 0 12 12 0 0 0 1.8 6.7l3.8 3c.9-2.8 3.4-4.9 6.4-4.9z"/></svg>
+        Continue with Google
+      </a>
+
+      <p class="alt">Already have an account? <a href="/login">Log in</a></p>
+      <p class="legal">By continuing you agree to the terms. Your ledger stays in your account &mdash; it is never shown to anyone else.</p>
+    </div>
+  </div>
+</div>
+
+<!-- Screens sit directly under the fold, staggered, so scrolling one notch
+     answers "what is this thing" before any feature copy. -->
+<section class="b-shots" id="screens">
+  <div class="wrap inner">
+    <div data-screen="home" class="shadow" style="--s:.58"></div>
+    <div data-screen="budget" class="shadow" style="--s:.58"></div>
+    <div data-screen="wealth" class="shadow" style="--s:.58"></div>
+  </div>
+  <div class="wrap">
+    <p class="b-cap"><b>Home, Budget and Patrimonio.</b> The same three questions every month: what can I spend, what did I plan, and what do I actually have.</p>
+  </div>
+</section>
+
+<section class="b-tiles" id="inside">
+  <div class="wrap g">
+    <div class="b-tile">
+      <svg class="gl" viewBox="0 0 24 24" fill="none" stroke="#ff7a64" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M8 7h6.5a2.75 2.75 0 0 1 0 5.5h-5a2.75 2.75 0 0 0 0 5.5H16"/></svg>
+      <b>Capture in one sheet</b>
+      <p>Amount first, category suggested as you type, saved before the sheet closes. Add another without leaving it.</p>
+    </div>
+    <div class="b-tile">
+      <svg class="gl" viewBox="0 0 24 24" fill="none" stroke="#3ddc97" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 11A8.5 8.5 0 0 0 6.3 5.2L3 8.2"/><path d="M3 3.4V8.6h5.2"/><path d="M3.5 13A8.5 8.5 0 0 0 17.7 18.8L21 15.8"/><path d="M21 20.6v-5.2h-5.2"/></svg>
+      <b>Recurring, on a day rail</b>
+      <p>Subscriptions and fixed costs laid out by day of month, so you can see the shape of the bills before they land.</p>
+    </div>
+    <div class="b-tile">
+      <svg class="gl" viewBox="0 0 24 24" fill="none" stroke="#ffe14d" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5 4 7v5.5c0 4.6 3.3 7.6 8 8.9 4.7-1.3 8-4.3 8-8.9V7z"/><path d="m9 12 2.2 2.2L15.5 10"/></svg>
+      <b>Only your data</b>
+      <p>One account, one ledger. Nothing is aggregated, sold or shown to anyone else &mdash; and you can export it whenever.</p>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap row">
+    <a class="brand" href="#"><img src="../../public/icons/budget-expense-app-icon.png" alt="" /><b style="color:#fff">Budget &amp; Expense</b></a>
+    <div class="spacer"></div>
+    <a href="/login">Log in</a>
+    <a href="/signup">Create account</a>
+    <a href="#">Privacy</a>
+    <a href="#">Espa&ntilde;ol</a>
+  </div>
+</footer>
+
+<a class="back" href="index.html">&larr; All directions</a>
+<script src="screens.js"></script>
+</body>
+</html>

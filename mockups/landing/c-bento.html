@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>C &middot; Bento &mdash; landing mockup</title>
+  <link rel="stylesheet" href="landing.css" />
+</head>
+<body>
+
+<header class="nav nav-light">
+  <div class="wrap wrap-wide" style="display:flex;align-items:center;gap:26px;width:100%">
+    <a class="brand" href="#"><img src="../../public/icons/budget-expense-app-icon.png" alt="" /><b>Budget &amp; Expense</b></a>
+    <nav class="links">
+      <a href="#grid">Screens</a>
+      <a href="#grid">Sections</a>
+      <a href="#grid">Privacy</a>
+    </nav>
+    <div class="spacer"></div>
+    <div class="cta">
+      <span class="lang">EN</span>
+      <a class="btn btn-sm btn-ghost-light" href="/login">Log in</a>
+      <a class="btn btn-sm btn-coral" href="/signup">Create account</a>
+    </div>
+  </div>
+</header>
+
+<div class="wrap wrap-wide c-head">
+  <div>
+    <p class="eyebrow">Money, clearly &middot; Tu dinero, claro</p>
+    <h1>The whole picture, on one screen.</h1>
+  </div>
+  <div class="r">
+    <p>Spending, budgets, savings goals and everything you own &mdash; in one private ledger, in English or Espa&ntilde;ol, in any currency you actually hold.</p>
+    <div class="acts">
+      <a class="btn btn-coral" href="/signup">Create your account</a>
+      <a class="btn btn-ghost-light" href="/login">Log in</a>
+    </div>
+  </div>
+</div>
+
+<!-- Every tile carries a real screen or a real number. Nothing here is a
+     stock illustration standing in for the product. -->
+<div class="wrap wrap-wide c-bento" id="grid">
+
+  <div class="c-t ink c-span-7">
+    <div class="pad" style="padding-bottom:0">
+      <div class="kicker">Home</div>
+      <h3>What you can spend, right now.</h3>
+      <p>One figure at the top, then the month as a dated feed. Money in, money out and the daily guide sit under it &mdash; no dashboard to assemble.</p>
+    </div>
+    <div class="shotwrap" style="margin-top:20px">
+      <div data-screen="home" class="crop" style="--s:.72;--crop:540px"></div>
+    </div>
+  </div>
+
+  <div class="c-t coral c-span-5 fill">
+    <div class="pad">
+      <div class="kicker">The number that matters</div>
+      <div class="big tnum">&euro;2,847.30</div>
+      <p style="margin-top:10px"><b>Available</b> &mdash; what is genuinely left, counted from your last balance checkpoint forward. It carries across the month boundary instead of resetting to zero on the 1st.</p>
+      <ul class="c-list" style="margin-top:18px">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> A daily guide from it</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Pace against the month</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Second currency in a pill</li>
+      </ul>
+      <div class="c-strip">
+        <div><b class="tnum">+&euro;2,410.00</b><span>Money in &middot; August</span></div>
+        <div><b class="tnum">&euro;1,798.60</b><span>Money out &middot; August</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="c-t light c-span-4">
+    <div class="pad" style="padding-bottom:0">
+      <div class="kicker">Budget</div>
+      <h3>Always shows what&rsquo;s left.</h3>
+      <p>Trackers are ceilings, Metas are goals. No percentage headline, and red only once you have actually passed the limit.</p>
+    </div>
+    <div class="shotwrap" style="margin-top:18px">
+      <div data-screen="budget" class="crop" style="--s:.66;--crop:600px"></div>
+    </div>
+  </div>
+
+  <div class="c-t ink c-span-4">
+    <div class="pad">
+      <div class="kicker">Patrimonio</div>
+      <div class="big tnum" style="color:#fff">&euro;48,120.65</div>
+      <p style="margin-top:6px;color:#3ddc97;font-weight:600">+&euro;1,240.00 this month</p>
+      <p style="margin-top:14px">Accounts, savings, investments, money lent and what you owe &mdash; resolved into one net&#8209;worth figure.</p>
+      <div style="margin-top:20px;display:grid;gap:11px">
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="width:9px;height:9px;border-radius:3px;background:#28c4d8"></span>Accounts<span style="margin-left:auto;font-weight:600" class="tnum">&euro;4,210</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="width:9px;height:9px;border-radius:3px;background:#3ddc97"></span>Savings<span style="margin-left:auto;font-weight:600" class="tnum">&euro;12,400</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="width:9px;height:9px;border-radius:3px;background:#b565d8"></span>Investments<span style="margin-left:auto;font-weight:600" class="tnum">&euro;33,900</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="width:9px;height:9px;border-radius:3px;background:#f5a623"></span>Money lent<span style="margin-left:auto;font-weight:600" class="tnum">&euro;600</span></div>
+        <div style="display:flex;align-items:center;gap:10px;font-size:14px"><span style="width:9px;height:9px;border-radius:3px;background:#f0453a"></span>Debts<span style="margin-left:auto;font-weight:600;color:#f0453a" class="tnum">&minus;&euro;2,990</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="c-t light c-span-4">
+    <div class="pad" style="padding-bottom:0">
+      <div class="kicker">Insights</div>
+      <h3>Twelve months, then the day.</h3>
+      <p>Tap a bar and land on the movements behind it. Every category ranked underneath.</p>
+    </div>
+    <div class="shotwrap" style="margin-top:18px">
+      <div data-screen="insights" class="crop" style="--s:.66;--crop:600px"></div>
+    </div>
+  </div>
+
+  <div class="c-t lemon c-span-5 fill">
+    <div class="pad">
+      <div class="kicker">Built for how you live</div>
+      <h3>Two languages. Any currency. One keystroke.</h3>
+      <ul class="c-list" style="margin-top:16px">
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 5h13M9.5 3v2M11 5c0 5-3.4 9-7 11"/><path d="M6 10c1.2 3 3.6 5.4 6.5 6.6M13 21l4.5-11L22 21M15 17.5h5"/></svg> Every string in EN and ES &mdash; it follows your device</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.8 2.5 15.2 0 18M12 3c-2.5 2.8-2.5 15.2 0 18"/></svg> Amounts stored as spent, shown in your base currency</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M8 9h8M8 13h5"/></svg> &#8984;K to jump to any screen, category or movement</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="#1a1b23" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="m7.5 8.5 4.5-4.5 4.5 4.5"/><path d="M4 15v3.5A2.5 2.5 0 0 0 6.5 21h11a2.5 2.5 0 0 0 2.5-2.5V15"/></svg> Import a bank export, or add as you go</li>
+      </ul>
+      <div class="c-strip">
+        <div><b>2 min</b><span>Setup, and it&rsquo;s skippable</span></div>
+        <div><b>Installable</b><span>Add it to your home screen</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="c-t light c-span-7">
+    <div class="pad" style="padding-bottom:0">
+      <div class="kicker">Every screen size</div>
+      <h3>The same app on the desktop.</h3>
+      <p>Not a stretched phone layout &mdash; a sidebar, a command menu and two columns of the month.</p>
+    </div>
+    <div style="margin-top:18px;overflow:hidden;height:250px;display:flex;justify-content:center">
+      <div data-screen="desktop" class="shadow" style="--s:.48"></div>
+    </div>
+  </div>
+
+</div>
+
+<div class="wrap wrap-wide">
+  <div class="c-band">
+    <h2>Start with this month. The rest can follow.</h2>
+    <div class="spacer"></div>
+    <div class="acts">
+      <a class="btn btn-coral" href="/signup">Create your account</a>
+      <a class="btn btn-ghost-dark" href="/login">Log in</a>
+    </div>
+  </div>
+</div>
+
+<footer class="foot">
+  <div class="wrap wrap-wide row">
+    <a class="brand" href="#"><img src="../../public/icons/budget-expense-app-icon.png" alt="" /><b style="color:#fff">Budget &amp; Expense</b></a>
+    <div class="spacer"></div>
+    <a href="/login">Log in</a>
+    <a href="/signup">Create account</a>
+    <a href="#">Privacy</a>
+    <a href="#">Espa&ntilde;ol</a>
+  </div>
+</footer>
+
+<a class="back" href="index.html">&larr; All directions</a>
+<script src="screens.js"></script>
+</body>
+</html>

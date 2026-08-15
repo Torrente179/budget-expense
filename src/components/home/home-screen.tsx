@@ -1,10 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { getDaysInMonth } from "date-fns";
-import { Compass, Target, ArrowUpDown } from "lucide-react";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import {
@@ -20,14 +18,8 @@ import { useMonth } from "@/providers/month-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
 import { Screen } from "@/components/patterns/screen";
-import { SectionHeader } from "@/components/patterns/section-header";
-import { TransactionRow } from "@/components/patterns/transaction-row";
-import { BudgetPaceChart } from "@/components/home/budget-pace-chart";
-import { HomeSummaryCard } from "@/components/home/home-summary-card";
-import { BreakdownDonut, type DonutSlice } from "@/components/patterns/breakdown-donut";
+import { HomeDashboardView } from "@/components/home/home-dashboard-view";
 import { MonthPicker } from "@/components/shared/month-picker";
-import { EmptyState } from "@/components/shared/empty-state";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function HomeScreen() {
@@ -104,6 +96,10 @@ export function HomeScreen() {
     day: "numeric",
     month: "long",
   }).format(new Date(year, month - 1, daysInMonth));
+  const monthLabel = new Intl.DateTimeFormat(intlLocale, {
+    month: "long",
+    year: "numeric",
+  }).format(new Date(year, month - 1, 1));
 
   const budgetsView = useMemo(() => {
     if (customBudgets.length === 0) return [];
@@ -148,19 +144,52 @@ export function HomeScreen() {
       });
   }, [customBudgets, summary.categoryBreakdown, monthlyIncome, convert]);
 
-  /* Category donut: every spent category, colored by DB category color. */
-  const donut = useMemo(() => {
+  /* Ranked category composition: the same converted totals the donut used. */
+  const spendingBreakdown = useMemo(() => {
     const rows = summary.categoryBreakdown;
     const total = rows.reduce((sum, row) => sum + row.total_amount, 0);
-    if (total <= 0) return { total: 0, slices: [] as DonutSlice[] };
-    const slices: DonutSlice[] = rows.map((row) => ({
+    const categories = rows.map((row) => ({
       id: row.category_id,
       name: tc(row.category_name),
       value: row.total_amount,
       color: row.category_color,
+      expenseCount: row.expense_count,
     }));
-    return { total, slices };
+    return { total, categories };
   }, [summary.categoryBreakdown, tc]);
+
+  const upcomingPayments = useMemo(() => {
+    const anchorDay = isCurrentMonth ? dayOfMonth : 1;
+    const distanceFromAnchor = (chargeDay: number) =>
+      chargeDay >= anchorDay
+        ? chargeDay - anchorDay
+        : daysInMonth - anchorDay + chargeDay;
+
+    return [...(snapshot?.recurringExpenses ?? [])]
+      .filter((recurring) => recurring.is_active)
+      .sort(
+        (a, b) =>
+          distanceFromAnchor(a.charge_day) -
+          distanceFromAnchor(b.charge_day)
+      )
+      .map((recurring) => ({
+        id: recurring.id,
+        title:
+          recurring.description || tc(recurring.categories?.name ?? "—"),
+        dueLabel: t(
+          `day ${recurring.charge_day}`,
+          `día ${recurring.charge_day}`
+        ),
+        amount: recurring.amount,
+        currency: recurring.currency,
+        category: recurring.categories
+          ? {
+              icon: recurring.categories.icon,
+              color: recurring.categories.color,
+            }
+          : null,
+      }));
+  }, [dayOfMonth, daysInMonth, isCurrentMonth, snapshot, t, tc]);
 
   function openCategory(categoryId: string) {
     router.push(
@@ -194,11 +223,6 @@ export function HomeScreen() {
    * a step and resets the rhythm.
    */
   const feedDays = useMemo(() => {
-    const days: {
-      date: string;
-      label: string;
-      movements: (typeof recentMovements)[number] & { alt: boolean };
-    }[] = [];
     const byDate = new Map<string, typeof recentMovements>();
     for (const movement of recentMovements) {
       const bucket = byDate.get(movement.date);
@@ -224,200 +248,42 @@ export function HomeScreen() {
   return (
     <Screen
       title={greeting}
-      actions={<MonthPicker month={month} year={year} onChange={setMonthYear} />}
+      actions={
+        <MonthPicker
+          month={month}
+          year={year}
+          onChange={setMonthYear}
+          onInk
+        />
+      }
+      mode="chrome-sheet"
+      width="wide"
     >
       {loading ? (
-        <div className="space-y-4">
-          <Skeleton className="h-52 rounded-2xl" />
-          <Skeleton className="h-36 rounded-xl" />
-          <Skeleton className="h-64 rounded-xl" />
+        <div className="grid min-w-0 items-start lg:grid-cols-[minmax(0,3fr)_minmax(19rem,2fr)] lg:gap-5">
+          <div className="-mx-4 sm:-mx-5 lg:mx-0">
+            <Skeleton className="h-72 rounded-none bg-ink/90 lg:rounded-t-xl" />
+            <Skeleton className="h-80 rounded-none bg-card lg:rounded-b-xl" />
+          </div>
+          <div className="mt-4 space-y-4 lg:mt-0">
+            <Skeleton className="h-48 rounded-xl bg-ink/90" />
+            <Skeleton className="h-64 rounded-xl" />
+          </div>
         </div>
       ) : (
-        <>
-          {incomplete && (
-            <Card className="border-border/60 bg-secondary/40">
-              <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between">
-                <div className="flex min-w-0 items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-info-subtle text-info">
-                    <Compass className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-body font-medium">
-                      {t("Finish your setup", "Termina tu configuración")}
-                    </p>
-                    <p className="text-caption text-muted-foreground">
-                      {t(
-                        "Income, recurring costs, debts, and goals — skip anytime.",
-                        "Ingresos, gastos fijos, deudas y metas — puedes saltarlo."
-                      )}
-                    </p>
-                  </div>
-                </div>
-                <Link
-                  href="/onboarding"
-                  className="inline-flex h-9 shrink-0 items-center justify-center rounded-lg bg-primary px-3 text-caption font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  {t("Continue setup", "Continuar")}
-                </Link>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Up's Activity shape: one figure on ink, then the feed as the
-              screen's primary content. Presupuestos and the donut follow it on
-              mobile and sit in the right column on desktop, where there is room
-              for both. */}
-          <div className="grid gap-4 lg:grid-cols-5 lg:items-start">
-            <div className="contents lg:col-span-3 lg:flex lg:flex-col lg:gap-4">
-              <div className="order-1 min-w-0 lg:order-none">
-                <HomeSummaryCard
-                  cashflow={cashflow}
-                  availableBalance={availableBalance}
-                  monthEndLabel={monthEndLabel}
-                />
-              </div>
-
-              <section className="up-sheet order-2 -mx-4 min-w-0 sm:-mx-5 lg:order-none lg:mx-0">
-                <div className="flex items-stretch border-b border-border">
-                  <p className="flex-1 px-4 py-3 text-body font-semibold">
-                    {monthEndLabel}
-                  </p>
-                  <Link
-                    href="/insights"
-                    className="flex items-center gap-2 border-l border-border px-4 py-3 text-body font-semibold transition-colors hover:bg-accent/40"
-                  >
-                    {t("Insights", "Análisis")}
-                    <span aria-hidden className="up-minibar">
-                      <i style={{ width: "58%", background: "var(--lemon)" }} />
-                      <i style={{ width: "26%", background: "var(--coral)" }} />
-                      <i style={{ width: "16%", background: "var(--ink-3)" }} />
-                    </span>
-                  </Link>
-                </div>
-
-                {feedDays.length === 0 ? (
-                  <div className="px-4 py-6">
-                    <EmptyState
-                      icon={ArrowUpDown}
-                      title={t("No movements yet", "Aún sin movimientos")}
-                      description={t(
-                        "Add your first expense with the + button.",
-                        "Agrega tu primer gasto con el botón +."
-                      )}
-                    />
-                  </div>
-                ) : (
-                  <>
-                    {feedDays.map((day) => (
-                      <div key={day.date}>
-                        <p className="up-stripe label-caps px-4 py-1.5">
-                          {day.label}
-                        </p>
-                        {day.movements.map((movement) => (
-                          <TransactionRow
-                            key={`${movement.kind}-${movement.id}`}
-                            title={movement.title}
-                            subtitle={movement.subtitle}
-                            amount={movement.amount}
-                            currency={movement.currency}
-                            kind={movement.kind}
-                            category={movement.category}
-                            needsReview={movement.needsReview}
-                            alt={movement.alt}
-                          />
-                        ))}
-                      </div>
-                    ))}
-                    <Link
-                      href="/movements"
-                      className="flex items-center justify-center px-4 py-3.5 text-body font-semibold text-primary transition-colors hover:bg-accent/40"
-                    >
-                      {t("See all movements", "Ver todos los movimientos")}
-                    </Link>
-                  </>
-                )}
-              </section>
-            </div>
-
-            <div className="contents lg:col-span-2 lg:flex lg:flex-col lg:gap-4">
-              <section className="order-3 min-w-0 lg:order-none">
-                <SectionHeader
-                  eyebrow={t("This month", "Este mes")}
-                  title={t("Presupuestos", "Presupuestos")}
-                  action={
-                    budgetsView.length > 0 ? (
-                      <Link
-                        href="/budget"
-                        className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {t("View all", "Ver todos")}
-                      </Link>
-                    ) : undefined
-                  }
-                />
-                <div className="mt-3">
-                  {budgetsView.length === 0 ? (
-                    <div className="flex flex-col items-start gap-4 rounded-xl bg-card p-4 ring-1 ring-border">
-                      <div className="flex min-w-0 items-start gap-3">
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
-                          <Target className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-body font-medium">
-                            {t("No budgets yet", "Aún sin presupuestos")}
-                          </p>
-                          <p className="text-caption text-muted-foreground">
-                            {t(
-                              "Group categories into budgets and we'll track spending against them.",
-                              "Agrupa categorías en presupuestos y seguiremos el gasto frente a ellos."
-                            )}
-                          </p>
-                        </div>
-                      </div>
-                      <Link
-                        href="/budget"
-                        className="inline-flex h-9 shrink-0 items-center justify-center rounded-full bg-primary px-4 text-caption font-medium text-primary-foreground transition-colors hover:bg-[var(--coral-deep)]"
-                      >
-                        {t("Set up budgets", "Configurar presupuestos")}
-                      </Link>
-                    </div>
-                  ) : (
-                    <BudgetPaceChart budgets={budgetsView} />
-                  )}
-                </div>
-              </section>
-
-              {donut.slices.length > 0 && (
-                <section className="order-4 min-w-0 lg:order-none">
-                  <SectionHeader
-                    eyebrow={t("This month", "Este mes")}
-                    title={t(
-                      "Your spending by category",
-                      "Tus gastos por categoría"
-                    )}
-                    action={
-                      <Link
-                        href="/insights"
-                        className="text-caption font-medium text-muted-foreground transition-colors hover:text-foreground"
-                      >
-                        {t("Insights", "Análisis")}
-                      </Link>
-                    }
-                  />
-                  <div className="mt-3 rounded-xl bg-card p-4 ring-1 ring-border">
-                    <BreakdownDonut
-                      slices={donut.slices}
-                      centerLabel={t("Spent", "Gastado")}
-                      centerValue={donut.total}
-                      onSelect={openCategory}
-                      calloutCount={0}
-                    />
-                  </div>
-                </section>
-              )}
-            </div>
-          </div>
-        </>
+        <HomeDashboardView
+          cashflow={cashflow}
+          availableBalance={availableBalance}
+          monthEndLabel={monthEndLabel}
+          monthLabel={monthLabel}
+          budgets={budgetsView}
+          spendingCategories={spendingBreakdown.categories}
+          spendingTotal={spendingBreakdown.total}
+          feedDays={feedDays}
+          upcoming={upcomingPayments}
+          showSetupPrompt={incomplete}
+          onSelectCategory={openCategory}
+        />
       )}
     </Screen>
   );

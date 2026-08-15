@@ -5,7 +5,6 @@ import {
   useEffect,
   useRef,
   useState,
-  type ReactNode,
 } from "react";
 import Link from "next/link";
 import { Target } from "lucide-react";
@@ -13,7 +12,6 @@ import { cn, formatCurrencyWithBreaks } from "@/lib/utils";
 import {
   budgetUsageColor,
   resolveBudgetUsageTone,
-  type BudgetUsageTone,
 } from "@/lib/palette";
 import { CategoryGlyph } from "@/components/shared/category-badge";
 import { useLocale } from "@/providers/locale-provider";
@@ -41,8 +39,8 @@ function chunkBudgets(
   return pages;
 }
 
-/** How many Metas-style cards fit per carousel page (one row, side by side). */
-const MAX_PER_PAGE = 3;
+/** Two columns by two rows keeps the phone treatment legible and scan-first. */
+const MAX_PER_PAGE = 4;
 
 /** Card glyph sizing, shared by category icons and the no-category fallback. */
 const GLYPH_CLASS =
@@ -51,7 +49,6 @@ const GLYPH_CLASS =
 const COLUMN_CLASS: Record<number, string> = {
   1: "grid-cols-1",
   2: "grid-cols-2",
-  3: "grid-cols-3",
 };
 
 /**
@@ -63,7 +60,7 @@ const COLUMN_CLASS: Record<number, string> = {
  * amount, and the thin bar hugging the bottom edge carries the proportion.
  * The bar runs in the category accent and turns red once over.
  */
-function BudgetMetaCard({
+export function BudgetTrackerTile({
   budget,
   onSelect,
 }: {
@@ -72,9 +69,9 @@ function BudgetMetaCard({
 }) {
   const { t, intlLocale } = useLocale();
   const { baseCurrency } = useCurrency();
-  const tone = resolveBudgetUsageTone(budget.ratio);
-  const toneColor = budgetUsageColor(tone);
-  const overLimit = !Number.isFinite(budget.ratio) || budget.ratio >= 1;
+  const overLimit = budget.spent > budget.limit;
+  const tone = resolveBudgetUsageTone(overLimit ? Math.max(budget.ratio, 1) : 0);
+  const toneColor = overLimit ? budgetUsageColor(tone) : "var(--coral)";
 
   const remaining = budget.limit - budget.spent;
   const remainingLabel = formatCurrencyWithBreaks(
@@ -120,7 +117,7 @@ function BudgetMetaCard({
       {/* Full-bleed to the card's corners, the way Up draws it. */}
       <span className="up-track-dark block h-1" aria-hidden>
         <span
-          className="block h-full transition-[width] duration-500 ease-out"
+          className="block h-full transition-[width] duration-[var(--motion-success)] ease-[var(--ease-out-up)] motion-reduce:transition-none"
           style={{ width: `${fillPct}%`, backgroundColor: toneColor }}
         />
       </span>
@@ -162,13 +159,13 @@ function BudgetPage({
     <div
       className={cn(
         "grid w-full items-stretch gap-2.5",
-        COLUMN_CLASS[columns] ?? COLUMN_CLASS[MAX_PER_PAGE],
+        COLUMN_CLASS[columns] ?? COLUMN_CLASS[2],
         columns === 1 && "sm:max-w-[14rem]"
       )}
       role="list"
     >
       {budgets.map((budget) => (
-        <BudgetMetaCard
+        <BudgetTrackerTile
           key={budget.id}
           budget={budget}
           onSelect={onSelect}
@@ -185,9 +182,9 @@ interface BudgetPaceChartProps {
 }
 
 /**
- * Home Presupuestos overview: a row of up to three Up Trackers, leading with
- * what is left rather than a percentage. More than three spill into swipeable
- * pages. The month-pace mark went with the ring — Up has neither.
+ * Home Presupuestos overview: up to four remaining-first Trackers in a compact
+ * two-column page. Additional Trackers spill into swipeable pages. The month-
+ * pace mark went with the ring — the card itself carries no bare percentage.
  */
 export function BudgetPaceChart({
   budgets,
@@ -215,8 +212,11 @@ export function BudgetPaceChart({
   }, [pages.length, syncActivePage]);
 
   useEffect(() => {
-    setActivePage(0);
-    scrollerRef.current?.scrollTo({ left: 0 });
+    const frame = window.requestAnimationFrame(() => {
+      setActivePage(0);
+      scrollerRef.current?.scrollTo({ left: 0 });
+    });
+    return () => window.cancelAnimationFrame(frame);
   }, [budgets.length]);
 
   if (pages.length === 0) return null;
@@ -226,7 +226,7 @@ export function BudgetPaceChart({
       <div aria-label={t("Monthly budgets", "Presupuestos del mes")}>
         <BudgetPage
           budgets={pages[0]}
-          columns={Math.min(pages[0].length, MAX_PER_PAGE)}
+          columns={Math.min(pages[0].length, 2)}
           onSelect={onSelect}
         />
       </div>
@@ -248,34 +248,31 @@ export function BudgetPaceChart({
           <div
             key={`budget-page-${pageIndex}`}
             className="w-full shrink-0 snap-center px-1"
-            aria-hidden={pageIndex !== activePage}
           >
             <BudgetPage
               budgets={page}
-              columns={MAX_PER_PAGE}
+              columns={2}
               onSelect={onSelect}
             />
           </div>
         ))}
       </div>
 
-      <div className="flex items-center justify-center gap-1.5" role="tablist">
+      <div
+        className="flex items-center justify-center"
+        role="group"
+        aria-label={t("Budget pages", "Páginas de presupuestos")}
+      >
         {pages.map((_, pageIndex) => (
           <button
             key={`budget-dot-${pageIndex}`}
             type="button"
-            role="tab"
-            aria-selected={pageIndex === activePage}
+            aria-current={pageIndex === activePage ? "page" : undefined}
             aria-label={t(
               `Budgets page ${pageIndex + 1} of ${pages.length}`,
               `Presupuestos página ${pageIndex + 1} de ${pages.length}`
             )}
-            className={cn(
-              "h-1.5 rounded-full transition-all",
-              pageIndex === activePage
-                ? "w-4 bg-foreground"
-                : "w-1.5 bg-border hover:bg-muted-foreground/50"
-            )}
+            className="group flex h-11 w-11 items-center justify-center rounded-full"
             onClick={() => {
               const el = scrollerRef.current;
               if (!el) return;
@@ -285,7 +282,17 @@ export function BudgetPaceChart({
               });
               setActivePage(pageIndex);
             }}
-          />
+          >
+            <span
+              aria-hidden
+              className={cn(
+                "h-1.5 rounded-full transition-all duration-[var(--motion-standard)]",
+                pageIndex === activePage
+                  ? "w-4 bg-foreground"
+                  : "w-1.5 bg-border group-hover:bg-muted-foreground/50"
+              )}
+            />
+          </button>
         ))}
       </div>
     </div>

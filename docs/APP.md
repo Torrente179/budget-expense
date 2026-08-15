@@ -26,13 +26,22 @@ only):
 
 | Section | Route | Job |
 |---|---|---|
-| Home | `/home` | Now + actionable: compact black hero (checkpoint-backed carried available cash for the headline/daily guide; month-only plan pace as support); Presupuesto cards only (`spending_limit`); category donut with legend % (no callouts); recent movements |
-| Movements | `/movements` (+ `/recurring`) | Unified ledger (expenses + income), filters, swipe-delete, recurring |
-| Budget | `/budget` | Compact hero + dual engines: **Presupuestos** (ceilings) + **Metas de aportación** (floors); plan distribution + recommendation |
+| Home | `/home` | Now + actionable: checkpoint-backed available balance in ink chrome; compact income/spent/daily-guide/pace strip; remaining-first Trackers; stacked category breakdown; Upcoming and recent movements in one white sheet |
+| Movements | `/movements` (+ `/recurring`) | Dense unified ledger with net-month chrome, subdued filters, swipe-delete/edit/undo, and chronological recurring schedule |
+| Budget | `/budget` | Explicit **Trackers/Presupuestos** (ceilings) and **Savers/Metas** (floors) views; existing plan distribution + recommendation |
 | Patrimonio | `/wealth` (+ accounts / investments / savings / liabilities / loans) | The balance sheet: `netWorth = (accounts + savings + investments + moneyLent) − debts`; net-worth hero, Evolución, Activos y deudas, Colchón financiero, Organiza tu dinero |
 | Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — ratios, clickable spend charts, monthly report, calendar; no data-entry CTAs |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings`, `/onboarding` (first-run).
+
+**Public:** `/` is the marketing landing page and the only route a signed-out
+visitor may reach besides `/login`, `/signup`, `/auth/*` and `/api/*`. Signed-in
+visitors are redirected from it to `/home`, which is what `/` did
+unconditionally before the page existed. It is a product tour: a hero carrying
+the desktop app, then one section per primary section — Home, Budget,
+Patrimonio, Insights — each pairing that section's screen with a plain
+statement of what it does, ending at Create account / Log in. See
+[`changes/2026-08-14-public-landing-page.md`](../changes/2026-08-14-public-landing-page.md).
 
 ---
 
@@ -40,16 +49,18 @@ Secondary: `/review`, `/import`, `/wisdom`, `/settings`, `/onboarding` (first-ru
 
 ### Theme
 
-- `next-themes` class strategy; **default theme is light**
-  (`ThemeProvider` `defaultTheme="light"`).
-- System preference still enabled; a saved user choice wins.
+- One fixed appearance: ink chrome, white sheets, coral actions and money figures.
+- No runtime theme provider or user/system theme switch. The legacy
+  `next-themes` package is not consumed and is scheduled for removal only after
+  the full-app propagation gate.
 - See [`design.md`](../design.md) theme model.
 
 ### Language
 
 - Supported locales: **EN** and **ES** only (`AppLocale`).
-- **Default:** the static server shell renders English, then the client resolves
-  the device / browser primary language from `navigator.languages`.
+- **Default:** the server resolves `be_locale` when an explicit preference
+  exists; otherwise it derives the initial `<html lang>` from the request's
+  primary `Accept-Language` value. The hydrated client uses the same resolver.
   - Primary tag starts with `es` → Spanish
   - Anything else (including English, French, etc.) → English
 - Explicit choice (Settings / language toggle) sets `be-locale-explicit` and
@@ -181,7 +192,9 @@ Change notes:
 ## 4. Capture (expenses & income)
 
 Single surface: `CaptureSheet` + global FAB (`CaptureFab`). Also opened from
-Movements for create/edit.
+Movements for create/edit. Its presentation is amount-first ink chrome flowing
+into an opaque white field sheet and keyboard-safe footer; no financial or
+mutation behavior differs between entry points.
 
 ### Rules (must hold)
 
@@ -248,8 +261,9 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 - **Screen back:** `router.back()` when history exists; else `backHref` (or
   `/home`). Never a hard-coded `/home`-only Link for pushed screens.
-- **Language:** never in `Screen` headers. Mobile → profile sheet toggle;
-  Settings → full list; desktop/auth → compact chip.
+- **Language:** mobile → profile sheet toggle; Settings → full list;
+  desktop/auth → compact control integrated into the solid route header or
+  branded auth surface.
 - **Underline tabs everywhere:** `patterns/underline-tabs.tsx` is the only
   in-screen view switcher app-wide (Wealth sub-nav, Movements filters,
   Wisdom sections, Import review filter). `@/components/ui/tabs` (filled
@@ -263,25 +277,33 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 ## 8. Home (current composition)
 
-Desktop layout (`lg+`): hero full-width, then two columns —
+> **2026-08-14 approval checkpoint.** Foundations, the application shell,
+> Home, Movements, Recurring, Budget, Capture, auth entry, and the private
+> fixture harness are implemented for visual approval. Wealth, Insights,
+> secondary surfaces, and full onboarding propagation remain deliberately
+> outside this wave. No merge or deployment is implied by this checkpoint.
 
-- **Left (`lg:col-span-3`):** recent movements.
-- **Right (`lg:col-span-2`):** Presupuestos card stacked above the
-  “Tus gastos por categoría” donut (same narrow width).
+Mobile is canonical: a solid ink header connects directly to the centered
+available-balance hero, followed by Trackers, the spending breakdown, and one
+continuous white Upcoming/activity sheet. There is no light seam between
+chrome and sheet.
 
-Mobile order: hero → Presupuestos → donut → movements.
+Desktop becomes two intentional columns:
+
+- **Left:** available-balance hero and the continuous Upcoming/activity sheet.
+- **Right:** remaining-first Trackers and the stacked spending breakdown with
+  ranked categories.
 
 Desktop quick-action shortcuts were **removed** 2026-07-24 — navigation is
 primary nav + FAB.
 
-### Hero summary card
+### Amount hero and metric strip
 
-Compact **black** card (`HomeSummaryCard` — denser padding/type/ring as of
-2026-07-24). Chrome comes from `src/components/patterns/hero-surface.tsx`,
-shared with the Budget hero: graphite→black gradient, hairline `white/10` edge,
-top-edge sheen, `white/55` labels against white numbers, and `HERO_ACCENT`
-(`#34D399`) for income / healthy states. Dark mode lifts the gradient a step so
-the card still reads as a card. Math in `src/lib/home/month-cashflow.ts`:
+`HomeSummaryCard` is continuous flat ink chrome: a centered 40–44px coral,
+tabular available-balance figure with month/currency context, then a compact
+income, spent, daily-guide, and plan-pace strip. It has no gradient, sheen,
+glass, ring, or nested stat cards. Math remains in
+`src/lib/home/month-cashflow.ts`:
 
 - **Income base:** plan income when set, else recorded income.
 - **Available balance (“Te quedan …”):** when balance tracking is active,
@@ -289,10 +311,8 @@ the card still reads as a card. Math in `src/lib/home/month-cashflow.ts`:
   transfers, capped at the selected month's end / today's local date. This is
   continuous cash, so the July closing balance becomes August's opening cash.
   Without a usable checkpoint it falls back to `monthlyIncome − actualOutflows`.
-- **Used %:** `outflows / income`; circular ring (~88px) on desktop; mobile bar
-  shows the month-plan % spent / remaining. This stays month-only and is not
-  presented as the carried cash balance.
-- **Pace marker:** vertical tick at `currentDay / daysInMonth`.
+- **Month pace:** `outflows / income`; it is compact supporting context and is
+  never presented as the carried cash balance.
 - **Daily guide:** `max(headlineAvailable, 0) /
   max(daysInMonth − currentDay, 1)` (excludes today; floors at 1 day).
 - **Pace status:** over plan / on track / slightly ahead / high pace.
@@ -306,35 +326,25 @@ matrix, currency handling, cache edge cases, regression fixture, and
 troubleshooting—is in
 [`docs/balance-carryover.md`](./balance-carryover.md).
 
-### Presupuestos card
+### Trackers
 
-- **Metas-style tiles, three across** per custom budget (spent ÷ limit): tinted
-  round category glyph and usage-band ring with the `%` inside on top, then
-  name, spent, and `of <limit>`. Tiles scale off their own width (container
-  queries) so the row works in the Home column and on a phone.
-- Ring **fill clamps at 100%**; the **% label can exceed 100%**. The label reads
-  `foreground` until the budget is over limit, then takes the band color — as
-  does the spent amount. Pace mark still shows month progress on the current
-  month.
-- **Usage-band colors** (shared with `/budget`, see §9 and `src/lib/palette.ts`):
-
-  | Band | Ratio | Color |
-  |---|---|---|
-  | Safe | 0–69% | `#22C55E` |
-  | Watch | 70–84% | `#F59E0B` |
-  | Near limit | 85–99% | `#F97316` |
-  | Exceeded | 100–119% | `#EF4444` |
-  | Critical | 120%+ | `#BE123C` |
-
-- **Max 3 cards per page**; more budgets swipe (snap + dots).
+- `BudgetPaceChart` renders two-column compact tiles on phones. The headline is
+  the useful amount: `€124 left` / `quedan 124 €`, or `€38 over` / `38 € de más`.
+- Each tile carries a category glyph, compact name, and a thin bottom progress
+  edge. Under-limit states remain coral; only a genuinely exceeded Tracker is
+  red. There are no rings, bare percentage headlines, or traffic-light grading.
+- Every Tracker remains visible in the responsive grid; Home does not replace
+  data with a carousel or arbitrary first-three cutoff.
 - Empty state: CTA into `/budget`.
 - **Only Presupuestos** (`kind = spending_limit`). Metas (`contribution_goal`:
-  Diezmo, Ahorro, Inversión, …) live on `/budget` — never on this Home card.
+  Diezmo, Ahorro, Inversión, …) live in Budget's Savers view — never on Home.
 
 ### Rest of Home
 
-- Category donut with legend percentages; **no callout connector lines**
-  (`calloutCount={0}`). DB category colors unchanged.
+- `SpendingBreakdown` replaces the donut with a compact stacked strip and the
+  complete ranked category list, using unchanged DB category colors and totals.
+- `HomeActivitySheet` keeps Upcoming context and recent transactions in one
+  continuous opaque white sheet with date separators and FX-aware amounts.
 - Finish-setup banner when a new user skipped / never completed onboarding.
 - Primary navigation + FAB cover Movements / Budget / Import / Review.
 
@@ -384,10 +394,13 @@ shrunk income pool).
 ### UI
 
 - **Empty (no income, no budgets):** guided setup — set income → optional
-  method → create budgets. Full-width card.
-- **Otherwise:** black **BudgetSummaryHero** (compact density) then
-  side-by-side **Presupuestos** + **Metas de aportación**; plan distribution
-  (both engines) + recommendation (overspent Presupuestos).
+  method → create budgets. It remains on the ink canvas.
+- **Otherwise:** one dark-canvas screen with explicit animated
+  **Trackers / Savers** tabs. Trackers are responsive remaining-first tiles and
+  turn red only beyond their ceiling. Savers show contributed amount, target,
+  positive progress, and green completion. The plan distribution (both
+  engines), monthly-income controls, copy-month action, and overspent-Tracker
+  recommendation remain accessible through the same production controllers.
 - **Create / edit — `BudgetWizard`** (`src/components/budgets/budget-wizard.tsx`):
   centered modal on desktop, bottom sheet under 768px.
   - Create runs **Tipo → Configuración → Revisar**; edit skips the type step
@@ -476,10 +489,16 @@ Change note: `changes/2026-07-24-budget-roles-and-smarter-categorization.md`.
 
 ## 10. Movements (current composition)
 
-- Unified ledger: expenses + income, underline filter tabs, search,
-  swipe-delete (mobile), edit via CaptureSheet.
-- Desktop: readable centered width; date labels aligned with row inset;
-  delete control in a stable trailing column (hover + keyboard focus).
+- Unified ledger: a centered net-month figure in ink chrome with secondary
+  money-in/money-out context, followed by subdued URL-backed tabs, search, and
+  category controls and one continuous white ledger sheet.
+- The virtualized list preserves date separators, review indicators,
+  pull-to-refresh, swipe-delete + five-second undo on mobile, desktop confirm,
+  edit through `CaptureSheet`, and stable keyboard-reachable controls.
+- `/movements/recurring` uses a recurring-total chrome hero and chronological
+  white schedule with a day-of-month rail, merchant/category identity, active
+  status, and original-currency detail. Existing create/update/delete/start-day
+  behavior is unchanged.
 - Amounts show converted base value plus original currency when different
   (`showOriginal` on `TransactionRow` → `AmountText`).
 - Balance-reconciliation surplus/deficit rows use standard bilingual names

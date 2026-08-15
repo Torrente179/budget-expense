@@ -30,6 +30,8 @@ NEXT_PUBLIC_EXCHANGE_API_URL=https://api.frankfurter.app
 SUPABASE_URL=https://awpygbfocmynxpadpsji.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=<service role key>
 SUPABASE_ACCESS_TOKEN=<Management API PAT — used by scripts/apply-sql.mjs>
+# Development/preview only; /__design/up still returns 404 on production.
+ENABLE_UP_DESIGN_REVIEW=true
 ```
 
 Two notes:
@@ -220,13 +222,19 @@ This is the thinnest part of the system, and it should be stated plainly.
 | Recurring start date | `npx tsx --test src/lib/recurring-expenses.test.ts` | Charge-day and year-boundary rules |
 | Import parity | `npm run check:parity` | Normalizers + import pipeline |
 | Lint | `npm run lint` | ESLint (next/core-web-vitals + TS) |
-| Types | `npm run build` | Full TypeScript check |
-| Design system | Manual grep, 5 rules in `design.md` §7 | UI conventions |
+| Next route types | `npx next typegen` | Generated App Router route declarations |
+| Types | `npx tsc --noEmit` | Strict TypeScript check |
+| Production build | `npm run build` | Next.js production compilation and static generation |
+| Design fixtures | `ENABLE_UP_DESIGN_REVIEW=true` + `/__design/up` | Production views with deterministic no-Supabase states |
+| UI E2E / visual / axe | Playwright + `@axe-core/playwright` (**pending package availability**) | 375×667, 390×844, 768×1024, 1440×900 |
 
 There are four pure-domain unit-test files, run through Node's built-in test
 runner via `tsx --test`: balance checkpoints, Home cashflow/carryover, net worth,
-and recurring-expense start dates. There are no component tests, integration
-tests, end-to-end tests, or CI configuration that runs the gates automatically.
+and recurring-expense start dates. The 2026-08-14 UP approval checkpoint adds a
+fail-closed deterministic review route, but Playwright, visual snapshots, and
+axe automation are not yet installed: the implementation environment could not
+reach the package registry. There is still no CI configuration that runs the
+gates automatically.
 
 What partially compensates:
 
@@ -239,6 +247,18 @@ What partially compensates:
 That targeting is deliberate and sensible. But the absence of CI means every
 gate still depends on someone remembering to run it. A GitHub Action should run
 lint, build, all four pure-domain suites, and both import-parity checks.
+
+### UP fixture review safety
+
+- `src/app/__design/up/page.tsx` returns 404 unless
+  `ENABLE_UP_DESIGN_REVIEW=true` and always returns 404 when
+  `VERCEL_ENV=production`.
+- It is unlinked and marked `noindex, nofollow, noarchive`.
+- It renders production presentation components through deterministic fixtures
+  and `StaticCurrencyProvider`; it does not instantiate Supabase or issue API
+  requests.
+- Use it for screenshots and non-destructive review. Never use production for
+  import, reconciliation, archive, delete, or account-deletion testing.
 
 ---
 

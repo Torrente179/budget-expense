@@ -17,9 +17,11 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
+import {
+  CaptureChrome,
+  type CaptureKind,
+} from "@/components/capture/capture-chrome";
 import {
   CategoryBadge,
   CategoryOption,
@@ -32,7 +34,6 @@ import {
   readCaptureDefaults,
   writeCaptureDefaults,
 } from "@/lib/capture/defaults";
-import { CURRENCIES } from "@/lib/constants";
 import { isLoanCategoryName } from "@/lib/loans/is-loan-category";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
 import { queryKeys } from "@/lib/query/keys";
@@ -53,7 +54,7 @@ function categoryAppliesTo(
   return value === "both" || value === side;
 }
 
-export type CaptureKind = "expense" | "income";
+export type { CaptureKind } from "@/components/capture/capture-chrome";
 
 export interface CaptureInitialValues {
   id?: string;
@@ -269,11 +270,6 @@ export function CaptureSheet({
     [sideCategories, tc]
   );
 
-  const currencyItems = useMemo(
-    () => CURRENCIES.map((item) => ({ value: item.code, label: item.code })),
-    []
-  );
-
   const loanItems = useMemo(
     () =>
       openLoans.map(({ loan, outstanding }) => ({
@@ -437,100 +433,31 @@ export function CaptureSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full gap-0 overflow-hidden p-0 sm:max-w-[420px]"
+        className="w-full gap-0 overflow-hidden border-0 p-0 sm:max-w-[440px]"
       >
-        <SheetHeader className="shrink-0 px-5 pb-3 pt-1">
-          <SheetTitle className="text-heading">{title}</SheetTitle>
-        </SheetHeader>
-
-        {!isEdit && (
-          <div
-            role="tablist"
-            aria-label={t("Movement type", "Tipo de movimiento")}
-            className="mx-5 mb-4 grid shrink-0 grid-cols-2 gap-1 rounded-lg bg-secondary p-1"
-          >
-            {(
-              [
-                ["expense", t("Expense", "Gasto")],
-                ["income", t("Income", "Ingreso")],
-              ] as const
-            ).map(([value, label]) => (
-              <button
-                key={value}
-                type="button"
-                role="tab"
-                aria-selected={kind === value}
-                onClick={() => {
-                  setKind(value);
-                  setCategoryId("");
-                  setCategoryTouched(false);
-                  setLoanId("");
-                  setBorrowerName("");
-                }}
-                className={cn(
-                  "rounded-md py-2 text-body font-medium transition-colors",
-                  kind === value
-                    ? "bg-background text-foreground shadow-1"
-                    : "text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
+        <CaptureChrome
+          title={title}
+          kind={kind}
+          amount={amount}
+          currency={currency}
+          isEdit={isEdit}
+          amountRef={amountRef}
+          onKindChange={(value) => {
+            setKind(value);
+            setCategoryId("");
+            setCategoryTouched(false);
+            setLoanId("");
+            setBorrowerName("");
+          }}
+          onAmountChange={(value) => setAmount(normalizeDecimalInput(value))}
+          onCurrencyChange={setCurrency}
+        />
 
         <form
           onSubmit={handleSubmit}
-          className="flex min-h-0 flex-1 flex-col"
+          className="flex min-h-0 flex-1 flex-col bg-white"
         >
-          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="capture-amount">{t("Amount", "Importe")}</Label>
-              <div className="flex gap-2">
-                <Input
-                  id="capture-amount"
-                  ref={amountRef}
-                  inputMode="decimal"
-                  autoComplete="off"
-                  placeholder="0,00"
-                  value={amount}
-                  onChange={(event) =>
-                    setAmount(normalizeDecimalInput(event.target.value))
-                  }
-                  className={cn(
-                    "h-12 min-w-0 flex-1 font-mono text-xl tabular-nums",
-                    kind === "expense" ? "text-foreground" : "text-positive"
-                  )}
-                />
-                <Select
-                  value={currency}
-                  onValueChange={(value) => {
-                    if (value) setCurrency(value);
-                  }}
-                  items={currencyItems}
-                >
-                  <SelectTrigger
-                    aria-label={t("Currency", "Moneda")}
-                    className="h-12 w-24 shrink-0 font-mono text-sm"
-                  >
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CURRENCIES.map((item) => (
-                      <SelectItem
-                        key={item.code}
-                        value={item.code}
-                        className="text-sm"
-                      >
-                        {item.code}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
+          <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4 pt-5">
             <div className="space-y-1.5">
               <Label htmlFor="capture-description">
                 {t("Description", "Descripción")}{" "}
@@ -568,7 +495,7 @@ export function CaptureSheet({
                           if (index > 0) rememberCategory(item.categoryId);
                         }}
                         className={cn(
-                          "rounded-full border px-2 py-0.5 transition-colors",
+                          "inline-flex min-h-11 items-center rounded-full border px-2.5 py-1 transition-colors md:min-h-8",
                           selected
                             ? "border-foreground/30 bg-secondary"
                             : "border-border/70 bg-background hover:bg-secondary/70"
@@ -603,7 +530,7 @@ export function CaptureSheet({
               >
                 <SelectTrigger
                   id="capture-category"
-                  className="h-11 w-full min-w-0 border-border/80 bg-secondary/40"
+                  className="h-11 w-full min-w-0 border-border bg-white"
                 >
                   <SelectValue placeholder={t("Select", "Selecciona")}>
                     {selectedCategory ? (
@@ -723,7 +650,7 @@ export function CaptureSheet({
             </div>
           </div>
 
-          <div className="shrink-0 space-y-2 border-t border-border bg-popover/96 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="shrink-0 space-y-2 border-t border-border bg-white px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Button
               type="submit"
               disabled={!canSubmit}

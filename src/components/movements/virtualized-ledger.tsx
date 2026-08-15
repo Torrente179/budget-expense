@@ -26,7 +26,6 @@ type VirtualItem =
       type: "row";
       movement: LedgerMovement;
       key: string;
-      alt: boolean;
     };
 
 interface VirtualizedLedgerProps {
@@ -49,10 +48,6 @@ export function VirtualizedLedger({
 
   const flatItems = useMemo(() => {
     const items: VirtualItem[] = [];
-    /* Parity is carried across the whole feed, not reset per day: a date
-       separator must not consume a stripe step or the rhythm breaks at every
-       boundary. */
-    let parity = 0;
     for (const [date, dayItems] of grouped) {
       items.push({ type: "header", date, key: `h-${date}` });
       for (const movement of dayItems) {
@@ -60,9 +55,7 @@ export function VirtualizedLedger({
           type: "row",
           movement,
           key: `${movement.kind}-${movement.id}`,
-          alt: parity % 2 === 1,
         });
-        parity += 1;
       }
     }
     return items;
@@ -75,7 +68,7 @@ export function VirtualizedLedger({
       (typeof document !== "undefined"
         ? document.querySelector("main")
         : null),
-    estimateSize: (index) => (flatItems[index]?.type === "header" ? 28 : 56),
+    estimateSize: (index) => (flatItems[index]?.type === "header" ? 32 : 57),
     overscan: 10,
   });
 
@@ -98,11 +91,11 @@ export function VirtualizedLedger({
               style={{ transform: `translateY(${virtualRow.start}px)` }}
             >
               {item.type === "header" ? (
-                <p className="up-stripe label-caps -mx-4 px-4 py-1.5 md:mx-0">
+                <p className="label-caps bg-card px-4 pb-1.5 pt-3 text-muted-foreground md:px-5">
                   {formatDate(item.date, "EEE, d MMM", locale)}
                 </p>
               ) : (
-                <div className="-mx-4 divide-y divide-border/40 md:mx-0 md:overflow-hidden md:rounded-none md:bg-card md:ring-0">
+                <div className="border-b border-border/55 bg-card [&>div]:rounded-none">
                   <SwipeableRow
                     enabled={isMobile}
                     onDelete={() => onSwipeDelete(item.movement)}
@@ -117,7 +110,8 @@ export function VirtualizedLedger({
                           kind={item.movement.kind}
                           category={item.movement.categoryIcon}
                           needsReview={item.movement.needsReview}
-                          alt={item.alt}
+                          alt={false}
+                          className="min-h-14 py-2.5 md:px-5"
                           onClick={() => onEdit(item.movement)}
                         />
                       </div>

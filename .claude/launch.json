@@ -12,6 +12,12 @@
       "runtimeExecutable": "python3",
       "runtimeArgs": ["-m", "http.server", "8781", "--directory", "mockups/up-true"],
       "port": 8781
+    },
+    {
+      "name": "mockups-landing",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "8782"],
+      "port": 8782
     }
   ]
 }

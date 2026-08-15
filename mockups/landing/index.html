@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Landing page &mdash; four directions</title>
+  <link rel="stylesheet" href="landing.css" />
+</head>
+<body class="gal">
+  <div class="wrap">
+    <h1>A front door, before the <span>login</span>.</h1>
+    <p class="lede">Today a signed&#8209;out visitor hits <code style="background:#23242c;padding:2px 6px;border-radius:5px">/</code> and is redirected
+    straight to <code style="background:#23242c;padding:2px 6px;border-radius:5px">/login</code> &mdash; the product never gets to introduce itself.
+    Four directions for a public page that does, each ending at the same two doors:
+    <b style="color:#fff">Create account</b> and <b style="color:#fff">Log in</b>.</p>
+    <p class="lede">All four are built from the system the app already uses &mdash; coral action and money
+    colour, ink chrome over white sheets, lemon accent, flat surfaces, pill buttons. They differ
+    in <b style="color:#fff">anatomy</b>, not paint, so the choice is about structure rather than colour.</p>
+
+    <h2>Directions</h2>
+    <div class="gal-grid">
+      <a class="gal-card" href="a-ink.html">
+        <span class="k">A</span>
+        <b>Ink</b>
+        <p>The app&rsquo;s own surface model used as the page: near&#8209;black hero, one centred coral figure,
+        three phones on a glow, then a white sheet that slides over the fold carrying the five sections
+        as rows. Most on&#8209;brand; the visitor sees the product&rsquo;s chrome before any marketing.</p>
+        <div class="tags"><i>centred</i><i>ink hero</i><i>3 phones</i><i>section rows</i><i>lemon close</i></div>
+      </a>
+
+      <a class="gal-card" href="b-split.html">
+        <span class="k">B</span>
+        <b>Split</b>
+        <p>Conversion first. Coral field, copy on the left, and the account form <em>on the page</em> &mdash; email,
+        password, Google, plus &ldquo;already have an account? Log in&rdquo;. Screens follow immediately below,
+        staggered. Fewest clicks from arrival to signed in.</p>
+        <div class="tags"><i>coral field</i><i>auth card inline</i><i>staggered phones</i><i>3 tiles</i></div>
+      </a>
+
+      <a class="gal-card" href="c-bento.html">
+        <span class="k">C</span>
+        <b>Bento</b>
+        <p>A light grid of tiles, each carrying one real screen or one real number: the Home feed, the
+        &euro;2,847.30 available figure, trackers, the net&#8209;worth breakdown, the Insights bars, and the
+        desktop layout. Most product visible in the least scrolling.</p>
+        <div class="tags"><i>light ground</i><i>12&#8209;col bento</i><i>5 screens</i><i>cropped shots</i></div>
+      </a>
+
+      <a class="gal-card" href="d-tour.html">
+        <span class="k">D</span>
+        <b>Tour</b>
+        <p>A long scroll that walks the app section by section &mdash; Home, Budget, Patrimonio, Insights &mdash;
+        one screen each, grounds alternating white / ink / lemon, with a sticky rail tracking progress.
+        Most explanation per pixel; best if the app needs teaching, not just showing.</p>
+        <div class="tags"><i>sticky rail</i><i>alternating grounds</i><i>desktop hero</i><i>4 sections</i></div>
+      </a>
+    </div>
+
+    <h2>How to read these</h2>
+    <div class="note">
+      <b>The screenshots are the real anatomy, not captures.</b> Every screen is behind auth, so the
+      phone and desktop frames are the app&rsquo;s actual structure rebuilt in markup &mdash; the Home feed with
+      merchant marks and day separators, remaining&#8209;first trackers, the five Patrimonio buckets in their
+      real accent colours, the magenta Insights bars. They live in <code>screens.js</code>, so all four
+      directions show identical screens and only the page around them differs.<br /><br />
+      <b>The numbers are sample data.</b> &euro;2,847.30, &euro;48,120.65 and the merchant rows are plausible
+      figures, not anyone&rsquo;s real ledger. No traction, user counts or testimonials appear anywhere &mdash;
+      there is nothing true to put there yet.<br /><br />
+      <b>Copy is a first pass.</b> It reuses the product&rsquo;s existing voice and the section definitions from
+      <code>design.md</code>, so nothing here claims a feature the app does not have. Rewrite freely; the
+      structural decision is what these are for.<br /><br />
+      <b>Nothing is wired.</b> <code>Log in</code> and <code>Create account</code> point at the real
+      <code>/login</code> and <code>/signup</code> routes but these are static files. Shipping the chosen one
+      means a public <code>/</code> route plus a middleware allowance, since the proxy currently redirects
+      every signed&#8209;out request to <code>/login</code>.
+    </div>
+  </div>
+</body>
+</html>

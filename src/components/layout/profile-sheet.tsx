@@ -46,7 +46,7 @@ export function ProfileSheet({ className }: { className?: string }) {
       aria-label={t("Account and more", "Cuenta y más")}
       onClick={openSheet ?? undefined}
       className={cn(
-        "flex h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+        "flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
         className
       )}
     >

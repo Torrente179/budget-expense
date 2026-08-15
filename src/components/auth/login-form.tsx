@@ -46,19 +46,17 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="border-border/50">
-      <CardHeader className="space-y-1 text-center">
-        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <span className="text-lg font-bold text-primary">B</span>
-        </div>
-        <CardTitle className="text-xl tracking-tight">
+    <Card className="gap-5 rounded-none bg-transparent py-0 ring-0">
+      <CardHeader className="space-y-1 px-0 text-left">
+        <p className="label-caps">Your ledger</p>
+        <CardTitle className="text-[2rem] font-semibold tracking-[-0.045em]">
           {t("Welcome back", "Qué bueno verte")}
         </CardTitle>
         <CardDescription>
           {t("Log in to open your ledger.", "Entra para abrir tu libro.")}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -89,7 +87,7 @@ export function LoginForm() {
               autoComplete="current-password"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t("Log in", "Iniciar sesión")}
           </Button>

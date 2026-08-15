@@ -305,7 +305,7 @@ export function OnboardingWizard() {
   }
 
   return (
-    <Screen title={t("Setup", "Configuración")}>
+    <Screen title={t("Setup", "Configuración")} showUtilities={false}>
       <div className="mx-auto w-full max-w-lg space-y-5">
         <div className="flex gap-1.5">
           {STEPS.map((item, index) => (

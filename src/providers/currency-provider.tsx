@@ -167,6 +167,53 @@ export function CurrencyProvider({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Deterministic currency context for internal review fixtures and isolated UI
+ * tests. It performs no bootstrap, query, mutation, Supabase, or network work.
+ */
+export function StaticCurrencyProvider({
+  children,
+  baseCurrency = DEFAULT_CURRENCY,
+  rates = {
+    EUR: 1,
+    USD: 1.08,
+    GBP: 0.86,
+    COP: 4320,
+    JPY: 164,
+  },
+}: {
+  children: ReactNode;
+  baseCurrency?: CurrencyCode;
+  rates?: Record<string, number>;
+}) {
+  const value = useMemo<CurrencyContextValue>(() => {
+    const convert = (amount: number, fromCurrency: string) => {
+      if (fromCurrency === baseCurrency) return amount;
+      const fromRate = rates[fromCurrency];
+      const toRate = rates[baseCurrency];
+      if (!fromRate || !toRate) return amount;
+      return (amount / fromRate) * toRate;
+    };
+
+    return {
+      baseCurrency,
+      rates,
+      rateSources: Object.fromEntries(
+        Object.keys(rates).map((code) => [code, "manual" as const])
+      ),
+      isLoading: false,
+      currencyPreferenceReady: true,
+      currencyPreferenceUpdating: false,
+      convert,
+      setBaseCurrency: async () => undefined,
+    };
+  }, [baseCurrency, rates]);
+
+  return (
+    <CurrencyContext.Provider value={value}>{children}</CurrencyContext.Provider>
+  );
+}
+
 export function useCurrency() {
   const context = useContext(CurrencyContext);
   if (!context) {

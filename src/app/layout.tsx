@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import { Inter } from "next/font/google";
+import { cookies, headers } from "next/headers";
 import { LocaleProvider } from "@/providers/locale-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { localeFromDeviceLanguages, resolveAppLocale } from "@/lib/locale";
 import "./globals.css";
 
 /**
@@ -17,14 +19,17 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   applicationName: "Budget & Expense",
-  title: "Budget & Expense",
+  title: {
+    default: "Budget & Expense",
+    template: "%s — Budget & Expense",
+  },
   description:
     "A private ledger for spending, budgets, and giving. / Tu libro privado de gastos, presupuestos y dar.",
   manifest: "/manifest.webmanifest",
   appleWebApp: {
     capable: true,
     title: "Budget & Expense",
-    statusBarStyle: "default",
+    statusBarStyle: "black-translucent",
   },
 };
 
@@ -35,15 +40,23 @@ export const viewport: Viewport = {
   themeColor: "#1a1b23",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const cookieStore = await cookies();
+  const requestHeaders = await headers();
+  const explicitLocale = cookieStore.get("be_locale")?.value;
+  const browserLocale = requestHeaders.get("accept-language")?.split(",")[0];
+  const initialLocale = explicitLocale
+    ? resolveAppLocale(explicitLocale)
+    : localeFromDeviceLanguages(browserLocale);
+
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html lang={initialLocale} className={`${inter.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
-        <LocaleProvider initialLocale="en">
+        <LocaleProvider initialLocale={initialLocale}>
           {children}
           <Toaster />
         </LocaleProvider>

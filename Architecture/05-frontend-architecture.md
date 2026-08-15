@@ -33,6 +33,8 @@ src/app/
 │       analytics/ → /insights      calendar/  → /insights/calendar
 │       investments/ → /wealth      movimientos/ → /movements
 │
+├── __design/up/               Flag-gated, noindex deterministic UI review
+│
 └── api/                       27 route handlers
 ```
 
@@ -59,20 +61,19 @@ Two nested layouts establish five contexts in a specific order.
 
 ```
 app/layout.tsx  (Server Component)
-│  reads headers().get("accept-language") → initialLocale
-│  <html lang={initialLocale} suppressHydrationWarning>
+│  reads explicit be_locale cookie, else Accept-Language → initialLocale
+│  <html lang={initialLocale}>
 │
-├─ ThemeProvider              next-themes, class strategy, defaultTheme="light"
-   └─ LocaleProvider          initialLocale from Accept-Language
-      └─ TooltipProvider
-         └─ {children} + <Toaster />
+└─ LocaleProvider             server-resolved initialLocale
+   └─ {children} + <Toaster />
 
 app/(app)/layout.tsx  ("use client")
 └─ QueryProvider              shared QueryClient (browser singleton)
    └─ CurrencyProvider        base currency + FX rates + convert()
       └─ MonthProvider        globally selected month  ← needs QueryClient
-         └─ OnboardingGate    soft new-user redirect
-            └─ Sidebar | Topbar | <main> | TabBar | CaptureFab
+         └─ ProfileSheetProvider
+            └─ OnboardingGate soft new-user redirect
+               └─ Sidebar | <main> | TabBar | CaptureFab
 ```
 
 The ordering is load-bearing in two places:
@@ -87,7 +88,6 @@ The ordering is load-bearing in two places:
 
 | Provider | State | Persistence |
 |---|---|---|
-| `ThemeProvider` | light/dark/system | localStorage (next-themes) |
 | `LocaleProvider` | `en` \| `es`, `t()`, `tc()` | localStorage + cookie, **only when explicit** |
 | `CurrencyProvider` | base currency, rates, sources, `convert()` | `profiles.base_currency` + `manual_fx_rates` |
 | `MonthProvider` | `{ month, year, isCurrentMonth }` | In-memory only |
@@ -107,9 +107,9 @@ void syncRecurringMonth(month, year).then(() => { /* invalidate */ });
 
 **`LocaleProvider` implements a three-tier preference** with a subtle rule:
 
-1. Explicit user choice (`be-locale-explicit` flag in localStorage) — wins forever
-2. Device / browser primary language (`navigator.languages[0]`)
-3. Server `Accept-Language` hint (first paint only)
+1. Explicit user choice (`be-locale-explicit` plus `be_locale`) — wins forever
+2. Server request's primary `Accept-Language` value — correct first-paint `<html lang>`
+3. Device / browser primary language (`navigator.languages[0]`) during hydration
 
 The soft device default is **never written to storage**. Only an explicit choice
 persists. A Spanish-phone user who has not chosen sees Spanish; if they later
@@ -167,9 +167,11 @@ renders tabular mono numerals, applies tone (positive/negative) and sign, and wi
 Movements filters, Wisdom sections, Import review filters. `ui/tabs.tsx` (filled
 pill chips) is retired with zero consumers.
 
-**`Screen`** — the app-screen scaffold: sticky translucent header, avatar on root
-screens or a back chevron on pushed screens, actions slot, subheader row. Its back
-behavior is specified precisely:
+**`Screen`** — the app-screen scaffold: solid header, avatar on root screens or a
+back chevron on pushed screens, actions/subheader slots, and desktop command,
+language, and currency utilities. Its three presentation modes are
+`chrome-sheet` (ink hero into white sheet), `dark-canvas` (Trackers/Savers), and
+`plain` (dense secondary screens). Its back behavior is specified precisely:
 
 > When `backHref` is set, Back calls `router.back()` if history exists; else
 > navigates to `backHref` (deep-link/refresh fallback). Never hard-code `/home` as
@@ -182,23 +184,25 @@ by deep link or refreshed mid-flow.
 
 | Component | Surface | Notes |
 |---|---|---|
-| `Sidebar` | Desktop | Primary nav + secondary footer group + review badge |
-| `Topbar` | Desktop only | Month picker, currency switch, ⌘K, profile |
-| `TabBar` | Mobile | 5 primary sections, safe-area padding |
+| `Sidebar` | Desktop | Flat ink primary nav + secondary footer group + review badge |
+| `Screen` header | Desktop | Solid route header with actions, currency, language, and ⌘K |
+| `TabBar` | Mobile | Flat opaque 60px ink capsule, 5 primary sections, safe-area padding |
 | `ProfileSheet` | Mobile | Secondary nav + **language row** + logout |
 | `CommandMenu` | Both | ⌘K palette over all destinations (cmdk) |
 | `CaptureFab` | Both | Floating add button, thumb zone |
 
-All five consume `lib/navigation.ts`. All are hidden on `/onboarding` by the
+Navigation surfaces consume `lib/navigation.ts`. Global chrome is hidden on `/onboarding` by the
 `isOnboarding` check in the app layout.
 
 ---
 
 ## 5.4 The design token system
 
-[`src/app/globals.css`](../src/app/globals.css) (250 lines) defines roughly **120
-custom properties**, split into raw values on `:root` / `.dark` and Tailwind
-exposure through `@theme inline`. Both themes must define every token.
+[`src/app/globals.css`](../src/app/globals.css) defines one appearance through
+raw values on `:root` and Tailwind exposure through `@theme inline`. The surface
+contract is ink chrome (`#1A1B23`), raised ink, coral (`#FF7A64`), restrained
+lemon/mint, and opaque white or subtly striped rows. The declared `dark` variant
+exists only for legacy compilation; no provider sets it.
 
 ### Color
 
@@ -215,24 +219,23 @@ Budget **usage-band** hexes (safe → critical) and category default map live in
 `"og"`) for a controlled revert. Cashflow CSS vars in `globals.css` must stay
 mirrored when flipping.
 
-Home composition (desktop): compact **black** `HomeSummaryCard` whose headline
-and daily guide prefer checkpoint-backed carried cash; its ring/bar remains the
-selected month's `income − spent` plan pace. Presupuestos + spending donut sit
-beside the movements column. Home Presupuestos shows **`spending_limit` only**
-(`BudgetPaceChart`), as a row of up to three tiles that pages three at a time
-beyond that. Metas never appear on Home. The two-layer number contract is
+Home composition: centered checkpoint-backed available balance plus compact
+income/spent/daily-guide/pace context; remaining-first Trackers; a stacked
+spending strip with ranked categories; and Upcoming + recent movements in one
+continuous white sheet. Desktop places amount/activity left and Trackers/
+analysis right. Home shows **`spending_limit` only**; Savers never appear there.
+The two-layer number contract is
 documented in [`docs/balance-carryover.md`](../docs/balance-carryover.md).
 
-Budget screen: compact `BudgetSummaryHero`, then **Presupuestos** +
-**Metas de aportación** (`EnvelopeListCard` dual engines), plan distribution,
-recommendation. `src/components/budget/budget-screen.tsx`.
+Budget screen: `dark-canvas` with explicit **Trackers** and **Savers** views.
+Tracker cards are remaining-first and red only when exceeded; Saver cards show
+contributed/target progress and positive completion. Existing plan,
+recommendation, setup and CRUD controllers are unchanged.
 
-**Shared hero chrome** — `src/components/patterns/hero-surface.tsx` exports the
-black summary surface used by the three headline screens: Home, Budget and
-Patrimonio (`HERO_SURFACE`, `HERO_TILE`, `HERO_ICON_TILE`, `HERO_RULE`,
-`HERO_TRACK`, `HERO_ACCENT`, `HERO_ACCENT_NEGATIVE`, `HERO_ACCENT_WARNING`,
-`HeroSheen`). Dark in both themes; dark mode lifts the gradient a step so the
-card still reads as a card. Use the tokens rather than ad-hoc `white/xx` values.
+**Shared UP presentation seam** — controller-heavy core screens map their
+existing hooks/calculations into typed production view components. Home,
+Movements, Recurring, Budget cards, and Capture chrome are therefore reused by
+the private fixture harness without duplicating UI or reaching Supabase.
 
 **Patrimonio** (`/wealth`) — the balance sheet. `wealth-overview.tsx` is
 orchestration only: it calls `useNetWorth()` (the single composition root over
@@ -260,23 +263,21 @@ The step-2 preview matches the chosen categories against the month's expenses
 **before** saving, so a limit created over existing spend never jumps from 0%
 after the write.
 
-> **Component-scoped colour conflict (unresolved):** limits are drawn with two
-> different band systems. `EnvelopeListCard` + the wizard use the 3-band
-> `envelope-kinds.ts` scale (blue &lt;80, amber 80–99, coral 100+); Home's
-> `BudgetPaceChart` uses the 5-band `palette.ts` scale (safe ≤69, watch 70–84,
-> near 85–99, exceeded 100–119, critical 120+). The same envelope at 75% is
-> blue on Budget and amber on Home. Pick one before adding a third surface.
+All Tracker presentation now follows the same rule: coral while under the
+ceiling and danger red only after `progressAmount > target`. Savers use positive
+progress and completion semantics; 100% is success for a Saver, not a Tracker.
 
 ### Typography
 
-Geist for UI, Geist Mono for **all numerals**, always `tabular-nums`.
+Inter is the documented stand-in for the unconfirmed UP typeface. UI and money
+figures share it; numerals always use `tabular-nums`.
 
 | Token | Size | Use |
 |---|---|---|
-| `text-display` | 2.25rem | Hero numerals (net worth, safe-to-spend) |
+| `text-display` | 2.625rem | 42px mobile money hero |
 | `text-title` | 1.375rem | Screen titles |
 | `text-heading` | 1.0625rem | Card/section titles |
-| `text-body` | 0.875rem | Default |
+| `text-body` | 0.9375rem | Default / compact row |
 | `text-caption` | 0.75rem | Secondary |
 | `text-label` | 0.6875rem | Micro labels |
 | `label-caps` | utility | The eyebrow: uppercase, 0.12em tracking, muted |
@@ -285,13 +286,14 @@ Arbitrary `text-[…rem]` and `tracking-[…]` are banned outside `components/ui
 
 ### Elevation, radius, motion
 
-Three theme-aware shadows (`--elevation-1/2/3`): resting cards · raised
-(popovers, sticky headers) · modal/sheet/FAB. Radius derives from `--radius: 1rem`
-with a documented scale; `rounded-full` is reserved for round icon buttons and
-dots — never status pills or tabs.
+UP surfaces are flat; ordinary cards have no drop shadow or hover lift. Radius
+derives from `--radius: 0.75rem`; controls may be pills, while status semantics
+remain the responsibility of `StatusTag`.
 
-Motion: route transitions are **opacity-only** (transforms break sticky headers),
-160ms ease-out; entrances ≤240ms; `prefers-reduced-motion` collapses everything.
+Motion: 100ms/0.98 press, 240ms ordinary state changes, 280ms sheet entry,
+200ms sheet exit, 560ms one-shot success, and 30ms list stagger for only the
+first six visible items. There is no whole-page swipe navigation and
+`prefers-reduced-motion` collapses nonessential motion.
 
 ---
 
@@ -302,18 +304,17 @@ desktop site.
 
 | Concern | Mobile (`< md`) | Desktop |
 |---|---|---|
-| Chrome | No topbar; each screen renders its own sticky translucent header | Sidebar + topbar |
-| Navigation | Bottom `TabBar`, 5 tabs | Sidebar |
+| Chrome | No topbar; each screen renders its own solid mode-aware header | Flat ink sidebar + solid screen header |
+| Navigation | Opaque 60px ink `TabBar`, 5 tabs | Sidebar |
 | Secondary nav | Profile sheet | Sidebar footer |
-| Forms | Bottom sheets, drag handle, sticky submit | Side sheets / dialogs |
+| Forms | Opaque white bottom sheets, drag handle, keyboard-safe sticky submit | Side sheets / dialogs |
 | Lists | Full-bleed rows, min-h-16, ≥44px targets, swipe-to-delete + undo | Rows in a Card, delete on hover |
 | Stat rows | Horizontal scroll with snap | Grid |
 | Capture | FAB in the thumb zone | FAB + sheet |
 | Language | Profile sheet row | Compact chip |
 
-Viewport is `viewportFit: "cover"` with `theme-color` matched to the real
-background pair (`#f4f6f8` light / `#070809` dark) in both the viewport export and
-`manifest.ts`. Main content padding clears the tab bar plus
+Viewport is `viewportFit: "cover"` with the single ink theme color `#1A1B23` in
+both the viewport export and `manifest.ts`. Main content padding clears the tab bar plus
 `env(safe-area-inset-bottom)`.
 
 Touch affordances include `scale(0.98)` press feedback and
@@ -329,10 +330,21 @@ follows it: **no blank areas while fetching**.
 - **Loading** — layout-shaped `Skeleton` components, never spinners. Route-level
   `loading.tsx` files exist for `/home` and `/movements`, the two heaviest screens.
 - **Empty** — `EmptyState` with a constructive action, never a bare "No data".
-- **Error** — toast via Sonner; destructive operations offer Undo.
+- **Error** — route, root, not-found, and global error boundaries are branded;
+  mutation feedback uses Sonner and destructive operations offer Undo.
 
 The Undo pattern is used consistently for deletes: the row disappears optimistically
 and a 5-second toast offers reversal, which issues the compensating request.
+
+### Private review harness
+
+`/__design/up` renders the same production view components with deterministic
+fixtures for populated, loading, empty, error, overspent, completed-goal,
+long-Spanish, large-number, negative, and multi-currency states. It uses
+`StaticCurrencyProvider`, never constructs a Supabase client, and issues no API
+request. The route returns 404 unless `ENABLE_UP_DESIGN_REVIEW=true`; it also
+returns 404 whenever `VERCEL_ENV=production`, is unlinked, and is marked
+`noindex, nofollow, noarchive`.
 
 ---
 

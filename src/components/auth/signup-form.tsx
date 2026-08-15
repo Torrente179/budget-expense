@@ -104,12 +104,12 @@ export function SignupForm() {
 
   if (awaitingConfirmation) {
     return (
-      <Card className="border-border/50">
-        <CardHeader className="space-y-1 text-center">
-          <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+      <Card className="gap-5 rounded-none bg-transparent py-0 ring-0">
+        <CardHeader className="space-y-1 px-0 text-left">
+          <div className="mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <Mail className="h-5 w-5 text-primary" />
           </div>
-          <CardTitle className="text-xl tracking-tight">
+          <CardTitle className="text-[2rem] font-semibold tracking-[-0.045em]">
             {t("Check your email", "Revisa tu correo")}
           </CardTitle>
           <CardDescription>
@@ -119,7 +119,7 @@ export function SignupForm() {
             )}
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-0">
           {error && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
               {error}
@@ -155,12 +155,12 @@ export function SignupForm() {
   }
 
   return (
-    <Card className="border-border/50">
-      <CardHeader className="space-y-1 text-center">
-        <div className="mx-auto mb-2 flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-          <span className="text-lg font-bold text-primary">B</span>
-        </div>
-        <CardTitle className="text-xl tracking-tight">
+    <Card className="gap-5 rounded-none bg-transparent py-0 ring-0">
+      <CardHeader className="space-y-1 px-0 text-left">
+        <p className="label-caps">
+          {t("Start clearly", "Empieza con claridad")}
+        </p>
+        <CardTitle className="text-[2rem] font-semibold tracking-[-0.045em]">
           {t("Create an account", "Crea tu cuenta")}
         </CardTitle>
         <CardDescription>
@@ -170,7 +170,7 @@ export function SignupForm() {
           )}
         </CardDescription>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0">
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -214,7 +214,7 @@ export function SignupForm() {
               autoComplete="new-password"
             />
           </div>
-          <Button type="submit" className="w-full" disabled={loading}>
+          <Button type="submit" size="lg" className="w-full" disabled={loading}>
             {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {t("Create account", "Crear cuenta")}
           </Button>

@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>D &middot; Tour &mdash; landing mockup</title>
+  <link rel="stylesheet" href="landing.css" />
+</head>
+<body>
+
+<header class="nav nav-dark">
+  <div class="wrap" style="display:flex;align-items:center;gap:26px;width:100%">
+    <a class="brand" href="#"><img src="../../public/icons/budget-expense-app-icon.png" alt="" /><b>Budget &amp; Expense</b></a>
+    <div class="spacer"></div>
+    <div class="cta">
+      <span class="lang">EN</span>
+      <a class="btn btn-sm btn-ghost-dark" href="/login">Log in</a>
+      <a class="btn btn-sm btn-coral" href="/signup">Create account</a>
+    </div>
+  </div>
+</header>
+
+<!-- A short hero, because the tour below is the argument. The desktop frame
+     answers "is this a real app" before the phone sections start. -->
+<section class="d-hero">
+  <div class="wrap">
+    <p class="eyebrow on-dark">Money, clearly &middot; Tu dinero, claro</p>
+    <h1>Four screens. The whole month.</h1>
+    <p>Take the tour before you sign up &mdash; this is the actual app, section by section.</p>
+    <div class="acts">
+      <a class="btn btn-coral" href="/signup">Create your account</a>
+      <a class="btn btn-ghost-dark" href="/login">Log in</a>
+    </div>
+    <div data-screen="desktop" class="shadow" style="--s:.62"></div>
+  </div>
+</section>
+
+<nav class="d-rail">
+  <div class="wrap inner">
+    <a class="on" href="#home">01 &nbsp;Home</a>
+    <a href="#budget">02 &nbsp;Budget</a>
+    <a href="#wealth">03 &nbsp;Patrimonio</a>
+    <a href="#insights">04 &nbsp;Insights</a>
+    <div style="flex:1"></div>
+    <a href="/login" style="color:var(--coral)">Log in &rarr;</a>
+  </div>
+</nav>
+
+<section class="d-sec on-white" id="home">
+  <div class="wrap inner">
+    <div class="txt">
+      <div class="num">01 &mdash; HOME</div>
+      <h2>Open it, and know where you stand.</h2>
+      <p>The top of Home is one figure: what you can actually spend. Below it, the month runs as a dated feed &mdash; merchant, time, amount &mdash; the way a statement should have read all along.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Available carries across months instead of resetting on the 1st</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Money in, money out, and a daily guide from what&rsquo;s left</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Add anything from one sheet &mdash; amount first, category suggested</li>
+      </ul>
+    </div>
+    <div class="shot"><div data-screen="home" class="shadow" style="--s:.68"></div></div>
+  </div>
+</section>
+
+<section class="d-sec on-ink flip" id="budget">
+  <div class="wrap inner">
+    <div class="txt">
+      <div class="num">02 &mdash; BUDGET</div>
+      <h2>A limit that tells you what&rsquo;s left.</h2>
+      <p>Trackers are ceilings and Metas are goals, and they never speak in percentages. A tracker says <em>&euro;124 left</em> until you pass the limit, and only then does it say <em>&euro;38 over</em> in red.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> One colour the whole way &mdash; no traffic&#8209;light anxiety at 71%</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> A toast the moment a purchase pushes an envelope past its limit</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Savings goals get their own view, where full is a good thing</li>
+      </ul>
+    </div>
+    <div class="shot"><div data-screen="budget" class="shadow" style="--s:.68"></div></div>
+  </div>
+</section>
+
+<section class="d-sec on-white" id="wealth">
+  <div class="wrap inner">
+    <div class="txt">
+      <div class="num">03 &mdash; PATRIMONIO</div>
+      <h2>Everything you own, minus what you owe.</h2>
+      <p>Accounts, savings, investments, money you lent and your debts, resolved into a single net&#8209;worth figure with the month&rsquo;s change beside it. If it is a balance, it lives here.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Five buckets, each opening to its own page</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> A by&#8209;currency split for money held in more than one place</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Loans and liabilities tracked down to the payment</li>
+      </ul>
+    </div>
+    <div class="shot"><div data-screen="wealth" class="shadow" style="--s:.68"></div></div>
+  </div>
+</section>
+
+<section class="d-sec on-lemon flip" id="insights">
+  <div class="wrap inner">
+    <div class="txt">
+      <div class="num">04 &mdash; INSIGHTS</div>
+      <h2>Where it actually went.</h2>
+      <p>Twelve months of spending, the days inside the current one, and every category ranked. Tap a bar and land on the movements behind it &mdash; the chart is a way in, not a picture.</p>
+      <ul>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> A calendar view for any day you want to inspect</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> Envelope utilisation and the months that broke pattern</li>
+        <li><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7"/></svg> A monthly report you can read in under a minute</li>
+      </ul>
+    </div>
+    <div class="shot"><div data-screen="insights" class="shadow" style="--s:.68"></div></div>
+  </div>
+</section>
+
+<section class="d-close">
+  <div class="wrap">
+    <h2>That&rsquo;s the app. Take it for a month.</h2>
+    <p>Set your income, add a few fixed costs, and Home starts answering the question on day one. Skip the setup entirely if you&rsquo;d rather just start adding.</p>
+    <div class="acts">
+      <a class="btn btn-ink" href="/signup">Create your account</a>
+      <a class="btn btn-ghost-light" href="/login">Log in</a>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap row">
+    <a class="brand" href="#"><img src="../../public/icons/budget-expense-app-icon.png" alt="" /><b style="color:#fff">Budget &amp; Expense</b></a>
+    <div class="spacer"></div>
+    <a href="/login">Log in</a>
+    <a href="/signup">Create account</a>
+    <a href="#">Privacy</a>
+    <a href="#">Espa&ntilde;ol</a>
+  </div>
+</footer>
+
+<a class="back" href="index.html">&larr; All directions</a>
+<script src="screens.js"></script>
+</body>
+</html>

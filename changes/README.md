@@ -34,6 +34,9 @@ Use this template:
 ```
 
 ## Current Entries
+- `2026-08-14-up-system-approval-checkpoint.md`
+- `2026-08-14-santander-charges-sync.md`
+- `2026-08-13-save-up-reference-assets.md`
 - `2026-08-11-document-balance-carryover-contract.md`
 - `2026-08-11-carry-available-balance-across-months.md`
 - `2026-04-01-initial-build.md`
