@@ -236,7 +236,7 @@ export function LandingPage() {
           {/* HERO — short on purpose. The tour below does the explaining. */}
           <section className="up-chrome overflow-hidden pt-12 pb-14 text-center sm:pt-16">
             <div className="mx-auto w-full max-w-[74rem] px-5 sm:px-7">
-              <p className="label-caps text-white/45">
+              <p className="label-caps text-white/50">
                 {t(
                   "Money, clearly · Tu dinero, claro",
                   "Tu dinero, claro · Money, clearly"

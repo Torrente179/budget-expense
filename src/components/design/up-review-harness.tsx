@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { AlertTriangle, CircleCheck, Loader2, Plus } from "lucide-react";
+import {
+  AlertTriangle,
+  CircleCheck,
+  CircleUserRound,
+  Loader2,
+  Plus,
+} from "lucide-react";
 import { HomeDashboardView } from "@/components/home/home-dashboard-view";
 import { BudgetSaverCard, BudgetTrackerCard } from "@/components/budget/envelope-list-card";
 import { MovementSummaryHero } from "@/components/movements/movement-summary-hero";
@@ -16,8 +22,16 @@ import {
   CaptureChrome,
   type CaptureKind,
 } from "@/components/capture/capture-chrome";
+import { CaptureFabButton } from "@/components/capture/capture-fab";
+import { TabBar } from "@/components/layout/tab-bar";
+import { Screen } from "@/components/patterns/screen";
+import { MonthPicker } from "@/components/shared/month-picker";
 import { StaticCurrencyProvider } from "@/providers/currency-provider";
-import { useLocale } from "@/providers/locale-provider";
+import {
+  StaticLocaleProvider,
+  useLocale,
+} from "@/providers/locale-provider";
+import { QueryProvider } from "@/providers/query-provider";
 import type { HomeDashboardViewProps } from "@/components/home/home-dashboard-view";
 import type { EnvelopeRow } from "@/components/budget/envelope-list-card";
 import type { RecurringScheduleItem } from "@/components/movements/recurring-schedule";
@@ -119,53 +133,180 @@ const recurring: RecurringScheduleItem[] = [
   { id: "r3", title: "GitHub", categoryName: "Work", categoryIcon: "code-xml", categoryColor: "#8B8D98", amount: 9.65, currency: "USD", chargeDay: 25, isActive: false },
 ];
 
-function HarnessContent() {
+function buildHomeFixture(state: ReviewState): HomeDashboardViewProps {
+  if (state === "empty") {
+    return {
+      ...fixtureHome,
+      budgets: [],
+      spendingCategories: [],
+      spendingTotal: 0,
+      feedDays: [],
+      upcoming: [],
+    };
+  }
+
+  if (state === "long-spanish") {
+    const budgetNames = [
+      "Supermercado y productos esenciales del hogar",
+      "Transporte público y desplazamientos",
+      "Salud, deporte y bienestar",
+      "Televisión, música y plataformas digitales",
+    ];
+    const categoryNames = [
+      "Vivienda",
+      "Supermercado",
+      "Transporte",
+      "Donaciones",
+      "Otros gastos",
+    ];
+
+    return {
+      ...fixtureHome,
+      monthEndLabel: "31 de agosto",
+      monthLabel: "agosto de 2026",
+      budgets: fixtureHome.budgets.map((budget, index) => ({
+        ...budget,
+        name: budgetNames[index] ?? budget.name,
+      })),
+      spendingCategories: fixtureHome.spendingCategories.map(
+        (category, index) => ({
+          ...category,
+          name: categoryNames[index] ?? category.name,
+        })
+      ),
+      upcoming: fixtureHome.upcoming.map((payment, index) => ({
+        ...payment,
+        title:
+          index === 0
+            ? "Suscripción de entretenimiento familiar"
+            : "Centro deportivo del barrio",
+        dueLabel: index === 0 ? "mañana" : "18 de agosto",
+      })),
+      feedDays: fixtureHome.feedDays.map((day, dayIndex) => ({
+        ...day,
+        label: dayIndex === 0 ? "vie, 14 ago" : "jue, 13 ago",
+        movements: day.movements.map((movement, index) =>
+          dayIndex === 0 && index === 0
+            ? {
+                ...movement,
+                title:
+                  "Restaurante excepcionalmente largo de la estación central",
+                subtitle: "Restaurantes y cafeterías · 18:42",
+                amount: 9_876_543.21,
+                currency: "COP",
+              }
+            : movement
+        ),
+      })),
+    };
+  }
+
+  if (state === "large-number") {
+    return {
+      ...fixtureHome,
+      cashflow: {
+        ...fixtureHome.cashflow,
+        monthlyIncome: 1_234_567_890,
+        actualOutflows: 246_913_578.91,
+        remaining: 987_654_311.09,
+        usedRatio: 0.2,
+        dailyAvailable: 58_097_312.42,
+      },
+      availableBalance: {
+        ...fixtureHome.availableBalance,
+        amount: 987_654_321.09,
+        dailyAvailable: 58_097_312.42,
+      },
+      budgets: fixtureHome.budgets.map((budget, index) => {
+        const limit = 9_876_543.21 + index * 1_234_567.89;
+        const ratio = 0.52 + index * 0.1;
+        return { ...budget, limit, spent: limit * ratio, ratio };
+      }),
+      spendingCategories: fixtureHome.spendingCategories.map(
+        (category, index) => ({
+          ...category,
+          value: [55_000_000, 33_000_000, 20_000_000, 10_000_000, 5_456_789.01][index],
+        })
+      ),
+      spendingTotal: 123_456_789.01,
+      upcoming: fixtureHome.upcoming.map((payment, index) => ({
+        ...payment,
+        amount: index === 0 ? 1_234_567.89 : 987_654.32,
+        currency: index === 0 ? "JPY" : "USD",
+      })),
+      feedDays: fixtureHome.feedDays.map((day, dayIndex) => ({
+        ...day,
+        movements: day.movements.map((movement, index) =>
+          dayIndex === 0 && index === 0
+            ? {
+                ...movement,
+                amount: 987_654_321.09,
+                currency: "COP",
+              }
+            : movement
+        ),
+      })),
+    };
+  }
+
+  if (state === "negative") {
+    return {
+      ...fixtureHome,
+      availableBalance: {
+        ...fixtureHome.availableBalance,
+        amount: -1_284.57,
+        dailyAvailable: 0,
+      },
+    };
+  }
+
+  if (state === "overspent") {
+    return {
+      ...fixtureHome,
+      budgets: fixtureHome.budgets.map((budget) => ({
+        ...budget,
+        spent: budget.limit + 84,
+        ratio: (budget.limit + 84) / budget.limit,
+      })),
+    };
+  }
+
+  if (state === "multi-currency") {
+    const currencies = ["COP", "USD", "JPY", "GBP"];
+    return {
+      ...fixtureHome,
+      upcoming: fixtureHome.upcoming.map((payment, index) => ({
+        ...payment,
+        currency: index === 0 ? "USD" : "JPY",
+      })),
+      feedDays: fixtureHome.feedDays.map((day, dayIndex) => ({
+        ...day,
+        movements: day.movements.map((movement, movementIndex) => ({
+          ...movement,
+          currency: currencies[dayIndex * 2 + movementIndex] ?? "EUR",
+        })),
+      })),
+    };
+  }
+
+  return fixtureHome;
+}
+
+function HarnessContent({
+  state,
+  setState,
+}: {
+  state: ReviewState;
+  setState: (state: ReviewState) => void;
+}) {
   const { t } = useLocale();
-  const [state, setState] = useState<ReviewState>("populated");
   const [sheetOpen, setSheetOpen] = useState(false);
   const [captureKind, setCaptureKind] = useState<CaptureKind>("expense");
   const [captureAmount, setCaptureAmount] = useState("54,72");
   const [captureCurrency, setCaptureCurrency] = useState("EUR");
+  const [reviewMonth, setReviewMonth] = useState({ month: 8, year: 2026 });
 
-  const home = state === "empty"
-    ? { ...fixtureHome, budgets: [], spendingCategories: [], spendingTotal: 0, feedDays: [], upcoming: [] }
-    : state === "long-spanish"
-      ? {
-          ...fixtureHome,
-          monthLabel: "Agosto de dos mil veintiséis",
-          feedDays: fixtureHome.feedDays.map((day) => ({
-            ...day,
-            movements: day.movements.map((movement, index) => index === 0
-              ? { ...movement, title: "Restaurante excepcionalmente largo de la estación central", amount: 9876543.21, currency: "COP" }
-              : movement),
-          })),
-        }
-      : state === "large-number"
-        ? {
-            ...fixtureHome,
-            availableBalance: {
-              ...fixtureHome.availableBalance,
-              amount: 987654321.09,
-            },
-          }
-        : state === "negative"
-          ? {
-              ...fixtureHome,
-              availableBalance: {
-                ...fixtureHome.availableBalance,
-                amount: -1284.57,
-              },
-            }
-          : state === "overspent"
-            ? {
-                ...fixtureHome,
-                budgets: fixtureHome.budgets.map((budget) => ({
-                  ...budget,
-                  spent: budget.limit + 84,
-                  ratio: 1.15,
-                })),
-              }
-      : fixtureHome;
+  const home = buildHomeFixture(state);
 
   const fixtureTrackers = state === "overspent"
     ? trackers.map((row) => ({
@@ -183,20 +324,24 @@ function HarnessContent() {
     : savers;
 
   return (
-    <main className="min-h-dvh bg-background pb-20">
+    <main className="min-h-dvh bg-background pb-28">
       <header className="sticky top-0 z-40 border-b border-white/10 bg-ink px-4 py-3 text-white">
-        <div className="mx-auto flex max-w-[1480px] flex-wrap items-center gap-3">
+        <div className="mx-auto grid max-w-[1480px] gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-3">
           <div className="min-w-0 flex-1">
-            <p className="label-caps text-white/42">Private design review</p>
+            <p className="label-caps text-white/50">Private design review</p>
             <h1 className="text-heading font-semibold">UP-derived approval checkpoint</h1>
           </div>
-          <div className="flex flex-wrap gap-1" role="group" aria-label="Fixture state">
+          <div
+            className="flex w-full gap-1 overflow-x-auto pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:pb-0 lg:w-auto [&::-webkit-scrollbar]:hidden"
+            role="group"
+            aria-label="Fixture state"
+          >
             {states.map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setState(item)}
-                className={`min-h-11 rounded-full px-3 text-caption font-medium capitalize transition-colors ${state === item ? "bg-coral text-white" : "bg-white/[0.07] text-white/60 hover:text-white"}`}
+                className={`min-h-11 shrink-0 rounded-full px-3 text-caption font-medium capitalize transition-colors ${state === item ? "bg-coral text-ink" : "bg-white/[0.07] text-white/60 hover:text-white"}`}
               >
                 {item.replaceAll("-", " ")}
               </button>
@@ -221,19 +366,55 @@ function HarnessContent() {
         ) : (
           <>
             <section>
-              <p className="label-caps mb-3">Home · production view component</p>
-              <HomeDashboardView {...home} />
+              <p className="label-caps mb-3">
+                Home · production shell + view components
+              </p>
+              <div className="overflow-hidden rounded-xl bg-background ring-1 ring-border">
+                <div className="px-4 sm:px-5 lg:px-8">
+                  <Screen
+                    title={t("Home", "Inicio")}
+                    mode="chrome-sheet"
+                    width="wide"
+                    leading={
+                      <span
+                        aria-hidden
+                        className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-white/60 md:hidden"
+                      >
+                        <CircleUserRound className="h-6 w-6" />
+                      </span>
+                    }
+                    subheader={
+                      <div className="flex justify-center sm:justify-end">
+                        <MonthPicker
+                          month={reviewMonth.month}
+                          year={reviewMonth.year}
+                          onChange={(month, year) =>
+                            setReviewMonth({ month, year })
+                          }
+                          onInk
+                          prefetchAdjacent={false}
+                        />
+                      </div>
+                    }
+                  >
+                    <HomeDashboardView
+                      {...home}
+                      onSelectCategory={() => undefined}
+                    />
+                  </Screen>
+                </div>
+              </div>
             </section>
 
-            <section className="rounded-xl bg-ink p-4 text-white sm:p-5">
+            <section className="min-w-0 rounded-xl bg-ink p-4 text-white sm:p-5">
               <div className="flex items-end justify-between gap-3">
                 <div>
-                  <p className="label-caps text-white/42">Budget language</p>
+                  <p className="label-caps text-white/50">Budget language</p>
                   <h2 className="mt-1 text-title font-semibold">Trackers + Savers</h2>
                 </div>
                 <Button size="sm"><Plus className="h-4 w-4" />New</Button>
               </div>
-              <div className="mt-4 grid gap-5 lg:grid-cols-2">
+              <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
                 <div>
                   <p className="mb-2 text-caption font-semibold text-white/55">Trackers</p>
                   <div className="grid grid-cols-2 gap-2.5">
@@ -249,24 +430,24 @@ function HarnessContent() {
               </div>
             </section>
 
-            <section className="grid gap-5 lg:grid-cols-2">
-              <div>
+            <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
+              <div className="min-w-0">
                 <p className="label-caps mb-3">Movements</p>
                 <MovementSummaryHero label="August net movement" netAmount={2441.44} incomeLabel="Money in" incomeAmount={4860} expenseLabel="Money out" expenseAmount={2418.56} currency="EUR" />
                 <div className="up-content-sheet">
-                  {fixtureHome.feedDays.flatMap((day) => day.movements).map((movement) => (
+                  {home.feedDays.flatMap((day) => day.movements).map((movement) => (
                     <TransactionRow key={movement.id} {...movement} />
                   ))}
                 </div>
               </div>
-              <div>
+              <div className="min-w-0">
                 <p className="label-caps mb-3">Recurring</p>
                 <RecurringSummaryHero label="Recurring monthly charges" totalAmount={224.08} currency="EUR" cadenceLabel="Expected every month" activeCount={2} activeLabel="active" pausedCount={1} pausedLabel="paused" />
                 <RecurringSchedule items={state === "empty" ? [] : recurring} title="August schedule" rangeLabel="16–25 Aug" dayLabel="Day" activeLabel="Active" pausedLabel="Paused" onEdit={() => undefined} />
               </div>
             </section>
 
-            <section className="grid gap-5 lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)]">
+            <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)]">
               <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-border">
                 <CaptureChrome
                   title={t("Add movement", "Añadir movimiento")}
@@ -309,7 +490,7 @@ function HarnessContent() {
                 </div>
               </div>
               <div className="flex flex-col justify-center rounded-xl bg-ink px-6 py-8 text-white">
-                <p className="label-caps text-white/42">Capture anatomy</p>
+                <p className="label-caps text-white/50">Capture anatomy</p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight">
                   Amount first. Context immediately after.
                 </h2>
@@ -338,8 +519,12 @@ function HarnessContent() {
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="bottom" className="gap-0 overflow-hidden p-0 sm:left-1/2 sm:max-w-2xl sm:-translate-x-1/2">
           <div className="bg-ink px-4 pb-3 pt-2 text-white">
-            <p className="label-caps text-white/42">Pinned context</p>
-            <TransactionRow {...fixtureHome.feedDays[0].movements[0]} className="-mx-4 mt-2 w-[calc(100%+2rem)] text-white [&_p]:text-white [&_span]:text-white" />
+            <p className="label-caps text-white/50">Pinned context</p>
+            <TransactionRow
+              {...(home.feedDays[0]?.movements[0] ??
+                fixtureHome.feedDays[0].movements[0])}
+              className="-mx-4 mt-2 w-[calc(100%+2rem)] text-white [&_p]:text-white [&_span]:text-white"
+            />
           </div>
           <SheetHeader>
             <SheetTitle>Mercadona</SheetTitle>
@@ -357,14 +542,22 @@ function HarnessContent() {
           </div>
         </SheetContent>
       </Sheet>
+      <TabBar pathnameOverride="/home" staticPreview />
+      <CaptureFabButton onClick={() => setSheetOpen(true)} />
     </main>
   );
 }
 
 export function UpReviewHarness() {
+  const [state, setState] = useState<ReviewState>("populated");
+
   return (
-    <StaticCurrencyProvider>
-      <HarnessContent />
-    </StaticCurrencyProvider>
+    <QueryProvider>
+      <StaticLocaleProvider locale={state === "long-spanish" ? "es" : "en"}>
+        <StaticCurrencyProvider>
+          <HarnessContent state={state} setState={setState} />
+        </StaticCurrencyProvider>
+      </StaticLocaleProvider>
+    </QueryProvider>
   );
 }

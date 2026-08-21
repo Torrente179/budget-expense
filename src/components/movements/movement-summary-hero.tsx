@@ -49,7 +49,7 @@ export function MovementSummaryHero({
                 className="h-1.5 w-1.5 rounded-full bg-positive"
               />
               <div>
-                <p className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-white/45">
+                <p className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-white/50">
                   {incomeLabel}
                 </p>
                 <AmountText
@@ -57,7 +57,7 @@ export function MovementSummaryHero({
                   currency={currency}
                   tone="positive"
                   size="caption"
-                  className="font-semibold"
+                  className="font-semibold text-[#3ddc97]"
                 />
               </div>
             </div>
@@ -68,7 +68,7 @@ export function MovementSummaryHero({
               className="h-1.5 w-1.5 rounded-full bg-white/35"
             />
             <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-white/45">
+              <p className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-white/50">
                 {expenseLabel}
               </p>
               <AmountText

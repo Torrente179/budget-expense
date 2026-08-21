@@ -55,7 +55,7 @@ export function CaptureChrome({
   return (
     <div className="shrink-0 bg-ink px-5 pb-5 pt-1 text-white">
       <SheetHeader className="px-0 pb-3 pt-0">
-        <p className="label-caps text-white/42">
+        <p className="label-caps text-white/50">
           {t("Quick capture", "Captura rápida")}
         </p>
         {titleElement === "sheet" ? (
@@ -108,7 +108,7 @@ export function CaptureChrome({
           aria-label={t("Amount", "Importe")}
           className={cn(
             "h-14 min-w-0 flex-1 border-0 bg-transparent px-0 text-center font-mono text-[2.65rem] font-semibold leading-none tracking-[-0.05em] text-coral shadow-none focus-visible:ring-0",
-            kind === "income" && "text-success"
+            kind === "income" && "text-[#3ddc97]"
           )}
         />
         <Select

@@ -50,6 +50,8 @@ statement of what it does, ending at Create account / Log in. See
 ### Theme
 
 - One fixed appearance: ink chrome, white sheets, coral actions and money figures.
+  Raw coral pairs with ink for large actions and chrome; deep coral is the
+  contrast-safe semantic variant for small controls and focus on white.
 - No runtime theme provider or user/system theme switch. The legacy
   `next-themes` package is not consumed and is scheduled for removal only after
   the full-app propagation gate.
@@ -333,8 +335,9 @@ troubleshooting—is in
 - Each tile carries a category glyph, compact name, and a thin bottom progress
   edge. Under-limit states remain coral; only a genuinely exceeded Tracker is
   red. There are no rings, bare percentage headlines, or traffic-light grading.
-- Every Tracker remains visible in the responsive grid; Home does not replace
-  data with a carousel or arbitrary first-three cutoff.
+- Every Tracker remains reachable: Home pages compact two-column grids in
+  groups of four, with labelled 44px pager controls instead of an arbitrary
+  first-three cutoff.
 - Empty state: CTA into `/budget`.
 - **Only Presupuestos** (`kind = spending_limit`). Metas (`contribution_goal`:
   Diezmo, Ahorro, Inversión, …) live in Budget's Savers view — never on Home.

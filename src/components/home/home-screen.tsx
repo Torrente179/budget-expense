@@ -41,13 +41,6 @@ export function HomeScreen() {
     : null;
   const { incomplete } = useOnboarding();
 
-  const greeting = useMemo(() => {
-    const hour = new Date().getHours();
-    if (hour < 12) return t("Good morning", "Buenos días");
-    if (hour < 19) return t("Good afternoon", "Buenas tardes");
-    return t("Good evening", "Buenas noches");
-  }, [t]);
-
   const daysInMonth = getDaysInMonth(new Date(year, month - 1));
   const dayOfMonth = isCurrentMonth ? new Date().getDate() : daysInMonth;
 
@@ -247,14 +240,16 @@ export function HomeScreen() {
 
   return (
     <Screen
-      title={greeting}
-      actions={
-        <MonthPicker
-          month={month}
-          year={year}
-          onChange={setMonthYear}
-          onInk
-        />
+      title={t("Home", "Inicio")}
+      subheader={
+        <div className="flex justify-center sm:justify-end">
+          <MonthPicker
+            month={month}
+            year={year}
+            onChange={setMonthYear}
+            onInk
+          />
+        </div>
       }
       mode="chrome-sheet"
       width="wide"

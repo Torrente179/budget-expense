@@ -114,10 +114,13 @@ hex, shadow, radius, or font-size values in components except:
 - **Up hues** are exposed directly as `--coral` / `--coral-deep` / `--lemon` /
   `--ink` / `--ink-2` / `--ink-3`, usable as `bg-ink`, `text-coral`, etc.
   **Coral `#FF7A64` is both the action colour and the money colour** — that
-  double duty is a large part of why the app reads as Up. It is `--primary`,
-  so every default Button, focus ring and FAB is coral.
+  double duty is a large part of why the app reads as Up. Raw coral is paired
+  with ink on the FAB, primary buttons, navigation, and dark chrome. Small text,
+  selected controls, and focus rings on white use the contrast-safe deep coral
+  `#CC4937` through `--primary`; this is an accessibility tonal pair, not a
+  second brand colour.
 - **Cashflow tokens** (Home stats; also aliased into amount semantics):
-  - `income` — `#16A56A` (mint) — money in
+  - `income` — `#087D4F` on white; bright `#3DDC97` on ink — money in
   - `available` — `#FF7A64` (coral) — the spendable headline, matching Up's hero
   - `expense` — `#1A1B23` (**ink**) — money out
   - `positive` → `var(--income)`; `negative` → `var(--expense)`
@@ -135,8 +138,8 @@ hex, shadow, radius, or font-size values in components except:
   | Safe | 0–69% | `#FF7A64` |
   | Watch | 70–84% | `#FF7A64` |
   | Near limit | 85–99% | `#FF7A64` |
-  | Exceeded | 100–119% | `#F0453A` |
-  | Critical | 120%+ | `#F0453A` |
+  | Exceeded | 100–119% | `#F65B50` |
+  | Critical | 120%+ | `#F65B50` |
 
   **Up does not grade a tracker on its way to the limit.** The bar holds one
   colour the whole way and only turns red once the limit is passed. The five
@@ -177,8 +180,9 @@ hex, shadow, radius, or font-size values in components except:
   responsively without changing their information hierarchy.
 - Home lists **only** `spending_limit` envelopes (Presupuestos). Metas stay on
   `/budget`.
-- Home preserves every Tracker and uses the responsive grid; it does not hide
-  information behind a dashboard-card carousel.
+- Home preserves every Tracker. Up to four appear in each compact responsive
+  grid page; additional Trackers remain reachable through a swipeable,
+  labelled pager rather than an arbitrary first-three cutoff.
 - Never treat 100% as success green — that is reserved for Metas on the Budget
   tab. Past the limit the headline amount takes the band colour (red).
 - Home: cards link to `/budget`. Budget tab: pass `onSelect` to open the

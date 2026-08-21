@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type KeyboardEvent } from "react";
 import dynamic from "next/dynamic";
 import { getDaysInMonth } from "date-fns";
 import {
@@ -100,6 +100,31 @@ export function BudgetScreen() {
     null
   );
   const [activeView, setActiveView] = useState<BudgetView>("trackers");
+
+  function focusBudgetView(view: BudgetView) {
+    setActiveView(view);
+    window.requestAnimationFrame(() => {
+      document.getElementById(`budget-${view}-tab`)?.focus();
+    });
+  }
+
+  function handleBudgetViewKeyDown(event: KeyboardEvent<HTMLButtonElement>) {
+    let nextView: BudgetView | null = null;
+
+    if (event.key === "ArrowRight") {
+      nextView = activeView === "trackers" ? "savers" : "trackers";
+    } else if (event.key === "ArrowLeft") {
+      nextView = activeView === "trackers" ? "savers" : "trackers";
+    } else if (event.key === "Home") {
+      nextView = "trackers";
+    } else if (event.key === "End") {
+      nextView = "savers";
+    }
+
+    if (!nextView) return;
+    event.preventDefault();
+    focusBudgetView(nextView);
+  }
 
   const {
     customBudgets,
@@ -705,13 +730,15 @@ export function BudgetScreen() {
                   type="button"
                   role="tab"
                   id="budget-trackers-tab"
-                  aria-controls="budget-trackers-panel"
+                  aria-controls="budget-view-panel"
                   aria-selected={activeView === "trackers"}
+                  tabIndex={activeView === "trackers" ? 0 : -1}
                   onClick={() => setActiveView("trackers")}
+                  onKeyDown={handleBudgetViewKeyDown}
                   className={`flex min-h-11 items-center justify-center gap-2 px-3 py-2 text-body font-medium transition-colors duration-[var(--motion-standard)] ${
                     activeView === "trackers"
                       ? "text-white"
-                      : "text-white/45 hover:text-white/75"
+                      : "text-white/50 hover:text-white/75"
                   }`}
                 >
                   {t("Trackers", "Presupuestos")}
@@ -723,13 +750,15 @@ export function BudgetScreen() {
                   type="button"
                   role="tab"
                   id="budget-savers-tab"
-                  aria-controls="budget-savers-panel"
+                  aria-controls="budget-view-panel"
                   aria-selected={activeView === "savers"}
+                  tabIndex={activeView === "savers" ? 0 : -1}
                   onClick={() => setActiveView("savers")}
+                  onKeyDown={handleBudgetViewKeyDown}
                   className={`flex min-h-11 items-center justify-center gap-2 px-3 py-2 text-body font-medium transition-colors duration-[var(--motion-standard)] ${
                     activeView === "savers"
                       ? "text-white"
-                      : "text-white/45 hover:text-white/75"
+                      : "text-white/50 hover:text-white/75"
                   }`}
                 >
                   {t("Savers", "Metas")}
@@ -741,11 +770,7 @@ export function BudgetScreen() {
 
               <section
                 key={activeView}
-                id={
-                  activeView === "trackers"
-                    ? "budget-trackers-panel"
-                    : "budget-savers-panel"
-                }
+                id="budget-view-panel"
                 role="tabpanel"
                 aria-labelledby={
                   activeView === "trackers"
@@ -756,7 +781,7 @@ export function BudgetScreen() {
               >
                 <div className="flex items-end justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="label-caps text-white/40">
+                    <p className="label-caps text-white/50">
                       {t("This month", "Este mes")}
                     </p>
                     <h2 className="mt-1 text-title font-semibold text-white">
@@ -824,7 +849,7 @@ export function BudgetScreen() {
                 />
 
                 {activeView === "trackers" && unallocatedSpent > 0 ? (
-                  <p className="text-caption text-white/45">
+                  <p className="text-caption text-white/50">
                     +{" "}
                     <span className="font-mono tabular-nums text-white/75">
                       {formatCurrency(unallocatedSpent, baseCurrency)}

@@ -179,6 +179,34 @@ export function LocaleProvider({
   );
 }
 
+/**
+ * Side-effect-free locale context for deterministic design fixtures. It never
+ * reads or writes cookies, localStorage, the document language, or user data.
+ */
+export function StaticLocaleProvider({
+  children,
+  locale = "en",
+}: {
+  children: ReactNode;
+  locale?: AppLocale;
+}) {
+  const value = useMemo<LocaleContextValue>(() => {
+    const t = (english: string, spanish: string) =>
+      locale === "es" ? spanish : english;
+    return {
+      locale,
+      intlLocale: getIntlLocale(locale),
+      setLocale: () => undefined,
+      t,
+      tc: (name: string) => translateCategoryName(name, locale),
+    };
+  }, [locale]);
+
+  return (
+    <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>
+  );
+}
+
 export function useLocale() {
   const context = useContext(LocaleContext);
 

@@ -63,7 +63,7 @@ export function HomeDashboardView({
   return (
     <div
       className={cn(
-        "grid min-w-0 items-start lg:grid-cols-[minmax(0,3fr)_minmax(19rem,2fr)] lg:gap-5",
+        "grid min-w-0 grid-cols-[minmax(0,1fr)] items-start lg:grid-cols-[minmax(0,3fr)_minmax(19rem,2fr)] lg:gap-5",
         className
       )}
     >
@@ -87,7 +87,7 @@ export function HomeDashboardView({
         <section className="overflow-hidden rounded-xl bg-ink text-white">
           <div className="flex items-end justify-between gap-3 px-4 pb-3 pt-4">
             <div className="min-w-0">
-              <p className="text-label font-medium uppercase tracking-widest text-white/45">
+              <p className="text-label font-medium uppercase tracking-widest text-white/50">
                 {t("This month", "Este mes")}
               </p>
               <h2 className="mt-0.5 text-heading font-semibold">
@@ -97,7 +97,7 @@ export function HomeDashboardView({
             {budgets.length > 0 ? (
               <Link
                 href="/budget"
-                className="shrink-0 text-caption font-medium text-white/55 transition-colors hover:text-white"
+                className="inline-flex min-h-11 shrink-0 items-center text-caption font-medium text-white/55 transition-colors hover:text-white"
               >
                 {t("View all", "Ver todos")}
               </Link>

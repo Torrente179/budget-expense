@@ -14,6 +14,8 @@ interface MonthPickerProps {
   year: number;
   onChange: (month: number, year: number) => void;
   onInk?: boolean;
+  /** Disable hover/focus prefetch in deterministic, no-network previews. */
+  prefetchAdjacent?: boolean;
 }
 
 export function MonthPicker({
@@ -21,6 +23,7 @@ export function MonthPicker({
   year,
   onChange,
   onInk = false,
+  prefetchAdjacent = true,
 }: MonthPickerProps) {
   const queryClient = useQueryClient();
   const { locale, t } = useLocale();
@@ -31,6 +34,7 @@ export function MonthPicker({
   }
 
   function prefetch(direction: -1 | 1) {
+    if (!prefetchAdjacent) return;
     const target = adjacent(direction);
     const now = new Date();
     const asOfDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;

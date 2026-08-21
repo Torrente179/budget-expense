@@ -71,7 +71,7 @@ export function WealthCategoryHero({
               >
                 {delta.amount > 0 ? "+" : ""}
                 {formatCurrency(delta.amount, baseCurrency)}{" "}
-                <span className="font-sans text-white/45">{delta.label}</span>
+                <span className="font-sans text-white/50">{delta.label}</span>
               </p>
             )}
           </div>

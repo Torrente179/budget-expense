@@ -64,7 +64,7 @@ export function AmountText({
       {prefix}
       {formatCurrency(converted, baseCurrency)}
       {showOriginal && isConverted && (
-        <span className="ml-1.5 text-caption font-normal text-muted-foreground">
+        <span className="block whitespace-nowrap text-caption font-normal text-muted-foreground">
           ({formatCurrency(amount, currency)})
         </span>
       )}

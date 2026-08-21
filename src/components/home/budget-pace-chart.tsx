@@ -107,7 +107,7 @@ export function BudgetTrackerTile({
             {budget.name}
           </p>
           <p
-            className="mt-0.5 truncate font-mono text-body font-bold leading-tight tabular-nums @min-[9rem]/budget-card:text-heading"
+            className="mt-0.5 line-clamp-2 font-mono text-[clamp(0.75rem,3.2vw,1.0625rem)] font-bold leading-tight tabular-nums"
             style={overLimit ? { color: toneColor } : undefined}
           >
             {headline}
@@ -288,8 +288,8 @@ export function BudgetPaceChart({
               className={cn(
                 "h-1.5 rounded-full transition-all duration-[var(--motion-standard)]",
                 pageIndex === activePage
-                  ? "w-4 bg-foreground"
-                  : "w-1.5 bg-border group-hover:bg-muted-foreground/50"
+                  ? "w-4 bg-coral"
+                  : "w-1.5 bg-white/20 group-hover:bg-white/45"
               )}
             />
           </button>

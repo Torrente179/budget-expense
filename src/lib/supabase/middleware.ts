@@ -2,6 +2,12 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
+  // The exact private design-review route owns its own fail-closed 404 gate.
+  // Let it reach that gate without creating a Supabase client or auth request.
+  if (request.nextUrl.pathname === "/__design/up") {
+    return NextResponse.next({ request });
+  }
+
   const url =
     process.env.NEXT_PUBLIC_SUPABASE_URL ??
     process.env.SUPABASE_URL;

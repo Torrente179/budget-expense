@@ -146,7 +146,7 @@ function MonthlyDelta({ change }: { change: MonthlyChange }) {
 
   if (change.amount === null) {
     return (
-      <p className="text-caption text-white/45">
+      <p className="text-caption text-white/50">
         {t(
           "Tracking starts today — check back next month.",
           "Empezamos a registrar hoy — vuelve el mes que viene."
@@ -181,7 +181,7 @@ function MonthlyDelta({ change }: { change: MonthlyChange }) {
         {formatCurrency(change.amount, baseCurrency)}
         {percentage}
       </span>
-      <span className="text-white/45">{t("this month", "este mes")}</span>
+      <span className="text-white/50">{t("this month", "este mes")}</span>
     </p>
   );
 }

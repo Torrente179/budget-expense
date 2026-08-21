@@ -7,6 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test:visual": "playwright test tests/e2e/up-design.spec.ts --grep @visual",
+    "test:a11y": "playwright test tests/e2e/up-design.spec.ts --grep @a11y",
+    "test:e2e:update": "playwright test tests/e2e/up-design.spec.ts --update-snapshots",
     "test:balance": "tsx --test src/lib/balance-checkpoint.test.ts",
     "test:home": "tsx --test src/lib/home/month-cashflow.test.ts",
     "test:wealth": "tsx --test src/lib/wealth/net-worth.test.ts",
@@ -40,6 +44,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.13.0",
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",

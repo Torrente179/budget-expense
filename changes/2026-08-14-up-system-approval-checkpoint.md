@@ -59,11 +59,12 @@
 - Baseline before the redesign: lint passed with 17 existing warnings; Next
   type generation and TypeScript passed; balance (8), Home (4), Wealth (22),
   recurring (4), and both import-parity checks passed.
-- Post-change TypeScript, lint, domain, parity, production-build, and diff checks
-  are recorded at handoff after the final integration run.
-- Local interactive preview and the requested Playwright/axe installation were
-  attempted but blocked by this execution environment: binding a local port
-  returned `EPERM`, and the package registry was unavailable. The fixture route
-  and viewport snapshot gate therefore remain pending visual approval in an
-  environment that can run the app.
-
+- Follow-up validation completed 2026-08-21: Next route types, TypeScript,
+  production build, all four domain suites, both parity checks, and lint pass.
+  Lint retains 12 existing warnings and no errors.
+- Playwright and axe now cover 375×667, 390×844, 768×1024, and 1440×900.
+  The approval run passes 13 checks with three intentional non-reference motion
+  skips, including deterministic fixtures, screenshots, horizontal overflow,
+  phone touch targets, runtime errors, axe, and the documented motion ceiling.
+- The review route was checked in every gate state: enabled preview returns
+  200; an absent flag or `VERCEL_ENV=production` returns 404.

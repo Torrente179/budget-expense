@@ -33,7 +33,7 @@ src/app/
 │       analytics/ → /insights      calendar/  → /insights/calendar
 │       investments/ → /wealth      movimientos/ → /movements
 │
-├── __design/up/               Flag-gated, noindex deterministic UI review
+├── %5F_design/up/             Flag-gated `/__design/up` deterministic review
 │
 └── api/                       27 route handlers
 ```
@@ -340,11 +340,15 @@ and a 5-second toast offers reversal, which issues the compensating request.
 
 `/__design/up` renders the same production view components with deterministic
 fixtures for populated, loading, empty, error, overspent, completed-goal,
-long-Spanish, large-number, negative, and multi-currency states. It uses
-`StaticCurrencyProvider`, never constructs a Supabase client, and issues no API
-request. The route returns 404 unless `ENABLE_UP_DESIGN_REVIEW=true`; it also
-returns 404 whenever `VERCEL_ENV=production`, is unlinked, and is marked
-`noindex, nofollow, noarchive`.
+long-Spanish, large-number, negative, and multi-currency states. It uses the
+production `Screen`, Home view, navigation, patterns, `QueryProvider`,
+`StaticLocaleProvider`, and `StaticCurrencyProvider`; it never constructs a
+Supabase client or issues an API request. The physical App Router segment is
+`%5F_design` (Next's required escape for a leading underscore), while the URL
+remains `/__design/up`. The route returns 404 unless
+`ENABLE_UP_DESIGN_REVIEW=true`; it also returns 404 whenever
+`VERCEL_ENV=production`, is unlinked, and is marked `noindex, nofollow,
+noarchive`.
 
 ---
 

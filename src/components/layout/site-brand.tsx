@@ -41,7 +41,7 @@ export function SiteBrand({
       </div>
       {!compact ? (
         <div className="space-y-1">
-          <span className="block label-caps text-white/42">
+          <span className="block label-caps text-white/50">
             {t("Stewardship", "Mayordomía")}
           </span>
           <span className="block text-lg font-semibold leading-none tracking-tight text-white">

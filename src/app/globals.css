@@ -110,7 +110,7 @@
 
   /* Raw Up hues, exposed to Tailwind as text-coral / bg-ink / etc. */
   --coral: #ff7a64;
-  --coral-deep: #f2664f;
+  --coral-deep: #cc4937;
   --lemon: #ffe14d;
   --ink: #1a1b23;
   --ink-2: #24262f;
@@ -122,43 +122,45 @@
   --card-foreground: #1a1b23;
   --popover: #ffffff;
   --popover-foreground: #1a1b23;
-  /* Coral is Up's action colour as well as its money colour. */
-  --primary: #ff7a64;
+  /* Raw coral stays on dark chrome. The semantic primary is the contrast-safe
+     light-surface variant used by small text links and selected controls. */
+  --primary: #cc4937;
   --primary-foreground: #ffffff;
   --secondary: #eceef1;
   --secondary-foreground: #1a1b23;
   --muted: #f0f1f4;
-  --muted-foreground: #8b8d98;
+  --muted-foreground: #6b6d76;
   --accent: #e9eaee;
   --accent-foreground: #1a1b23;
   --destructive: #f0453a;
   --border: rgba(26, 27, 35, 0.08);
   --input: rgba(26, 27, 35, 0.1);
-  --ring: #ff7a64;
+  --ring: #cc4937;
   --chart-1: #ff7a64;
   --chart-2: #3ddc97;
   --chart-3: #28c4d8;
   --chart-4: #b565d8;
   --chart-5: #f5a623;
   --chart-grid: rgba(26, 27, 35, 0.06);
-  --chart-axis: #8b8d98;
-  --success: #16a56a;
+  --chart-axis: #6b6d76;
+  --success: #087d4f;
   --success-foreground: #ffffff;
   --success-subtle: rgba(61, 220, 151, 0.16);
-  --warning: #f5a623;
-  --warning-foreground: #1a1b23;
+  --warning: #9a6200;
+  --warning-foreground: #ffffff;
   --warning-subtle: rgba(245, 166, 35, 0.16);
   --danger: #f0453a;
+  --danger-on-ink: #f65b50;
   --danger-foreground: #ffffff;
   --danger-subtle: rgba(240, 69, 58, 0.12);
-  --info: #28c4d8;
-  --info-foreground: #1a1b23;
+  --info: #0b7685;
+  --info-foreground: #ffffff;
   --info-subtle: rgba(40, 196, 216, 0.14);
 
   /* Cashflow. Up renders outflows in plain **ink**, not red — red is reserved
      for a tracker actually over its limit. Inflows are the mint green, and the
      available/spendable headline is coral, matching Up's hero. */
-  --income: #16a56a;
+  --income: #087d4f;
   --available: #ff7a64;
   --expense: #1a1b23;
   --positive: var(--income);
@@ -183,7 +185,7 @@
   --sidebar: #1a1b23;
   --sidebar-foreground: #ffffff;
   --sidebar-primary: #ff7a64;
-  --sidebar-primary-foreground: #ffffff;
+  --sidebar-primary-foreground: #1a1b23;
   --sidebar-accent: rgba(255, 255, 255, 0.08);
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: rgba(255, 255, 255, 0.09);
@@ -405,6 +407,9 @@
     @apply bg-background text-foreground;
     text-rendering: optimizeLegibility;
     min-width: 320px;
+  }
+  main:has([data-screen-mode="dark-canvas"]) {
+    background: var(--ink);
   }
   ::selection {
     background: color-mix(in srgb, var(--primary) 18%, transparent);

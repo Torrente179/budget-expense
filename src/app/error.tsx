@@ -21,7 +21,7 @@ export default function ErrorState({
   return (
     <main className="flex min-h-[70dvh] items-center justify-center bg-ink px-6 py-12 text-white">
       <section className="w-full max-w-lg text-center">
-        <p className="label-caps text-white/45">
+        <p className="label-caps text-white/50">
           {t("Something interrupted the view", "Algo interrumpió la vista")}
         </p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">

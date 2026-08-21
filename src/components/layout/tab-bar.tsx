@@ -8,8 +8,16 @@ import { PRIMARY_NAV, isNavItemActive } from "@/lib/navigation";
 import { NavigationPendingIndicator } from "./navigation-pending-indicator";
 
 /** Flat, opaque mobile navigation adapted from Up's ink chrome. */
-export function TabBar() {
-  const pathname = usePathname();
+export function TabBar({
+  pathnameOverride,
+  staticPreview = false,
+}: {
+  pathnameOverride?: string;
+  /** Keep production navigation visible without prefetching or leaving a fixture. */
+  staticPreview?: boolean;
+} = {}) {
+  const currentPathname = usePathname();
+  const pathname = pathnameOverride ?? currentPathname;
   const { t } = useLocale();
 
   return (
@@ -29,6 +37,13 @@ export function TabBar() {
             <Link
               key={item.key}
               href={item.href}
+              prefetch={staticPreview ? false : undefined}
+              onClick={
+                staticPreview
+                  ? (event) => event.preventDefault()
+                  : undefined
+              }
+              aria-disabled={staticPreview || undefined}
               aria-current={active ? "page" : undefined}
               className={cn(
                 "relative flex min-h-11 flex-col items-center justify-center gap-1 rounded-full transition-colors duration-[var(--motion-standard)]",

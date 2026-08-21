@@ -51,7 +51,7 @@ function CardActions({
       onClick={() => onDelete(row.id)}
       className={
         onInk
-          ? "absolute right-1 top-1 z-10 flex h-11 w-11 items-center justify-center rounded-full text-white/45 transition-colors hover:bg-danger/15 hover:text-danger focus-visible:bg-danger/15 focus-visible:text-danger md:right-2 md:top-2 md:h-8 md:w-8"
+          ? "absolute right-1 top-1 z-10 flex h-11 w-11 items-center justify-center rounded-full text-white/50 transition-colors hover:bg-danger/15 hover:text-danger focus-visible:bg-danger/15 focus-visible:text-danger md:right-2 md:top-2 md:h-8 md:w-8"
           : "absolute right-1 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-danger-subtle hover:text-danger focus-visible:bg-danger-subtle focus-visible:text-danger md:right-2 md:h-8 md:w-8"
       }
     >
@@ -69,7 +69,9 @@ function TrackerContent({
   const remaining = row.target - row.progressAmount;
   const overBy = Math.max(-remaining, 0);
   const exceeded = row.progressAmount > row.target;
-  const accent = exceeded ? "var(--danger)" : row.color || "var(--coral)";
+  const accent = exceeded
+    ? "var(--danger-on-ink)"
+    : row.color || "var(--coral)";
   const fill = Number.isFinite(row.ratio)
     ? Math.min(Math.max(row.ratio, 0), 1) * 100
     : row.progressAmount > row.target

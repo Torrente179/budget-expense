@@ -212,8 +212,8 @@ export const PALETTE_UP: Palette = {
     safe: "#FF7A64",
     watch: "#FF7A64",
     near: "#FF7A64",
-    exceeded: "#F0453A",
-    critical: "#F0453A",
+    exceeded: "#F65B50",
+    critical: "#F65B50",
   },
   /**
    * "Cool" — blues, teals and violets with one warm accent for food.

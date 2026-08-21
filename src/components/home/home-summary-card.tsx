@@ -70,11 +70,11 @@ function SummaryMetric({
         </span>
         <span className="truncate">{label}</span>
       </div>
-      <div className="mt-1 truncate font-mono text-body font-bold leading-tight tabular-nums text-white">
+      <div className="mt-1 min-w-0 font-mono text-[clamp(0.75rem,3.4vw,0.9375rem)] font-bold leading-tight tabular-nums text-white">
         {value}
       </div>
       {detail ? (
-        <p className="mt-0.5 truncate text-label text-white/45">{detail}</p>
+        <p className="mt-0.5 truncate text-label text-white/50">{detail}</p>
       ) : null}
     </div>
   );
@@ -139,7 +139,7 @@ export function HomeSummaryCard({
         <p className="mt-2 text-body font-semibold text-coral">
           {t("Available", "Disponible")}
         </p>
-        <p className="mt-0.5 text-caption text-white/45">{balanceCaption}</p>
+        <p className="mt-0.5 text-caption text-white/50">{balanceCaption}</p>
       </div>
 
       <div className={cn("border-t", HERO_RULE)}>
@@ -160,7 +160,7 @@ export function HomeSummaryCard({
                   amount={cashflow.monthlyIncome}
                   currency={baseCurrency}
                   size="body"
-                  className="font-bold text-income"
+                  className="font-bold text-[#3ddc97]"
                 />
               )
             }
@@ -209,7 +209,7 @@ export function HomeSummaryCard({
               style={{ left: `${paceMark}%` }}
             />
           </div>
-          <div className="mt-1.5 flex items-center justify-between gap-3 text-label text-white/45">
+          <div className="mt-1.5 flex items-center justify-between gap-3 text-label text-white/50">
             <span>
               {usedPct === "—"
                 ? t("Plan unavailable", "Plan no disponible")

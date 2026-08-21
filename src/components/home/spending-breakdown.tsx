@@ -149,7 +149,7 @@ export function SpendingBreakdown({
 
       <Link
         href="/insights"
-        className="flex items-center justify-center border-t border-border px-4 py-3 text-caption font-semibold text-primary transition-colors hover:bg-accent/40"
+        className="flex min-h-11 items-center justify-center border-t border-border px-4 py-3 text-caption font-semibold text-primary transition-colors hover:bg-accent/40"
       >
         {t("See all insights", "Ver todos los análisis")}
       </Link>

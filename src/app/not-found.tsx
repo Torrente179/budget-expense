@@ -6,7 +6,7 @@ export default function NotFound() {
     <main className="flex min-h-dvh items-center justify-center bg-ink px-6 py-12 text-white">
       <section className="w-full max-w-lg text-center">
         <p className="money-hero">404</p>
-        <p className="label-caps mt-4 text-white/45">Off the ledger</p>
+        <p className="label-caps mt-4 text-white/50">Off the ledger</p>
         <h1 className="mt-3 text-3xl font-semibold tracking-tight">
           This page moved. / Esta página se movió.
         </h1>

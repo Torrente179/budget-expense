@@ -45,7 +45,7 @@ export function RecurringSummaryHero({
         {loading ? (
           <span className="mt-3 h-2.5 w-36 animate-pulse rounded bg-white/10" />
         ) : (
-          <p className="mt-3 text-[0.6875rem] text-white/45">
+          <p className="mt-3 text-[0.6875rem] text-white/50">
             {cadenceLabel}
             <span aria-hidden> · </span>
             <span className="text-white/70">

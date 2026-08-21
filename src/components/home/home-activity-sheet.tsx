@@ -62,7 +62,7 @@ export function HomeActivitySheet({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-t-2xl bg-card text-foreground",
+        "overflow-hidden bg-card text-foreground",
         className
       )}
     >
@@ -165,10 +165,15 @@ export function HomeActivitySheet({
         </div>
       ) : (
         <>
-          {feedDays.map((day) => (
-            <div key={day.date}>
-              <p className="up-stripe label-caps px-4 py-1.5">{day.label}</p>
-              {day.movements.map((movement) => (
+          <div className="up-list-stagger">
+            {feedDays.flatMap((day) => [
+              <p
+                key={`date-${day.date}`}
+                className="up-stripe label-caps px-4 py-1.5"
+              >
+                {day.label}
+              </p>,
+              ...day.movements.map((movement) => (
                 <TransactionRow
                   key={`${movement.kind}-${movement.id}`}
                   title={movement.title}
@@ -180,9 +185,9 @@ export function HomeActivitySheet({
                   needsReview={movement.needsReview}
                   alt={movement.alt}
                 />
-              ))}
-            </div>
-          ))}
+              )),
+            ])}
+          </div>
           <Link
             href="/movements"
             className="flex items-center justify-center border-t border-border px-4 py-3.5 text-body font-semibold text-primary transition-colors hover:bg-accent/40"

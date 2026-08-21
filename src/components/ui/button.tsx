@@ -13,7 +13,7 @@ const buttonVariants = cva(
         // Up's primary action is a flat coral pill. No lift, no drop shadow —
         // the colour carries it.
         default:
-          "bg-primary text-primary-foreground hover:bg-[var(--coral-deep)]",
+          "bg-coral text-ink hover:bg-[var(--coral-deep)] hover:text-white",
         outline:
           "border-border bg-white text-foreground shadow-none hover:border-foreground/12 hover:bg-secondary hover:text-foreground aria-expanded:bg-secondary aria-expanded:text-foreground",
         secondary:

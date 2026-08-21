@@ -47,6 +47,7 @@ export function CurrencyQuickSwitch({
       disabled={!currencyPreferenceReady || currencyPreferenceUpdating}
     >
       <SelectTrigger
+        aria-label={t("Base currency", "Moneda base")}
         className={cn(
           "h-11 w-[90px] font-mono text-xs md:h-9",
           onInk && "border-white/10 bg-white/[0.07] text-white"

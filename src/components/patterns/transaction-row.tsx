@@ -64,6 +64,7 @@ export function TransactionRow({
           </p>
           {needsReview && (
             <span
+              role="img"
               aria-label="Needs review"
               className="h-1.5 w-1.5 shrink-0 rounded-full bg-warning"
             />
@@ -75,7 +76,7 @@ export function TransactionRow({
           </p>
         )}
       </div>
-      <div className="shrink-0 text-right">
+      <div className="max-w-[46%] shrink-0 text-right leading-tight">
         {/* Outflows carry no sign. In Up a feed is outflows by default, so the
             minus is noise; inflows earn their "+" precisely because they are
             the exception. */}

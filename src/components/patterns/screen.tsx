@@ -135,7 +135,7 @@ export function Screen({
           )}
           <div className="min-w-0 flex-1">
             {eyebrow && (
-              <p className={cn("label-caps", onInk && "text-white/45")}>
+              <p className={cn("label-caps", onInk && "text-white/50")}>
                 {eyebrow}
               </p>
             )}
