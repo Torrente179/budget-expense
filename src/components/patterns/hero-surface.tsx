@@ -41,7 +41,7 @@ export const HERO_ACCENT = "#3DDC97";
  * falling. Deliberately NOT coral — coral is the primary and the money colour
  * here, so using it for "bad" would make every hero read as an alarm.
  */
-export const HERO_ACCENT_NEGATIVE = "#F0453A";
+export const HERO_ACCENT_NEGATIVE = "#F65B50";
 
 /** Amber for "watch this", short of bad. */
 export const HERO_ACCENT_WARNING = "#F5A623";

@@ -22,8 +22,8 @@
   Recharts · Supabase · Vercel.
 - **Theme model:** **one appearance.** There is no runtime theme provider or
   toggle. The `dark` variant remains declared only so legacy utilities compile;
-  nothing sets it. The now-unused `next-themes` package is removed only after
-  the full-app propagation gate, not during the approval checkpoint.
+  nothing sets it. The unused `next-themes` dependency was removed with the
+  completed full-app propagation on 2026-08-24.
 - **Surface model:** **dark chrome over a white sheet.** The page ground and
   `--foreground` stay light/ink so text inside cards reads normally; the dark
   layer is applied per surface (`up-chrome`, `up-canvas`, `HERO_SURFACE`, the
@@ -43,11 +43,12 @@ of truth for every nav surface is
 | **Home** | `/home` | "How am I doing right now" — centered checkpoint-backed **available balance** in ink chrome, followed by a compact income/spent/daily-guide/pace strip. UP-style **Trackers** show remaining or over amounts; a stacked spending strip and ranked category rows replace the donut. Upcoming context and recent movements share one continuous white sheet. Desktop: amount/activity left, Trackers and spending analysis right. **Savers/Metas** (`contribution_goal`) live on `/budget`, never on Home. See [`docs/balance-carryover.md`](docs/balance-carryover.md). |
 | **Movements** | `/movements` (+`/recurring`) | Dense unified ledger: one net-month hero, secondary money-in/out context, subdued URL-backed search/filters, chronological white sheet, swipe-delete/edit/undo, and a day-rail recurring schedule. |
 | **Budget** | `/budget` | Two explicit views: **Trackers/Presupuestos** (ceilings; remaining-first and red only when exceeded) and **Savers/Metas** (contribution floors; completion is positive). The existing plan, recommendation, setup, percentage, warning, and CRUD engines remain unchanged behind contextual actions. |
-| **Patrimonio** | `/wealth` (+`/accounts`, `/investments`, `/savings`, `/liabilities`, `/loans`) | The personal balance sheet: `netWorth = (accounts + savings + investments + moneyLent) − debts`. Black net-worth hero with the monthly change; quick-glance row (Evolución · Activos y deudas · Colchón financiero); **Organiza tu dinero** (5 category cards → pushed pages); by-currency. In-screen tabs **Resumen · Activos · Deudas**. If it's a balance, it lives here. **Available money is not a Patrimonio headline** — spendable "now" belongs to Home. |
-| **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: ratios, pillars, clickable 12-month + daily spend bars (magenta series), envelope utilization, anomalies, monthly report (owns category spend bars), calendar day drilldown. No data-entry CTAs. No duplicate standalone “Where it went” list. |
+| **Patrimonio** | `/wealth` (+`/accounts`, `/investments`, `/savings`, `/liabilities`, `/loans`) | The personal balance sheet: `netWorth = (accounts + savings + investments + moneyLent) − debts`. One dominant ink net-worth hero flows into a continuous white asset/debt sheet with dense category rows, trend/cushion analysis, by-currency context, and pushed workflows. If it's a balance, it lives here. **Available money is not a Patrimonio headline** — spendable "now" belongs to Home. |
+| **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: one month-spend chrome hero followed by a continuous divided report containing ratios, pillars, clickable 12-month + daily spend bars, Tracker utilization, anomalies, monthly analysis, giving, income sources, and calendar/category drilldowns. No decorative unsupported time controls and no data-entry CTAs. |
 
-Secondary: `/review`, `/import`, `/wisdom`, `/settings` — reachable from the
-sidebar (desktop), the profile sheet (mobile), and the command menu (⌘K).
+Secondary: `/review`, `/import`, `/wisdom`, `/settings` — compact list/sheet
+surfaces reachable from the sidebar (desktop), the profile sheet (mobile), and
+the command menu (⌘K). Import copy remains Santander/Wise.
 
 **Public landing page:** `/` — the only marketing surface, and the only route a
 signed-out visitor reaches besides the auth forms. It is not an app screen: it
@@ -62,7 +63,9 @@ app, not a copy of it. Utilities `device-phone`, `device-window`,
 are the only sanctioned fixed-pixel values in the system because they are
 device geometry rather than tokens.
 
-**First-run:** `/onboarding` — skippable setup wizard (not in primary nav).
+**First-run:** `/onboarding` — skippable setup wizard (not in primary nav),
+presented as a full-screen coral story with accessible ink-backed lemon display
+type and an opaque white form sheet.
 See [§8 First-run onboarding & goals](#8-first-run-onboarding--goals).
 
 Old routes (`/dashboard`, `/movimientos`, `/budgets`, `/analytics`,
@@ -226,13 +229,11 @@ uppercase micro-badges. Arbitrary `tracking-[…]` values are banned.
 
 ### 2.3 Elevation
 
-**Up is flat.** Cards separate from the ground by contrast, not by lift. The
-three shadows (`--elevation-1/2/3`, exposed as `shadow-1/2/3`) survive but are
-now nearly imperceptible: **1** resting · **2** raised (popovers, sticky
-headers) · **3** modal/sheet. `<Card>` no longer carries a shadow at all, and
-buttons have no drop shadow and no hover lift. The FAB uses the `up-fab-glow`
-utility — a halo in coral's own hue, not a neutral drop shadow. One-off
-`shadow-[…]` values are banned.
+**Up is flat.** Surfaces separate from the ground by contrast and one-pixel
+rules, not by lift. `<Card>`, popovers, menus, buttons, and sheets carry no
+decorative drop shadow or hover lift; contextual overlays use an opaque surface
+plus a restrained ring. The FAB alone uses `up-fab-glow` — a coral action halo,
+not a neutral material shadow. One-off `shadow-[…]` values are banned.
 
 ### 2.4 Radius & spacing
 
@@ -305,6 +306,10 @@ src/components/
                                   navigates to `backHref` (deep-link/refresh
                                   fallback). Never hard-code `/home` as the
                                   only back target.
+              continuous-sheet.tsx one uninterrupted white content plane with
+                                  divided `SheetSection` chapters; use this for
+                                  primary reports and dense balance/ledger
+                                  surfaces instead of stacked generic cards.
               section-header.tsx  eyebrow + title + optional action
               stat-card.tsx       label / value / detail tile
               amount-text.tsx     THE way to render money (converts via the
@@ -330,8 +335,8 @@ src/components/
               expense add with Undo). There is exactly ONE movement form.
               After a successful expense save, envelope-limit toasts may fire
               (see §9).
-  onboarding/ First-run wizard + soft client gate (`OnboardingGate` in the
-              app layout). Not primary nav.
+  onboarding/ First-run wizard + reusable `OnboardingStoryShell` + soft client
+              gate (`OnboardingGate` in the app layout). Not primary nav.
   layout/     sidebar (desktop, flat ink chrome),
               tab-bar (mobile, 5 tabs, flat opaque 60px ink capsule),
               profile-sheet (mobile secondary nav + language row + logout),
@@ -340,9 +345,10 @@ src/components/
               in solid `Screen` headers; there is no separate glass topbar.
               Chrome (Sidebar/TabBar/CaptureFab) is hidden on
               `/onboarding`.
-  design/     `/__design/up` fixture review: deterministic production view
-              components, no Supabase/API access, noindex, and fail-closed
-              outside an explicit non-production preview flag.
+  design/     `/__design/up` fixture review: deterministic production Home,
+              Movements, Recurring, Budget, Capture, Wealth, Insights, and
+              onboarding presentation components; no Supabase/API access,
+              noindex, and fail-closed outside an explicit non-production flag.
   home/ movements/ budget/ wealth/ insights/   feature modules per section
   review/ import/ settings/ auth/ shared/      kept modules
 ```
@@ -420,7 +426,8 @@ error states. No blank areas while fetching.
 |---|---|
 | Page scaffold | `<Screen mode="chrome-sheet" \| "dark-canvas" \| "plain" …>` |
 | Pushed-screen back | `<Screen backHref="/safe-fallback">` (history first) |
-| Surface / panel | `<Card>` (unmodified) |
+| Continuous primary report | `<ContinuousSheet>` + `<SheetSection>` |
+| Compact secondary panel | `<Card>` (flat, no shadow) |
 | Section/metric label | `label-caps` |
 | Big number | `up-figure font-mono text-display tabular-nums` (coral, chrome only) |
 | Money | `<AmountText amount currency tone signed>` |
@@ -463,8 +470,9 @@ error states. No blank areas while fetching.
 1. No raw status colors in `src/`:
    `emerald-|rose-\d|amber-\d|red-\d|sky-\d|blue-\d|#10b981` (category-color
    plumbing exempt).
-2. No magic values outside `components/ui/`: `rounded-[…rem]`, `text-[…rem]`,
-   `tracking-[…]`, `shadow-[0_…]`, `bg-card/96`.
+2. No legacy material effects or magic values: `backdrop-blur`, gradients,
+   decorative `shadow-*`, `rounded-[…rem]`, `text-[…rem]`, `tracking-[…]`, or
+   `bg-card/96` outside explicit owned artwork/geometry exceptions.
 3. No stale route strings outside their redirect stubs.
 4. Nav items come only from `lib/navigation.ts`.
 5. No language switcher in `Screen` headers — Settings / profile sheet only.

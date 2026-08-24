@@ -48,7 +48,7 @@ export function TypeStep<Value extends string>({
             role="radio"
             aria-checked={active}
             onClick={() => onChange(option.value)}
-            className="rounded-xl bg-card p-4 text-left ring-1 ring-border transition-shadow hover:shadow-2"
+            className="rounded-xl bg-card p-4 text-left ring-1 ring-border transition-colors hover:bg-accent/30"
             style={active ? { boxShadow: `inset 0 0 0 2px ${accent}` } : undefined}
           >
             <span

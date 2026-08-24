@@ -76,7 +76,7 @@ export function MonthPicker({
         variant="ghost"
         size="icon"
         className={cn(
-          "h-11 w-11 rounded-xl md:h-8 md:w-8",
+          "h-11 w-11 rounded-xl",
           onInk && "text-white hover:bg-white/10 hover:text-white"
         )}
         onClick={handlePrev}
@@ -95,7 +95,7 @@ export function MonthPicker({
         variant="ghost"
         size="icon"
         className={cn(
-          "h-11 w-11 rounded-xl md:h-8 md:w-8",
+          "h-11 w-11 rounded-xl",
           onInk && "text-white hover:bg-white/10 hover:text-white"
         )}
         onClick={handleNext}

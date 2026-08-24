@@ -119,10 +119,13 @@ export function OrganizeMoneyGrid({
   const { baseCurrency } = useCurrency();
 
   return (
-    <section className="space-y-3">
-      <SectionHeader title={t("Organize your money", "Organiza tu dinero")} />
+    <section>
+      <SectionHeader
+        title={t("Organize your money", "Organiza tu dinero")}
+        className="px-4 pb-3 pt-5 sm:px-5"
+      />
 
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="divide-y divide-border/70 border-t border-border/70">
         {CATEGORIES.map((category) => {
           const accent = PALETTE.wealth[category.key];
           const count = counts[category.key] ?? 0;
@@ -133,7 +136,7 @@ export function OrganizeMoneyGrid({
             <Link
               key={category.key}
               href={category.href}
-              className="group flex items-center gap-3.5 rounded-xl bg-card px-4 py-3.5 ring-1 ring-border shadow-1 transition-all hover:shadow-2 hover:ring-border/80"
+              className="group flex min-h-16 items-center gap-3.5 px-4 py-3 transition-colors hover:bg-accent/40 sm:px-5"
             >
               <span
                 aria-hidden
@@ -144,16 +147,13 @@ export function OrganizeMoneyGrid({
               </span>
 
               <span className="min-w-0 flex-1">
-                <span
-                  className="block truncate text-body font-semibold"
-                  style={{ color: accent }}
-                >
+                <span className="block truncate text-body font-semibold text-foreground">
                   {t(category.label.en, category.label.es)}
                 </span>
 
                 {showAmount ? (
                   <>
-                    <span className="block truncate font-mono text-heading font-semibold tabular-nums text-foreground">
+                    <span className="block truncate font-mono text-body font-semibold tabular-nums text-foreground">
                       {formatCurrency(total, baseCurrency)}
                     </span>
                     <span className="block truncate text-caption text-muted-foreground">

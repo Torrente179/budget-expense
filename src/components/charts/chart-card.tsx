@@ -16,6 +16,8 @@ interface ChartCardProps {
   height?: number;
   children: ReactNode;
   className?: string;
+  /** Render inside a parent sheet without adding another bordered card. */
+  variant?: "card" | "section";
 }
 
 /**
@@ -30,28 +32,37 @@ export function ChartCard({
   height = 260,
   children,
   className,
+  variant = "card",
 }: ChartCardProps) {
   const mounted = useChartMounted();
 
+  const header = (
+    <SectionHeader
+      eyebrow={eyebrow}
+      title={title}
+      description={description}
+      action={action}
+    />
+  );
+  const plot = (
+    <div style={{ height }} className="w-full min-w-0">
+      {mounted ? children : <Skeleton className="h-full w-full rounded-lg" />}
+    </div>
+  );
+
+  if (variant === "section") {
+    return (
+      <section className={cn("min-w-0 space-y-4", className)}>
+        {header}
+        {plot}
+      </section>
+    );
+  }
+
   return (
     <Card className={cn("min-w-0", className)}>
-      <CardHeader>
-        <SectionHeader
-          eyebrow={eyebrow}
-          title={title}
-          description={description}
-          action={action}
-        />
-      </CardHeader>
-      <CardContent className="pb-1">
-        <div style={{ height }} className="w-full min-w-0">
-          {mounted ? (
-            children
-          ) : (
-            <Skeleton className="h-full w-full rounded-lg" />
-          )}
-        </div>
-      </CardContent>
+      <CardHeader>{header}</CardHeader>
+      <CardContent className="pb-1">{plot}</CardContent>
     </Card>
   );
 }

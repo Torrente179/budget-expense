@@ -7,6 +7,7 @@ import { useCurrency } from "@/providers/currency-provider";
 import { useInvestments } from "@/hooks/use-investments";
 import { formatCurrency } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
+import { ContinuousSheet } from "@/components/patterns/continuous-sheet";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
 import { WealthBreadcrumb } from "@/components/wealth/wealth-breadcrumb";
 import { WealthCategoryHero } from "@/components/wealth/wealth-category-hero";
@@ -200,6 +201,7 @@ export default function InvestmentStocksPage() {
     <Screen
       title={t("Investments", "Inversiones")}
       backHref="/wealth"
+      mode="chrome-sheet"
       actions={
         <>
           <Button size="sm" className="gap-1.5" onClick={openTradeSheet}>
@@ -228,7 +230,7 @@ export default function InvestmentStocksPage() {
       }
       subheader={<WealthBreadcrumb current={t("Investments", "Inversiones")} />}
     >
-      {accounts.length > 0 || loading ? (
+      <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
         <WealthCategoryHero
           eyebrow={t("Portfolio value", "Valor de tus inversiones")}
           amount={
@@ -237,6 +239,7 @@ export default function InvestmentStocksPage() {
             manualTotals.value
           }
           icon={TrendingUp}
+          className="mx-0 rounded-none sm:mx-0 md:mx-0 md:rounded-none"
           delta={
             overview.totalUnrealizedPnl !== 0
               ? {
@@ -268,7 +271,9 @@ export default function InvestmentStocksPage() {
             },
           ]}
         />
-      ) : null}
+
+        <ContinuousSheet className="relative -mt-px mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+          <div className="space-y-5 px-4 pb-5 pt-2 sm:px-5 [&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:shadow-none [&_[data-slot=card]]:ring-0">
 
       {accounts.length === 0 && !loading ? (
         <Card>
@@ -302,6 +307,7 @@ export default function InvestmentStocksPage() {
         value={tab}
         onChange={setTab}
         ariaLabel={t("Investment views", "Vistas de inversión")}
+        className="mx-0 px-0"
       />
 
       {tab === "overview" && (
@@ -589,6 +595,10 @@ export default function InvestmentStocksPage() {
           />
         </div>
       )}
+
+          </div>
+        </ContinuousSheet>
+      </div>
 
       {tradeSheetMounted ? (
         <TradeForm

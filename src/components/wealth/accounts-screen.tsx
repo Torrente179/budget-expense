@@ -5,6 +5,10 @@ import Link from "next/link";
 import { Plus, Wallet } from "lucide-react";
 import { toast } from "sonner";
 import { Screen } from "@/components/patterns/screen";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
 import { SectionHeader } from "@/components/patterns/section-header";
 import {
   HERO_ACCENT,
@@ -13,7 +17,6 @@ import {
 } from "@/components/patterns/hero-surface";
 import { StatusTag } from "@/components/patterns/status-tag";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/shared/empty-state";
 import { WealthBreadcrumb } from "@/components/wealth/wealth-breadcrumb";
@@ -70,6 +73,7 @@ export function AccountsScreen() {
     <Screen
       title={t("Accounts & cash", "Cuentas y efectivo")}
       backHref="/wealth"
+      mode="chrome-sheet"
       subheader={
         <WealthBreadcrumb current={t("Accounts", "Cuentas")} />
       }
@@ -86,8 +90,13 @@ export function AccountsScreen() {
           <Skeleton className="h-48 rounded-xl" />
         </>
       ) : (
-        <>
-          <section className={cn(HERO_SURFACE, "px-5 py-5 sm:px-6")}>
+        <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+          <section
+            className={cn(
+              HERO_SURFACE,
+              "mx-0 rounded-none px-5 py-5 sm:mx-0 sm:px-6 md:mx-0 md:rounded-none"
+            )}
+          >
             <div className="relative space-y-4">
               <div className="space-y-1.5">
                 <p className="label-caps text-white/55">
@@ -121,11 +130,12 @@ export function AccountsScreen() {
             </div>
           </section>
 
-          <Card>
-            <CardHeader>
-              <SectionHeader title={t("Your accounts", "Tus cuentas")} />
-            </CardHeader>
-            <CardContent>
+          <ContinuousSheet className="relative -mt-px mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+            <SheetSection
+              header={
+                <SectionHeader title={t("Your accounts", "Tus cuentas")} />
+              }
+            >
               {activeAccounts.length === 0 ? (
                 <EmptyState
                   icon={Wallet}
@@ -213,9 +223,9 @@ export function AccountsScreen() {
                   })}
                 </ul>
               )}
-            </CardContent>
-          </Card>
-        </>
+            </SheetSection>
+          </ContinuousSheet>
+        </div>
       )}
 
       <AccountWizard

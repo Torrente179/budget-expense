@@ -32,7 +32,7 @@ export function LanguageSwitch({ className }: { className?: string }) {
       variant="ghost"
       size="sm"
       className={cn(
-        "h-11 gap-1.5 rounded-full border border-border bg-secondary/80 px-2.5 font-mono text-xs font-medium tracking-wide md:h-9",
+        "h-11 gap-1.5 rounded-full border border-border bg-secondary/80 px-2.5 font-mono text-xs font-medium tracking-wide",
         className
       )}
       aria-label={t(

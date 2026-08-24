@@ -12,6 +12,7 @@ export default function LoansPage() {
     <Screen
       title={t("Loans", "Préstamos")}
       backHref="/wealth"
+      mode="chrome-sheet"
       subheader={<WealthBreadcrumb current={t("Loans", "Préstamos")} />}
     >
       <LoansEditor />

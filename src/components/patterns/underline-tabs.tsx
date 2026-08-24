@@ -12,7 +12,7 @@ export const underlineTabListClass =
 
 export function underlineTabItemClass(active: boolean) {
   return cn(
-    "relative shrink-0 pb-2.5 text-body font-medium whitespace-nowrap transition-colors",
+    "relative flex min-h-11 shrink-0 items-center pt-1 text-body font-medium whitespace-nowrap transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
     active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
   );
 }
@@ -42,20 +42,58 @@ export function UnderlineTabs<Key extends string>({
   ariaLabel,
   className,
 }: UnderlineTabsProps<Key>) {
+  function moveFocus(
+    currentIndex: number,
+    delta: number,
+    tabList: HTMLElement | null
+  ) {
+    const nextIndex = (currentIndex + delta + tabs.length) % tabs.length;
+    const next = tabs[nextIndex];
+    if (!next) return;
+    onChange(next.key);
+    requestAnimationFrame(() => {
+      tabList
+        ?.querySelector<HTMLButtonElement>(
+          `[data-up-tab="${CSS.escape(next.key)}"]`
+        )
+        ?.focus();
+    });
+  }
+
   return (
     <div
       role="tablist"
       aria-label={ariaLabel}
       className={cn(underlineTabListClass, className)}
     >
-      {tabs.map((tab) => {
+      {tabs.map((tab, index) => {
         const active = value === tab.key;
         return (
           <button
             key={tab.key}
             role="tab"
             aria-selected={active}
+            tabIndex={active ? 0 : -1}
+            data-up-tab={tab.key}
             onClick={() => onChange(tab.key)}
+            onKeyDown={(event) => {
+              const tabList = event.currentTarget.closest<HTMLElement>(
+                '[role="tablist"]'
+              );
+              if (event.key === "ArrowRight") {
+                event.preventDefault();
+                moveFocus(index, 1, tabList);
+              } else if (event.key === "ArrowLeft") {
+                event.preventDefault();
+                moveFocus(index, -1, tabList);
+              } else if (event.key === "Home") {
+                event.preventDefault();
+                moveFocus(index, -index, tabList);
+              } else if (event.key === "End") {
+                event.preventDefault();
+                moveFocus(index, tabs.length - index - 1, tabList);
+              }
+            }}
             className={underlineTabItemClass(active)}
           >
             {tab.label}

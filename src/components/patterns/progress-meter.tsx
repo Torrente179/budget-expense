@@ -21,6 +21,7 @@ interface ProgressMeterProps {
    */
   tone?: MeterTone;
   className?: string;
+  ariaLabel?: string;
   /** @deprecated Unused when tone is omitted; kept for call-site compatibility. */
   warnAt?: number;
 }
@@ -30,6 +31,7 @@ export function ProgressMeter({
   ratio,
   tone,
   className,
+  ariaLabel = "Progress",
 }: ProgressMeterProps) {
   const clamped = Math.max(0, Math.min(ratio, 1));
   const usageColor = tone ? null : budgetUsageColorForRatio(ratio);
@@ -37,9 +39,11 @@ export function ProgressMeter({
   return (
     <div
       role="progressbar"
+      aria-label={ariaLabel}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={Math.round(Math.min(Math.max(ratio, 0), 9.99) * 100)}
+      aria-valuenow={Math.round(clamped * 100)}
+      aria-valuetext={`${Math.round(Math.max(ratio, 0) * 100)}%`}
       /* Up: a flat painted bar. No machined material anywhere in Up. */
       className={cn(
         "up-track h-1 w-full overflow-hidden rounded-sm",

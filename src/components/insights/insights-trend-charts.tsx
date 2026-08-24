@@ -27,6 +27,7 @@ export interface InsightsTrendChartsProps {
   baseCurrency: string;
   onMonthClick?: (monthKey: string) => void;
   onDayClick?: (day: number) => void;
+  variant?: "card" | "section";
 }
 
 function activeChartIndex(
@@ -44,6 +45,7 @@ export function InsightsTrendCharts({
   baseCurrency,
   onMonthClick,
   onDayClick,
+  variant = "card",
 }: InsightsTrendChartsProps) {
   const { t } = useLocale();
   const tooltipFormatter = currencyTooltipFormatter(intlLocale, baseCurrency);
@@ -53,6 +55,7 @@ export function InsightsTrendCharts({
       <ChartCard
         eyebrow={t("Trend", "Tendencia")}
         title={t("Monthly spending, 12 months", "Gasto mensual, 12 meses")}
+        variant={variant}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <BarChart
@@ -96,6 +99,7 @@ export function InsightsTrendCharts({
       <ChartCard
         eyebrow={t("This month", "Este mes")}
         title={t("Daily spending", "Gasto diario")}
+        variant={variant}
       >
         <ResponsiveContainer width="100%" height="100%" minWidth={0}>
           <BarChart

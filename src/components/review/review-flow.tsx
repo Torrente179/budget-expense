@@ -10,6 +10,7 @@ import {
   Sparkles,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { ContinuousSheet } from "@/components/patterns/continuous-sheet";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -108,17 +109,23 @@ export function ReviewFlow() {
   };
 
   return (
-    <div className="space-y-4">
+    <ContinuousSheet className="md:mx-0">
       {/* Step indicator */}
-      <div className="flex flex-wrap gap-2">
+      <div
+        role="tablist"
+        aria-label={t("Review steps", "Pasos de revisión")}
+        className="flex overflow-x-auto border-b border-border/70 px-4 [scrollbar-width:none] sm:px-5"
+      >
         {STEP_ORDER.map((item, index) => (
           <button
             key={item}
             type="button"
+            role="tab"
+            aria-selected={step === item}
             onClick={() => setStep(item)}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+            className={`relative flex min-h-12 shrink-0 items-center gap-1.5 px-3 text-xs font-medium transition-colors ${
               step === item
-                ? "bg-secondary text-foreground ring-1 ring-border"
+                ? "text-foreground after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-foreground"
                 : index < stepIndex
                   ? "text-muted-foreground"
                   : "text-muted-foreground/60"
@@ -132,6 +139,8 @@ export function ReviewFlow() {
           </button>
         ))}
       </div>
+
+      <div className="space-y-4 px-4 py-5 sm:px-5 [&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:py-0 [&_[data-slot=card]]:ring-0 [&_[data-slot=card-content]]:px-0 [&_[data-slot=card-header]]:px-0">
 
       {step === "uncategorized" && (
         <Card>
@@ -157,11 +166,11 @@ export function ReviewFlow() {
                 )}
               />
             ) : (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-border/70">
                 {expenses.map((expense) => (
                   <li
                     key={expense.id}
-                    className="flex flex-wrap items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border"
+                    className="flex min-h-14 flex-wrap items-center gap-3 px-1 py-3"
                   >
                     <CategoryIcon
                       icon={expense.categories?.icon ?? "circle"}
@@ -247,11 +256,11 @@ export function ReviewFlow() {
                 )}
               />
             ) : (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-border/70">
                 {anomalies.map((anomaly) => (
                   <li
                     key={anomaly.categoryId}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border"
+                    className="flex min-h-14 items-center gap-3 px-1 py-3"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-destructive/10">
                       <AlertTriangle className="h-4 w-4 text-destructive" />
@@ -300,11 +309,11 @@ export function ReviewFlow() {
                 )}
               />
             ) : (
-              <ul className="space-y-2">
+              <ul className="divide-y divide-border/70">
                 {upcoming.map(({ expense, daysAway }) => (
                   <li
                     key={expense.id}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border"
+                    className="flex min-h-14 items-center gap-3 px-1 py-3"
                   >
                     <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-secondary">
                       <CalendarClock className="h-4 w-4 text-muted-foreground" />
@@ -399,7 +408,8 @@ export function ReviewFlow() {
           </Button>
         </div>
       )}
-    </div>
+      </div>
+    </ContinuousSheet>
   );
 }
 

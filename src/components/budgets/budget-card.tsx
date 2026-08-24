@@ -52,7 +52,7 @@ export function BudgetCard({
     locale === "es" ? band?.labelEs ?? "" : band?.labelEn ?? "";
 
   return (
-    <div className="group rounded-lg border bg-card p-4 shadow-sm md:rounded-xl md:p-5 md:shadow-1">
+    <div className="group rounded-lg border bg-card p-4 md:rounded-xl md:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <CategoryIcon

@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { Screen } from "@/components/patterns/screen";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
 import { ImportDropzone } from "@/components/import/import-dropzone";
 import { ImportHistory } from "@/components/import/import-history";
 import { ImportReview } from "@/components/import/import-review";
@@ -113,30 +117,38 @@ export default function ImportPage() {
       title={t("Import", "Importar")}
       eyebrow={t("Bank CSV", "CSV bancario")}
       backHref="/home"
+      mode="chrome-sheet"
     >
+      <ContinuousSheet className="[&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:py-0 [&_[data-slot=card]]:ring-0 [&_[data-slot=card-content]]:px-0 [&_[data-slot=card-header]]:px-0">
+        <SheetSection>
+          <ImportDropzone
+            onUpload={handleUpload}
+            uploading={createBatch.isPending}
+          />
+        </SheetSection>
 
-      <ImportDropzone
-        onUpload={handleUpload}
-        uploading={createBatch.isPending}
-      />
+        {batch && (
+          <SheetSection>
+            <ImportReview
+              batch={batch}
+              onOverride={(overrides) => updateRows.mutateAsync(overrides)}
+              onCommit={handleCommit}
+              onDiscard={handleDiscard}
+              committing={commitBatch.isPending}
+            />
+          </SheetSection>
+        )}
 
-      {batch && (
-        <ImportReview
-          batch={batch}
-          onOverride={(overrides) => updateRows.mutateAsync(overrides)}
-          onCommit={handleCommit}
-          onDiscard={handleDiscard}
-          committing={commitBatch.isPending}
-        />
-      )}
-
-      <ImportHistory
-        batches={batches}
-        loading={loading}
-        onSelect={setActiveBatchId}
-        onRollback={handleRollback}
-        rollingBackId={rollingBackId}
-      />
+        <SheetSection>
+          <ImportHistory
+            batches={batches}
+            loading={loading}
+            onSelect={setActiveBatchId}
+            onRollback={handleRollback}
+            rollingBackId={rollingBackId}
+          />
+        </SheetSection>
+      </ContinuousSheet>
     </Screen>
   );
 }

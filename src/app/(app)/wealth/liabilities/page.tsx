@@ -12,6 +12,7 @@ export default function LiabilitiesPage() {
     <Screen
       title={t("Debts", "Deudas")}
       backHref="/wealth"
+      mode="chrome-sheet"
       subheader={<WealthBreadcrumb current={t("Debts", "Deudas")} />}
     >
       <LiabilitiesEditor />

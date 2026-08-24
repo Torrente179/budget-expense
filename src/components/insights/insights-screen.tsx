@@ -27,8 +27,16 @@ import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
 import { formatCurrency } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
+import {
+  HERO_ACCENT,
+  HERO_RULE,
+  HERO_SURFACE,
+} from "@/components/patterns/hero-surface";
 import { SectionHeader } from "@/components/patterns/section-header";
-import { StatCard } from "@/components/patterns/stat-card";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { StatusTag } from "@/components/patterns/status-tag";
 import { MonthPicker } from "@/components/shared/month-picker";
@@ -36,7 +44,6 @@ import { CategoryIcon } from "@/components/shared/category-badge";
 import { MonthlyReport } from "@/components/insights/monthly-report";
 import { GivingInsights } from "@/components/insights/giving-insights";
 import { DeferredInsightsTrendCharts } from "@/components/insights/deferred-insights-trend-charts";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getDaysInMonth, parseISO } from "date-fns";
 
@@ -212,87 +219,74 @@ export function InsightsScreen() {
   return (
     <Screen
       title={t("Insights", "Análisis")}
-      actions={<MonthPicker month={month} year={year} onChange={setMonthYear} />}
+      mode="chrome-sheet"
+      actions={
+        <MonthPicker
+          month={month}
+          year={year}
+          onChange={setMonthYear}
+          onInk
+        />
+      }
     >
       {loading ? (
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            {Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={index} className="h-28 rounded-xl" />
-            ))}
-          </div>
-          <Skeleton className="h-72 rounded-xl" />
-          <Skeleton className="h-72 rounded-xl" />
+        <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+          <Skeleton className="h-64 rounded-none bg-ink/90" />
+          <Skeleton className="h-[38rem] rounded-none bg-card" />
         </div>
       ) : (
-        <>
-          {/* Ratios */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-            <StatCard
-              label={t("Savings rate", "Tasa de ahorro")}
-              value={
-                <span className="font-mono text-heading font-semibold tabular-nums">
-                  {savingsRate !== null ? `${savingsRate.toFixed(1)}%` : "—"}
-                </span>
-              }
-              detail={
-                savingsRate !== null
-                  ? savingsRate >= 20
-                    ? t("Above 20% target", "Sobre la meta del 20%")
-                    : t("Below 20% target", "Debajo de la meta del 20%")
-                  : t("No income this month", "Sin ingresos este mes")
-              }
-            />
-            <StatCard
-              label={t("Expense ratio", "Ratio de gastos")}
-              value={
-                <span className="font-mono text-heading font-semibold tabular-nums">
-                  {expenseRatio !== null ? `${expenseRatio.toFixed(0)}%` : "—"}
-                </span>
-              }
-              detail={t("of income spent", "del ingreso gastado")}
-            />
-            <StatCard
-              label={t("Budget usage", "Uso del presupuesto")}
-              value={
-                <span className="font-mono text-heading font-semibold tabular-nums">
-                  {budgetUsage !== null ? `${budgetUsage.toFixed(0)}%` : "—"}
-                </span>
-              }
-              detail={
-                budgetUsage !== null
-                  ? t("of pool consumed", "del fondo consumido")
-                  : t("No budget set", "Sin presupuesto")
-              }
-            />
-            <StatCard
-              label={t("Transactions", "Transacciones")}
-              value={
-                <span className="font-mono text-heading font-semibold tabular-nums">
-                  {summary.expenseCount}
-                </span>
-              }
-              detail={t("this month", "este mes")}
-            />
-          </div>
+        <div className="-mx-4 min-w-0 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+          <section className={`${HERO_SURFACE} mx-0 rounded-none px-5 py-6 sm:mx-0 sm:px-6 md:mx-0 md:rounded-none`}>
+            <div className="text-center">
+              <p className="label-caps text-white/55">
+                {t("Spent this month", "Gastado este mes")}
+              </p>
+              <p className="up-figure mt-2 font-mono text-display tabular-nums tracking-tight">
+                {formatCurrency(summary.totalSpent, baseCurrency)}
+              </p>
+              <p className="mt-1 text-caption text-white/50">
+                {formatCurrency(summary.totalIncome, baseCurrency)} {t("money in", "de ingresos")}
+              </p>
+            </div>
+            <div className={`mt-6 grid grid-cols-2 border-t pt-4 sm:grid-cols-4 ${HERO_RULE}`}>
+              <InsightMetric
+                label={t("Savings rate", "Tasa de ahorro")}
+                value={savingsRate !== null ? `${savingsRate.toFixed(1)}%` : "—"}
+                healthy={savingsRate !== null && savingsRate >= 20}
+              />
+              <InsightMetric
+                label={t("Expense ratio", "Ratio de gastos")}
+                value={expenseRatio !== null ? `${expenseRatio.toFixed(0)}%` : "—"}
+              />
+              <InsightMetric
+                label={t("Budget use", "Uso del presupuesto")}
+                value={budgetUsage !== null ? `${budgetUsage.toFixed(0)}%` : "—"}
+              />
+              <InsightMetric
+                label={t("Transactions", "Transacciones")}
+                value={String(summary.expenseCount)}
+              />
+            </div>
+          </section>
 
-          {/* Three pillars (trailing 12M) */}
-          {insights && insights.givingRate !== null && (
-            <Card>
-              <CardHeader>
-                <SectionHeader
-                  eyebrow={t("Last 12 months", "Últimos 12 meses")}
-                  title={t(
-                    "Giving · Spending · Saving",
-                    "Dar · Gastar · Ahorrar"
-                  )}
-                  description={t(
-                    `Giving target ${insights.titheTargetPercent}% · the three sum to 100% of income`,
-                    `Meta de dar ${insights.titheTargetPercent}% · los tres suman el 100% del ingreso`
-                  )}
-                />
-              </CardHeader>
-              <CardContent className="space-y-3">
+          <ContinuousSheet className="relative -mt-px mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+            {insights && insights.givingRate !== null && (
+              <SheetSection
+                header={
+                  <SectionHeader
+                    eyebrow={t("Last 12 months", "Últimos 12 meses")}
+                    title={t(
+                      "Giving · Spending · Saving",
+                      "Dar · Gastar · Ahorrar"
+                    )}
+                    description={t(
+                      `Giving target ${insights.titheTargetPercent}% · the three sum to 100% of income`,
+                      `Meta de dar ${insights.titheTargetPercent}% · los tres suman el 100% del ingreso`
+                    )}
+                  />
+                }
+              >
+                <div className="space-y-3">
                 <div className="flex h-3 w-full gap-0.5 overflow-hidden rounded-full">
                   <div
                     style={{
@@ -345,34 +339,36 @@ export function InsightsScreen() {
                     </span>
                   ))}
                 </div>
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              </SheetSection>
+            )}
 
-          {/* Trends */}
-          <DeferredInsightsTrendCharts
-            trendData={trendData}
-            dailySpendData={dailySpendData}
-            intlLocale={intlLocale}
-            baseCurrency={baseCurrency}
-            onMonthClick={handleMonthClick}
-            onDayClick={handleDayClick}
-          />
+            <SheetSection>
+              <DeferredInsightsTrendCharts
+                trendData={trendData}
+                dailySpendData={dailySpendData}
+                intlLocale={intlLocale}
+                baseCurrency={baseCurrency}
+                onMonthClick={handleMonthClick}
+                onDayClick={handleDayClick}
+                variant="section"
+              />
+            </SheetSection>
 
-          {/* Budget utilization */}
-          {budgetUtilization.length > 0 && (
-            <Card>
-              <CardHeader>
-                <SectionHeader
-                  eyebrow={t("Against plan", "Frente al plan")}
-                  title={t("Budget use", "Uso del presupuesto")}
-                  description={t(
-                    `${budgetUtilization.filter((b) => b.ratio > 1).length} of ${budgetUtilization.length} budgets over the limit`,
-                    `${budgetUtilization.filter((b) => b.ratio > 1).length} de ${budgetUtilization.length} presupuestos por encima del límite`
-                  )}
-                />
-              </CardHeader>
-              <CardContent className="space-y-1">
+            {budgetUtilization.length > 0 && (
+              <SheetSection
+                header={
+                  <SectionHeader
+                    eyebrow={t("Against plan", "Frente al plan")}
+                    title={t("Budget use", "Uso del presupuesto")}
+                    description={t(
+                      `${budgetUtilization.filter((b) => b.ratio > 1).length} of ${budgetUtilization.length} budgets over the limit`,
+                      `${budgetUtilization.filter((b) => b.ratio > 1).length} de ${budgetUtilization.length} presupuestos por encima del límite`
+                    )}
+                  />
+                }
+              >
+                <div className="divide-y divide-border/60">
                 {budgetUtilization.map((row) => (
                   <button
                     key={row.id}
@@ -384,7 +380,7 @@ export function InsightsScreen() {
                         router.push("/budget");
                       }
                     }}
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/50"
+                    className="flex min-h-14 w-full items-center gap-3 px-2 py-2 text-left transition-colors hover:bg-accent/50"
                   >
                     <CategoryIcon
                       icon={row.categoryIcon}
@@ -411,30 +407,34 @@ export function InsightsScreen() {
                           {formatCurrency(row.budgetAmount, baseCurrency)}
                         </span>
                       </div>
-                      <ProgressMeter ratio={row.ratio} className="mt-1.5" />
+                      <ProgressMeter
+                        ratio={row.ratio}
+                        ariaLabel={`${row.name}: ${Math.round(row.ratio * 100)}%`}
+                        className="mt-1.5"
+                      />
                     </div>
                   </button>
                 ))}
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              </SheetSection>
+            )}
 
-          {/* Anomalies */}
-          {anomalies.length > 0 && (
-            <Card>
-              <CardHeader>
-                <SectionHeader
-                  eyebrow={t("Heads up", "Ojo")}
-                  title={t("Unusual spending", "Gasto raro")}
-                />
-              </CardHeader>
-              <CardContent className="space-y-1">
+            {anomalies.length > 0 && (
+              <SheetSection
+                header={
+                  <SectionHeader
+                    eyebrow={t("Heads up", "Ojo")}
+                    title={t("Unusual spending", "Gasto raro")}
+                  />
+                }
+              >
+                <div className="divide-y divide-border/60">
                 {anomalies.map((anomaly) => (
                   <button
                     key={anomaly.categoryId}
                     type="button"
                     onClick={() => handleCategoryClick(anomaly.categoryId)}
-                    className="flex w-full items-center gap-3 rounded-lg px-2 py-2 text-left transition-colors hover:bg-accent/50"
+                    className="flex min-h-14 w-full items-center gap-3 px-2 py-2 text-left transition-colors hover:bg-accent/50"
                   >
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-warning-subtle text-warning">
                       <AlertTriangle className="h-4 w-4" />
@@ -455,32 +455,43 @@ export function InsightsScreen() {
                     </div>
                   </button>
                 ))}
-              </CardContent>
-            </Card>
-          )}
+                </div>
+              </SheetSection>
+            )}
 
-          {/* Monthly report + Giving */}
-          <MonthlyReport
-            totalSpent={summary.totalSpent}
-            totalIncome={summary.totalIncome}
-            previousMonthTotal={summary.previousMonthTotal}
-            categoryBreakdown={summary.categoryBreakdown}
-            budgets={[]}
-            overBudgetCount={
-              budgetUtilization.filter((row) => row.ratio > 1).length
-            }
-            onCategoryClick={handleCategoryClick}
-          />
+            {summary.categoryBreakdown.length > 0 && (
+              <SheetSection>
+                <MonthlyReport
+                  variant="section"
+                  totalSpent={summary.totalSpent}
+                  totalIncome={summary.totalIncome}
+                  previousMonthTotal={summary.previousMonthTotal}
+                  categoryBreakdown={summary.categoryBreakdown}
+                  budgets={[]}
+                  overBudgetCount={
+                    budgetUtilization.filter((row) => row.ratio > 1).length
+                  }
+                  onCategoryClick={handleCategoryClick}
+                />
+              </SheetSection>
+            )}
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <GivingInsights
-              expenses={givingExpenses}
-              totalIncome={summary.totalIncome}
-            />
+            {(summary.totalIncome > 0 ||
+              givingExpenses.some(
+                (expense) => expense.classification === "giving"
+              )) && (
+              <SheetSection>
+                <GivingInsights
+                  variant="section"
+                  expenses={givingExpenses}
+                  totalIncome={summary.totalIncome}
+                />
+              </SheetSection>
+            )}
 
             {incomeBySource.length > 0 && (
-              <Card>
-                <CardHeader>
+              <SheetSection
+                header={
                   <SectionHeader
                     eyebrow={t("Income", "Ingresos")}
                     title={t("Where it came from", "De dónde vino")}
@@ -490,8 +501,9 @@ export function InsightsScreen() {
                       </div>
                     }
                   />
-                </CardHeader>
-                <CardContent className="space-y-1">
+                }
+              >
+                <div className="divide-y divide-border/60">
                   {incomeBySource.map((source) => {
                     const maxAmount = incomeBySource[0]?.total ?? 1;
                     const share =
@@ -499,7 +511,7 @@ export function InsightsScreen() {
                         ? (source.total / summary.totalIncome) * 100
                         : 0;
                     return (
-                      <div key={source.source} className="px-2 py-2">
+                      <div key={source.source} className="px-2 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-2.5">
                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-success-subtle">
@@ -532,26 +544,47 @@ export function InsightsScreen() {
                       </div>
                     );
                   })}
-                </CardContent>
-              </Card>
+                </div>
+              </SheetSection>
             )}
-          </div>
 
-          {/* Wisdom footer link */}
-          <Link
-            href="/wisdom"
-            className="flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3.5 transition-colors hover:bg-secondary"
-          >
-            <span className="flex items-center gap-3">
-              <BookOpenText className="h-4.5 w-4.5 text-muted-foreground" />
-              <span className="text-body font-medium">
-                {t("Wisdom library", "Biblioteca de sabiduría")}
+            <Link
+              href="/wisdom"
+              className="flex min-h-14 items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-accent/40 sm:px-5"
+            >
+              <span className="flex items-center gap-3">
+                <BookOpenText className="h-4.5 w-4.5 text-muted-foreground" />
+                <span className="text-body font-medium">
+                  {t("Wisdom library", "Biblioteca de sabiduría")}
+                </span>
               </span>
-            </span>
-            <ArrowRight className="h-4 w-4 text-muted-foreground" />
-          </Link>
-        </>
+              <ArrowRight className="h-4 w-4 text-muted-foreground" />
+            </Link>
+          </ContinuousSheet>
+        </div>
       )}
     </Screen>
+  );
+}
+
+function InsightMetric({
+  label,
+  value,
+  healthy = false,
+}: {
+  label: string;
+  value: string;
+  healthy?: boolean;
+}) {
+  return (
+    <div className="min-w-0 border-white/10 px-3 py-2 odd:border-r sm:border-r sm:last:border-r-0">
+      <p className="label-caps truncate text-white/50">{label}</p>
+      <p
+        className="mt-1 truncate font-mono text-heading font-semibold tabular-nums text-white"
+        style={healthy ? { color: HERO_ACCENT } : undefined}
+      >
+        {value}
+      </p>
+    </div>
   );
 }

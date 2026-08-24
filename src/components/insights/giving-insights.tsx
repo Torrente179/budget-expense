@@ -4,7 +4,7 @@ import { useMemo } from "react";
 import { useCurrency } from "@/providers/currency-provider";
 import { useTitheTarget } from "@/hooks/use-tithe-target";
 import { useLocale } from "@/providers/locale-provider";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -72,13 +72,18 @@ interface GivingExpense {
 interface GivingInsightsProps {
   expenses: GivingExpense[];
   totalIncome: number;
+  variant?: "card" | "section";
 }
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
+export function GivingInsights({
+  expenses,
+  totalIncome,
+  variant = "card",
+}: GivingInsightsProps) {
   const { baseCurrency, convert } = useCurrency();
   const { t, tc } = useLocale();
   const titheTargetPercent = useTitheTarget();
@@ -137,8 +142,19 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
 
   return (
     <div>
-      <Card className="bg-card">
-        <CardHeader className="space-y-3 pb-3">
+      <Card
+        className={cn(
+          "bg-card",
+          variant === "section" &&
+            "gap-4 rounded-none bg-transparent py-0 ring-0"
+        )}
+      >
+        <CardHeader
+          className={cn(
+            "space-y-3 pb-3",
+            variant === "section" && "px-0"
+          )}
+        >
           <div className="flex items-center justify-between gap-3">
             <div className="space-y-2">
               <Badge variant="outline" className="bg-secondary/70 text-foreground">
@@ -168,10 +184,19 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
           </p>
         </CardHeader>
 
-        <CardContent className="space-y-4">
+        <CardContent
+          className={cn("space-y-4", variant === "section" && "px-0")}
+        >
           {/* Tithe benchmark */}
           {totalIncome > 0 && (
-            <div className="rounded-xl border border-border/70 bg-secondary/40 p-4">
+            <div
+              className={cn(
+                "p-4",
+                variant === "section"
+                  ? "border-y border-border/70"
+                  : "rounded-xl border border-border/70 bg-secondary/40"
+              )}
+            >
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">
                   {t("Tithe benchmark (10%)", "Referencia del diezmo (10%)")}
@@ -211,7 +236,12 @@ export function GivingInsights({ expenses, totalIncome }: GivingInsightsProps) {
               {analysis.categories.map((cat) => (
                 <div
                   key={cat.name}
-                  className="flex items-center gap-2.5 rounded-xl border border-border/70 bg-secondary/30 px-3 py-2.5"
+                  className={cn(
+                    "flex items-center gap-2.5 px-3 py-2.5",
+                    variant === "section"
+                      ? "border-b border-border/60 last:border-b-0"
+                      : "rounded-xl border border-border/70 bg-secondary/30"
+                  )}
                 >
                   <CategoryIcon
                     icon={cat.icon}

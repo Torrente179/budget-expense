@@ -45,7 +45,7 @@ export function SavingsTransferTable({
 
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="divide-y divide-border/70">
         {Array.from({ length: 3 }).map((_, index) => (
           <div
             key={index}
@@ -75,7 +75,7 @@ export function SavingsTransferTable({
         {transfers.map((transfer) => (
           <div
             key={transfer.id}
-            className="rounded-xl border bg-card p-4 shadow-1"
+            className="py-4"
           >
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="space-y-2">

@@ -328,7 +328,7 @@ export function BudgetWizard({
                   className={cn(
                     "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     amountType === "fixed"
-                      ? "bg-background text-foreground shadow-sm"
+                      ? "bg-background text-foreground ring-1 ring-border"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -340,7 +340,7 @@ export function BudgetWizard({
                   className={cn(
                     "flex-1 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                     amountType === "percentage"
-                      ? "bg-background text-foreground shadow-sm"
+                      ? "bg-background text-foreground ring-1 ring-border"
                       : "text-muted-foreground hover:text-foreground"
                   )}
                 >
@@ -434,7 +434,7 @@ export function BudgetWizard({
                   render={
                     <button
                       type="button"
-                      className="flex w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2.5 text-sm shadow-sm transition-colors hover:bg-accent"
+                      className="flex w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-2.5 text-sm transition-colors hover:bg-accent"
                     />
                   }
                 >
@@ -875,16 +875,11 @@ function TypeStep({
               aria-checked={selected}
               onClick={() => onPick(option.kind)}
               className={cn(
-                "group relative flex flex-col items-center gap-3 rounded-2xl px-5 py-6 text-center transition-all",
+                "group relative flex flex-col items-center gap-3 rounded-2xl px-5 py-6 text-center transition-colors",
                 selected
-                  ? "bg-card shadow-2"
-                  : "bg-card/60 ring-1 ring-border/70 hover:bg-card hover:shadow-1"
+                  ? "bg-card ring-2 ring-foreground"
+                  : "bg-card ring-1 ring-border/70 hover:bg-accent/30"
               )}
-              style={
-                selected
-                  ? { boxShadow: `inset 0 0 0 2px ${option.accent}` }
-                  : undefined
-              }
             >
               <span
                 aria-hidden
@@ -969,7 +964,7 @@ function BudgetPreviewCard({
   const fill = Number.isFinite(ratio) ? Math.min(Math.max(ratio, 0), 1) : 1;
 
   return (
-    <div className="rounded-2xl bg-card px-3.5 py-3 shadow-1 ring-1 ring-border/60">
+    <div className="rounded-2xl bg-card px-3.5 py-3 ring-1 ring-border/60">
       <div className="flex items-start gap-3">
         <span
           className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"

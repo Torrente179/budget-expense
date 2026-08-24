@@ -34,6 +34,7 @@ Use this template:
 ```
 
 ## Current Entries
+- `2026-08-24-up-full-app-redesign.md`
 - `2026-08-21-up-approval-qa.md`
 - `2026-08-14-up-system-approval-checkpoint.md`
 - `2026-08-14-santander-charges-sync.md`

@@ -9,6 +9,7 @@ import {
   type BudgetingMethod,
 } from "@/lib/budgeting-methods";
 import { Screen } from "@/components/patterns/screen";
+import { ContinuousSheet } from "@/components/patterns/continuous-sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -65,7 +66,7 @@ function MethodMiniCard({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{
-        delay: index * 0.04,
+        delay: Math.min(index, 5) * 0.03,
         duration: 0.24,
         ease: [0.22, 1, 0.36, 1],
       }}
@@ -186,6 +187,7 @@ export function WisdomScreen() {
     <Screen
       title={t("Wisdom", "Sabiduría")}
       backHref="/insights"
+      mode="chrome-sheet"
       actions={
         <div className="hidden items-center gap-1.5 sm:flex">
           {biblicalContent.translations.map((translation) => (
@@ -195,7 +197,11 @@ export function WisdomScreen() {
               target="_blank"
               rel="noreferrer"
             >
-              <Button variant="outline" size="sm" className="gap-1.5">
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5 border-white/12 bg-white/[0.07] text-white hover:bg-white/12 hover:text-white"
+              >
                 {translation.code}
                 <ArrowUpRight className="h-4 w-4" />
               </Button>
@@ -209,7 +215,8 @@ export function WisdomScreen() {
       {/*  Tab navigation                                               */}
       {/* ------------------------------------------------------------ */}
 
-      <div className="space-y-6">
+      <ContinuousSheet className="[&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:shadow-none [&_[data-slot=card]]:ring-0">
+      <div className="space-y-6 px-4 py-5 sm:px-5">
         <UnderlineTabs
           tabs={[
             {
@@ -579,7 +586,7 @@ export function WisdomScreen() {
                         initial={{ opacity: 0, y: 6 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{
-                          delay: i * 0.03,
+                          delay: Math.min(i, 5) * 0.03,
                           duration: 0.24,
                           ease: [0.22, 1, 0.36, 1],
                         }}
@@ -660,6 +667,7 @@ export function WisdomScreen() {
         </div>
         )}
       </div>
+      </ContinuousSheet>
     </Screen>
   );
 }

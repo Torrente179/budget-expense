@@ -14,6 +14,7 @@ import {
   getMonthName,
 } from "@/lib/utils";
 import { Screen } from "@/components/patterns/screen";
+import { ContinuousSheet } from "@/components/patterns/continuous-sheet";
 import { TransactionRow } from "@/components/patterns/transaction-row";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { CategoryIcon } from "@/components/shared/category-badge";
@@ -120,6 +121,7 @@ function CategoryDetail() {
       eyebrow={`${getMonthName(month, locale)} ${year}`}
       title={catMeta ? tc(catMeta.name) : t("Category", "Categoría")}
       backHref={backHref}
+      mode="chrome-sheet"
     >
       {loading ? (
         <div className="space-y-4">
@@ -127,7 +129,8 @@ function CategoryDetail() {
           <Skeleton className="h-72 rounded-xl" />
         </div>
       ) : (
-        <>
+        <ContinuousSheet className="[&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:ring-0">
+          <div className="space-y-5 px-4 py-5 sm:px-5">
           {/* Summary */}
           <Card>
             <CardContent className="space-y-4">
@@ -197,7 +200,7 @@ function CategoryDetail() {
                   <p className="label-caps mb-1.5 px-4 md:px-0">
                     {formatDate(date, "EEEE d MMMM yyyy", locale)}
                   </p>
-                  <div className="-mx-4 divide-y divide-border/40 md:mx-0 md:overflow-hidden md:rounded-xl md:bg-card md:ring-1 md:ring-border md:shadow-1">
+                  <div className="-mx-4 divide-y divide-border/40 border-y border-border/70 md:mx-0">
                     {items.map((expense) => (
                       <div key={expense.id} className="group flex items-center">
                         <div className="min-w-0 flex-1">
@@ -249,7 +252,8 @@ function CategoryDetail() {
               ))}
             </div>
           )}
-        </>
+          </div>
+        </ContinuousSheet>
       )}
 
       {/* Edit */}

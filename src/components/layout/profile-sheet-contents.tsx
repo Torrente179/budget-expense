@@ -40,22 +40,22 @@ export function ProfileSheetContents({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" showCloseButton={false} className="gap-0">
-        <SheetHeader className="pb-2">
-          <SheetTitle>{t("Account", "Cuenta")}</SheetTitle>
+      <SheetContent side="bottom" showCloseButton={false} className="gap-0 bg-white">
+        <SheetHeader className="mt-2 bg-ink px-5 pb-4 pt-5 text-white">
+          <SheetTitle className="text-white">{t("Account", "Cuenta")}</SheetTitle>
           {email && (
-            <p className="truncate text-caption text-muted-foreground">
+            <p className="truncate text-caption text-white/50">
               {email}
             </p>
           )}
         </SheetHeader>
-        <nav className="flex flex-col px-2 pb-1">
+        <nav className="flex flex-col divide-y divide-border/70 pb-1">
           {SECONDARY_NAV.map((item) => (
             <Link
               key={item.key}
               href={item.href}
               onClick={() => onOpenChange(false)}
-              className="flex min-h-12 items-center gap-3 rounded-lg px-3 text-body font-medium text-foreground transition-colors hover:bg-accent"
+              className="flex min-h-12 items-center gap-3 px-5 text-body font-medium text-foreground transition-colors hover:bg-accent"
             >
               <item.icon className="h-4.5 w-4.5 text-muted-foreground" />
               {t(item.label.en, item.label.es)}
@@ -73,7 +73,7 @@ export function ProfileSheetContents({
           <button
             type="button"
             onClick={handleLogout}
-            className="ml-auto flex items-center gap-2 rounded-lg px-3 py-2 text-body font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            className="ml-auto flex min-h-11 items-center gap-2 px-3 text-body font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
           >
             <LogOut className="h-4 w-4" />
             {t("Log out", "Cerrar sesión")}

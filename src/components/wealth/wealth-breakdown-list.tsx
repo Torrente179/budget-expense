@@ -10,7 +10,6 @@ import {
   Wallet,
   type LucideIcon,
 } from "lucide-react";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { ProgressMeter } from "@/components/patterns/progress-meter";
 import { EmptyState } from "@/components/shared/empty-state";
@@ -67,8 +66,8 @@ export function WealthBreakdownList({
   const populated = rows.filter((row) => row.value !== 0);
 
   return (
-    <Card>
-      <CardHeader>
+    <section className="px-4 py-5 sm:px-5">
+      <div className="mb-4">
         <SectionHeader
           eyebrow={eyebrow}
           title={title}
@@ -83,8 +82,7 @@ export function WealthBreakdownList({
             ) : undefined
           }
         />
-      </CardHeader>
-      <CardContent>
+      </div>
         {populated.length === 0 ? (
           <EmptyState
             icon={emptyIcon}
@@ -118,7 +116,11 @@ export function WealthBreakdownList({
                       </span>
                     </span>
 
-                    <ProgressMeter ratio={share} tone="neutral" />
+                    <ProgressMeter
+                      ratio={share}
+                      tone="neutral"
+                      ariaLabel={`${row.label}: ${Math.round(share * 100)}%`}
+                    />
 
                     <span className="flex items-center justify-between gap-3 text-caption text-muted-foreground">
                       <span className="min-w-0 truncate">
@@ -153,7 +155,6 @@ export function WealthBreakdownList({
             })}
           </ul>
         )}
-      </CardContent>
-    </Card>
+    </section>
   );
 }

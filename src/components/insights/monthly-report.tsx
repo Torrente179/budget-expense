@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import { useCurrency } from "@/providers/currency-provider";
 import { useLocale } from "@/providers/locale-provider";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CategoryIcon } from "@/components/shared/category-badge";
@@ -49,6 +49,7 @@ interface MonthlyReportProps {
   /** Count of custom budgets over limit (preferred over legacy envelopes). */
   overBudgetCount?: number;
   onCategoryClick?: (categoryId: string) => void;
+  variant?: "card" | "section";
 }
 
 /* ------------------------------------------------------------------ */
@@ -63,6 +64,7 @@ export function MonthlyReport({
   budgets = [],
   overBudgetCount: overBudgetCountProp,
   onCategoryClick,
+  variant = "card",
 }: MonthlyReportProps) {
   const { baseCurrency, convert } = useCurrency();
   const { t, tc } = useLocale();
@@ -190,8 +192,19 @@ export function MonthlyReport({
 
   return (
     <div>
-      <Card className="bg-card">
-        <CardHeader className="space-y-3 pb-3">
+      <Card
+        className={cn(
+          "bg-card",
+          variant === "section" &&
+            "gap-4 rounded-none bg-transparent py-0 ring-0"
+        )}
+      >
+        <CardHeader
+          className={cn(
+            "space-y-3 pb-3",
+            variant === "section" && "px-0"
+          )}
+        >
           <div className="flex items-center justify-between gap-3">
             <div className="space-y-2">
               <Badge variant="outline" className="bg-secondary/70 text-foreground">
@@ -207,10 +220,19 @@ export function MonthlyReport({
           </div>
         </CardHeader>
 
-        <CardContent className="space-y-5">
+        <CardContent
+          className={cn("space-y-5", variant === "section" && "px-0")}
+        >
           {/* Month-over-month */}
-          <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-xl border border-border/70 bg-secondary/40 p-3">
+          <div
+            className={cn(
+              "grid grid-cols-3",
+              variant === "section"
+                ? "divide-x divide-border/70 border-y border-border/70"
+                : "gap-2"
+            )}
+          >
+            <div className={cn("p-3", variant !== "section" && "rounded-xl border border-border/70 bg-secondary/40")}>
               <p className="label-caps">
                 {t("This month", "Este mes")}
               </p>
@@ -218,7 +240,7 @@ export function MonthlyReport({
                 {formatCurrency(totalSpent, baseCurrency)}
               </p>
             </div>
-            <div className="rounded-xl border border-border/70 bg-secondary/40 p-3">
+            <div className={cn("p-3", variant !== "section" && "rounded-xl border border-border/70 bg-secondary/40")}>
               <p className="label-caps">
                 {t("Last month", "Mes pasado")}
               </p>
@@ -226,7 +248,7 @@ export function MonthlyReport({
                 {formatCurrency(previousMonthTotal, baseCurrency)}
               </p>
             </div>
-            <div className="rounded-xl border border-border/70 bg-secondary/40 p-3">
+            <div className={cn("p-3", variant !== "section" && "rounded-xl border border-border/70 bg-secondary/40")}>
               <p className="label-caps">
                 {t("Change", "Cambio")}
               </p>
@@ -273,7 +295,14 @@ export function MonthlyReport({
                   tabIndex={onCategoryClick ? 0 : undefined}
                   onClick={onCategoryClick ? () => onCategoryClick(cat.category_id) : undefined}
                   onKeyDown={onCategoryClick ? (e) => { if (e.key === "Enter") onCategoryClick(cat.category_id); } : undefined}
-                  className={`rounded-xl border border-border/70 bg-secondary/30 p-3${onCategoryClick ? " cursor-pointer transition-colors hover:bg-secondary/50" : ""}`}
+                  className={cn(
+                    "p-3",
+                    variant === "section"
+                      ? "border-b border-border/60 last:border-b-0"
+                      : "rounded-xl border border-border/70 bg-secondary/30",
+                    onCategoryClick &&
+                      "cursor-pointer transition-colors hover:bg-secondary/50"
+                  )}
                 >
                   <div className="flex items-center gap-2.5">
                     <CategoryIcon

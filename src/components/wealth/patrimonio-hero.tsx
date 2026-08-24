@@ -21,6 +21,7 @@ interface PatrimonioHeroProps {
   /** Empty renders the onboarding hero instead of the figures. */
   isEmpty: boolean;
   addHref: string;
+  className?: string;
 }
 
 /**
@@ -35,13 +36,14 @@ export function PatrimonioHero({
   monthlyChange,
   isEmpty,
   addHref,
+  className,
 }: PatrimonioHeroProps) {
   const { t } = useLocale();
   const { baseCurrency } = useCurrency();
 
   if (isEmpty) {
     return (
-      <section className={cn(HERO_SURFACE, "px-5 py-7 sm:px-7 sm:py-9")}>
+      <section className={cn(HERO_SURFACE, "px-5 py-7 sm:px-7 sm:py-9", className)}>
         <div className="relative max-w-xl space-y-4">
           <span
             className={cn(
@@ -77,7 +79,7 @@ export function PatrimonioHero({
   const negative = totals.netWorth < 0;
 
   return (
-    <section className={cn(HERO_SURFACE, "px-5 py-5 sm:px-6 sm:py-6")}>
+    <section className={cn(HERO_SURFACE, "px-5 py-5 sm:px-6 sm:py-6", className)}>
       <div className="relative space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1.5">
@@ -101,7 +103,7 @@ export function PatrimonioHero({
             href={addHref}
             aria-label={t("Add", "Añadir")}
             className={cn(
-              "inline-flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-caption font-medium text-white transition-colors hover:bg-white/[0.12]",
+              "inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg px-3 py-2 text-caption font-medium text-white transition-colors hover:bg-white/[0.12]",
               HERO_TILE
             )}
           >

@@ -214,7 +214,7 @@ export function AttentionFeed({
   /* Nothing pending: one calm line, not a full card of empty space. */
   if (items.length === 0) {
     return (
-      <div className="flex items-center gap-2.5 rounded-xl bg-card px-4 py-3 ring-1 ring-border shadow-1">
+      <div className="flex items-center gap-2.5 rounded-xl bg-card px-4 py-3 ring-1 ring-border">
         <CheckCircle2 className="h-4.5 w-4.5 shrink-0 text-success" />
         <p className="min-w-0 truncate text-body text-muted-foreground">
           <span className="font-medium text-foreground">

@@ -214,7 +214,7 @@ export function CategoryGlyph({
 
 /** Elevated, high-contrast surface for category menus nested inside sheets. */
 export const CATEGORY_SELECT_CONTENT_CLASS =
-  "border-2 border-foreground/20 bg-card shadow-3 ring-1 ring-foreground/10";
+  "border-2 border-foreground/20 bg-card shadow-none ring-1 ring-foreground/10";
 
 interface CategoryBadgeProps {
   name: string;
@@ -240,7 +240,7 @@ export function CategoryBadge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium shadow-1",
+        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
         className
       )}
       style={{

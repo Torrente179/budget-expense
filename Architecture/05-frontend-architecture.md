@@ -152,7 +152,7 @@ live only in `monthly-report.tsx`, not a second Insights list.
 
 ### The patterns tier
 
-These ten components encode the product's visual and behavioral rules. Four are
+These composed components encode the product's visual and behavioral rules. Four are
 described by `design.md` as the *only* sanctioned way to do their job:
 
 **`AmountText`** — THE money renderer. Converts through `CurrencyProvider`,
@@ -179,6 +179,10 @@ language, and currency utilities. Its three presentation modes are
 
 That rule exists because a hard-coded `/home` back link strands users who arrived
 by deep link or refreshed mid-flow.
+
+**`ContinuousSheet` + `SheetSection`** — the canonical white content plane for
+activity, balances, analytics, and dense secondary work. Dividing rules establish
+chapters without turning every chapter into a generic elevated card.
 
 ### Chrome
 
@@ -215,8 +219,8 @@ exists only for legacy compilation; no provider sets it.
 | Charts | `chart-1..5`, `chart-grid`, `chart-axis`; Insights spend bars also use `SPEND_CHART_COLOR` (`#EC4899`) from `chart-theme.tsx` |
 
 Budget **usage-band** hexes (safe → critical) and category default map live in
-[`src/lib/palette.ts`](../src/lib/palette.ts) with `ACTIVE_PALETTE` (`"v2"` |
-`"og"`) for a controlled revert. Cashflow CSS vars in `globals.css` must stay
+[`src/lib/palette.ts`](../src/lib/palette.ts) with `ACTIVE_PALETTE` (`"up"` |
+`"hybrid"` | `"v2"` | `"og"`) for a controlled revert. Cashflow CSS vars in `globals.css` must stay
 mirrored when flipping.
 
 Home composition: centered checkpoint-backed available balance plus compact
@@ -237,7 +241,9 @@ existing hooks/calculations into typed production view components. Home,
 Movements, Recurring, Budget cards, and Capture chrome are therefore reused by
 the private fixture harness without duplicating UI or reaching Supabase.
 
-**Patrimonio** (`/wealth`) — the balance sheet. `wealth-overview.tsx` is
+**Patrimonio** (`/wealth`) — the balance sheet. Its dominant net-worth chrome
+flows into one continuous divided asset/debt sheet; dense category rows retain
+accent marks while readable labels remain ink. `wealth-overview.tsx` is
 orchestration only: it calls `useNetWorth()` (the single composition root over
 `useInvestments` + `useHouseholdInsights` + `useWealthAccounts` + loans +
 snapshots) and passes plain props to every card. Because the cards take props
@@ -308,7 +314,7 @@ desktop site.
 | Navigation | Opaque 60px ink `TabBar`, 5 tabs | Sidebar |
 | Secondary nav | Profile sheet | Sidebar footer |
 | Forms | Opaque white bottom sheets, drag handle, keyboard-safe sticky submit | Side sheets / dialogs |
-| Lists | Full-bleed rows, min-h-16, ≥44px targets, swipe-to-delete + undo | Rows in a Card, delete on hover |
+| Lists | Full-bleed rows, min-h-16, ≥44px targets, swipe-to-delete + undo | Dense divided rows in a contained continuous sheet; delete on hover |
 | Stat rows | Horizontal scroll with snap | Grid |
 | Capture | FAB in the thumb zone | FAB + sheet |
 | Language | Profile sheet row | Compact chip |
@@ -338,7 +344,8 @@ and a 5-second toast offers reversal, which issues the compensating request.
 
 ### Private review harness
 
-`/__design/up` renders the same production view components with deterministic
+`/__design/up` renders representative production Home, Movements, Recurring,
+Budget, Capture, Wealth, Insights, and onboarding view components with deterministic
 fixtures for populated, loading, empty, error, overspent, completed-goal,
 long-Spanish, large-number, negative, and multi-currency states. It uses the
 production `Screen`, Home view, navigation, patterns, `QueryProvider`,

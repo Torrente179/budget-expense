@@ -7,6 +7,7 @@ import {
   CircleUserRound,
   Loader2,
   Plus,
+  Wallet,
 } from "lucide-react";
 import { HomeDashboardView } from "@/components/home/home-dashboard-view";
 import { BudgetSaverCard, BudgetTrackerCard } from "@/components/budget/envelope-list-card";
@@ -26,6 +27,23 @@ import { CaptureFabButton } from "@/components/capture/capture-fab";
 import { TabBar } from "@/components/layout/tab-bar";
 import { Screen } from "@/components/patterns/screen";
 import { MonthPicker } from "@/components/shared/month-picker";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
+import { SectionHeader } from "@/components/patterns/section-header";
+import { MonthlyReport } from "@/components/insights/monthly-report";
+import { OnboardingStoryShell } from "@/components/onboarding/onboarding-story-shell";
+import { OrganizeMoneyGrid } from "@/components/wealth/organize-money-grid";
+import { PatrimonioHero } from "@/components/wealth/patrimonio-hero";
+import {
+  WealthBreakdownList,
+  type BreakdownRow,
+} from "@/components/wealth/wealth-breakdown-list";
+import {
+  computeNetWorth,
+  type WealthComponents,
+} from "@/lib/wealth/net-worth";
 import { StaticCurrencyProvider } from "@/providers/currency-provider";
 import {
   StaticLocaleProvider,
@@ -132,6 +150,80 @@ const recurring: RecurringScheduleItem[] = [
   { id: "r2", title: "Spotify", categoryName: "Music", categoryIcon: "music", categoryColor: "#3DDC97", amount: 17.99, currency: "EUR", chargeDay: 19, isActive: true },
   { id: "r3", title: "GitHub", categoryName: "Work", categoryIcon: "code-xml", categoryColor: "#8B8D98", amount: 9.65, currency: "USD", chargeDay: 25, isActive: false },
 ];
+
+const fixtureWealth: WealthComponents = {
+  accountsAndCash: 8_420,
+  savings: 12_250,
+  investments: 19_840,
+  moneyLent: 1_200,
+  debts: 6_380,
+};
+
+const fixtureInsightCategories = [
+  {
+    category_id: "housing",
+    category_name: "Housing",
+    category_color: "#FF7A64",
+    category_icon: "house",
+    total_amount: 1_080,
+    expense_count: 2,
+  },
+  {
+    category_id: "groceries",
+    category_name: "Groceries",
+    category_color: "#B565D8",
+    category_icon: "shopping-cart",
+    total_amount: 436,
+    expense_count: 9,
+  },
+  {
+    category_id: "transport",
+    category_name: "Transportation",
+    category_color: "#28C4D8",
+    category_icon: "car-front",
+    total_amount: 248,
+    expense_count: 12,
+  },
+  {
+    category_id: "giving",
+    category_name: "Giving",
+    category_color: "#FFE14D",
+    category_icon: "heart-handshake",
+    total_amount: 220,
+    expense_count: 1,
+  },
+];
+
+function buildWealthComponents(state: ReviewState): WealthComponents {
+  if (state === "empty") {
+    return {
+      accountsAndCash: 0,
+      savings: 0,
+      investments: 0,
+      moneyLent: 0,
+      debts: 0,
+    };
+  }
+  if (state === "negative") {
+    return {
+      accountsAndCash: 315,
+      savings: 0,
+      investments: 0,
+      moneyLent: 0,
+      debts: 1_599.57,
+    };
+  }
+  if (state === "large-number") {
+    return {
+      accountsAndCash: 124_000_000,
+      savings: 86_000_000,
+      investments: 740_654_321.09,
+      moneyLent: 37_000_000,
+      debts: 142_000_000,
+    };
+  }
+  return fixtureWealth;
+}
 
 function buildHomeFixture(state: ReviewState): HomeDashboardViewProps {
   if (state === "empty") {
@@ -307,6 +399,57 @@ function HarnessContent({
   const [reviewMonth, setReviewMonth] = useState({ month: 8, year: 2026 });
 
   const home = buildHomeFixture(state);
+  const wealthComponents = buildWealthComponents(state);
+  const wealthTotals = computeNetWorth(wealthComponents);
+  const wealthIsEmpty = wealthTotals.totalAssets === 0 && wealthTotals.debts === 0;
+  const wealthCounts = wealthIsEmpty
+    ? { accounts: 0, savings: 0, investments: 0, lent: 0, debts: 0 }
+    : { accounts: 2, savings: 3, investments: 5, lent: 1, debts: 2 };
+  const wealthCategoryTotals = {
+    accounts: wealthTotals.accountsAndCash,
+    savings: wealthTotals.savings,
+    investments: wealthTotals.investments,
+    lent: wealthTotals.moneyLent,
+    debts: wealthTotals.debts,
+  };
+  const wealthRows: BreakdownRow[] = [
+    {
+      key: "accounts",
+      category: "accounts",
+      label: t("Accounts & cash", "Cuentas y efectivo"),
+      detail: t("2 accounts", "2 cuentas"),
+      value: wealthTotals.accountsAndCash,
+    },
+    {
+      key: "savings",
+      category: "savings",
+      label: t("Savings", "Ahorros"),
+      detail: t("3 funds", "3 fondos"),
+      value: wealthTotals.savings,
+    },
+    {
+      key: "investments",
+      category: "investments",
+      label: t("Investments", "Inversiones"),
+      detail: t("5 positions", "5 posiciones"),
+      value: wealthTotals.investments,
+    },
+    {
+      key: "lent",
+      category: "lent",
+      label: t("Money lent", "Dinero prestado"),
+      detail: t("1 loan", "1 préstamo"),
+      value: wealthTotals.moneyLent,
+    },
+  ];
+  const insightCategories =
+    state === "empty"
+      ? []
+      : fixtureInsightCategories.map((category) =>
+          state === "large-number"
+            ? { ...category, total_amount: category.total_amount * 100_000 }
+            : category
+        );
 
   const fixtureTrackers = state === "overspent"
     ? trackers.map((row) => ({
@@ -329,7 +472,7 @@ function HarnessContent({
         <div className="mx-auto grid max-w-[1480px] gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-3">
           <div className="min-w-0 flex-1">
             <p className="label-caps text-white/50">Private design review</p>
-            <h1 className="text-heading font-semibold">UP-derived approval checkpoint</h1>
+            <h1 className="text-heading font-semibold">UP-derived full-app review</h1>
           </div>
           <div
             className="flex w-full gap-1 overflow-x-auto pb-1 [scrollbar-width:none] sm:flex-wrap sm:overflow-visible sm:pb-0 lg:w-auto [&::-webkit-scrollbar]:hidden"
@@ -500,6 +643,149 @@ function HarnessContent({
                   validation, category suggestions, loans, optimistic writes,
                   failure retention, undo, and save-and-add-another.
                 </p>
+              </div>
+            </section>
+
+            <section data-testid="wealth-report-preview">
+              <p className="label-caps mb-3">
+                Wealth + Insights · production view components
+              </p>
+              <div className="overflow-hidden rounded-xl bg-ink ring-1 ring-border">
+                <PatrimonioHero
+                  totals={wealthTotals}
+                  monthlyChange={{
+                    amount:
+                      state === "negative"
+                        ? -412
+                        : state === "large-number"
+                          ? 28_400_000
+                          : wealthIsEmpty
+                            ? null
+                            : 842,
+                    percentage:
+                      state === "negative"
+                        ? -0.24
+                        : wealthIsEmpty
+                          ? null
+                          : 0.024,
+                  }}
+                  isEmpty={wealthIsEmpty}
+                  addHref="/wealth/accounts"
+                  className="mx-0 rounded-none sm:mx-0 md:mx-0 md:rounded-none"
+                />
+                <ContinuousSheet className="mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+                  <div className="grid lg:grid-cols-[minmax(0,.78fr)_minmax(0,1.22fr)] lg:divide-x lg:divide-border/70">
+                    <div>
+                      <OrganizeMoneyGrid
+                        totals={wealthCategoryTotals}
+                        counts={wealthCounts}
+                        isEmpty={wealthIsEmpty}
+                      />
+                    </div>
+                    <WealthBreakdownList
+                      eyebrow={t("Owned", "Lo que tienes")}
+                      title={t("Assets", "Activos")}
+                      rows={wealthRows}
+                      total={wealthTotals.totalAssets}
+                      totalLabel={t("Total assets", "Total activos")}
+                      emptyIcon={Wallet}
+                      emptyTitle={t("No assets yet", "Aún no tienes activos")}
+                      emptyDescription={t(
+                        "Add an account, a savings fund or an investment to get started.",
+                        "Añade una cuenta, un fondo de ahorro o una inversión para empezar."
+                      )}
+                    />
+                  </div>
+                  <SheetSection
+                    header={
+                      <SectionHeader
+                        eyebrow={t("Report", "Reporte")}
+                        title={t("Monthly insights", "Análisis mensual")}
+                      />
+                    }
+                  >
+                    {insightCategories.length > 0 ? (
+                      <MonthlyReport
+                        totalSpent={insightCategories.reduce(
+                          (sum, category) => sum + category.total_amount,
+                          0
+                        )}
+                        totalIncome={
+                          state === "large-number" ? 486_000_000 : 4_860
+                        }
+                        previousMonthTotal={
+                          state === "large-number" ? 174_000_000 : 2_170
+                        }
+                        categoryBreakdown={insightCategories}
+                        overBudgetCount={state === "overspent" ? 2 : 0}
+                        variant="section"
+                      />
+                    ) : (
+                      <p className="py-6 text-center text-caption text-muted-foreground">
+                        {t(
+                          "Insights appear after the first movement.",
+                          "El análisis aparecerá después del primer movimiento."
+                        )}
+                      </p>
+                    )}
+                  </SheetSection>
+                </ContinuousSheet>
+              </div>
+            </section>
+
+            <section data-testid="onboarding-preview">
+              <p className="label-caps mb-3">Onboarding · production story shell</p>
+              <div className="overflow-hidden rounded-xl ring-1 ring-border">
+                <OnboardingStoryShell
+                  stepIndex={1}
+                  stepCount={6}
+                  progressLabel={t(
+                    "Setup preview progress",
+                    "Progreso de la vista previa"
+                  )}
+                  eyebrow={t("Easy setup", "Configuración fácil")}
+                  title={t(
+                    "Start with what comes in.",
+                    "Empieza por lo que entra."
+                  )}
+                  description={t(
+                    "Your usual take-home amount anchors every tracker and daily guide.",
+                    "Tu ingreso neto habitual da sentido a cada presupuesto y guía diaria."
+                  )}
+                  className="mx-0 mt-0 sm:mx-0 lg:mx-0"
+                >
+                  <div className="space-y-4">
+                    <h2 className="text-heading font-semibold">
+                      {t("Monthly income", "Ingreso mensual")}
+                    </h2>
+                    <p className="text-caption text-muted-foreground">
+                      {t(
+                        "What you usually take home this month.",
+                        "Lo que sueles cobrar neto este mes."
+                      )}
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        aria-label={t("Monthly income", "Ingreso mensual")}
+                        value={state === "large-number" ? "987654321,09" : "4860,00"}
+                        readOnly
+                        className="h-12 flex-1 font-mono text-xl"
+                      />
+                      <button
+                        type="button"
+                        className="min-h-12 rounded-lg border border-border px-4 font-mono text-sm"
+                      >
+                        EUR
+                      </button>
+                    </div>
+                    <div className="flex gap-2 pt-2">
+                      <Button variant="ghost">{t("Back", "Atrás")}</Button>
+                      <Button className="flex-1">
+                        {t("Continue", "Continuar")}
+                      </Button>
+                    </div>
+                  </div>
+                </OnboardingStoryShell>
               </div>
             </section>
 

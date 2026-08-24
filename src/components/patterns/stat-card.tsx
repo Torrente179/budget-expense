@@ -38,7 +38,7 @@ export function StatCard({
       className={cn(
         "@container/stat-card h-full min-w-0 justify-between gap-2 px-3.5",
         href &&
-          "transition-all duration-200 hover:shadow-2 hover:ring-border/80",
+          "transition-colors duration-[var(--motion-standard)] hover:bg-accent/30 hover:ring-border/80",
         className
       )}
     >

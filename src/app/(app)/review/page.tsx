@@ -12,8 +12,9 @@ export default function ReviewPage() {
       title={t("Weekly review", "Revisión semanal")}
       eyebrow={t("Two minutes", "Dos minutos")}
       backHref="/home"
+      mode="chrome-sheet"
     >
-      <div className="mx-auto w-full max-w-2xl">
+      <div className="w-full max-w-3xl md:mx-auto">
         <ReviewFlow />
       </div>
     </Screen>

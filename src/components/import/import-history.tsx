@@ -64,11 +64,11 @@ export function ImportHistory({
             )}
           />
         ) : (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-border/70">
             {batches.map((batch) => (
               <li
                 key={batch.id}
-                className="flex flex-wrap items-center gap-3 rounded-lg bg-card px-3 py-2.5 ring-1 ring-border"
+                className="flex min-h-14 flex-wrap items-center gap-3 px-1 py-3"
               >
                 <button
                   type="button"

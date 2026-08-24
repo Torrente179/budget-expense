@@ -22,7 +22,11 @@ import {
   type SavingsWizardValues,
 } from "@/components/wealth/wizards/savings-wizard";
 import { SavingsTransferTable } from "@/components/wealth/savings-transfer-table";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
+import { SectionHeader } from "@/components/patterns/section-header";
 import { Button } from "@/components/ui/button";
 import { useLocale } from "@/providers/locale-provider";
 
@@ -146,6 +150,7 @@ export default function InvestmentSavingsPage() {
     <Screen
       title={t("Savings", "Ahorros")}
       backHref="/wealth"
+      mode="chrome-sheet"
       actions={
         <>
           <Button size="sm" className="gap-1.5" onClick={() => setWizardOpen(true)}>
@@ -170,61 +175,72 @@ export default function InvestmentSavingsPage() {
       subheader={<WealthBreadcrumb current={t("Savings", "Ahorros")} />}
     >
 
-      <WealthCategoryHero
-        eyebrow={t("Total saved", "Total ahorrado")}
-        amount={totalSavingsBalance}
-        icon={PiggyBank}
-        delta={
-          movedThisMonth !== 0
-            ? { amount: movedThisMonth, label: t("this month", "este mes") }
-            : null
-        }
-        stats={[
-          {
-            label: t("Funds", "Fondos"),
-            value: String(savingsAccounts.length),
-          },
-          {
-            label: t("Movements", "Movimientos"),
-            value: String(savingsTransfers.length),
-          },
-          {
-            label: t("Currencies", "Monedas"),
-            value: String(
-              new Set(savingsAccounts.map((account) => account.currency)).size
-            ),
-          },
-        ]}
-      />
+      <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+        <WealthCategoryHero
+          eyebrow={t("Total saved", "Total ahorrado")}
+          amount={totalSavingsBalance}
+          icon={PiggyBank}
+          className="mx-0 rounded-none sm:mx-0 md:mx-0 md:rounded-none"
+          delta={
+            movedThisMonth !== 0
+              ? { amount: movedThisMonth, label: t("this month", "este mes") }
+              : null
+          }
+          stats={[
+            {
+              label: t("Funds", "Fondos"),
+              value: String(savingsAccounts.length),
+            },
+            {
+              label: t("Movements", "Movimientos"),
+              value: String(savingsTransfers.length),
+            },
+            {
+              label: t("Currencies", "Monedas"),
+              value: String(
+                new Set(savingsAccounts.map((account) => account.currency)).size
+              ),
+            },
+          ]}
+        />
 
-      <div className="xl:grid xl:grid-cols-[minmax(0,1.2fr)_420px] xl:gap-5">
-        <div>
-          <SavingsTransferTable
-            transfers={savingsTransfers}
-            loading={loading}
-            onEdit={openTransferForm}
-            onDelete={deleteSavingsTransfer}
-          />
+        <ContinuousSheet className="relative -mt-px mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+          <SheetSection
+            header={
+              <SectionHeader
+                eyebrow={t("Activity", "Actividad")}
+                title={t("Savings movements", "Movimientos de ahorro")}
+              />
+            }
+          >
+            <SavingsTransferTable
+              transfers={savingsTransfers}
+              loading={loading}
+              onEdit={openTransferForm}
+              onDelete={deleteSavingsTransfer}
+            />
 
-          {hasMoreSavings ? (
-            <Button
-              variant="outline"
-              className="mx-auto mt-4 flex"
-              disabled={loadingMoreSavings}
-              onClick={() => void loadMoreSavings()}
-            >
-              {loadingMoreSavings
-                ? t("Loading…", "Cargando…")
-                : t("Load more movements", "Cargar más movimientos")}
-            </Button>
-          ) : null}
-        </div>
+            {hasMoreSavings ? (
+              <Button
+                variant="outline"
+                className="mx-auto mt-4 flex"
+                disabled={loadingMoreSavings}
+                onClick={() => void loadMoreSavings()}
+              >
+                {loadingMoreSavings
+                  ? t("Loading…", "Cargando…")
+                  : t("Load more movements", "Cargar más movimientos")}
+              </Button>
+            ) : null}
+          </SheetSection>
 
-        <Card className="hidden bg-card xl:block">
-          <CardHeader className="border-b border-border/70">
-            <CardTitle>{t("Savings accounts", "Cuentas de ahorro")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 pt-4">
+          <SheetSection
+            header={
+              <SectionHeader
+                title={t("Savings accounts", "Cuentas de ahorro")}
+              />
+            }
+          >
             {savingsAccountSummaries.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 {t(
@@ -233,11 +249,9 @@ export default function InvestmentSavingsPage() {
                 )}
               </p>
             ) : (
-              savingsAccountSummaries.map((account) => (
-                <div
-                  key={account.id}
-                  className="rounded-lg border border-border/70 bg-secondary/25 p-4"
-                >
+              <div className="divide-y divide-border/70">
+                {savingsAccountSummaries.map((account) => (
+                <div key={account.id} className="py-3.5">
                   <div className="flex items-start justify-between gap-3">
                     <div>
                       <p className="font-medium text-foreground">
@@ -274,10 +288,11 @@ export default function InvestmentSavingsPage() {
                     {formatCurrency(account.balance, baseCurrency)}
                   </p>
                 </div>
-              ))
+                ))}
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </SheetSection>
+        </ContinuousSheet>
       </div>
 
       {accountFormMounted ? (

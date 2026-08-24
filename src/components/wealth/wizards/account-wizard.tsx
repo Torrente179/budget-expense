@@ -208,7 +208,7 @@ export function AccountWizard({
             aria-checked={active}
             onClick={() => setKind(option.value)}
             className={cn(
-              "rounded-xl bg-card p-4 text-left ring-1 ring-border transition-shadow hover:shadow-2"
+              "rounded-xl bg-card p-4 text-left ring-1 ring-border transition-colors hover:bg-accent/30"
             )}
             style={
               active

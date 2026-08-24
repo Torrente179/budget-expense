@@ -3,10 +3,13 @@
 import { useState, type ReactNode } from "react";
 import { Archive, Pencil, type LucideIcon } from "lucide-react";
 import { Screen } from "@/components/patterns/screen";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { StatusTag } from "@/components/patterns/status-tag";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { EmptyState } from "@/components/shared/empty-state";
 import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { WealthBreadcrumb } from "@/components/wealth/wealth-breadcrumb";
@@ -79,6 +82,7 @@ export function WealthItemDetail({
     <Screen
       title={title}
       backHref={backHref}
+      mode="chrome-sheet"
       subheader={<WealthBreadcrumb current={breadcrumb} />}
       actions={
         <>
@@ -103,78 +107,86 @@ export function WealthItemDetail({
         </>
       }
     >
-      <WealthCategoryHero
-        eyebrow={eyebrow}
-        amount={amount}
-        icon={icon}
-        stats={stats}
-        progress={progress}
-      />
+      <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+        <WealthCategoryHero
+          eyebrow={eyebrow}
+          amount={amount}
+          icon={icon}
+          stats={stats}
+          progress={progress}
+          className="mx-0 rounded-none sm:mx-0 md:mx-0 md:rounded-none"
+        />
 
-      {archived && (
-        <StatusTag tone="neutral">
-          {t(
-            "Archived — it no longer counts toward net worth.",
-            "Archivado — ya no cuenta en tu patrimonio."
+        <ContinuousSheet className="relative -mt-px mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+          {archived && (
+            <div className="border-b border-border/70 px-4 py-3 sm:px-5">
+              <StatusTag tone="neutral">
+                {t(
+                  "Archived — it no longer counts toward net worth.",
+                  "Archivado — ya no cuenta en tu patrimonio."
+                )}
+              </StatusTag>
+            </div>
           )}
-        </StatusTag>
-      )}
 
-      {children}
+          {children ? (
+            <SheetSection className="[&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:py-0 [&_[data-slot=card]]:ring-0 [&_[data-slot=card-content]]:px-0 [&_[data-slot=card-header]]:px-0">
+              {children}
+            </SheetSection>
+          ) : null}
 
-      <Card>
-        <CardHeader>
-          <SectionHeader
-            eyebrow={t("Activity", "Actividad")}
-            title={t("Recent movements", "Movimientos recientes")}
-          />
-        </CardHeader>
-        <CardContent>
-          {movements.length === 0 ? (
-            <EmptyState
-              icon={icon}
-              title={t("No movements yet", "Aún no hay movimientos")}
-              description={t(
-                "Money in and out of this item will appear here.",
-                "Las entradas y salidas de este elemento aparecerán aquí."
-              )}
-            />
-          ) : (
-            <ul className="divide-y divide-border/60">
-              {movements.map((movement) => (
-                <li
-                  key={movement.id}
-                  className="flex items-center justify-between gap-3 py-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-body font-medium">
-                      {movement.label}
-                    </p>
-                    <p className="truncate text-caption text-muted-foreground">
-                      {movement.detail
-                        ? `${movement.detail} · `
-                        : ""}
-                      {dateFormatter.format(
-                        new Date(`${movement.date}T00:00:00Z`)
-                      )}
-                    </p>
-                  </div>
-                  <p
-                    className={
-                      movement.amount < 0
-                        ? "shrink-0 font-mono text-body tabular-nums text-negative"
-                        : "shrink-0 font-mono text-body tabular-nums text-positive"
-                    }
+          <SheetSection
+            header={
+              <SectionHeader
+                eyebrow={t("Activity", "Actividad")}
+                title={t("Recent movements", "Movimientos recientes")}
+              />
+            }
+          >
+            {movements.length === 0 ? (
+              <EmptyState
+                icon={icon}
+                title={t("No movements yet", "Aún no hay movimientos")}
+                description={t(
+                  "Money in and out of this item will appear here.",
+                  "Las entradas y salidas de este elemento aparecerán aquí."
+                )}
+              />
+            ) : (
+              <ul className="divide-y divide-border/60">
+                {movements.map((movement) => (
+                  <li
+                    key={movement.id}
+                    className="flex min-h-14 items-center justify-between gap-3 py-3"
                   >
-                    {movement.amount > 0 ? "+" : ""}
-                    {formatCurrency(movement.amount, movement.currency)}
-                  </p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+                    <div className="min-w-0">
+                      <p className="truncate text-body font-medium">
+                        {movement.label}
+                      </p>
+                      <p className="truncate text-caption text-muted-foreground">
+                        {movement.detail ? `${movement.detail} · ` : ""}
+                        {dateFormatter.format(
+                          new Date(`${movement.date}T00:00:00Z`)
+                        )}
+                      </p>
+                    </div>
+                    <p
+                      className={
+                        movement.amount < 0
+                          ? "shrink-0 font-mono text-body tabular-nums text-negative"
+                          : "shrink-0 font-mono text-body tabular-nums text-positive"
+                      }
+                    >
+                      {movement.amount > 0 ? "+" : ""}
+                      {formatCurrency(movement.amount, movement.currency)}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SheetSection>
+        </ContinuousSheet>
+      </div>
 
       <p className="px-1 text-caption text-muted-foreground">
         {t(

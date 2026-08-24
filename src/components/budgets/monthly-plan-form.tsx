@@ -176,7 +176,7 @@ export function MonthlyPlanForm({
 
       <SheetContent
         side={isMobile ? "bottom" : "right"}
-        className="w-full border-l border-border/80 bg-popover/96 p-0 shadow-3 sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-3xl data-[side=bottom]:border-x data-[side=bottom]:border-t"
+        className="w-full border-l border-border/80 bg-white p-0 shadow-none sm:max-w-[460px] data-[side=bottom]:max-h-[88vh] data-[side=bottom]:rounded-t-2xl data-[side=bottom]:border-x data-[side=bottom]:border-t"
       >
         <form
           onSubmit={form.handleSubmit(handleSubmit)}

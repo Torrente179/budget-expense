@@ -30,6 +30,7 @@ interface WealthCategoryHeroProps {
   progress?: { ratio: number; label: string } | null;
   stats?: HeroStat[];
   children?: ReactNode;
+  className?: string;
 }
 
 /**
@@ -45,11 +46,14 @@ export function WealthCategoryHero({
   progress,
   stats,
   children,
+  className,
 }: WealthCategoryHeroProps) {
   const { baseCurrency } = useCurrency();
 
   return (
-    <section className={cn(HERO_SURFACE, "px-5 py-5 sm:px-6 sm:py-6")}>
+    <section
+      className={cn(HERO_SURFACE, "px-5 py-5 sm:px-6 sm:py-6", className)}
+    >
       <div className="relative space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1.5">

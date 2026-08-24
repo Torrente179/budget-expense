@@ -230,9 +230,10 @@ This is the thinnest part of the system, and it should be stated plainly.
 
 There are four pure-domain unit-test files, run through Node's built-in test
 runner via `tsx --test`: balance checkpoints, Home cashflow/carryover, net worth,
-and recurring-expense start dates. The UP approval checkpoint adds a fail-closed
-deterministic review route plus Playwright visual and behavioral coverage with
-axe. Screenshot baselines are committed per target viewport. There is still no
+and recurring-expense start dates. The completed UP full-app redesign adds a
+fail-closed deterministic review route plus Playwright visual and behavioral
+coverage with axe. Screenshot baselines are committed per target viewport.
+There is still no
 CI configuration that runs the gates automatically.
 
 What partially compensates:

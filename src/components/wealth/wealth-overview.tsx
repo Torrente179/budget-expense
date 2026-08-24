@@ -11,11 +11,13 @@ import { useLocale } from "@/providers/locale-provider";
 import { formatCurrency } from "@/lib/utils";
 import type { WealthCategory } from "@/lib/palette";
 import { Screen } from "@/components/patterns/screen";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AssetsDebtsCard } from "@/components/wealth/assets-debts-card";
 import { CushionCard } from "@/components/wealth/cushion-card";
 import { FxExposureCard } from "@/components/wealth/fx-exposure-card";
 import { NetWorthTrendCard } from "@/components/wealth/net-worth-trend-card";
@@ -25,7 +27,6 @@ import {
   WealthBreakdownList,
   type BreakdownRow,
 } from "@/components/wealth/wealth-breakdown-list";
-import { WealthEmptyPreview } from "@/components/wealth/wealth-empty-preview";
 
 type WealthTab = "summary" | "assets" | "debts";
 
@@ -152,7 +153,7 @@ export function WealthOverview() {
 
   if (loading) {
     return (
-      <Screen title={t("Net worth", "Patrimonio")}>
+      <Screen title={t("Net worth", "Patrimonio")} mode="chrome-sheet">
         <Skeleton className="h-40 rounded-2xl" />
         <div className="grid gap-3 lg:grid-cols-3">
           {Array.from({ length: 3 }).map((_, index) => (
@@ -167,6 +168,7 @@ export function WealthOverview() {
   return (
     <Screen
       title={t("Net worth", "Patrimonio")}
+      mode="chrome-sheet"
       subheader={
         <p className="text-caption text-muted-foreground">
           {t(
@@ -176,139 +178,148 @@ export function WealthOverview() {
         </p>
       }
     >
-      <PatrimonioHero
-        totals={totals}
-        monthlyChange={monthlyChange}
-        isEmpty={isEmpty}
-        addHref="/wealth/accounts"
-      />
+      <div className="-mx-4 min-w-0 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+        <PatrimonioHero
+          totals={totals}
+          monthlyChange={monthlyChange}
+          isEmpty={isEmpty}
+          addHref="/wealth/accounts"
+          className="mx-0 rounded-none sm:mx-0 md:mx-0 md:rounded-none"
+        />
 
-      {isEmpty ? (
-        <>
-          <OrganizeMoneyGrid
-            totals={categoryTotals}
-            counts={categoryCounts}
-            isEmpty
-          />
-          <div className="grid gap-3 lg:grid-cols-2">
-            <WealthEmptyPreview />
-            <Card>
-              <CardHeader>
-                <SectionHeader
-                  eyebrow={t("Currency", "Moneda")}
-                  title={t("By currency", "Distribución por moneda")}
-                />
-              </CardHeader>
-              <CardContent>
-                <p className="py-8 text-center text-caption text-muted-foreground">
+        <ContinuousSheet className="relative -mt-px mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+          {isEmpty ? (
+            <>
+              <OrganizeMoneyGrid
+                totals={categoryTotals}
+                counts={categoryCounts}
+                isEmpty
+              />
+              <SheetSection
+                header={
+                  <SectionHeader
+                    eyebrow={t("Currency", "Moneda")}
+                    title={t("By currency", "Distribución por moneda")}
+                  />
+                }
+              >
+                <p className="py-5 text-center text-caption text-muted-foreground">
                   {t(
                     "Appears once you add your first account.",
                     "Aparecerá cuando añadas tu primera cuenta."
                   )}
                 </p>
-              </CardContent>
-            </Card>
-          </div>
-        </>
-      ) : (
-        <>
-          <UnderlineTabs
-            tabs={[
-              { key: "summary" as const, label: t("Summary", "Resumen") },
-              { key: "assets" as const, label: t("Assets", "Activos") },
-              { key: "debts" as const, label: t("Debts", "Deudas") },
-            ]}
-            value={tab}
-            onChange={setTab}
-            ariaLabel={t("Net worth views", "Vistas de patrimonio")}
-          />
-
-          {tab === "summary" && (
+              </SheetSection>
+            </>
+          ) : (
             <>
-              <div className="grid gap-3 lg:grid-cols-3">
-                <NetWorthTrendCard snapshots={snapshots} />
-                <AssetsDebtsCard totals={totals} />
-                <CushionCard
-                  cushion={cushion}
-                  liquidBase={
-                    totals.accountsAndCash +
-                    totals.savings +
-                    overview.estimatedCash
-                  }
+              <div className="px-4 pt-2 sm:px-5">
+                <UnderlineTabs
+                  tabs={[
+                    { key: "summary" as const, label: t("Summary", "Resumen") },
+                    { key: "assets" as const, label: t("Assets", "Activos") },
+                    { key: "debts" as const, label: t("Debts", "Deudas") },
+                  ]}
+                  value={tab}
+                  onChange={setTab}
+                  ariaLabel={t("Net worth views", "Vistas de patrimonio")}
+                  className="mx-0 px-0"
                 />
               </div>
 
-              <OrganizeMoneyGrid
-                totals={categoryTotals}
-                counts={categoryCounts}
-                isEmpty={false}
-              />
+              {tab === "summary" && (
+                <>
+                  <SheetSection>
+                    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.35fr)_minmax(18rem,.65fr)] lg:divide-x lg:divide-border/70">
+                      <NetWorthTrendCard snapshots={snapshots} variant="section" />
+                      <div className="lg:pl-6">
+                        <CushionCard
+                          variant="section"
+                          cushion={cushion}
+                          liquidBase={
+                            totals.accountsAndCash +
+                            totals.savings +
+                            overview.estimatedCash
+                          }
+                        />
+                      </div>
+                    </div>
+                  </SheetSection>
 
-              {insights && (
-                <Card>
-                  <CardHeader>
-                    <SectionHeader
-                      eyebrow={t("Currency", "Moneda")}
-                      title={t("By currency", "Distribución por moneda")}
+                  <div className="border-b border-border/70">
+                    <OrganizeMoneyGrid
+                      totals={categoryTotals}
+                      counts={categoryCounts}
+                      isEmpty={false}
                     />
-                  </CardHeader>
-                  <CardContent>
-                    <FxExposureCard
-                      variant="bare"
-                      holdings={overview.holdings}
-                      accountSummaries={overview.accountSummaries}
-                      accountCurrencies={accountCurrencies}
-                      savingsTransfers={[
-                        ...savingsTransfers.map((transfer) => ({
-                          amount: Number(transfer.amount),
-                          currency: transfer.currency,
-                        })),
-                        ...activeAccounts.map((account) => ({
-                          amount: account.balance,
-                          currency: account.currency,
-                        })),
-                      ]}
-                      liabilitiesByCurrency={insights.liabilitiesByCurrency}
-                    />
-                  </CardContent>
-                </Card>
+                  </div>
+
+                  {insights && (
+                    <SheetSection
+                      header={
+                        <SectionHeader
+                          eyebrow={t("Currency", "Moneda")}
+                          title={t("By currency", "Distribución por moneda")}
+                        />
+                      }
+                    >
+                      <FxExposureCard
+                        variant="bare"
+                        holdings={overview.holdings}
+                        accountSummaries={overview.accountSummaries}
+                        accountCurrencies={accountCurrencies}
+                        savingsTransfers={[
+                          ...savingsTransfers.map((transfer) => ({
+                            amount: Number(transfer.amount),
+                            currency: transfer.currency,
+                          })),
+                          ...activeAccounts.map((account) => ({
+                            amount: account.balance,
+                            currency: account.currency,
+                          })),
+                        ]}
+                        liabilitiesByCurrency={insights.liabilitiesByCurrency}
+                      />
+                    </SheetSection>
+                  )}
+                </>
+              )}
+
+              {tab === "assets" && (
+                <WealthBreakdownList
+                  eyebrow={t("Owned", "Lo que tienes")}
+                  title={t("Assets", "Activos")}
+                  rows={assetRows}
+                  total={totals.totalAssets}
+                  totalLabel={t("Total assets", "Total activos")}
+                  emptyIcon={Wallet}
+                  emptyTitle={t("No assets yet", "Aún no tienes activos")}
+                  emptyDescription={t(
+                    "Add an account, a savings fund or an investment to get started.",
+                    "Añade una cuenta, un fondo de ahorro o una inversión para empezar."
+                  )}
+                />
+              )}
+
+              {tab === "debts" && (
+                <WealthBreakdownList
+                  eyebrow={t("Owed", "Lo que debes")}
+                  title={t("Debts", "Deudas")}
+                  rows={debtRows}
+                  total={totals.totalLiabilities}
+                  totalLabel={t("Total debt", "Deuda total")}
+                  emptyIcon={CreditCard}
+                  emptyTitle={t("No debts recorded", "Sin deudas registradas")}
+                  emptyDescription={t(
+                    "Nothing owed — or nothing added yet.",
+                    "No debes nada, o aún no lo has añadido."
+                  )}
+                />
               )}
             </>
           )}
-
-          {tab === "assets" && (
-            <WealthBreakdownList
-              eyebrow={t("Owned", "Lo que tienes")}
-              title={t("Assets", "Activos")}
-              rows={assetRows}
-              total={totals.totalAssets}
-              totalLabel={t("Total assets", "Total activos")}
-              emptyIcon={Wallet}
-              emptyTitle={t("No assets yet", "Aún no tienes activos")}
-              emptyDescription={t(
-                "Add an account, a savings fund or an investment to get started.",
-                "Añade una cuenta, un fondo de ahorro o una inversión para empezar."
-              )}
-            />
-          )}
-
-          {tab === "debts" && (
-            <WealthBreakdownList
-              eyebrow={t("Owed", "Lo que debes")}
-              title={t("Debts", "Deudas")}
-              rows={debtRows}
-              total={totals.totalLiabilities}
-              totalLabel={t("Total debt", "Deuda total")}
-              emptyIcon={CreditCard}
-              emptyTitle={t("No debts recorded", "Sin deudas registradas")}
-              emptyDescription={t(
-                "Nothing owed — or nothing added yet.",
-                "No debes nada, o aún no lo has añadido."
-              )}
-            />
-          )}
-        </>
-      )}
+        </ContinuousSheet>
+      </div>
 
       {!isEmpty && tab === "summary" && totals.totalAssets > 0 && (
         <p className="px-1 text-caption text-muted-foreground">

@@ -47,7 +47,7 @@ export function CustomBudgetCard({
   const categories = budget.custom_budget_categories.map((c) => c.categories);
 
   return (
-    <div className="group rounded-lg border bg-card p-4 shadow-sm md:rounded-xl md:p-5 md:shadow-1">
+    <div className="group rounded-lg border bg-card p-4 md:rounded-xl md:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
           <p className="truncate text-base font-medium">{budget.name}</p>

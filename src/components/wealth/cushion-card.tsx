@@ -34,31 +34,36 @@ const STATUS_TONE: Record<CushionTone, "success" | "warning" | "danger"> = {
 interface CushionCardProps {
   cushion: Cushion;
   liquidBase: number;
+  variant?: "card" | "section";
 }
 
 /** Colchón financiero — how many months of essentials the liquid money covers. */
-export function CushionCard({ cushion, liquidBase }: CushionCardProps) {
+export function CushionCard({
+  cushion,
+  liquidBase,
+  variant = "card",
+}: CushionCardProps) {
   const { t, locale } = useLocale();
   const { baseCurrency } = useCurrency();
 
   const label = CUSHION_LABELS[cushion.tone];
 
-  return (
-    <Card className="min-w-0">
-      <CardHeader>
-        <SectionHeader
-          eyebrow={t("Safety", "Seguridad")}
-          title={t("Financial cushion", "Colchón financiero")}
-          action={
-            cushion.months !== null ? (
-              <StatusTag tone={STATUS_TONE[cushion.tone]}>
-                {t(label.en, label.es)}
-              </StatusTag>
-            ) : undefined
-          }
-        />
-      </CardHeader>
-      <CardContent className="space-y-4">
+  const header = (
+    <SectionHeader
+      eyebrow={t("Safety", "Seguridad")}
+      title={t("Financial cushion", "Colchón financiero")}
+      action={
+        cushion.months !== null ? (
+          <StatusTag tone={STATUS_TONE[cushion.tone]}>
+            {t(label.en, label.es)}
+          </StatusTag>
+        ) : undefined
+      }
+    />
+  );
+
+  const content = (
+    <div className="space-y-4">
         {cushion.months === null ? (
           <div className="space-y-3">
             <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-secondary text-muted-foreground">
@@ -96,6 +101,10 @@ export function CushionCard({ cushion, liquidBase }: CushionCardProps) {
               <ProgressMeter
                 ratio={cushion.ratio ?? 0}
                 tone={METER_TONE[cushion.tone]}
+                ariaLabel={t(
+                  "Monthly expenses covered",
+                  "Gastos mensuales cubiertos"
+                )}
               />
               <div className="flex items-center justify-between text-label text-muted-foreground">
                 <span>0</span>
@@ -113,7 +122,22 @@ export function CushionCard({ cushion, liquidBase }: CushionCardProps) {
             </p>
           </>
         )}
-      </CardContent>
+    </div>
+  );
+
+  if (variant === "section") {
+    return (
+      <section className="min-w-0 space-y-4">
+        {header}
+        {content}
+      </section>
+    );
+  }
+
+  return (
+    <Card className="min-w-0">
+      <CardHeader>{header}</CardHeader>
+      <CardContent>{content}</CardContent>
     </Card>
   );
 }

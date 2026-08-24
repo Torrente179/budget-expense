@@ -58,7 +58,7 @@ export function SiteBrand({
       onClick={onClick}
       aria-label="Budget & Expense"
       className={cn(
-        "flex items-center gap-3",
+        "flex min-h-11 items-center gap-3",
         compact ? "justify-center" : "items-start",
         className
       )}

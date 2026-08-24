@@ -124,7 +124,7 @@ export function ImportReview({
             )}
           />
         ) : (
-          <ul className="space-y-2">
+          <ul className="divide-y divide-border/70">
             {visibleRows.map((row) => (
               <ReviewRow
                 key={row.index}
@@ -190,7 +190,7 @@ function ReviewRow({
 
   return (
     <li
-      className={`flex flex-wrap items-center gap-3 rounded-lg px-3 py-2.5 ring-1 ring-border ${
+      className={`flex min-h-14 flex-wrap items-center gap-3 px-1 py-3 ${
         row.include ? "bg-card" : "bg-muted/40 opacity-70"
       }`}
     >

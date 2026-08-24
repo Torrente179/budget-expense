@@ -108,7 +108,7 @@ export function TradeTable({
         {trades.map((trade) => (
           <div
             key={trade.id}
-            className="rounded-xl border bg-card p-4 shadow-1"
+            className="rounded-xl border bg-card p-4"
           >
             <div className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
               <div className="space-y-2">

@@ -38,15 +38,15 @@ test.beforeEach(async ({ page }) => {
   await expect(page).toHaveTitle(/UP Design Review/);
   await expect(
     page.getByRole("heading", {
-      name: "UP-derived approval checkpoint",
+      name: "UP-derived full-app review",
       exact: true,
     })
   ).toBeVisible();
 });
 
-test("@visual populated approval checkpoint", async ({ page }) => {
+test("@visual populated full-app review", async ({ page }) => {
   await expectNoHorizontalOverflow(page);
-  await expect(page).toHaveScreenshot("up-approval-checkpoint.png", {
+  await expect(page).toHaveScreenshot("up-full-app-review.png", {
     animations: "disabled",
     fullPage: false,
     mask: [page.locator("nextjs-portal")],
@@ -54,7 +54,7 @@ test("@visual populated approval checkpoint", async ({ page }) => {
   expect(runtimeErrorsByPage.get(page)).toEqual([]);
 });
 
-test("@a11y populated checkpoint is axe-clean", async ({ page }) => {
+test("@a11y populated full-app review is axe-clean", async ({ page }) => {
   const results = await new AxeBuilder({ page })
     .exclude("nextjs-portal")
     .analyze();
@@ -71,6 +71,24 @@ test("@a11y populated checkpoint is axe-clean", async ({ page }) => {
     violationSummary,
     violationSummary.join("\n")
   ).toEqual([]);
+});
+
+test("propagated wealth, insights, and onboarding surfaces render", async ({
+  page,
+}) => {
+  await expect(page.getByTestId("wealth-report-preview")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Monthly insights", exact: true })
+  ).toBeVisible();
+  await expect(page.getByTestId("onboarding-preview")).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: "Start with what comes in.",
+      exact: true,
+    })
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page);
+  expect(runtimeErrorsByPage.get(page)).toEqual([]);
 });
 
 test("all deterministic stress states remain reachable and stable", async ({
@@ -95,7 +113,7 @@ test("all deterministic stress states remain reachable and stable", async ({
     }
   }
 
-  if (testInfo.project.name.includes("phone")) {
+  if (testInfo.project.use.hasTouch) {
     const shortTargets = await page.evaluate(() =>
       [...document.querySelectorAll<HTMLElement>(
         "a[href],button:not([disabled]),input:not([type='hidden']),select,textarea,[role='button'],[role='tab']"

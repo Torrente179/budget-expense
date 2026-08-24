@@ -35,6 +35,7 @@ interface NetWorthTrendCardProps {
   snapshots: NetWorthSnapshotPoint[];
   /** Today, injected so the component stays deterministic in previews. */
   today?: string;
+  variant?: "card" | "section";
 }
 
 /**
@@ -44,7 +45,11 @@ interface NetWorthTrendCardProps {
  * first-run case gets its own copy rather than an empty plot: an axis with
  * nothing on it looks broken, and this is expected.
  */
-export function NetWorthTrendCard({ snapshots, today }: NetWorthTrendCardProps) {
+export function NetWorthTrendCard({
+  snapshots,
+  today,
+  variant = "card",
+}: NetWorthTrendCardProps) {
   const { t, locale } = useLocale();
   const { baseCurrency } = useCurrency();
   const [range, setRange] = useState<TrendRange>("6M");
@@ -91,6 +96,7 @@ export function NetWorthTrendCard({ snapshots, today }: NetWorthTrendCardProps) 
         eyebrow={t("History", "Historial")}
         title={t("Evolution", "Evolución")}
         height={200}
+        variant={variant}
       >
         <div className="flex h-full flex-col items-center justify-center gap-2 text-center">
           <p className="text-body font-medium">
@@ -113,6 +119,7 @@ export function NetWorthTrendCard({ snapshots, today }: NetWorthTrendCardProps) 
       title={t("Evolution", "Evolución")}
       action={rangeSwitch}
       height={200}
+      variant={variant}
     >
       <ResponsiveContainer width="100%" height="100%">
         <AreaChart data={data} margin={{ top: 8, right: 4, bottom: 0, left: 0 }}>

@@ -29,8 +29,8 @@ only):
 | Home | `/home` | Now + actionable: checkpoint-backed available balance in ink chrome; compact income/spent/daily-guide/pace strip; remaining-first Trackers; stacked category breakdown; Upcoming and recent movements in one white sheet |
 | Movements | `/movements` (+ `/recurring`) | Dense unified ledger with net-month chrome, subdued filters, swipe-delete/edit/undo, and chronological recurring schedule |
 | Budget | `/budget` | Explicit **Trackers/Presupuestos** (ceilings) and **Savers/Metas** (floors) views; existing plan distribution + recommendation |
-| Patrimonio | `/wealth` (+ accounts / investments / savings / liabilities / loans) | The balance sheet: `netWorth = (accounts + savings + investments + moneyLent) − debts`; net-worth hero, Evolución, Activos y deudas, Colchón financiero, Organiza tu dinero |
-| Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — ratios, clickable spend charts, monthly report, calendar; no data-entry CTAs |
+| Patrimonio | `/wealth` (+ accounts / investments / savings / liabilities / loans) | The balance sheet: dominant net-worth chrome flowing into one continuous asset/debt sheet, dense category rows, trend/cushion analysis, FX context, and preserved pushed workflows |
+| Insights | `/insights` (+ calendar, category drilldown) | Past + patterns — month-spend chrome plus one continuous divided report for ratios, charts, Trackers, anomalies, monthly analysis, giving, income sources, and drilldowns |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings`, `/onboarding` (first-run).
 
@@ -53,8 +53,7 @@ statement of what it does, ending at Create account / Log in. See
   Raw coral pairs with ink for large actions and chrome; deep coral is the
   contrast-safe semantic variant for small controls and focus on white.
 - No runtime theme provider or user/system theme switch. The legacy
-  `next-themes` package is not consumed and is scheduled for removal only after
-  the full-app propagation gate.
+  `next-themes` dependency was removed after the full-app propagation gate.
 - See [`design.md`](../design.md) theme model.
 
 ### Language
@@ -91,6 +90,11 @@ Change notes: `changes/2026-07-18-default-theme-light.md`,
 
 **Route:** `/onboarding` — not in primary nav. Chrome (sidebar, topbar, tab bar,
 FAB) is hidden on this route.
+
+Presentation is a full-screen coral narrative with an accessible ink-backed
+lemon headline and an opaque white form sheet. `OnboardingStoryShell` owns only
+this presentation; `OnboardingWizard` retains the six-step state, validation,
+skip/resume behavior, and all existing writes.
 
 ### Who sees the force-gate
 
@@ -279,11 +283,10 @@ Helpers: `src/lib/budgeting/envelope-alerts.ts`,
 
 ## 8. Home (current composition)
 
-> **2026-08-14 approval checkpoint.** Foundations, the application shell,
-> Home, Movements, Recurring, Budget, Capture, auth entry, and the private
-> fixture harness are implemented for visual approval. Wealth, Insights,
-> secondary surfaces, and full onboarding propagation remain deliberately
-> outside this wave. No merge or deployment is implied by this checkpoint.
+> **2026-08-24 full-app propagation.** The approval checkpoint was carried
+> through Wealth, Insights, secondary surfaces, auth/onboarding, and branded
+> system states. The private harness now reviews representative production
+> components from the full application with deterministic, no-Supabase data.
 
 Mobile is canonical: a solid ink header connects directly to the centered
 available-balance hero, followed by Trackers, the spending breakdown, and one
@@ -578,15 +581,13 @@ A €9.950 net worth can sit beside €2.500 of spendable money.
   `patterns/hero-surface.tsx` chrome. Empty state is
   "Construye tu patrimonio" + `+ Añadir primera cuenta`; populated shows net
   worth, the signed monthly change, and an `Activos · Deudas` split.
-- **Quick-glance row:** Evolución (net-worth area chart, 1M/3M/6M/1Y/All),
-  Activos y deudas (two-slice `BreakdownDonut`, net worth in the centre), and
-  Colchón financiero (`StatusTag` + `ProgressMeter`).
-- **Tabs:** Resumen · Activos · Deudas via `UnderlineTabs` (in-screen state).
-- **Organiza tu dinero:** five cards → Cuentas y efectivo · Ahorros ·
-  Inversiones · Dinero prestado · Deudas. An empty category still opens its
-  parent page, never a modal.
-- Empty state swaps the quick-glance row for a "Lo que verás aquí" preview
-  rather than rendering zeros.
+- **Continuous white sheet:** Resumen · Activos · Deudas use `UnderlineTabs`
+  inside one divided surface rather than a gallery of lifted cards.
+- **Summary:** Evolución and Colchón financiero share a report chapter;
+  **Organiza tu dinero** is five dense rows → Cuentas y efectivo · Ahorros ·
+  Inversiones · Dinero prestado · Deudas; FX exposure is another sheet chapter.
+- Empty state keeps the net-worth onboarding hero and actionable dense category
+  rows rather than rendering fabricated zeros.
 
 ### Navigation
 
@@ -824,7 +825,8 @@ production, not localhost). Built-in SMTP is rate-limited.
 | Status indicator | `src/components/patterns/status-tag.tsx` |
 | Shared donut | `src/components/patterns/breakdown-donut.tsx` |
 | Locale + device default | `src/providers/locale-provider.tsx`, `src/lib/locale.ts` |
-| Theme default | `src/providers/theme-provider.tsx` |
+| Fixed appearance tokens | `src/app/globals.css`, `src/components/patterns/hero-surface.tsx` |
+| Continuous white sheet | `src/components/patterns/continuous-sheet.tsx` |
 | Onboarding UI + gate | `src/components/onboarding/` |
 | Onboarding logic | `src/hooks/use-onboarding.ts`, `src/lib/onboarding/` |
 | Capture UI | `src/components/capture/capture-sheet.tsx`, `capture-fab.tsx` |
@@ -867,6 +869,7 @@ production, not localhost). Built-in SMTP is rate-limited.
 | In-app confirm | `src/components/shared/confirm-dialog.tsx` |
 | Patrimonio accents | `WEALTH_ACCENTS` in `src/lib/palette.ts` |
 | Insights | `src/components/insights/insights-screen.tsx`, `insights-trend-charts.tsx`, `deferred-insights-trend-charts.tsx`, `monthly-report.tsx`, `calendar-screen.tsx` |
+| Private deterministic UI review | `src/app/%5F_design/up/page.tsx`, `src/components/design/up-review-harness.tsx` |
 | Chart theme (incl. spend series color) | `src/components/charts/chart-theme.tsx` (`SPEND_CHART_COLOR`) |
 | Wisdom content | `src/lib/financial-wisdom.ts`, `src/lib/budgeting-methods.ts` |
 | Query keys | `src/lib/query/keys.ts` |

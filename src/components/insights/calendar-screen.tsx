@@ -17,6 +17,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils";
 import { getTodayIsoDate } from "@/lib/calendar";
 import { Screen } from "@/components/patterns/screen";
+import { ContinuousSheet } from "@/components/patterns/continuous-sheet";
 import { TransactionRow } from "@/components/patterns/transaction-row";
 import { MonthPicker } from "@/components/shared/month-picker";
 import { CategoryIcon } from "@/components/shared/category-badge";
@@ -178,12 +179,21 @@ export function CalendarScreen() {
     <Screen
       title={t("Calendar", "Calendario")}
       backHref="/insights"
-      actions={<MonthPicker month={month} year={year} onChange={setMonthYear} />}
+      mode="chrome-sheet"
+      actions={
+        <MonthPicker
+          month={month}
+          year={year}
+          onChange={setMonthYear}
+          onInk
+        />
+      }
     >
       {loading ? (
         <Skeleton className="h-[480px] rounded-xl" />
       ) : (
-        <div className="rounded-xl bg-card p-2 ring-1 ring-border shadow-1 sm:p-3">
+        <ContinuousSheet>
+          <div className="p-2 sm:p-3">
           <div className="grid grid-cols-7">
             {weekdayLabels.map((label, index) => (
               <div
@@ -251,24 +261,24 @@ export function CalendarScreen() {
               );
             })}
           </div>
-        </div>
-      )}
+          </div>
 
-      {/* Legend */}
-      <div className="flex flex-wrap gap-x-5 gap-y-1.5 px-1">
-        <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-foreground/60" />
-          {t("Spending", "Gastos")}
-        </span>
-        <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
-          <span className="h-1.5 w-1.5 rounded-full bg-success" />
-          {t("Income", "Ingresos")}
-        </span>
-        <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
-          <Repeat className="h-3 w-3 text-info" />
-          {t("Upcoming recurring", "Recurrente próximo")}
-        </span>
-      </div>
+          <div className="flex flex-wrap gap-x-5 gap-y-1.5 border-t border-border/70 px-4 py-3 sm:px-5">
+            <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-foreground/60" />
+              {t("Spending", "Gastos")}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
+              <span className="h-1.5 w-1.5 rounded-full bg-success" />
+              {t("Income", "Ingresos")}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-caption text-muted-foreground">
+              <Repeat className="h-3 w-3 text-info" />
+              {t("Upcoming recurring", "Recurrente próximo")}
+            </span>
+          </div>
+        </ContinuousSheet>
+      )}
 
       {/* Day detail */}
       <Sheet

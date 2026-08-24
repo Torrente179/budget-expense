@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCurrency } from "@/providers/currency-provider";
 import { CURRENCIES, type CurrencyCode } from "@/lib/constants";
 import { Screen } from "@/components/patterns/screen";
+import { ContinuousSheet } from "@/components/patterns/continuous-sheet";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -110,13 +111,19 @@ export default function SettingsPage() {
 
 
   return (
-    <Screen title={t("Settings", "Ajustes")} backHref="/home">
-      <div className="mx-auto w-full max-w-2xl space-y-6">
+    <Screen
+      title={t("Settings", "Ajustes")}
+      backHref="/home"
+      mode="chrome-sheet"
+    >
+      <div className="w-full max-w-3xl md:mx-auto">
+      <ContinuousSheet className="md:mx-0">
+      <div className="divide-y divide-border/70 [&_[data-slot=card]]:gap-3 [&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:py-5 [&_[data-slot=card]]:ring-0">
 
       {incomplete && (
         <Link
           href="/onboarding"
-          className="flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3.5 transition-colors hover:bg-secondary"
+          className="flex min-h-16 items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-accent/40"
         >
           <span className="flex min-w-0 items-start gap-3">
             <Compass className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
@@ -233,7 +240,7 @@ export default function SettingsPage() {
       {/* Liabilities moved to Wealth */}
       <Link
         href="/wealth/liabilities"
-        className="flex items-center justify-between gap-3 rounded-xl border border-border bg-secondary/50 px-4 py-3.5 transition-colors hover:bg-secondary"
+        className="flex min-h-16 items-center justify-between gap-3 px-4 py-3.5 transition-colors hover:bg-accent/40"
       >
         <span className="min-w-0">
           <span className="block text-body font-medium">
@@ -273,6 +280,8 @@ export default function SettingsPage() {
           </Button>
         </CardContent>
       </Card>
+      </div>
+      </ContinuousSheet>
     </div>
     </Screen>
   );

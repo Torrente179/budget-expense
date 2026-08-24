@@ -7,7 +7,11 @@ import { es as esLocale, enUS } from "date-fns/locale";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
+import { SectionHeader } from "@/components/patterns/section-header";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/empty-state";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
@@ -144,117 +148,122 @@ export function LoansEditor() {
 
   return (
     <>
-      <WealthCategoryHero
-        eyebrow={t("Still to collect", "Pendiente por cobrar")}
-        amount={outstandingBase}
-        icon={HandCoins}
-        progress={
-          lentBase > 0
-            ? {
-                ratio: recoveredBase / lentBase,
-                label: t("Recovered", "Recuperado"),
-              }
-            : null
-        }
-        stats={[
-          {
-            label: t("Total lent", "Total prestado"),
-            value: formatCurrency(lentBase, baseCurrency),
-          },
-          {
-            label: t("Recovered", "Recuperado"),
-            value: formatCurrency(recoveredBase, baseCurrency),
-            tone: "positive",
-          },
-          {
-            label: t("Active", "Activos"),
-            value: String(activeLoans.length),
-          },
-        ]}
-      />
-
-      <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">
-          {t("Loans lent", "Préstamos concedidos")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          {t(
-            "Money you lent to people. Creating a loan records a Loan expense; repayments record income and reduce what you’re owed. You can also record a repayment from Movements → Income → Loan.",
-            "Dinero que prestaste. Crear un préstamo registra un gasto Préstamo; los cobros registran ingreso y reducen lo que te deben. También puedes registrar un cobro en Movimientos → Ingreso → Préstamo."
-          )}
-        </p>
-
-        {isError ? (
-          <p className="text-sm text-destructive">
-            {t(
-              "Loans need the 2026-07-22-loans-receivables migration.",
-              "Los préstamos requieren la migración 2026-07-22-loans-receivables."
-            )}
-          </p>
-        ) : isPending ? (
-          <div className="h-16 animate-pulse rounded-xl bg-muted" />
-        ) : data && data.loans.length === 0 ? (
-          <EmptyState
-            icon={Banknote}
-            title={t("No loans out", "Sin préstamos pendientes")}
-            description={t(
-              "When you lend money, track it here and in Movements.",
-              "Cuando prestes dinero, síguelo aquí y en Movimientos."
-            )}
-          />
-        ) : (
-          <ul className="space-y-3">
-            {activeLoans.map((loan) => (
-              <LoanRow
-                key={loan.id}
-                loan={loan}
-                repayments={
-                  data?.repayments.filter(
-                    (repayment) => repayment.loan_id === loan.id
-                  ) ?? []
+      <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+        <WealthCategoryHero
+          eyebrow={t("Still to collect", "Pendiente por cobrar")}
+          amount={outstandingBase}
+          icon={HandCoins}
+          className="mx-0 rounded-none sm:mx-0 md:mx-0 md:rounded-none"
+          progress={
+            lentBase > 0
+              ? {
+                  ratio: recoveredBase / lentBase,
+                  label: t("Recovered", "Recuperado"),
                 }
-                onChanged={invalidate}
-              />
-            ))}
-            {closedLoans.length > 0 && (
-              <li className="pt-2">
-                <p className="mb-2 text-xs font-medium text-muted-foreground">
-                  {t("Fully repaid", "Totalmente cobrados")}
-                </p>
-                <ul className="space-y-3">
-                  {closedLoans.map((loan) => (
-                    <LoanRow
-                      key={loan.id}
-                      loan={loan}
-                      repayments={
-                        data?.repayments.filter(
-                          (repayment) => repayment.loan_id === loan.id
-                        ) ?? []
-                      }
-                      onChanged={invalidate}
-                    />
-                  ))}
-                </ul>
-              </li>
-            )}
-          </ul>
-        )}
+              : null
+          }
+          stats={[
+            {
+              label: t("Total lent", "Total prestado"),
+              value: formatCurrency(lentBase, baseCurrency),
+            },
+            {
+              label: t("Recovered", "Recuperado"),
+              value: formatCurrency(recoveredBase, baseCurrency),
+              tone: "positive",
+            },
+            {
+              label: t("Active", "Activos"),
+              value: String(activeLoans.length),
+            },
+          ]}
+        />
 
-        {!isError && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setWizardOpen(true)}
+        <ContinuousSheet className="relative -mt-px mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+          <SheetSection
+            header={
+              <SectionHeader
+                title={t("Loans lent", "Préstamos concedidos")}
+              />
+            }
+            className="space-y-4"
           >
-            <Plus />
-            {t("Add loan", "Añadir préstamo")}
-          </Button>
-        )}
-      </CardContent>
-      </Card>
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "Money you lent to people. Creating a loan records a Loan expense; repayments record income and reduce what you’re owed. You can also record a repayment from Movements → Income → Loan.",
+                "Dinero que prestaste. Crear un préstamo registra un gasto Préstamo; los cobros registran ingreso y reducen lo que te deben. También puedes registrar un cobro en Movimientos → Ingreso → Préstamo."
+              )}
+            </p>
+
+            {isError ? (
+              <p className="text-sm text-destructive">
+                {t(
+                  "Loans need the 2026-07-22-loans-receivables migration.",
+                  "Los préstamos requieren la migración 2026-07-22-loans-receivables."
+                )}
+              </p>
+            ) : isPending ? (
+              <div className="h-16 animate-pulse rounded-xl bg-muted" />
+            ) : data && data.loans.length === 0 ? (
+              <EmptyState
+                icon={Banknote}
+                title={t("No loans out", "Sin préstamos pendientes")}
+                description={t(
+                  "When you lend money, track it here and in Movements.",
+                  "Cuando prestes dinero, síguelo aquí y en Movimientos."
+                )}
+              />
+            ) : (
+              <ul className="divide-y divide-border/70">
+                {activeLoans.map((loan) => (
+                  <LoanRow
+                    key={loan.id}
+                    loan={loan}
+                    repayments={
+                      data?.repayments.filter(
+                        (repayment) => repayment.loan_id === loan.id
+                      ) ?? []
+                    }
+                    onChanged={invalidate}
+                  />
+                ))}
+                {closedLoans.length > 0 && (
+                  <li className="pt-4">
+                    <p className="mb-2 text-xs font-medium text-muted-foreground">
+                      {t("Fully repaid", "Totalmente cobrados")}
+                    </p>
+                    <ul className="divide-y divide-border/70">
+                      {closedLoans.map((loan) => (
+                        <LoanRow
+                          key={loan.id}
+                          loan={loan}
+                          repayments={
+                            data?.repayments.filter(
+                              (repayment) => repayment.loan_id === loan.id
+                            ) ?? []
+                          }
+                          onChanged={invalidate}
+                        />
+                      ))}
+                    </ul>
+                  </li>
+                )}
+              </ul>
+            )}
+
+            {!isError && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setWizardOpen(true)}
+              >
+                <Plus />
+                {t("Add loan", "Añadir préstamo")}
+              </Button>
+            )}
+          </SheetSection>
+        </ContinuousSheet>
+      </div>
 
       <LoanWizard
         open={wizardOpen}

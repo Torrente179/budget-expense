@@ -18,11 +18,11 @@ enforced by a single navigation source of truth
 
 | Section | Route | Owns | Editorial rule |
 |---|---|---|---|
-| **Home** | `/home` | Compact black hero (checkpoint-backed carried available cash headline; month-only plan pace as support); Presupuesto cards only (`spending_limit`); category donut; recent movements | *Now + actionable* |
-| **Movements** | `/movements`, `/movements/recurring` | Unified expense + income ledger, filters, search, swipe-delete, recurring charges | The ledger itself |
+| **Home** | `/home` | Connected ink available-cash hero; compact income/spent/daily-guide/pace strip; remaining-first Trackers; stacked category strip; Upcoming + activity in one white sheet | *Now + actionable* |
+| **Movements** | `/movements`, `/movements/recurring` | Dense unified ledger, subdued URL filters/search, edit/swipe-delete/undo, and a chronological recurring day rail | The ledger itself |
 | **Budget** | `/budget` | Dual engines: Presupuestos (ceilings) + Metas (floors); compact hero; methods seed by `budget_role` → `kind` | Planning |
-| **Wealth** | `/wealth` + `/investments`, `/savings`, `/liabilities`, `/loans` | Net worth, allocation, runway, FX exposure, holdings, debts, money lent | *Balances* |
-| **Insights** | `/insights` + `/calendar`, `/categories/[id]` | Ratios, pillars, clickable 12-month + daily spend bars, envelope use, anomalies, monthly report (category bars), calendar day drilldown | *Past + patterns* — no data-entry CTAs |
+| **Wealth** | `/wealth` + `/accounts`, `/investments`, `/savings`, `/liabilities`, `/loans` | Dominant net-worth chrome, continuous asset/debt sheet, dense balance rows, trend/cushion/FX context, holdings, debts, money lent | *Balances* |
+| **Insights** | `/insights` + `/calendar`, `/categories/[id]` | Month-spend chrome plus one continuous report for ratios, pillars, clickable trends, Tracker use, anomalies, monthly analysis, giving, income sources, and drilldowns | *Past + patterns* — no data-entry CTAs |
 
 Secondary destinations — `/review`, `/import`, `/wisdom`, `/settings` — are
 reachable from the desktop sidebar, the mobile profile sheet, and a ⌘K command
@@ -53,7 +53,7 @@ for example, net worth appears only in Wealth and never on Home.
 | Motion | Framer Motion | v12 | Opacity-only route transitions |
 | Icons | lucide-react | v1.7 | |
 | Toasts | Sonner | v2 | Destructive actions offer Undo |
-| Theming | next-themes | 0.4 | Class strategy, **light by default** |
+| Appearance | Fixed UP-derived token system | — | One ink/white/coral appearance; no runtime theme provider |
 | Hosting | Vercel | — | Project `budget-expense`, team `torrente179s-projects` |
 
 **Notable absences**, all deliberate: no state management library (React Query +
@@ -139,11 +139,12 @@ GET /home
   ├─▶ app/layout.tsx  (Server Component)
   │     ├─ headers().get("accept-language") → localeFromAcceptLanguage()
   │     ├─ <html lang={initialLocale}>  ← correct language on first paint
-  │     └─ ThemeProvider > LocaleProvider > TooltipProvider > {children} + Toaster
+  │     └─ LocaleProvider > {children} + Toaster
   │
   ├─▶ app/(app)/layout.tsx  ("use client")
   │     └─ QueryProvider > CurrencyProvider > MonthProvider > OnboardingGate
-  │          └─ Sidebar | Topbar | TabBar | CaptureFab   (all hidden on /onboarding)
+  │          └─ Sidebar | screen-local headers | TabBar | CaptureFab
+  │             (all global chrome hidden on /onboarding)
   │
   └─▶ app/(app)/home/page.tsx → <HomeScreen />
 ```

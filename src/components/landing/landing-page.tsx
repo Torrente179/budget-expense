@@ -197,7 +197,7 @@ export function LandingPage() {
   return (
     <StaticCurrencyProvider baseCurrency="EUR">
       <div className="flex min-h-dvh flex-col bg-background">
-        <header className="sticky top-0 z-40 bg-ink/85 backdrop-blur-md">
+        <header className="sticky top-0 z-40 bg-ink">
           {/* On a phone this row is exactly the brand and the two doors. The
               wordmark and the language chip drop out rather than push the
               account buttons off the viewport. */}
@@ -287,7 +287,7 @@ export function LandingPage() {
           {/* Section rail. Anchors only — it never leaves the page. */}
           <nav
             aria-label={t("Product tour", "Recorrido del producto")}
-            className="sticky top-18 z-30 border-b border-border bg-card/90 backdrop-blur-md"
+            className="sticky top-18 z-30 border-b border-border bg-card"
           >
             <div className="mx-auto flex w-full max-w-[74rem] items-center gap-6 overflow-x-auto px-5 py-4 sm:px-7">
               {sections.map((section) => (

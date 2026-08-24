@@ -5,7 +5,11 @@ import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ContinuousSheet,
+  SheetSection,
+} from "@/components/patterns/continuous-sheet";
+import { SectionHeader } from "@/components/patterns/section-header";
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/shared/empty-state";
 import { authorizedFetch } from "@/lib/query/authorized-fetch";
@@ -108,89 +112,94 @@ export function LiabilitiesEditor() {
 
   return (
     <>
-      <WealthCategoryHero
-        eyebrow={t("Outstanding debt", "Deuda pendiente")}
-        amount={outstandingBase}
-        icon={CreditCard}
-        progress={
-          originalBase > 0
-            ? { ratio: paidBase / originalBase, label: t("Paid off", "Pagado") }
-            : null
-        }
-        stats={[
-          {
-            label: t("Paid so far", "Pagado hasta hoy"),
-            value: formatCurrency(paidBase, baseCurrency),
-            tone: "positive",
-          },
-          {
-            label: t("Original", "Importe original"),
-            value: formatCurrency(originalBase, baseCurrency),
-          },
-          {
-            label: t("Active", "Activas"),
-            value: String(activeLiabilities.length),
-          },
-        ]}
-      />
+      <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+        <WealthCategoryHero
+          eyebrow={t("Outstanding debt", "Deuda pendiente")}
+          amount={outstandingBase}
+          icon={CreditCard}
+          className="mx-0 rounded-none sm:mx-0 md:mx-0 md:rounded-none"
+          progress={
+            originalBase > 0
+              ? { ratio: paidBase / originalBase, label: t("Paid off", "Pagado") }
+              : null
+          }
+          stats={[
+            {
+              label: t("Paid so far", "Pagado hasta hoy"),
+              value: formatCurrency(paidBase, baseCurrency),
+              tone: "positive",
+            },
+            {
+              label: t("Original", "Importe original"),
+              value: formatCurrency(originalBase, baseCurrency),
+            },
+            {
+              label: t("Active", "Activas"),
+              value: String(activeLiabilities.length),
+            },
+          ]}
+        />
 
-      <Card className="border-border/50">
-      <CardHeader>
-        <CardTitle className="text-sm font-medium">
-          {t("Liabilities", "Pasivos")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <p className="text-sm text-muted-foreground">
-          {t(
-            "Debts you owe. Payments reduce the balance; net worth subtracts what remains.",
-            "Deudas pendientes. Los pagos reducen el saldo; el patrimonio neto resta lo que queda."
-          )}
-        </p>
+        <ContinuousSheet className="relative -mt-px mx-0 rounded-none ring-0 sm:mx-0 md:mx-0 md:rounded-none md:ring-0">
+          <SheetSection
+            header={<SectionHeader title={t("Liabilities", "Pasivos")} />}
+            className="space-y-4"
+          >
+            <p className="text-sm text-muted-foreground">
+              {t(
+                "Debts you owe. Payments reduce the balance; net worth subtracts what remains.",
+                "Deudas pendientes. Los pagos reducen el saldo; el patrimonio neto resta lo que queda."
+              )}
+            </p>
 
-        {isError ? (
-          <p className="text-sm text-destructive">
-            {t(
-              "Liabilities need the 2026-07-03 migration — see docs/pending-migrations-runbook.md",
-              "Los pasivos requieren la migración 2026-07-03 — ver docs/pending-migrations-runbook.md"
-            )}
-          </p>
-        ) : isPending ? (
-          <div className="h-16 animate-pulse rounded-xl bg-muted" />
-        ) : data && data.liabilities.length === 0 ? (
-          <EmptyState
-            icon={Landmark}
-            title={t("Debt-free", "Sin deudas")}
-            description={t(
-              "Nothing to subtract from your net worth.",
-              "Nada que restar de tu patrimonio."
-            )}
-          />
-        ) : (
-          <ul className="space-y-3">
-            {data?.liabilities.map((liability) => (
-              <LiabilityRow
-                key={liability.id}
-                liability={liability}
-                payments={
-                  data.payments.filter(
-                    (payment) => payment.liability_id === liability.id
-                  ) ?? []
-                }
-                onChanged={invalidate}
+            {isError ? (
+              <p className="text-sm text-destructive">
+                {t(
+                  "Liabilities need the 2026-07-03 migration — see docs/pending-migrations-runbook.md",
+                  "Los pasivos requieren la migración 2026-07-03 — ver docs/pending-migrations-runbook.md"
+                )}
+              </p>
+            ) : isPending ? (
+              <div className="h-16 animate-pulse rounded-xl bg-muted" />
+            ) : data && data.liabilities.length === 0 ? (
+              <EmptyState
+                icon={Landmark}
+                title={t("Debt-free", "Sin deudas")}
+                description={t(
+                  "Nothing to subtract from your net worth.",
+                  "Nada que restar de tu patrimonio."
+                )}
               />
-            ))}
-          </ul>
-        )}
+            ) : (
+              <ul className="divide-y divide-border/70">
+                {data?.liabilities.map((liability) => (
+                  <LiabilityRow
+                    key={liability.id}
+                    liability={liability}
+                    payments={
+                      data.payments.filter(
+                        (payment) => payment.liability_id === liability.id
+                      ) ?? []
+                    }
+                    onChanged={invalidate}
+                  />
+                ))}
+              </ul>
+            )}
 
-        {!isError && (
-          <Button size="sm" variant="outline" onClick={() => setWizardOpen(true)}>
-            <Plus />
-            {t("Add debt", "Añadir deuda")}
-          </Button>
-        )}
-      </CardContent>
-      </Card>
+            {!isError && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setWizardOpen(true)}
+              >
+                <Plus />
+                {t("Add debt", "Añadir deuda")}
+              </Button>
+            )}
+          </SheetSection>
+        </ContinuousSheet>
+      </div>
 
       <DebtWizard
         open={wizardOpen}

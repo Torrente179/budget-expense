@@ -29,7 +29,7 @@ import {
   CategoryOption,
   CATEGORY_SELECT_CONTENT_CLASS,
 } from "@/components/shared/category-badge";
-import { Screen } from "@/components/patterns/screen";
+import { OnboardingStoryShell } from "@/components/onboarding/onboarding-story-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -170,6 +170,51 @@ export function OnboardingWizard() {
     : null;
   const suggestedMethodId = suggestedPersonalization.methodId;
 
+  const story: Record<Step, { title: string; description: string }> = {
+    welcome: {
+      title: t("Money, made yours.", "Tu dinero, a tu manera."),
+      description: t(
+        "Six short steps turn a blank ledger into a plan you can actually use.",
+        "Seis pasos breves convierten un libro vacío en un plan que sí puedes usar."
+      ),
+    },
+    income: {
+      title: t("Start with what comes in.", "Empieza por lo que entra."),
+      description: t(
+        "Your usual take-home amount anchors every tracker and daily guide.",
+        "Tu ingreso neto habitual da sentido a cada presupuesto y guía diaria."
+      ),
+    },
+    recurring: {
+      title: t("See the month ahead.", "Mira el mes que viene."),
+      description: t(
+        "Add the fixed costs that should never catch you by surprise.",
+        "Añade los gastos fijos que nunca deberían pillarte por sorpresa."
+      ),
+    },
+    debt: {
+      title: t("Name what you owe.", "Ponle nombre a lo que debes."),
+      description: t(
+        "A clear starting balance makes every payment visible progress.",
+        "Un saldo inicial claro convierte cada pago en progreso visible."
+      ),
+    },
+    goals: {
+      title: t("Choose what matters.", "Elige lo que importa."),
+      description: t(
+        "Your priorities shape the trackers, savers, and guidance you see first.",
+        "Tus prioridades ordenan los presupuestos, metas y consejos que verás primero."
+      ),
+    },
+    suggestions: {
+      title: t("Ready for your next move.", "Listo para tu próximo paso."),
+      description: t(
+        "Review the plan, keep what fits, and change anything whenever you need.",
+        "Revisa el plan, conserva lo que encaja y cambia lo que necesites cuando quieras."
+      ),
+    },
+  };
+
   function goNext() {
     if (step === "recurring" && recurringRows.some(isIncompleteRecurringRow)) {
       toast.error(
@@ -305,20 +350,14 @@ export function OnboardingWizard() {
   }
 
   return (
-    <Screen title={t("Setup", "Configuración")} showUtilities={false}>
-      <div className="mx-auto w-full max-w-lg space-y-5">
-        <div className="flex gap-1.5">
-          {STEPS.map((item, index) => (
-            <div
-              key={item}
-              className={cn(
-                "h-1 flex-1 rounded-full",
-                index <= stepIndex ? "bg-foreground" : "bg-secondary"
-              )}
-            />
-          ))}
-        </div>
-
+    <OnboardingStoryShell
+      stepIndex={stepIndex}
+      stepCount={STEPS.length}
+      progressLabel={t("Setup progress", "Progreso de configuración")}
+      eyebrow={t("Easy setup", "Configuración fácil")}
+      title={story[step].title}
+      description={story[step].description}
+    >
         {step === "welcome" && (
           <Card>
             <CardContent className="space-y-4 py-6">
@@ -901,8 +940,7 @@ export function OnboardingWizard() {
             </CardContent>
           </Card>
         )}
-      </div>
-    </Screen>
+    </OnboardingStoryShell>
   );
 }
 
