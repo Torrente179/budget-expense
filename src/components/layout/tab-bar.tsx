@@ -7,7 +7,7 @@ import { useLocale } from "@/providers/locale-provider";
 import { PRIMARY_NAV, isNavItemActive } from "@/lib/navigation";
 import { NavigationPendingIndicator } from "./navigation-pending-indicator";
 
-/** Flat, opaque mobile navigation adapted from Up's ink chrome. */
+/** Floating capsule navigation: a raised, slightly translucent surface. */
 export function TabBar({
   pathnameOverride,
   staticPreview = false,
@@ -23,12 +23,12 @@ export function TabBar({
   return (
     <nav
       aria-label={t("Main navigation", "Navegación principal")}
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3 pb-[max(0.625rem,env(safe-area-inset-bottom))] md:hidden"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:hidden"
     >
       <div
         className={cn(
-          "pointer-events-auto grid h-[60px] w-full max-w-md grid-cols-5 rounded-full",
-          "border border-white/10 bg-ink"
+          "pointer-events-auto grid h-16 w-full max-w-md grid-cols-5 rounded-full px-1.5",
+          "border border-border bg-tabbar/85 shadow-3 backdrop-blur-xl backdrop-saturate-150"
         )}
       >
         {PRIMARY_NAV.map((item) => {
@@ -49,16 +49,16 @@ export function TabBar({
                 "relative flex min-h-11 flex-col items-center justify-center gap-1 rounded-full transition-colors duration-[var(--motion-standard)]",
                 active
                   ? "text-coral"
-                  : "text-white/52 hover:text-white"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               <item.icon
-                className={cn("h-5 w-5", active && "stroke-[2.25]")}
+                className={cn("h-[1.375rem] w-[1.375rem]", active && "stroke-[2.25]")}
               />
               <span
                 className={cn(
-                  "text-[0.625rem] leading-none",
-                  active ? "font-semibold" : "font-medium"
+                  "text-nav tracking-tight",
+                  active ? "font-extrabold" : "font-semibold"
                 )}
               >
                 {t(item.label.en, item.label.es)}

@@ -3,14 +3,14 @@
 export default function GlobalError({ reset }: { reset: () => void }) {
   return (
     <html lang="en">
-      <body style={{ margin: 0, fontFamily: "Inter, system-ui, sans-serif" }}>
+      <body style={{ margin: 0, fontFamily: "Manrope, system-ui, sans-serif" }}>
         <main
           style={{
             minHeight: "100dvh",
             display: "grid",
             placeItems: "center",
             padding: 24,
-            background: "#1A1B23",
+            background: "#0D0B0A",
             color: "white",
             textAlign: "center",
           }}
@@ -37,7 +37,7 @@ export default function GlobalError({ reset }: { reset: () => void }) {
                 borderRadius: 999,
                 padding: "0 22px",
                 background: "#FF7A64",
-                color: "white",
+                color: "#1C0D08",
                 fontWeight: 700,
                 cursor: "pointer",
               }}

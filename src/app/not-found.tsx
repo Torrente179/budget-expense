@@ -3,7 +3,10 @@ import { ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <main className="flex min-h-dvh items-center justify-center bg-ink px-6 py-12 text-white">
+    <main
+      data-theme="dark"
+      className="flex min-h-dvh items-center justify-center bg-ink px-6 py-12 text-white"
+    >
       <section className="w-full max-w-lg text-center">
         <p className="money-hero">404</p>
         <p className="label-caps mt-4 text-white/50">Off the ledger</p>

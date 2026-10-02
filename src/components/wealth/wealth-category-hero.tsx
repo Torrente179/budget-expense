@@ -57,7 +57,7 @@ export function WealthCategoryHero({
       <div className="relative space-y-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1.5">
-            <p className="label-caps text-white/55">{eyebrow}</p>
+            <p className="label-caps text-muted-foreground">{eyebrow}</p>
             <p className="up-figure font-mono text-display tabular-nums tracking-tight">
               {formatCurrency(amount, baseCurrency)}
             </p>
@@ -67,7 +67,7 @@ export function WealthCategoryHero({
                 style={{
                   color:
                     delta.amount === 0
-                      ? "rgba(255,255,255,0.55)"
+                      ? "var(--muted-foreground)"
                       : delta.amount > 0
                         ? HERO_ACCENT
                         : HERO_ACCENT_NEGATIVE,
@@ -75,7 +75,7 @@ export function WealthCategoryHero({
               >
                 {delta.amount > 0 ? "+" : ""}
                 {formatCurrency(delta.amount, baseCurrency)}{" "}
-                <span className="font-sans text-white/50">{delta.label}</span>
+                <span className="font-sans text-muted-foreground">{delta.label}</span>
               </p>
             )}
           </div>
@@ -87,17 +87,17 @@ export function WealthCategoryHero({
               HERO_ICON_TILE
             )}
           >
-            <Icon className="h-[18px] w-[18px] text-white/70" />
+            <Icon className="h-[18px] w-[18px] text-foreground/70" />
           </span>
         </div>
 
         {progress && (
           <div className="space-y-1.5">
             <div className="flex items-baseline justify-between gap-3">
-              <span className="text-caption text-white/55">
+              <span className="text-caption text-muted-foreground">
                 {progress.label}
               </span>
-              <span className="font-mono text-caption tabular-nums text-white">
+              <span className="font-mono text-caption tabular-nums text-foreground">
                 {Math.round(Math.min(Math.max(progress.ratio, 0), 1) * 100)}%
               </span>
             </div>
@@ -123,7 +123,7 @@ export function WealthCategoryHero({
           >
             {stats.map((stat) => (
               <div key={stat.label} className="min-w-0">
-                <p className="label-caps text-white/55">{stat.label}</p>
+                <p className="label-caps text-muted-foreground">{stat.label}</p>
                 <p
                   className="mt-1 truncate font-mono text-body font-semibold tabular-nums"
                   style={{
@@ -132,7 +132,7 @@ export function WealthCategoryHero({
                         ? HERO_ACCENT
                         : stat.tone === "negative"
                           ? HERO_ACCENT_NEGATIVE
-                          : "#fff",
+                          : "var(--foreground)",
                   }}
                 >
                   {stat.value}

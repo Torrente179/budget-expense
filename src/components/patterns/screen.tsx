@@ -5,6 +5,7 @@ import { ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { ProfileSheet } from "@/components/layout/profile-sheet";
 import { CommandMenu } from "@/components/layout/command-menu";
+import { CaptureButton } from "@/components/capture/capture-button";
 import { LanguageSwitch } from "@/components/shared/language-switch";
 import { CurrencyQuickSwitch } from "@/components/shared/currency-quick-switch";
 import type { ReactNode } from "react";
@@ -22,7 +23,7 @@ interface ScreenProps {
    * otherwise navigates to this safe fallback (deep links / refresh).
    */
   backHref?: string;
-  /** Leading slot on mobile (e.g. profile avatar). Ignored when backHref is set. */
+  /** Replaces the mobile profile trigger. Ignored when backHref is set. */
   leading?: ReactNode;
   /** Trailing header actions (icon buttons, pickers). */
   actions?: ReactNode;
@@ -31,24 +32,21 @@ interface ScreenProps {
   children: ReactNode;
   className?: string;
   /**
-   * `chrome-sheet` connects an ink header/hero to a white list sheet.
-   * `dark-canvas` keeps goal-card screens on ink throughout.
-   * `plain` is the dense neutral scaffold for secondary routes and forms.
+   * Layout rhythm only — every mode shares the one dark ground.
+   * `chrome-sheet` joins a hero to the list below it with no gap.
+   * `dark-canvas` stacks card groups with a small gap.
+   * `plain` is the roomier scaffold for secondary routes and forms.
    */
   mode?: ScreenMode;
   /** Constrains the screen without changing route-level shell breakpoints. */
   width?: ScreenWidth;
-  /** Hide desktop command/preference actions in immersive flows. */
+  /** Hide search/preference actions in immersive flows. */
   showUtilities?: boolean;
+  /** Hide the add-movement button (flows that are themselves a capture). */
+  showCapture?: boolean;
 }
 
-function ScreenBackButton({
-  fallbackHref,
-  onInk = false,
-}: {
-  fallbackHref: string;
-  onInk?: boolean;
-}) {
+function ScreenBackButton({ fallbackHref }: { fallbackHref: string }) {
   const router = useRouter();
 
   return (
@@ -62,12 +60,7 @@ function ScreenBackButton({
         }
         router.push(fallbackHref);
       }}
-      className={cn(
-        "-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full transition-colors duration-[var(--motion-standard)]",
-        onInk
-          ? "text-white/60 hover:bg-white/8 hover:text-white"
-          : "text-muted-foreground hover:bg-accent hover:text-foreground"
-      )}
+      className="-ml-2 flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors duration-[var(--motion-standard)] hover:bg-accent hover:text-foreground"
     >
       <ChevronLeft className="h-5 w-5" />
     </button>
@@ -75,11 +68,15 @@ function ScreenBackButton({
 }
 
 /**
- * App-screen scaffold: solid route chrome, history-first back navigation,
- * consistent gutters, and an optional subheader. The mode controls whether
- * content joins a white sheet, stays on the ink canvas, or uses the neutral
- * secondary-screen ground. Desktop utilities live here; mobile keeps them in
- * the profile and command surfaces so primary actions retain the full width.
+ * App-screen scaffold: one header row on the page ground, history-first back
+ * navigation, consistent gutters, and an optional subheader.
+ *
+ * The header reads left to right as: back (pushed screens), title, the
+ * screen's own actions, search, the profile trigger, and the accent
+ * add-movement button — always last, so it sits in the same corner on every
+ * screen. From `lg` up, language and currency sit in the header and the
+ * profile trigger gives way to them; below that they live in the profile
+ * sheet, so the title keeps its room on phones and tablets.
  */
 export function Screen({
   title,
@@ -93,9 +90,8 @@ export function Screen({
   mode = "plain",
   width = "wide",
   showUtilities = true,
+  showCapture = true,
 }: ScreenProps) {
-  const onInk = mode !== "plain";
-
   return (
     <div
       data-screen-mode={mode}
@@ -109,67 +105,41 @@ export function Screen({
     >
       <header
         className={cn(
-          "sticky top-0 z-30 -mx-4 border-b px-4 pt-[env(safe-area-inset-top)] sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8",
-          onInk
-            ? "border-white/8 bg-ink text-white"
-            : "border-border bg-background text-foreground",
+          "sticky top-0 z-30 -mx-4 bg-background/92 px-4 pt-[env(safe-area-inset-top)] text-foreground backdrop-blur-xl sm:-mx-5 sm:px-5 lg:-mx-8 lg:px-8",
           mode === "plain" && "mb-3"
         )}
       >
-        <div className="flex min-h-14 items-center gap-3 py-2">
-          {backHref ? (
-            <ScreenBackButton
-              fallbackHref={backHref || "/home"}
-              onInk={onInk}
-            />
-          ) : (
-            (leading ?? (
-              <ProfileSheet
-                className={cn(
-                  "-ml-2 md:hidden",
-                  onInk &&
-                    "text-white/60 hover:bg-white/[0.08] hover:text-white"
-                )}
-              />
-            ))
-          )}
+        <div className="flex min-h-16 items-center gap-2.5 py-2.5">
+          {backHref ? <ScreenBackButton fallbackHref={backHref} /> : null}
           <div className="min-w-0 flex-1">
-            {eyebrow && (
-              <p className={cn("label-caps", onInk && "text-white/50")}>
-                {eyebrow}
-              </p>
-            )}
+            {eyebrow && <p className="label-caps">{eyebrow}</p>}
             <h1
               className={cn(
-                "truncate text-title font-semibold",
-                onInk ? "text-white" : "text-foreground"
+                "truncate",
+                backHref
+                  ? "text-title font-bold"
+                  : "text-screen font-extrabold"
               )}
             >
               {title}
             </h1>
           </div>
           {actions && (
-            <div className="flex shrink-0 items-center gap-1.5">{actions}</div>
+            <div className="flex shrink-0 items-center gap-2">{actions}</div>
           )}
           {showUtilities && (
-            <div
-              className={cn(
-                "hidden shrink-0 items-center gap-1.5 md:flex",
-                actions && "ml-2 border-l pl-2",
-                onInk ? "border-white/10" : "border-border"
-              )}
-            >
-              <CommandMenu onInk={onInk} />
-              <LanguageSwitch
-                className={
-                  onInk
-                    ? "border-white/10 bg-white/[0.07] text-white hover:bg-white/10 hover:text-white"
-                    : undefined
-                }
-              />
-              <CurrencyQuickSwitch onInk={onInk} />
-            </div>
+            <>
+              <CommandMenu />
+              <div className="hidden shrink-0 items-center gap-2 lg:flex">
+                <LanguageSwitch />
+                <CurrencyQuickSwitch />
+              </div>
+            </>
           )}
+          {backHref
+            ? null
+            : (leading ?? <ProfileSheet className="lg:hidden" />)}
+          {showCapture && <CaptureButton />}
         </div>
         {subheader && <div className="pb-3">{subheader}</div>}
       </header>
@@ -178,8 +148,7 @@ export function Screen({
           "flex min-w-0 flex-1 flex-col",
           mode === "plain" && "gap-4",
           mode === "chrome-sheet" && "gap-0",
-          mode === "dark-canvas" &&
-            "-mx-4 gap-3 bg-ink px-4 pb-8 text-white sm:-mx-5 sm:px-5 md:mx-0 md:px-0"
+          mode === "dark-canvas" && "gap-3 pb-8"
         )}
       >
         {children}

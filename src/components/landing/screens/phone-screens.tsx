@@ -2,17 +2,19 @@
 
 import { ChevronRight } from "lucide-react";
 import { SPEND_CHART_COLOR } from "@/components/charts/chart-theme";
-import { BudgetTrackerCard } from "@/components/budget/envelope-list-card";
+import { BudgetSummaryFigure } from "@/components/budget/budget-summary-figure";
+import { TrackerWallet } from "@/components/budget/tracker-wallet";
 import { HomeActivitySheet } from "@/components/home/home-activity-sheet";
+import { HomeBalanceCard } from "@/components/home/home-balance-card";
+import { TrackerPills } from "@/components/home/tracker-pills";
 import { WEALTH_ACCENTS } from "@/lib/palette";
 import { formatCurrency } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
 import {
   DEMO_CURRENCY,
-  demoAvailable,
-  demoBudgetRemaining,
+  demoBalance,
+  demoCashflow,
   demoFeedDays,
-  demoMoneyIn,
   demoMoneyOut,
   demoNetWorth,
   demoNetWorthChange,
@@ -24,19 +26,19 @@ import {
 } from "@/components/landing/demo-data";
 import {
   DemoChrome,
-  DemoFab,
   DemoHero,
   DemoRail,
   DemoSheet,
   DemoStatusBar,
+  DemoTabBar,
 } from "@/components/landing/screens/screen-chrome";
 
 /**
  * The four screens shown on the public page.
  *
  * Wherever the app has a component that is free of viewport breakpoints, the
- * screen renders that component rather than a copy of it — `HomeActivitySheet`
- * for the feed, `BudgetTrackerCard` for the trackers. When those change, the
+ * screen renders that component rather than a copy of it — `HomeBalanceCard`,
+ * `TrackerPills` and `HomeActivitySheet` for Home, `TrackerWallet` for Budget. When those change, the
  * landing page changes with them, which is the whole point: a marketing
  * screenshot that can go stale is a marketing screenshot that will.
  */
@@ -46,79 +48,72 @@ function Frame({ children }: { children: React.ReactNode }) {
 }
 
 export function HomeDemoScreen() {
-  const { t } = useLocale();
-
   return (
     <Frame>
-      <DemoChrome>
-        <DemoStatusBar />
-        <DemoRail activeKey="home" />
-        <DemoHero
-          amount={demoAvailable}
-          currency={DEMO_CURRENCY}
-          label={t("Available", "Disponible")}
+      <DemoStatusBar />
+      <DemoRail activeKey="home" />
+      <div className="flex-1 overflow-hidden pt-4">
+        <HomeBalanceCard
+          cashflow={demoCashflow}
+          availableBalance={demoBalance}
+          className="mx-5"
         />
-      </DemoChrome>
-      <HomeActivitySheet
-        monthLabel={t("August 2026", "Agosto 2026")}
-        feedDays={demoFeedDays}
-        upcoming={demoUpcoming}
-        className="flex-1"
-      />
-      <DemoFab />
+        <TrackerPills
+          budgets={demoTrackers.map((row) => ({
+            id: row.id,
+            name: row.name,
+            limit: row.target,
+            spent: row.progressAmount,
+            ratio: row.ratio,
+            icon: row.icon,
+            color: row.color,
+          }))}
+          className="mt-5 px-5"
+        />
+        <HomeActivitySheet
+          feedDays={demoFeedDays}
+          upcoming={demoUpcoming}
+          className="mt-6 px-1"
+        />
+      </div>
+      <DemoTabBar activeKey="home" />
     </Frame>
   );
 }
 
 export function BudgetDemoScreen() {
   const { t, intlLocale } = useLocale();
+  const limit = demoTrackers.reduce((sum, row) => sum + row.target, 0);
+  const spent = demoTrackers.reduce((sum, row) => sum + row.progressAmount, 0);
 
   return (
     <Frame>
-      <DemoChrome>
-        <DemoStatusBar />
-        <DemoRail activeKey="budget" />
-        <DemoHero
-          amount={demoBudgetRemaining}
-          currency={DEMO_CURRENCY}
-          label={t("Left to spend this month", "Queda por gastar este mes")}
-        />
-        <div className="mt-3 flex gap-5 px-4.5">
-          <span className="text-body font-bold text-white">
+      <DemoStatusBar />
+      <DemoRail activeKey="budget" />
+      <div className="flex-1 overflow-hidden px-5 pt-3">
+        <div className="flex gap-6 border-b border-border">
+          <span className="-mb-px flex min-h-11 items-center border-b-2 border-primary text-base font-extrabold">
             {t("Trackers", "Presupuestos")}
           </span>
-          <span className="text-body font-semibold text-white/50">
+          <span className="flex min-h-11 items-center text-base font-bold text-muted-foreground">
             {t("Savers", "Metas")}
           </span>
         </div>
-      </DemoChrome>
-      {/* Budget has no white sheet — cards float on the chrome colour. */}
-      <div className="up-canvas flex-1">
-        <div className="grid grid-cols-2 border-b border-white/10">
-          <div className="px-4.5 py-3">
-            <p className="text-title font-bold tabular-nums">
-              {formatCurrency(demoMoneyOut, DEMO_CURRENCY, intlLocale)}
-            </p>
-            <p className="text-caption text-white/50">
-              {t("Money out", "Dinero que sale")}
-            </p>
-          </div>
-          <div className="border-l border-white/10 px-4.5 py-3">
-            <p className="text-title font-bold text-income tabular-nums">
-              +{formatCurrency(demoMoneyIn, DEMO_CURRENCY, intlLocale)}
-            </p>
-            <p className="text-caption text-white/50">
-              {t("Money in", "Dinero que entra")}
-            </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-2 gap-2.5 p-4">
-          {demoTrackers.map((row) => (
-            <BudgetTrackerCard key={row.id} row={row} />
-          ))}
+        <BudgetSummaryFigure
+          className="mt-6"
+          amount={limit - spent}
+          lead={t("Left in Trackers", "Queda en Presupuestos")}
+          detail={t("18 days to go", "quedan 18 días")}
+          meta={t(
+            `${formatCurrency(spent, DEMO_CURRENCY, intlLocale)} of ${formatCurrency(limit, DEMO_CURRENCY, intlLocale)} spent`,
+            `${formatCurrency(spent, DEMO_CURRENCY, intlLocale)} de ${formatCurrency(limit, DEMO_CURRENCY, intlLocale)} gastado`
+          )}
+        />
+        <div className="mt-6">
+          <TrackerWallet rows={demoTrackers.slice(0, 5)} daysRemaining={18} />
         </div>
       </div>
-      <DemoFab />
+      <DemoTabBar activeKey="budget" />
     </Frame>
   );
 }
@@ -196,7 +191,7 @@ export function WealthDemoScreen() {
               <span
                 className={
                   index === 0
-                    ? "block h-full rounded-full bg-ink"
+                    ? "block h-full rounded-full bg-foreground"
                     : "block h-full rounded-full bg-coral"
                 }
                 style={{ width: `${row.ratio * 100}%` }}
@@ -205,6 +200,7 @@ export function WealthDemoScreen() {
           </div>
         ))}
       </DemoSheet>
+      <DemoTabBar activeKey="wealth" />
     </Frame>
   );
 }
@@ -280,6 +276,7 @@ export function InsightsDemoScreen() {
           </div>
         ))}
       </DemoSheet>
+      <DemoTabBar activeKey="insights" />
     </Frame>
   );
 }

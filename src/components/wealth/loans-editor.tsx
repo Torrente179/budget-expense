@@ -148,7 +148,7 @@ export function LoansEditor() {
 
   return (
     <>
-      <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+      <div className="-mx-4 bg-background sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
         <WealthCategoryHero
           eyebrow={t("Still to collect", "Pendiente por cobrar")}
           amount={outstandingBase}

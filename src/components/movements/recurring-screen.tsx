@@ -198,7 +198,7 @@ export function RecurringScreen() {
         <Button
           variant="outline"
           size="sm"
-          className="h-11 gap-1.5 rounded-full border-white/10 bg-white/[0.07] text-white hover:bg-white/10 hover:text-white md:h-9"
+          className="h-11 gap-1.5 rounded-full border-border bg-foreground/[0.07] text-foreground hover:bg-foreground/10 hover:text-foreground md:h-9"
           onClick={() => setForm({ ...EMPTY_FORM })}
         >
           <Plus className="h-4 w-4" />
@@ -434,7 +434,7 @@ export function RecurringScreen() {
                 </label>
               </div>
 
-              <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-white pb-1 pt-2">
+              <div className="sticky bottom-0 mt-auto flex flex-col gap-2 bg-popover pb-1 pt-2">
                 <Button
                   type="submit"
                   disabled={!canSubmit}

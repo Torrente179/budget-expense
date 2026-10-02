@@ -1,38 +1,41 @@
 "use client";
 
-import Link from "next/link";
-import { Target } from "lucide-react";
 import type {
   HomeAvailableBalance,
   MonthCashflow,
 } from "@/lib/home/month-cashflow";
 import { cn } from "@/lib/utils";
 import {
-  BudgetPaceChart,
-  type BudgetPaceItem,
-} from "@/components/home/budget-pace-chart";
-import {
   HomeActivitySheet,
   type HomeFeedDay,
   type HomeUpcomingPayment,
 } from "@/components/home/home-activity-sheet";
-import { HomeSummaryCard } from "@/components/home/home-summary-card";
+import { HomeBalanceCard } from "@/components/home/home-balance-card";
+import { HomeMonthPanel } from "@/components/home/home-month-panel";
+import {
+  ReviewPrompt,
+  type HomeReviewPrompt,
+} from "@/components/home/review-prompt";
 import {
   SpendingBreakdown,
   type HomeSpendingCategory,
 } from "@/components/home/spending-breakdown";
-import { useLocale } from "@/providers/locale-provider";
+import {
+  TrackerList,
+  TrackerPills,
+  type BudgetPaceItem,
+} from "@/components/home/tracker-pills";
 
 export interface HomeDashboardViewProps {
   cashflow: MonthCashflow;
   availableBalance: HomeAvailableBalance;
-  monthEndLabel: string;
-  monthLabel: string;
   budgets: BudgetPaceItem[];
   spendingCategories: HomeSpendingCategory[];
   spendingTotal: number;
   feedDays: HomeFeedDay[];
   upcoming: HomeUpcomingPayment[];
+  /** Movements waiting for a category; the prompt shows only when count > 0. */
+  review?: HomeReviewPrompt;
   showSetupPrompt?: boolean;
   onSelectCategory?: (categoryId: string) => void;
   className?: string;
@@ -40,108 +43,71 @@ export interface HomeDashboardViewProps {
 
 /**
  * Typed, data-only Home composition shared by the signed-in controller and the
- * design fixture route. Mobile is the canonical stack; desktop preserves that
- * chrome-to-sheet story in the wider left column and moves planning context to
- * a compact right column.
+ * design fixture route.
+ *
+ * Phone is one stack: the balance card, the Trackers as a row of pills, the
+ * review prompt when something is waiting, the feed, then the month's category
+ * split.
+ *
+ * Desktop is two rows. The first pairs the balance card with the month panel,
+ * so the headline and its context read as one band. The second puts the feed
+ * in the wide column and, in a rail beside it, the review prompt, the Trackers
+ * and the category split.
  */
 export function HomeDashboardView({
   cashflow,
   availableBalance,
-  monthEndLabel,
-  monthLabel,
   budgets,
   spendingCategories,
   spendingTotal,
   feedDays,
   upcoming,
+  review,
   showSetupPrompt = false,
   onSelectCategory,
   className,
 }: HomeDashboardViewProps) {
-  const { t } = useLocale();
-
   return (
-    <div
-      className={cn(
-        "grid min-w-0 grid-cols-[minmax(0,1fr)] items-start lg:grid-cols-[minmax(0,3fr)_minmax(19rem,2fr)] lg:gap-5",
-        className
-      )}
-    >
-      <div className="-mx-4 min-w-0 bg-ink sm:-mx-5 lg:mx-0 lg:overflow-hidden lg:rounded-xl">
-        <HomeSummaryCard
+    <div className={cn("min-w-0 pt-1", className)}>
+      <div className="xl:grid xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] xl:items-stretch xl:gap-6">
+        <HomeBalanceCard
           cashflow={cashflow}
           availableBalance={availableBalance}
-          monthEndLabel={monthEndLabel}
-          className="mx-0 rounded-none sm:mx-0 md:mx-0 md:rounded-none"
+          flowClassName="xl:hidden"
+          className="mx-auto w-full max-w-md xl:mx-0 xl:max-w-none"
         />
-        <HomeActivitySheet
-          monthLabel={monthLabel}
-          feedDays={feedDays}
-          upcoming={upcoming}
-          showSetupPrompt={showSetupPrompt}
-          className="relative -mt-px rounded-b-none"
+        <HomeMonthPanel
+          cashflow={cashflow}
+          className="hidden xl:mb-[1.125rem] xl:flex"
         />
       </div>
 
-      <aside className="mt-4 min-w-0 space-y-4 lg:mt-0">
-        <section className="overflow-hidden rounded-xl bg-ink text-white">
-          <div className="flex items-end justify-between gap-3 px-4 pb-3 pt-4">
-            <div className="min-w-0">
-              <p className="text-label font-medium uppercase tracking-widest text-white/50">
-                {t("This month", "Este mes")}
-              </p>
-              <h2 className="mt-0.5 text-heading font-semibold">
-                {t("Trackers", "Presupuestos")}
-              </h2>
-            </div>
-            {budgets.length > 0 ? (
-              <Link
-                href="/budget"
-                className="inline-flex min-h-11 shrink-0 items-center text-caption font-medium text-white/55 transition-colors hover:text-white"
-              >
-                {t("View all", "Ver todos")}
-              </Link>
-            ) : null}
-          </div>
+      {/* Full-bleed on a phone so the row scrolls under both screen edges. */}
+      <TrackerPills
+        budgets={budgets}
+        className="-mx-4 mt-5 px-4 sm:-mx-5 sm:px-5 xl:hidden"
+      />
+      {review && <ReviewPrompt review={review} className="mt-4 xl:hidden" />}
 
-          {budgets.length === 0 ? (
-            <div className="border-t border-white/10 px-4 py-4">
-              <div className="flex items-start gap-3">
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-white/[0.08] text-coral">
-                  <Target className="h-4 w-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="text-body font-medium">
-                    {t("No budgets yet", "Aún sin presupuestos")}
-                  </p>
-                  <p className="mt-0.5 text-caption text-white/50">
-                    {t(
-                      "Group categories into budgets and we'll track spending against them.",
-                      "Agrupa categorías en presupuestos y seguiremos el gasto frente a ellos."
-                    )}
-                  </p>
-                  <Link
-                    href="/budget"
-                    className="mt-3 inline-flex min-h-11 items-center justify-center rounded-full bg-coral px-4 text-caption font-semibold text-white transition-colors hover:bg-[var(--coral-deep)]"
-                  >
-                    {t("Set up budgets", "Configurar presupuestos")}
-                  </Link>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="px-4 pb-4">
-              <BudgetPaceChart budgets={budgets} />
-            </div>
-          )}
-        </section>
-
-        <SpendingBreakdown
-          categories={spendingCategories}
-          total={spendingTotal}
-          onSelect={onSelectCategory}
+      <div className="mt-6 xl:mt-5 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:items-start xl:gap-6">
+        <HomeActivitySheet
+          feedDays={feedDays}
+          upcoming={upcoming}
+          showSetupPrompt={showSetupPrompt}
+          className="-mx-4 sm:-mx-5 sm:px-1 xl:mx-0 xl:rounded-2xl xl:bg-card xl:px-1 xl:py-5 xl:ring-1 xl:ring-inset xl:ring-border"
         />
-      </aside>
+        <aside className="mt-7 min-w-0 space-y-6 xl:mt-0">
+          {review && (
+            <ReviewPrompt review={review} className="hidden xl:flex" />
+          )}
+          <TrackerList budgets={budgets} className="hidden xl:block" />
+          <SpendingBreakdown
+            categories={spendingCategories}
+            total={spendingTotal}
+            onSelect={onSelectCategory}
+          />
+        </aside>
+      </div>
     </div>
   );
 }

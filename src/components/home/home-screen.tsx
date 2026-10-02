@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { getDaysInMonth } from "date-fns";
 import { useMonthlySummary } from "@/hooks/use-monthly-summary";
 import { useOnboarding } from "@/hooks/use-onboarding";
+import { useReviewCount } from "@/hooks/use-review-queue";
 import {
   resolveCustomBudgetAmount,
   budgetUsageRatio,
@@ -19,11 +20,12 @@ import { useLocale } from "@/providers/locale-provider";
 import { useCurrency } from "@/providers/currency-provider";
 import { Screen } from "@/components/patterns/screen";
 import { HomeDashboardView } from "@/components/home/home-dashboard-view";
-import { MonthPicker } from "@/components/shared/month-picker";
+import { MonthTitle } from "@/components/shared/month-title";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function HomeScreen() {
   const { t, tc, intlLocale } = useLocale();
+  const reviewCount = useReviewCount();
   const { convert } = useCurrency();
   const { month, year, isCurrentMonth, setMonthYear } = useMonth();
   const router = useRouter();
@@ -85,15 +87,6 @@ export function HomeScreen() {
     ]
   );
 
-  const monthEndLabel = new Intl.DateTimeFormat(intlLocale, {
-    day: "numeric",
-    month: "long",
-  }).format(new Date(year, month - 1, daysInMonth));
-  const monthLabel = new Intl.DateTimeFormat(intlLocale, {
-    month: "long",
-    year: "numeric",
-  }).format(new Date(year, month - 1, 1));
-
   const budgetsView = useMemo(() => {
     if (customBudgets.length === 0) return [];
     const spentByCategory = new Map(
@@ -128,6 +121,7 @@ export function HomeScreen() {
           spent,
           ratio: budgetUsageRatio(spent, limit),
           icon: leading?.link.categories?.icon,
+          color: leading?.link.categories?.color,
         };
       })
       .sort((a, b) => {
@@ -238,44 +232,58 @@ export function HomeScreen() {
     }));
   }, [recentMovements, intlLocale]);
 
+  // Name one waiting movement in the prompt when the feed already holds it.
+  const review = useMemo(() => {
+    const waiting = recentMovements.find((movement) => movement.needsReview);
+    return {
+      count: reviewCount,
+      preview: waiting
+        ? {
+            title: waiting.title,
+            amount: waiting.amount,
+            currency: waiting.currency,
+          }
+        : undefined,
+    };
+  }, [recentMovements, reviewCount]);
+
   return (
     <Screen
-      title={t("Home", "Inicio")}
-      subheader={
-        <div className="flex justify-center sm:justify-end">
-          <MonthPicker
-            month={month}
-            year={year}
-            onChange={setMonthYear}
-            onInk
-          />
-        </div>
+      title={
+        <MonthTitle month={month} year={year} onChange={setMonthYear} />
       }
       mode="chrome-sheet"
       width="wide"
     >
       {loading ? (
-        <div className="grid min-w-0 items-start lg:grid-cols-[minmax(0,3fr)_minmax(19rem,2fr)] lg:gap-5">
-          <div className="-mx-4 sm:-mx-5 lg:mx-0">
-            <Skeleton className="h-72 rounded-none bg-ink/90 lg:rounded-t-xl" />
-            <Skeleton className="h-80 rounded-none bg-card lg:rounded-b-xl" />
+        <div className="min-w-0 pt-1">
+          <div className="xl:grid xl:grid-cols-[minmax(0,26rem)_minmax(0,1fr)] xl:gap-6">
+            <Skeleton className="mx-auto h-[13.875rem] w-full max-w-md rounded-2xl bg-card xl:mx-0 xl:max-w-none" />
+            <Skeleton className="hidden h-[12.75rem] rounded-2xl bg-card xl:block" />
           </div>
-          <div className="mt-4 space-y-4 lg:mt-0">
-            <Skeleton className="h-48 rounded-xl bg-ink/90" />
-            <Skeleton className="h-64 rounded-xl" />
+          <div className="mt-5 flex gap-2 xl:hidden">
+            <Skeleton className="h-11 w-44 rounded-full bg-card" />
+            <Skeleton className="h-11 w-44 rounded-full bg-card" />
+          </div>
+          <div className="mt-6 xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:gap-6">
+            <div className="space-y-3">
+              <Skeleton className="h-14 rounded-2xl bg-card" />
+              <Skeleton className="h-14 rounded-2xl bg-card" />
+              <Skeleton className="h-14 rounded-2xl bg-card" />
+            </div>
+            <Skeleton className="mt-7 h-64 rounded-2xl bg-card xl:mt-0" />
           </div>
         </div>
       ) : (
         <HomeDashboardView
           cashflow={cashflow}
           availableBalance={availableBalance}
-          monthEndLabel={monthEndLabel}
-          monthLabel={monthLabel}
           budgets={budgetsView}
           spendingCategories={spendingBreakdown.categories}
           spendingTotal={spendingBreakdown.total}
           feedDays={feedDays}
           upcoming={upcomingPayments}
+          review={review}
           showSetupPrompt={incomplete}
           onSelectCategory={openCategory}
         />

@@ -28,7 +28,7 @@ function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
     <SheetPrimitive.Backdrop
       data-slot="sheet-overlay"
       className={cn(
-        "fixed inset-0 z-50 bg-ink/60 backdrop-saturate-50 transition-opacity duration-[var(--motion-sheet-exit)] data-open:duration-[var(--motion-sheet-enter)] data-ending-style:opacity-0 data-starting-style:opacity-0",
+        "fixed inset-0 z-50 bg-scrim backdrop-saturate-50 transition-opacity duration-[var(--motion-sheet-exit)] data-open:duration-[var(--motion-sheet-enter)] data-ending-style:opacity-0 data-starting-style:opacity-0",
         className
       )}
       {...props}
@@ -64,7 +64,7 @@ function SheetContent({
         {renderHandle && (
           <div
             aria-hidden
-            className="mx-auto mt-2.5 h-1 w-9 shrink-0 rounded-full bg-ink/20"
+            className="mx-auto mt-2.5 h-1 w-9 shrink-0 rounded-full bg-foreground/25"
           />
         )}
         {children}
@@ -74,7 +74,7 @@ function SheetContent({
             render={
               <Button
                 variant="ghost"
-                className="absolute top-3 right-3 bg-white text-ink ring-1 ring-black/10 hover:bg-white hover:text-ink"
+                className="absolute top-3 right-3 bg-secondary text-foreground ring-1 ring-border hover:bg-accent hover:text-foreground"
                 size="icon-sm"
               />
             }
@@ -104,7 +104,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="sheet-footer"
       className={cn(
-        "sticky bottom-0 mt-auto flex flex-col gap-2 border-t border-border bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))]",
+        "sticky bottom-0 mt-auto flex flex-col gap-2 border-t border-border bg-popover p-4 pb-[max(1rem,env(safe-area-inset-bottom))]",
         className
       )}
       {...props}

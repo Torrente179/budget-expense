@@ -26,6 +26,7 @@ import {
 } from "@/lib/balance-checkpoint";
 import { cn } from "@/lib/utils";
 import { getTodayIsoDate } from "@/lib/calendar";
+import { IMPORT_NAV } from "@/lib/navigation";
 import { Screen } from "@/components/patterns/screen";
 import { UnderlineTabs } from "@/components/patterns/underline-tabs";
 import { MovementSummaryHero } from "@/components/movements/movement-summary-hero";
@@ -425,8 +426,8 @@ export function MovementsScreen() {
             size="icon"
             aria-label={t("Search", "Buscar")}
             className={cn(
-              "h-11 w-11 rounded-full border border-white/10 bg-white/[0.07] text-white md:hidden",
-              searchOpen && "bg-coral text-white"
+              "h-11 w-11 rounded-full border border-border bg-foreground/[0.07] text-foreground md:hidden",
+              searchOpen && "bg-coral text-on-coral"
             )}
             onClick={() => {
               setSearchOpen(!searchOpen);
@@ -439,7 +440,7 @@ export function MovementsScreen() {
             variant="ghost"
             size="icon"
             aria-label={t("Recurring expenses", "Gastos recurrentes")}
-            className="h-11 w-11 rounded-full border border-white/10 bg-white/[0.07] text-white hover:bg-white/10 hover:text-white md:h-9 md:w-9"
+            className="h-11 w-11 rounded-full border border-border bg-foreground/[0.07] text-foreground hover:bg-foreground/10 hover:text-foreground md:h-9 md:w-9"
             render={<Link href="/movements/recurring" />}
           >
             <Repeat className="h-4 w-4" />
@@ -447,7 +448,7 @@ export function MovementsScreen() {
           <Button
             variant="outline"
             size="sm"
-            className="hidden h-9 gap-1.5 rounded-full border-white/10 bg-white/[0.07] text-white hover:bg-white/10 hover:text-white md:inline-flex"
+            className="hidden h-9 gap-1.5 rounded-full border-border bg-foreground/[0.07] text-foreground hover:bg-foreground/10 hover:text-foreground md:inline-flex"
             onClick={() => setCaptureOpen(true)}
           >
             <Plus className="h-4 w-4" />
@@ -462,14 +463,25 @@ export function MovementsScreen() {
             value={tab}
             onChange={setTab}
             ariaLabel={t("Filter movements", "Filtrar movimientos")}
-            className="border-b-0 [&_[role=tab]]:text-white/48 [&_[role=tab]:hover]:text-white [&_[role=tab][aria-selected=true]]:text-coral [&_[role=tab][aria-selected=true]>span]:bg-coral"
+            className="border-b-0 [&_[role=tab]]:text-muted-foreground [&_[role=tab]:hover]:text-foreground [&_[role=tab][aria-selected=true]]:text-coral [&_[role=tab][aria-selected=true]>span]:bg-coral"
           />
-          <MonthPicker
-            month={month}
-            year={year}
-            onChange={setMonthYear}
-            onInk
-          />
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-11 gap-1.5 rounded-full border-border bg-foreground/[0.07] px-4 text-foreground hover:bg-foreground/10 hover:text-foreground md:hidden"
+              render={<Link href={IMPORT_NAV.href} />}
+            >
+              <IMPORT_NAV.icon className="h-4 w-4" />
+              {t(IMPORT_NAV.label.en, IMPORT_NAV.label.es)}
+            </Button>
+            <MonthPicker
+              month={month}
+              year={year}
+              onChange={setMonthYear}
+              onInk
+            />
+          </div>
         </div>
       }
     >
@@ -489,7 +501,7 @@ export function MovementsScreen() {
       />
 
       {/* Search remains local state; URL-backed tab/category filters are unchanged. */}
-      <div className="-mx-4 flex min-w-0 items-center gap-2 bg-white px-4 py-3 sm:-mx-5 sm:px-5 md:mx-0 md:mt-4 md:rounded-t-xl">
+      <div className="-mx-4 flex min-w-0 items-center gap-2 bg-card px-4 py-3 sm:-mx-5 sm:px-5 md:mx-0 md:mt-4 md:rounded-t-xl">
         <div
           className={cn(
             "relative min-w-0 flex-1 md:block",

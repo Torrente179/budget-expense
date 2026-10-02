@@ -46,11 +46,11 @@ export function ProfileSheet({ className }: { className?: string }) {
       aria-label={t("Account and more", "Cuenta y más")}
       onClick={openSheet ?? undefined}
       className={cn(
-        "flex h-11 w-11 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+        "flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-card text-foreground transition-colors hover:bg-accent",
         className
       )}
     >
-      <CircleUserRound className="h-6 w-6" />
+      <CircleUserRound className="h-5 w-5" />
     </button>
   );
 }

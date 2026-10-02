@@ -67,7 +67,7 @@ export function MonthPicker({
       className={cn(
         "flex items-center gap-1 rounded-lg border p-1",
         onInk
-          ? "border-white/10 bg-white/[0.07] text-white"
+          ? "border-border bg-foreground/[0.07] text-foreground"
           : "border-border bg-secondary"
       )}
     >
@@ -77,7 +77,7 @@ export function MonthPicker({
         size="icon"
         className={cn(
           "h-11 w-11 rounded-xl",
-          onInk && "text-white hover:bg-white/10 hover:text-white"
+          onInk && "text-foreground hover:bg-foreground/10 hover:text-foreground"
         )}
         onClick={handlePrev}
         onPointerEnter={() => prefetch(-1)}
@@ -96,7 +96,7 @@ export function MonthPicker({
         size="icon"
         className={cn(
           "h-11 w-11 rounded-xl",
-          onInk && "text-white hover:bg-white/10 hover:text-white"
+          onInk && "text-foreground hover:bg-foreground/10 hover:text-foreground"
         )}
         onClick={handleNext}
         onPointerEnter={() => prefetch(1)}

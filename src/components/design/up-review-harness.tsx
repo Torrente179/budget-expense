@@ -1,16 +1,17 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AlertTriangle,
   CircleCheck,
   CircleUserRound,
   Loader2,
-  Plus,
   Wallet,
 } from "lucide-react";
 import { HomeDashboardView } from "@/components/home/home-dashboard-view";
-import { BudgetSaverCard, BudgetTrackerCard } from "@/components/budget/envelope-list-card";
+import { BudgetSaverCard } from "@/components/budget/envelope-list-card";
+import { BudgetSummaryFigure } from "@/components/budget/budget-summary-figure";
+import { TrackerWallet } from "@/components/budget/tracker-wallet";
 import { MovementSummaryHero } from "@/components/movements/movement-summary-hero";
 import { RecurringSummaryHero } from "@/components/movements/recurring-summary-hero";
 import { RecurringSchedule } from "@/components/movements/recurring-schedule";
@@ -23,16 +24,17 @@ import {
   CaptureChrome,
   type CaptureKind,
 } from "@/components/capture/capture-chrome";
-import { CaptureFabButton } from "@/components/capture/capture-fab";
+import { SidebarView } from "@/components/layout/sidebar";
 import { TabBar } from "@/components/layout/tab-bar";
 import { Screen } from "@/components/patterns/screen";
-import { MonthPicker } from "@/components/shared/month-picker";
+import { MonthTitle } from "@/components/shared/month-title";
 import {
   ContinuousSheet,
   SheetSection,
 } from "@/components/patterns/continuous-sheet";
 import { SectionHeader } from "@/components/patterns/section-header";
 import { MonthlyReport } from "@/components/insights/monthly-report";
+import { useThemePreference } from "@/providers/theme-provider";
 import { OnboardingStoryShell } from "@/components/onboarding/onboarding-story-shell";
 import { OrganizeMoneyGrid } from "@/components/wealth/organize-money-grid";
 import { PatrimonioHero } from "@/components/wealth/patrimonio-hero";
@@ -95,13 +97,11 @@ const fixtureHome: HomeDashboardViewProps = {
     dailyAvailable: 184.02,
     source: "tracked",
   },
-  monthEndLabel: "August 31",
-  monthLabel: "August 2026",
   budgets: [
-    { id: "groceries", name: "Groceries", limit: 560, spent: 436, ratio: 0.779, icon: "shopping-cart" },
-    { id: "transport", name: "Transport", limit: 210, spent: 248, ratio: 1.181, icon: "car-front" },
-    { id: "health", name: "Health & fitness", limit: 180, spent: 72, ratio: 0.4, icon: "heart-pulse" },
-    { id: "streaming", name: "TV, music & streaming", limit: 75, spent: 44, ratio: 0.587, icon: "monitor-play" },
+    { id: "groceries", name: "Groceries", limit: 560, spent: 436, ratio: 0.779, icon: "shopping-cart", color: "#B565D8" },
+    { id: "transport", name: "Transport", limit: 210, spent: 248, ratio: 1.181, icon: "car-front", color: "#28C4D8" },
+    { id: "health", name: "Health & fitness", limit: 180, spent: 72, ratio: 0.4, icon: "heart-pulse", color: "#F472B6" },
+    { id: "streaming", name: "TV, music & streaming", limit: 75, spent: 44, ratio: 0.587, icon: "monitor-play", color: "#FFB547" },
   ],
   spendingCategories: [
     { id: "housing", name: "Housing", value: 1080, color: "#FF7A64", expenseCount: 2 },
@@ -111,6 +111,10 @@ const fixtureHome: HomeDashboardViewProps = {
     { id: "other", name: "Other", value: 434.56, color: "#8B8D98", expenseCount: 14 },
   ],
   spendingTotal: 2418.56,
+  review: {
+    count: 1,
+    preview: { title: "Unknown card payment", amount: 19.8, currency: "GBP" },
+  },
   upcoming: [
     { id: "netflix", title: "Netflix", dueLabel: "tomorrow", amount: 17.99, currency: "EUR", category: { icon: "monitor-play", color: "#FF7A64" } },
     { id: "gym", title: "Basic-Fit", dueLabel: "August 18", amount: 29.99, currency: "EUR", category: { icon: "dumbbell", color: "#28C4D8" } },
@@ -138,6 +142,8 @@ const fixtureHome: HomeDashboardViewProps = {
 const trackers: EnvelopeRow[] = [
   { id: "t1", name: "Groceries", kind: "spending_limit", target: 560, progressAmount: 436, ratio: 0.779, icon: "shopping-cart", color: "#B565D8", categoryName: "Groceries" },
   { id: "t2", name: "Transport", kind: "spending_limit", target: 210, progressAmount: 248, ratio: 1.181, icon: "car-front", color: "#28C4D8", categoryName: "Transportation" },
+  { id: "t3", name: "Health & fitness", kind: "spending_limit", target: 180, progressAmount: 72, ratio: 0.4, icon: "heart-pulse", color: "#F472B6", categoryName: "Health" },
+  { id: "t4", name: "TV, music & streaming", kind: "spending_limit", target: 75, progressAmount: 44, ratio: 0.587, icon: "monitor-play", color: "#FFB547", categoryName: "Entertainment" },
 ];
 
 const savers: EnvelopeRow[] = [
@@ -232,6 +238,7 @@ function buildHomeFixture(state: ReviewState): HomeDashboardViewProps {
       budgets: [],
       spendingCategories: [],
       spendingTotal: 0,
+      review: undefined,
       feedDays: [],
       upcoming: [],
     };
@@ -254,8 +261,6 @@ function buildHomeFixture(state: ReviewState): HomeDashboardViewProps {
 
     return {
       ...fixtureHome,
-      monthEndLabel: "31 de agosto",
-      monthLabel: "agosto de 2026",
       budgets: fixtureHome.budgets.map((budget, index) => ({
         ...budget,
         name: budgetNames[index] ?? budget.name,
@@ -392,6 +397,11 @@ function HarnessContent({
   setState: (state: ReviewState) => void;
 }) {
   const { t } = useLocale();
+  const { preference, setPreference } = useThemePreference();
+  // Lets the visual tests wait for hydration before they touch the page.
+  useEffect(() => {
+    document.documentElement.dataset.reviewReady = "true";
+  }, []);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [captureKind, setCaptureKind] = useState<CaptureKind>("expense");
   const [captureAmount, setCaptureAmount] = useState("54,72");
@@ -458,6 +468,11 @@ function HarnessContent({
         ratio: 1.15,
       }))
     : trackers;
+  const trackerLimit = fixtureTrackers.reduce((sum, row) => sum + row.target, 0);
+  const trackerSpent = fixtureTrackers.reduce(
+    (sum, row) => sum + row.progressAmount,
+    0
+  );
   const fixtureSavers = state === "completed-goal"
     ? savers.map((row) => ({
         ...row,
@@ -468,10 +483,10 @@ function HarnessContent({
 
   return (
     <main className="min-h-dvh bg-background pb-28">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-ink px-4 py-3 text-white">
+      <header className="sticky top-0 z-40 border-b border-border bg-background px-4 py-3 text-foreground">
         <div className="mx-auto grid max-w-[1480px] gap-2 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center lg:gap-3">
           <div className="min-w-0 flex-1">
-            <p className="label-caps text-white/50">Private design review</p>
+            <p className="label-caps text-muted-foreground">Private design review</p>
             <h1 className="text-heading font-semibold">UP-derived full-app review</h1>
           </div>
           <div
@@ -479,12 +494,23 @@ function HarnessContent({
             role="group"
             aria-label="Fixture state"
           >
+            {(["light", "dark", "system"] as const).map((item) => (
+              <button
+                key={item}
+                type="button"
+                aria-pressed={preference === item}
+                onClick={() => setPreference(item)}
+                className={`min-h-11 shrink-0 rounded-full border px-3 text-caption font-medium capitalize transition-colors ${preference === item ? "border-foreground text-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}
+              >
+                {item} theme
+              </button>
+            ))}
             {states.map((item) => (
               <button
                 key={item}
                 type="button"
                 onClick={() => setState(item)}
-                className={`min-h-11 shrink-0 rounded-full px-3 text-caption font-medium capitalize transition-colors ${state === item ? "bg-coral text-ink" : "bg-white/[0.07] text-white/60 hover:text-white"}`}
+                className={`min-h-11 shrink-0 rounded-full px-3 text-caption font-medium capitalize transition-colors ${state === item ? "bg-coral text-on-coral" : "bg-foreground/[0.07] text-muted-foreground hover:text-foreground"}`}
               >
                 {item.replaceAll("-", " ")}
               </button>
@@ -495,15 +521,15 @@ function HarnessContent({
 
       <div className="mx-auto max-w-[1480px] space-y-10 px-4 py-6 sm:px-5 lg:px-8">
         {state === "loading" ? (
-          <section className="flex min-h-[60dvh] flex-col items-center justify-center bg-ink text-white md:rounded-xl">
+          <section className="flex min-h-[60dvh] flex-col items-center justify-center bg-background text-foreground md:rounded-xl">
             <Loader2 className="h-8 w-8 animate-spin text-coral" />
-            <p className="mt-4 text-body text-white/55">Loading deterministic fixtures…</p>
+            <p className="mt-4 text-body text-muted-foreground">Loading deterministic fixtures…</p>
           </section>
         ) : state === "error" ? (
-          <section className="flex min-h-[60dvh] flex-col items-center justify-center bg-ink px-6 text-center text-white md:rounded-xl">
+          <section className="flex min-h-[60dvh] flex-col items-center justify-center bg-background px-6 text-center text-foreground md:rounded-xl">
             <AlertTriangle className="h-8 w-8 text-coral" />
             <h2 className="mt-4 text-2xl font-semibold">The fixture did not load.</h2>
-            <p className="mt-2 max-w-md text-sm text-white/55">This state never talks to Supabase. Financial data remains untouched.</p>
+            <p className="mt-2 max-w-md text-sm text-muted-foreground">This state never talks to Supabase. Financial data remains untouched.</p>
             <Button className="mt-5" onClick={() => setState("populated")}>Try populated state</Button>
           </section>
         ) : (
@@ -512,32 +538,29 @@ function HarnessContent({
               <p className="label-caps mb-3">
                 Home · production shell + view components
               </p>
-              <div className="overflow-hidden rounded-xl bg-background ring-1 ring-border">
-                <div className="px-4 sm:px-5 lg:px-8">
+              <div className="flex overflow-hidden rounded-xl bg-background ring-1 ring-border">
+                <SidebarView pathname="/home" staticPreview />
+                <div className="min-w-0 flex-1 px-4 pb-8 sm:px-5 lg:px-8">
                   <Screen
-                    title={t("Home", "Inicio")}
+                    title={
+                      <MonthTitle
+                        month={reviewMonth.month}
+                        year={reviewMonth.year}
+                        onChange={(month, year) =>
+                          setReviewMonth({ month, year })
+                        }
+                        prefetchAdjacent={false}
+                      />
+                    }
                     mode="chrome-sheet"
                     width="wide"
                     leading={
                       <span
                         aria-hidden
-                        className="-ml-2 flex h-11 w-11 items-center justify-center rounded-full text-white/60 md:hidden"
+                        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-card lg:hidden"
                       >
-                        <CircleUserRound className="h-6 w-6" />
+                        <CircleUserRound className="h-5 w-5" />
                       </span>
-                    }
-                    subheader={
-                      <div className="flex justify-center sm:justify-end">
-                        <MonthPicker
-                          month={reviewMonth.month}
-                          year={reviewMonth.year}
-                          onChange={(month, year) =>
-                            setReviewMonth({ month, year })
-                          }
-                          onInk
-                          prefetchAdjacent={false}
-                        />
-                      </div>
                     }
                   >
                     <HomeDashboardView
@@ -549,23 +572,36 @@ function HarnessContent({
               </div>
             </section>
 
-            <section className="min-w-0 rounded-xl bg-ink p-4 text-white sm:p-5">
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <p className="label-caps text-white/50">Budget language</p>
-                  <h2 className="mt-1 text-title font-semibold">Trackers + Savers</h2>
+            <section className="min-w-0">
+              <p className="label-caps mb-3">
+                Budget · summary figure, tracker wallet, savers
+              </p>
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-2">
+                <div className="min-w-0 space-y-5">
+                  <BudgetSummaryFigure
+                    amount={
+                      state === "empty"
+                        ? null
+                        : Math.abs(trackerLimit - trackerSpent)
+                    }
+                    lead={
+                      trackerSpent > trackerLimit
+                        ? t("Over in Trackers", "De más en Presupuestos")
+                        : t("Left in Trackers", "Queda en Presupuestos")
+                    }
+                    detail={t("17 days to go", "quedan 17 días")}
+                    tone={trackerSpent > trackerLimit ? "over" : "default"}
+                  />
+                  <TrackerWallet
+                    rows={state === "empty" ? [] : fixtureTrackers}
+                    daysRemaining={17}
+                    onEdit={() => undefined}
+                  />
                 </div>
-                <Button size="sm"><Plus className="h-4 w-4" />New</Button>
-              </div>
-              <div className="mt-4 grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-2">
-                <div>
-                  <p className="mb-2 text-caption font-semibold text-white/55">Trackers</p>
-                  <div className="grid grid-cols-2 gap-2.5">
-                    {(state === "empty" ? [] : fixtureTrackers).map((row) => <BudgetTrackerCard key={row.id} row={row} />)}
-                  </div>
-                </div>
-                <div>
-                  <p className="mb-2 text-caption font-semibold text-white/55">Savers / Metas</p>
+                <div className="min-w-0">
+                  <p className="mb-2 text-caption font-semibold text-muted-foreground">
+                    Savers / Metas
+                  </p>
                   <div className="grid gap-2.5">
                     {(state === "empty" ? [] : fixtureSavers).map((row) => <BudgetSaverCard key={row.id} row={row} />)}
                   </div>
@@ -591,7 +627,7 @@ function HarnessContent({
             </section>
 
             <section className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-5 lg:grid-cols-[minmax(0,440px)_minmax(0,1fr)]">
-              <div className="overflow-hidden rounded-2xl bg-white ring-1 ring-border">
+              <div className="overflow-hidden rounded-2xl bg-card ring-1 ring-border">
                 <CaptureChrome
                   title={t("Add movement", "Añadir movimiento")}
                   titleElement="heading"
@@ -602,7 +638,7 @@ function HarnessContent({
                   onAmountChange={setCaptureAmount}
                   onCurrencyChange={setCaptureCurrency}
                 />
-                <div className="space-y-4 bg-white p-5">
+                <div className="space-y-4 bg-card p-5">
                   <div className="space-y-1.5">
                     <Label htmlFor="fixture-description">
                       {t("Description", "Descripción")}
@@ -632,12 +668,12 @@ function HarnessContent({
                   </Button>
                 </div>
               </div>
-              <div className="flex flex-col justify-center rounded-xl bg-ink px-6 py-8 text-white">
-                <p className="label-caps text-white/50">Capture anatomy</p>
+              <div className="flex flex-col justify-center rounded-xl bg-background px-6 py-8 text-foreground">
+                <p className="label-caps text-muted-foreground">Capture anatomy</p>
                 <h2 className="mt-2 text-2xl font-semibold tracking-tight">
                   Amount first. Context immediately after.
                 </h2>
-                <p className="mt-3 max-w-xl text-sm text-white/55">
+                <p className="mt-3 max-w-xl text-sm text-muted-foreground">
                   This is the same production capture chrome, backed here by
                   local component state only. The live controller still owns
                   validation, category suggestions, loans, optimistic writes,
@@ -650,7 +686,7 @@ function HarnessContent({
               <p className="label-caps mb-3">
                 Wealth + Insights · production view components
               </p>
-              <div className="overflow-hidden rounded-xl bg-ink ring-1 ring-border">
+              <div className="overflow-hidden rounded-xl bg-background ring-1 ring-border">
                 <PatrimonioHero
                   totals={wealthTotals}
                   monthlyChange={{
@@ -789,7 +825,7 @@ function HarnessContent({
               </div>
             </section>
 
-            <section className="rounded-xl bg-white p-5 ring-1 ring-border">
+            <section className="rounded-xl bg-card p-5 ring-1 ring-border">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="label-caps">Context preservation</p>
@@ -804,12 +840,12 @@ function HarnessContent({
 
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="bottom" className="gap-0 overflow-hidden p-0 sm:left-1/2 sm:max-w-2xl sm:-translate-x-1/2">
-          <div className="bg-ink px-4 pb-3 pt-2 text-white">
-            <p className="label-caps text-white/50">Pinned context</p>
+          <div className="bg-background px-4 pb-3 pt-2 text-foreground">
+            <p className="label-caps text-muted-foreground">Pinned context</p>
             <TransactionRow
               {...(home.feedDays[0]?.movements[0] ??
                 fixtureHome.feedDays[0].movements[0])}
-              className="-mx-4 mt-2 w-[calc(100%+2rem)] text-white [&_p]:text-white [&_span]:text-white"
+              className="-mx-4 mt-2 w-[calc(100%+2rem)] text-foreground [&_p]:text-foreground [&_span]:text-foreground"
             />
           </div>
           <SheetHeader>
@@ -820,7 +856,7 @@ function HarnessContent({
             <button className="min-h-14 rounded-xl bg-secondary text-sm font-medium">Groceries</button>
             <button className="min-h-14 rounded-xl bg-secondary text-sm font-medium">Add note</button>
           </div>
-          <div className="border-t border-border bg-white p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="border-t border-border bg-card p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Button className="w-full" onClick={() => setSheetOpen(false)}>
               <CircleCheck className="h-4 w-4" />
               {t("Done", "Listo")}
@@ -829,7 +865,6 @@ function HarnessContent({
         </SheetContent>
       </Sheet>
       <TabBar pathnameOverride="/home" staticPreview />
-      <CaptureFabButton onClick={() => setSheetOpen(true)} />
     </main>
   );
 }

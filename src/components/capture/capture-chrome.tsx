@@ -53,15 +53,15 @@ export function CaptureChrome({
   }));
 
   return (
-    <div className="shrink-0 bg-ink px-5 pb-5 pt-1 text-white">
+    <div className="shrink-0 bg-background px-5 pb-5 pt-1 text-foreground">
       <SheetHeader className="px-0 pb-3 pt-0">
-        <p className="label-caps text-white/50">
+        <p className="label-caps text-muted-foreground">
           {t("Quick capture", "Captura rápida")}
         </p>
         {titleElement === "sheet" ? (
-          <SheetTitle className="text-heading text-white">{title}</SheetTitle>
+          <SheetTitle className="text-heading text-foreground">{title}</SheetTitle>
         ) : (
-          <h2 className="text-heading font-medium text-white">{title}</h2>
+          <h2 className="text-heading font-medium text-foreground">{title}</h2>
         )}
       </SheetHeader>
 
@@ -69,7 +69,7 @@ export function CaptureChrome({
         <div
           role="tablist"
           aria-label={t("Movement type", "Tipo de movimiento")}
-          className="grid shrink-0 grid-cols-2 border-b border-white/12"
+          className="grid shrink-0 grid-cols-2 border-b border-border"
         >
           {(
             [
@@ -87,7 +87,7 @@ export function CaptureChrome({
                 "relative min-h-11 py-2 text-body font-medium transition-colors duration-[var(--motion-standard)]",
                 kind === value
                   ? "text-coral after:absolute after:inset-x-4 after:bottom-0 after:h-0.5 after:bg-coral"
-                  : "text-white/48 hover:text-white"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {label}
@@ -108,7 +108,7 @@ export function CaptureChrome({
           aria-label={t("Amount", "Importe")}
           className={cn(
             "h-14 min-w-0 flex-1 border-0 bg-transparent px-0 text-center font-mono text-[2.65rem] font-semibold leading-none tracking-[-0.05em] text-coral shadow-none focus-visible:ring-0",
-            kind === "income" && "text-[#3ddc97]"
+            kind === "income" && "text-income"
           )}
         />
         <Select
@@ -120,7 +120,7 @@ export function CaptureChrome({
         >
           <SelectTrigger
             aria-label={t("Currency", "Moneda")}
-            className="h-11 w-20 shrink-0 border-white/12 bg-white/[0.07] font-mono text-sm text-white"
+            className="h-11 w-20 shrink-0 border-border bg-foreground/[0.07] font-mono text-sm text-foreground"
           >
             <SelectValue />
           </SelectTrigger>

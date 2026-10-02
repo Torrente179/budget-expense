@@ -25,7 +25,7 @@ export function SiteBrand({
     <>
       <div
         className={cn(
-          "shrink-0 overflow-hidden rounded-lg border border-white/10 bg-ink-2",
+          "shrink-0 overflow-hidden rounded-xl border border-border bg-card",
           compact && "rounded-lg"
         )}
       >
@@ -41,10 +41,10 @@ export function SiteBrand({
       </div>
       {!compact ? (
         <div className="space-y-1">
-          <span className="block label-caps text-white/50">
+          <span className="block label-caps">
             {t("Stewardship", "Mayordomía")}
           </span>
-          <span className="block text-lg font-semibold leading-none tracking-tight text-white">
+          <span className="block text-lg font-extrabold leading-none tracking-tight text-foreground">
             Budget & Expense
           </span>
         </div>

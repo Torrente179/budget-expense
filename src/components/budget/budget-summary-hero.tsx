@@ -9,7 +9,6 @@ import {
   HERO_ACCENT_NEGATIVE,
   HERO_ACCENT_WARNING,
   HERO_ICON_TILE,
-  HERO_SURFACE,
   HERO_TILE,
 } from "@/components/patterns/hero-surface";
 import { useCurrency } from "@/providers/currency-provider";
@@ -22,7 +21,9 @@ interface BudgetSummaryHeroProps {
 }
 
 /**
- * Budget tab hero: remaining inside this month's plan + daily/pace chips.
+ * Budget's plan card: remaining inside this month's income plan, plus the
+ * daily guide and pace status. It sits in the Plan section below the trackers,
+ * so its figure is a card-sized number, not the screen's headline.
  */
 export function BudgetSummaryHero({
   cashflow,
@@ -99,17 +100,17 @@ export function BudgetSummaryHero({
   })();
 
   return (
-    <section className={HERO_SURFACE}>
-      <div className="relative grid gap-3.5 p-4 sm:p-5 lg:grid-cols-[minmax(0,1.4fr)_minmax(14rem,0.85fr)] lg:items-center lg:gap-5">
+    <section className="relative overflow-hidden rounded-2xl bg-card text-foreground ring-1 ring-inset ring-border">
+      <div className="relative grid gap-4 p-4 sm:p-5">
         <div className="min-w-0 space-y-3">
           <div>
-            <p className="text-[0.8125rem] font-medium text-white/55">
+            <p className="text-detail font-medium text-muted-foreground">
               {t(
                 "Remaining in this month's plan",
                 "Restante en el plan de este mes"
               )}
             </p>
-            <p className="up-figure mt-0.5 font-mono text-[2rem] font-bold leading-none tracking-[-0.035em] tabular-nums">
+            <p className="mt-1 font-mono text-[1.75rem] font-extrabold leading-none tracking-[-0.035em] tabular-nums">
               {remainingLabel}
             </p>
           </div>
@@ -121,7 +122,7 @@ export function BudgetSummaryHero({
                 style={{ width: `${barFill}%`, backgroundColor: barColor }}
               />
             </div>
-            <p className="text-[0.75rem] text-white/55">
+            <p className="text-caption text-muted-foreground">
               <span className="font-mono tabular-nums">{spentLabel}</span>{" "}
               {t("spent of", "gastados de")}{" "}
               <span className="font-mono tabular-nums">{incomeLabel}</span>
@@ -140,7 +141,7 @@ export function BudgetSummaryHero({
           </div>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+        <div className="grid gap-2 sm:grid-cols-2">
           {dailyLabel != null && (
             <div
               className={cn(
@@ -154,13 +155,13 @@ export function BudgetSummaryHero({
                   HERO_ICON_TILE
                 )}
               >
-                <Gauge className="h-3.5 w-3.5 text-white" />
+                <Gauge className="h-3.5 w-3.5 text-foreground" />
               </span>
               <div className="min-w-0">
                 <p className="font-mono text-sm font-semibold tabular-nums">
                   {dailyLabel} {t("/ day", "al día")}
                 </p>
-                <p className="text-[0.6875rem] text-white/55">
+                <p className="text-label text-muted-foreground">
                   {t("To stay on plan", "Para mantenerte en el plan")}
                 </p>
               </div>
@@ -190,7 +191,7 @@ export function BudgetSummaryHero({
             </span>
             <div className="min-w-0">
               <p className="text-sm font-semibold">{statusCopy.title}</p>
-              <p className="text-[0.6875rem] text-white/55">
+              <p className="text-label text-muted-foreground">
                 {statusCopy.detail}
               </p>
             </div>

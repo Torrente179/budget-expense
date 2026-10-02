@@ -72,23 +72,33 @@ export const PRIMARY_NAV: NavItem[] = [
   },
 ];
 
-/** Secondary destinations: sidebar footer group, profile sheet, command menu. */
-export const SECONDARY_NAV: NavItem[] = [
-  {
-    key: "review",
-    href: "/review",
-    label: { en: "Review", es: "Revisión" },
-    icon: ClipboardCheck,
-    match: /^\/review/,
-    badge: "review",
-  },
-  {
-    key: "import",
-    href: "/import",
-    label: { en: "Import", es: "Importar" },
-    icon: FileUp,
-    match: /^\/import/,
-  },
+/**
+ * Review is surfaced where it is needed: a prompt on Home whenever something
+ * is waiting. It is not a standing menu row.
+ */
+export const REVIEW_NAV: NavItem = {
+  key: "review",
+  href: "/review",
+  label: { en: "Review", es: "Revisión" },
+  icon: ClipboardCheck,
+  match: /^\/review/,
+  badge: "review",
+};
+
+/**
+ * Import is an action, not a section: a button at the foot of the desktop
+ * sidebar and an action in the Movements header on a phone.
+ */
+export const IMPORT_NAV: NavItem = {
+  key: "import",
+  href: "/import",
+  label: { en: "Import", es: "Importar" },
+  icon: FileUp,
+  match: /^\/import/,
+};
+
+/** The "More" group: desktop sidebar and the phone's profile sheet. */
+export const MENU_NAV: NavItem[] = [
   {
     key: "wisdom",
     href: "/wisdom",
@@ -104,6 +114,9 @@ export const SECONDARY_NAV: NavItem[] = [
     match: /^\/settings/,
   },
 ];
+
+/** Every secondary destination, for surfaces that list them all (search). */
+export const SECONDARY_NAV: NavItem[] = [REVIEW_NAV, IMPORT_NAV, ...MENU_NAV];
 
 export function isNavItemActive(item: NavItem, pathname: string) {
   return item.match.test(pathname);

@@ -196,7 +196,7 @@ export function LandingPage() {
 
   return (
     <StaticCurrencyProvider baseCurrency="EUR">
-      <div className="flex min-h-dvh flex-col bg-background">
+      <div data-theme="dark" className="flex min-h-dvh flex-col bg-background">
         <header className="sticky top-0 z-40 bg-ink">
           {/* On a phone this row is exactly the brand and the two doors. The
               wordmark and the language chip drop out rather than push the

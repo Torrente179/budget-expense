@@ -4,33 +4,26 @@ import { cn } from "@/lib/utils";
 import { CategoryGlyph } from "@/components/shared/category-badge";
 
 /**
- * The square mark that opens every feed row.
+ * The round mark that opens every feed row.
  *
- * Up's feed marks are saturated tiles carrying a pictogram — a real brand logo
- * where one exists. We have no logo assets, so the tile is filled with the
- * category colour and carries the category's line-art glyph in white. That
- * keeps the category legible at a glance, which is what the glyph is for, while
- * the colour still distinguishes rows down the column.
+ * Card Stream marks are quiet: a tinted disc in the category's colour carrying
+ * the merchant's initial. The tint keeps categories distinguishable down a
+ * column without a wall of saturated tiles competing with the accent.
  *
- * With no category at all, it falls back to the merchant's initial on a tile
- * coloured by a stable hash of the title — so uncategorised rows still differ
- * from one another instead of forming a column of identical grey squares.
+ * With no category at all, the disc takes a hue from a stable hash of the
+ * title, so uncategorised rows still differ from one another.
  */
 
-/**
- * Hues for rows with no category. Drawn from the same "Cool" family as
- * `PALETTE.categories` so an uncategorised row sits in the palette rather than
- * standing out as a stray colour.
- */
+/** Hues for rows with no category. */
 const FALLBACK_HUES = [
-  "#3A7DC4",
-  "#2E9E6B",
-  "#6D5BC0",
-  "#2F97AE",
-  "#8258B8",
-  "#4FA88E",
-  "#C25E86",
-  "#5566CC",
+  "#6FA8E8",
+  "#6FD3A0",
+  "#A99BEF",
+  "#6FCFE0",
+  "#C39BEA",
+  "#8FD9C0",
+  "#F0A0C0",
+  "#93A2F2",
 ];
 
 function hashHue(input: string): string {
@@ -42,26 +35,27 @@ function hashHue(input: string): string {
   return FALLBACK_HUES[Math.abs(hash) % FALLBACK_HUES.length];
 }
 
-/** First letter/number of the merchant, or an emoji if the name starts with one. */
-function initial(title: string): string {
-  const trimmed = title.trim();
-  if (!trimmed) return "?";
-  const first = Array.from(trimmed)[0];
+/** First letter/number of the merchant, an emoji if it leads, else nothing. */
+function initial(title: string): string | null {
+  const first = Array.from(title.trim())[0];
+  if (!first) return null;
   // Emoji-led names (user-authored Metas) keep their emoji as the mark.
   if (/\p{Extended_Pictographic}/u.test(first)) return first;
-  return first.toUpperCase();
+  return /[\p{L}\p{N}]/u.test(first) ? first.toUpperCase() : null;
 }
 
 interface MerchantMarkProps {
   title: string;
   /** Category colour, when the movement has one. */
   color?: string | null;
-  /** Category icon key — draws the pictogram instead of the initial. */
+  /** Category icon key. Drawn only when the title has no usable initial. */
   icon?: string | null;
   /** Category name, used to resolve a pictogram when `icon` is missing. */
   categoryName?: string | null;
-  /** Circular instead of squircle — used for people (transfers, splits). */
+  /** Kept for callers; every mark is round in Card Stream. */
   round?: boolean;
+  /** Outline instead of a fill, for a payment that has not happened yet. */
+  outlined?: boolean;
   className?: string;
 }
 
@@ -70,31 +64,40 @@ export function MerchantMark({
   color,
   icon,
   categoryName,
-  round = false,
+  outlined = false,
   className,
 }: MerchantMarkProps) {
-  const bg = color || hashHue(title);
+  const base = color || hashHue(title);
+  const letter = initial(title);
   const hasCategory = Boolean(icon || categoryName);
 
   return (
     <span
       aria-hidden
       className={cn(
-        "flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden text-body font-bold text-white",
-        round ? "rounded-full" : "rounded-[0.6rem]",
+        "flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full text-heading font-extrabold",
+        outlined && "text-muted-foreground ring-[1.5px] ring-inset ring-track",
         className
       )}
-      style={{ backgroundColor: bg }}
+      style={
+        outlined
+          ? undefined
+          : {
+              backgroundColor: `color-mix(in srgb, ${base} 20%, transparent)`,
+              color: `color-mix(in srgb, ${base} 48%, var(--tint-toward))`,
+            }
+      }
     >
-      {hasCategory ? (
-        <CategoryGlyph
-          icon={icon ?? ""}
-          name={categoryName ?? undefined}
-          className="h-[1.125rem] w-[1.125rem] stroke-[1.9]"
-        />
-      ) : (
-        initial(title)
-      )}
+      {letter ??
+        (hasCategory ? (
+          <CategoryGlyph
+            icon={icon ?? ""}
+            name={categoryName ?? undefined}
+            className="h-5 w-5 stroke-[1.9]"
+          />
+        ) : (
+          "?"
+        ))}
     </span>
   );
 }

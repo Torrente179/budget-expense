@@ -6,64 +6,76 @@ import { cn } from "@/lib/cn";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/providers/locale-provider";
-import { useReviewCount } from "@/hooks/use-review-queue";
 import {
+  IMPORT_NAV,
+  MENU_NAV,
   PRIMARY_NAV,
-  SECONDARY_NAV,
   isNavItemActive,
   type NavItem,
 } from "@/lib/navigation";
 import { SiteBrand } from "./site-brand";
 import { NavigationPendingIndicator } from "./navigation-pending-indicator";
 
+const ROW =
+  "relative flex min-h-11 items-center gap-3 rounded-full px-4 text-body font-semibold transition-colors duration-[var(--motion-standard)]";
+
 function SidebarLink({
   item,
   active,
-  badge,
   label,
+  staticPreview,
 }: {
   item: NavItem;
   active: boolean;
-  badge?: number;
   label: string;
+  staticPreview: boolean;
 }) {
   return (
     <Link
       href={item.href}
+      prefetch={staticPreview ? false : undefined}
+      onClick={staticPreview ? (event) => event.preventDefault() : undefined}
+      aria-disabled={staticPreview || undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
-        // The sidebar is chrome, so it carries the dark layer — these must use
-        // sidebar-* tokens, not the light page's foreground/secondary.
-        "relative flex min-h-11 items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium transition-colors duration-[var(--motion-standard)]",
+        ROW,
         active
-          ? "bg-white/[0.07] text-coral"
-          : "text-white/50 hover:bg-white/[0.06] hover:text-white"
+          ? "bg-card text-foreground ring-1 ring-inset ring-border"
+          : "text-muted-foreground hover:bg-card/60 hover:text-foreground"
       )}
     >
-      <item.icon className="h-4 w-4" />
+      <item.icon
+        className={cn(
+          "h-[1.125rem] w-[1.125rem] shrink-0",
+          active && "stroke-[2.25] text-coral"
+        )}
+      />
       {label}
       <NavigationPendingIndicator />
-      {badge !== undefined && badge > 0 && (
-        <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-warning-subtle px-1.5 font-mono text-label tabular-nums text-warning ring-1 ring-warning/25">
-          {badge}
-        </span>
-      )}
     </Link>
   );
 }
 
-export function Sidebar() {
-  const pathname = usePathname();
-  const router = useRouter();
-  const supabase = createClient();
+/**
+ * The desktop navigation column, presentational only. It sits on the page
+ * ground itself, separated by one hairline, so the app reads as one surface
+ * rather than a dark rail beside a light page. The active section is a raised
+ * pill with an accent icon — the same language as the phone's tab bar.
+ *
+ * Import is an action at the foot of the column, not a row in "More". Review
+ * has no row at all: Home prompts for it whenever something is waiting.
+ */
+export function SidebarView({
+  pathname,
+  onLogout,
+  staticPreview = false,
+}: {
+  pathname: string;
+  onLogout?: () => void;
+  /** Keep links inert in fixtures: no prefetch, no navigation. */
+  staticPreview?: boolean;
+}) {
   const { t } = useLocale();
-  const reviewCount = useReviewCount();
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-    router.push("/login");
-    router.refresh();
-  }
 
   const renderItem = (item: NavItem) => (
     <SidebarLink
@@ -71,33 +83,76 @@ export function Sidebar() {
       item={item}
       active={isNavItemActive(item, pathname)}
       label={t(item.label.en, item.label.es)}
-      badge={item.badge === "review" ? reviewCount : undefined}
+      staticPreview={staticPreview}
     />
   );
 
   return (
-    <aside className="hidden shrink-0 border-r border-sidebar-border bg-sidebar text-sidebar-foreground md:flex md:w-[252px] md:flex-col">
-      <div className="border-b border-sidebar-border px-5 py-5">
+    <aside className="hidden shrink-0 border-r border-border bg-background text-foreground md:flex md:w-[248px] md:flex-col">
+      <div className="px-5 pb-6 pt-6">
         <SiteBrand />
       </div>
       <nav
         aria-label={t("Main navigation", "Navegación principal")}
-        className="flex-1 space-y-6 px-3 py-5"
+        className="flex-1 space-y-7 px-3"
       >
         <div className="space-y-1">{PRIMARY_NAV.map(renderItem)}</div>
-        <div className="space-y-1 border-t border-sidebar-border pt-5">
-          {SECONDARY_NAV.map(renderItem)}
+        <div className="space-y-1">
+          <p className="label-caps px-4 pb-1.5">{t("More", "Más")}</p>
+          {MENU_NAV.map(renderItem)}
         </div>
       </nav>
-      <div className="border-t border-sidebar-border px-3 py-4">
-        <button
-          onClick={handleLogout}
-          className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3.5 py-2.5 text-sm font-medium text-white/50 transition-colors duration-[var(--motion-standard)] hover:bg-white/[0.06] hover:text-white"
+      <div className="space-y-1 px-3 py-4">
+        <Link
+          href={IMPORT_NAV.href}
+          prefetch={staticPreview ? false : undefined}
+          onClick={
+            staticPreview ? (event) => event.preventDefault() : undefined
+          }
+          aria-disabled={staticPreview || undefined}
+          aria-current={
+            isNavItemActive(IMPORT_NAV, pathname) ? "page" : undefined
+          }
+          className={cn(
+            ROW,
+            "mb-2 justify-center border border-input text-foreground hover:bg-card",
+            isNavItemActive(IMPORT_NAV, pathname) && "bg-card"
+          )}
         >
-          <LogOut className="h-4 w-4" />
+          <IMPORT_NAV.icon className="h-[1.125rem] w-[1.125rem] shrink-0" />
+          {t("Import statement", "Importar extracto")}
+        </Link>
+        <button
+          type="button"
+          onClick={onLogout}
+          className={cn(
+            ROW,
+            "w-full text-muted-foreground hover:bg-card/60 hover:text-foreground"
+          )}
+        >
+          <LogOut className="h-[1.125rem] w-[1.125rem]" />
           {t("Log out", "Cerrar sesión")}
         </button>
       </div>
     </aside>
+  );
+}
+
+export function Sidebar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const supabase = createClient();
+
+  async function handleLogout() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
+  return (
+    <SidebarView
+      pathname={pathname}
+      onLogout={handleLogout}
+    />
   );
 }

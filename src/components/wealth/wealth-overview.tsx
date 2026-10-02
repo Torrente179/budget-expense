@@ -178,7 +178,7 @@ export function WealthOverview() {
         </p>
       }
     >
-      <div className="-mx-4 min-w-0 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+      <div className="-mx-4 min-w-0 bg-background sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
         <PatrimonioHero
           totals={totals}
           monthlyChange={monthlyChange}

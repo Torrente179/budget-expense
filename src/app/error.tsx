@@ -19,7 +19,10 @@ export default function ErrorState({
   }, [error]);
 
   return (
-    <main className="flex min-h-[70dvh] items-center justify-center bg-ink px-6 py-12 text-white">
+    <main
+      data-theme="dark"
+      className="flex min-h-[70dvh] items-center justify-center bg-ink px-6 py-12 text-white"
+    >
       <section className="w-full max-w-lg text-center">
         <p className="label-caps text-white/50">
           {t("Something interrupted the view", "Algo interrumpió la vista")}

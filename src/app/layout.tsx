@@ -1,19 +1,20 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Manrope } from "next/font/google";
 import { cookies, headers } from "next/headers";
 import { LocaleProvider } from "@/providers/locale-provider";
+import { ThemeProvider } from "@/providers/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { localeFromDeviceLanguages, resolveAppLocale } from "@/lib/locale";
+import {
+  THEME_COOKIE_KEY,
+  THEME_GROUND,
+  resolveThemePreference,
+} from "@/lib/theme";
 import "./globals.css";
 
-/**
- * STAND-IN for Up's typeface, which is unconfirmed — Brandfetch returns 403
- * and Up's design blog never names it. From the captures it is a tight
- * geometric sans with heavy, negatively-tracked numerals; Inter is the closest
- * freely-available match. Swap here and in globals.css when identified.
- */
-const inter = Inter({
-  variable: "--font-inter",
+/** Card Stream's one typeface. Mapped to the font tokens in globals.css. */
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
 });
 
@@ -33,12 +34,27 @@ export const metadata: Metadata = {
   },
 };
 
-/* One appearance — Up has no light/dark duality, so a single theme-color that
-   matches the chrome band at the top of every screen. */
-export const viewport: Viewport = {
-  viewportFit: "cover",
-  themeColor: "#1a1b23",
-};
+/* The browser chrome takes the page ground: fixed for an explicit Light or
+   Dark choice, per device scheme for "Match device". */
+export async function generateViewport(): Promise<Viewport> {
+  const cookieStore = await cookies();
+  const preference = resolveThemePreference(
+    cookieStore.get(THEME_COOKIE_KEY)?.value
+  );
+  return {
+    viewportFit: "cover",
+    themeColor:
+      preference === "system"
+        ? [
+            {
+              media: "(prefers-color-scheme: light)",
+              color: THEME_GROUND.light,
+            },
+            { media: "(prefers-color-scheme: dark)", color: THEME_GROUND.dark },
+          ]
+        : THEME_GROUND[preference],
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -52,14 +68,23 @@ export default async function RootLayout({
   const initialLocale = explicitLocale
     ? resolveAppLocale(explicitLocale)
     : localeFromDeviceLanguages(browserLocale);
+  const themePreference = resolveThemePreference(
+    cookieStore.get(THEME_COOKIE_KEY)?.value
+  );
 
   return (
-    <html lang={initialLocale} className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang={initialLocale}
+      data-theme={themePreference}
+      className={`${manrope.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">
-        <LocaleProvider initialLocale={initialLocale}>
-          {children}
-          <Toaster />
-        </LocaleProvider>
+        <ThemeProvider initialPreference={themePreference}>
+          <LocaleProvider initialLocale={initialLocale}>
+            {children}
+            <Toaster />
+          </LocaleProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

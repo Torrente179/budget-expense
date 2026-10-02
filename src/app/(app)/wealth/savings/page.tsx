@@ -175,7 +175,7 @@ export default function InvestmentSavingsPage() {
       subheader={<WealthBreadcrumb current={t("Savings", "Ahorros")} />}
     >
 
-      <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+      <div className="-mx-4 bg-background sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
         <WealthCategoryHero
           eyebrow={t("Total saved", "Total ahorrado")}
           amount={totalSavingsBalance}

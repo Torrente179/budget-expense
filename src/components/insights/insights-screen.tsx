@@ -230,21 +230,21 @@ export function InsightsScreen() {
       }
     >
       {loading ? (
-        <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
-          <Skeleton className="h-64 rounded-none bg-ink/90" />
+        <div className="-mx-4 bg-background sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+          <Skeleton className="h-64 rounded-none bg-background/90" />
           <Skeleton className="h-[38rem] rounded-none bg-card" />
         </div>
       ) : (
-        <div className="-mx-4 min-w-0 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+        <div className="-mx-4 min-w-0 bg-background sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
           <section className={`${HERO_SURFACE} mx-0 rounded-none px-5 py-6 sm:mx-0 sm:px-6 md:mx-0 md:rounded-none`}>
             <div className="text-center">
-              <p className="label-caps text-white/55">
+              <p className="label-caps text-muted-foreground">
                 {t("Spent this month", "Gastado este mes")}
               </p>
               <p className="up-figure mt-2 font-mono text-display tabular-nums tracking-tight">
                 {formatCurrency(summary.totalSpent, baseCurrency)}
               </p>
-              <p className="mt-1 text-caption text-white/50">
+              <p className="mt-1 text-caption text-muted-foreground">
                 {formatCurrency(summary.totalIncome, baseCurrency)} {t("money in", "de ingresos")}
               </p>
             </div>
@@ -577,10 +577,10 @@ function InsightMetric({
   healthy?: boolean;
 }) {
   return (
-    <div className="min-w-0 border-white/10 px-3 py-2 odd:border-r sm:border-r sm:last:border-r-0">
-      <p className="label-caps truncate text-white/50">{label}</p>
+    <div className="min-w-0 border-border px-3 py-2 odd:border-r sm:border-r sm:last:border-r-0">
+      <p className="label-caps truncate text-muted-foreground">{label}</p>
       <p
-        className="mt-1 truncate font-mono text-heading font-semibold tabular-nums text-white"
+        className="mt-1 truncate font-mono text-heading font-semibold tabular-nums text-foreground"
         style={healthy ? { color: HERO_ACCENT } : undefined}
       >
         {value}

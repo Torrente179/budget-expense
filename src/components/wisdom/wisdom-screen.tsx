@@ -200,7 +200,7 @@ export function WisdomScreen() {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 border-white/12 bg-white/[0.07] text-white hover:bg-white/12 hover:text-white"
+                className="gap-1.5 border-border bg-foreground/[0.07] text-foreground hover:bg-foreground/12 hover:text-foreground"
               >
                 {translation.code}
                 <ArrowUpRight className="h-4 w-4" />

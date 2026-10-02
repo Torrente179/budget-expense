@@ -29,9 +29,9 @@ export function MovementSummaryHero({
   showIncome = true,
 }: MovementSummaryHeroProps) {
   return (
-    <section className="-mx-4 overflow-hidden bg-ink text-white sm:-mx-5 md:mx-0 md:rounded-xl">
+    <section className="-mx-4 overflow-hidden bg-background text-foreground sm:-mx-5 md:mx-0 md:rounded-xl">
       <div className="flex min-h-[12.5rem] flex-col items-center justify-center px-5 py-7 text-center md:min-h-[14rem] md:px-8 md:py-8">
-        <p className="text-[0.75rem] font-medium tracking-wide text-white/55">
+        <p className="text-[0.75rem] font-medium tracking-wide text-muted-foreground">
           {label}
         </p>
         <AmountText
@@ -49,7 +49,7 @@ export function MovementSummaryHero({
                 className="h-1.5 w-1.5 rounded-full bg-positive"
               />
               <div>
-                <p className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-white/50">
+                <p className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                   {incomeLabel}
                 </p>
                 <AmountText
@@ -57,7 +57,7 @@ export function MovementSummaryHero({
                   currency={currency}
                   tone="positive"
                   size="caption"
-                  className="font-semibold text-[#3ddc97]"
+                  className="font-semibold text-income"
                 />
               </div>
             </div>
@@ -65,17 +65,17 @@ export function MovementSummaryHero({
           <div className="flex items-center gap-2">
             <span
               aria-hidden
-              className="h-1.5 w-1.5 rounded-full bg-white/35"
+              className="h-1.5 w-1.5 rounded-full bg-foreground/35"
             />
             <div>
-              <p className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-white/50">
+              <p className="text-[0.625rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                 {expenseLabel}
               </p>
               <AmountText
                 amount={expenseAmount}
                 currency={currency}
                 size="caption"
-                className="font-semibold text-white"
+                className="font-semibold text-foreground"
               />
             </div>
           </div>

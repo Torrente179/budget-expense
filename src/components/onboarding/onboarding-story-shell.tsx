@@ -30,6 +30,7 @@ export function OnboardingStoryShell({
 }: OnboardingStoryShellProps) {
   return (
     <div
+      data-theme="dark"
       className={cn(
         "-mx-4 -mt-3 min-h-dvh bg-coral text-ink sm:-mx-5 lg:-mx-8",
         className
@@ -78,7 +79,7 @@ export function OnboardingStoryShell({
           </section>
 
           <section className="flex items-end bg-ink lg:items-center lg:px-10 lg:py-10">
-            <div className="w-full rounded-t-2xl bg-white px-5 py-6 sm:px-8 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:rounded-2xl lg:px-8 lg:py-8 [&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:py-0 [&_[data-slot=card]]:ring-0 [&_[data-slot=card-content]]:px-0">
+            <div className="w-full rounded-t-2xl bg-card px-5 py-6 text-foreground sm:px-8 lg:max-h-[calc(100dvh-5rem)] lg:overflow-y-auto lg:rounded-2xl lg:px-8 lg:py-8 [&_[data-slot=card]]:rounded-none [&_[data-slot=card]]:bg-transparent [&_[data-slot=card]]:py-0 [&_[data-slot=card]]:ring-0 [&_[data-slot=card-content]]:px-0">
               {children}
             </div>
           </section>

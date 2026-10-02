@@ -31,7 +31,7 @@ function DialogOverlay({
     <DialogPrimitive.Backdrop
       data-slot="dialog-overlay"
       className={cn(
-        "fixed inset-0 isolate z-50 bg-ink/60 duration-[var(--motion-sheet-exit)] data-open:animate-in data-open:fade-in-0 data-open:duration-[var(--motion-sheet-enter)] data-closed:animate-out data-closed:fade-out-0",
+        "fixed inset-0 isolate z-50 bg-scrim duration-[var(--motion-sheet-exit)] data-open:animate-in data-open:fade-in-0 data-open:duration-[var(--motion-sheet-enter)] data-closed:animate-out data-closed:fade-out-0",
         className
       )}
       {...props}

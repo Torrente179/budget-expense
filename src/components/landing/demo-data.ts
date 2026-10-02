@@ -3,6 +3,10 @@ import type {
   HomeFeedDay,
   HomeUpcomingPayment,
 } from "@/components/home/home-activity-sheet";
+import type {
+  HomeAvailableBalance,
+  MonthCashflow,
+} from "@/lib/home/month-cashflow";
 
 /**
  * Sample data for the screenshots on the public landing page.
@@ -31,7 +35,24 @@ export const demoMoneyOut = 1798.6;
 export const demoDailyGuide = 158.2;
 export const demoNetWorth = 48120.65;
 export const demoNetWorthChange = 1240;
-export const demoBudgetRemaining = 612.4;
+
+/** Home's month figures, in the shapes the production components take. */
+export const demoCashflow: MonthCashflow = {
+  monthlyIncome: demoMoneyIn,
+  actualOutflows: demoMoneyOut,
+  remaining: demoMoneyIn - demoMoneyOut,
+  usedRatio: demoMoneyOut / demoMoneyIn,
+  monthProgress: 13 / 31,
+  daysRemaining: 18,
+  dailyAvailable: demoDailyGuide,
+  paceStatus: "on_track",
+};
+
+export const demoBalance: HomeAvailableBalance = {
+  amount: demoAvailable,
+  dailyAvailable: demoDailyGuide,
+  source: "tracked",
+};
 
 export const demoFeedDays: HomeFeedDay[] = [
   {

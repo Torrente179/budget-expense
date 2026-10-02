@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useLocale } from "@/providers/locale-provider";
-import { useReviewCount } from "@/hooks/use-review-queue";
 import { useAppBootstrap } from "@/hooks/use-app-bootstrap";
-import { SECONDARY_NAV } from "@/lib/navigation";
+import { MENU_NAV } from "@/lib/navigation";
 import { LanguagePreferenceRow } from "@/components/shared/language-switch";
+import { ThemePreferenceRow } from "@/components/shared/theme-switch";
 import { CurrencyQuickSwitch } from "@/components/shared/currency-quick-switch";
 import {
   Sheet,
@@ -28,7 +28,6 @@ export function ProfileSheetContents({
   const supabase = createClient();
   const { t } = useLocale();
   const { data: bootstrap } = useAppBootstrap();
-  const reviewCount = useReviewCount();
   const email = bootstrap?.identity.email ?? null;
 
   async function handleLogout() {
@@ -40,17 +39,17 @@ export function ProfileSheetContents({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="bottom" showCloseButton={false} className="gap-0 bg-white">
-        <SheetHeader className="mt-2 bg-ink px-5 pb-4 pt-5 text-white">
-          <SheetTitle className="text-white">{t("Account", "Cuenta")}</SheetTitle>
+      <SheetContent side="bottom" showCloseButton={false} className="gap-0 bg-popover">
+        <SheetHeader className="mt-2 bg-background px-5 pb-4 pt-5 text-foreground">
+          <SheetTitle className="text-foreground">{t("Account", "Cuenta")}</SheetTitle>
           {email && (
-            <p className="truncate text-caption text-white/50">
+            <p className="truncate text-caption text-muted-foreground">
               {email}
             </p>
           )}
         </SheetHeader>
         <nav className="flex flex-col divide-y divide-border/70 pb-1">
-          {SECONDARY_NAV.map((item) => (
+          {MENU_NAV.map((item) => (
             <Link
               key={item.key}
               href={item.href}
@@ -59,14 +58,10 @@ export function ProfileSheetContents({
             >
               <item.icon className="h-4.5 w-4.5 text-muted-foreground" />
               {t(item.label.en, item.label.es)}
-              {item.badge === "review" && reviewCount > 0 && (
-                <span className="ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-warning-subtle px-1.5 font-mono text-label tabular-nums text-warning ring-1 ring-warning/25">
-                  {reviewCount}
-                </span>
-              )}
             </Link>
           ))}
           <LanguagePreferenceRow />
+          <ThemePreferenceRow />
         </nav>
         <div className="flex items-center gap-2 border-t border-border px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           <CurrencyQuickSwitch />

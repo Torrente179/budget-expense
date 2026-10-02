@@ -25,6 +25,7 @@ import { ArrowRight, Compass, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale } from "@/providers/locale-provider";
 import { LanguagePreferenceList } from "@/components/shared/language-switch";
+import { ThemePreferenceList } from "@/components/shared/theme-switch";
 import { StewardshipSettings } from "@/components/settings/stewardship-settings";
 import { BalanceCheckpointSettings } from "@/components/settings/balance-checkpoint-settings";
 import { CategoryClassification } from "@/components/settings/category-classification";
@@ -158,6 +159,24 @@ export default function SettingsPage() {
             )}
           </p>
           <LanguagePreferenceList />
+        </CardContent>
+      </Card>
+
+      {/* Appearance */}
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">
+            {t("Appearance", "Apariencia")}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <p className="text-sm text-muted-foreground">
+            {t(
+              "Light, dark, or whatever your device is set to.",
+              "Claro, oscuro, o lo que marque tu dispositivo."
+            )}
+          </p>
+          <ThemePreferenceList />
         </CardContent>
       </Card>
 

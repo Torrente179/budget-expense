@@ -1,13 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { Plus, Search } from "lucide-react";
 import { PRIMARY_NAV } from "@/lib/navigation";
 import { cn, formatCurrency } from "@/lib/utils";
 import { useLocale } from "@/providers/locale-provider";
 
 /**
  * The parts of an app screen that surround the real components: the status
- * bar, the section rail and the single centred figure. They are written here
+ * bar, the header row, the tab bar and the single centred figure. They are written here
  * rather than imported because the signed-in versions carry routing, month
  * state and viewport breakpoints that a fixed-width screenshot cannot honour.
  *
@@ -17,7 +18,7 @@ import { useLocale } from "@/providers/locale-provider";
 
 export function DemoStatusBar() {
   return (
-    <div className="flex h-11 shrink-0 items-center justify-between px-7 text-caption font-semibold text-white">
+    <div className="flex h-11 shrink-0 items-center justify-between px-7 text-caption font-semibold text-foreground">
       <span>9:41</span>
       <span className="tracking-widest opacity-90">●●● ●</span>
     </div>
@@ -25,43 +26,60 @@ export function DemoStatusBar() {
 }
 
 /**
- * Up's rail centres the active section and lets its neighbours clip at both
- * edges — that clipping is the affordance that says the row scrolls. Splitting
- * the list around the active item centres it with no measurement.
+ * The header row every app screen opens with: the section title on the left,
+ * search and the accent add button on the right. A picture of the real header,
+ * not the header itself — the live one carries routing and sheet state.
  */
 export function DemoRail({ activeKey }: { activeKey: string }) {
   const { locale } = useLocale();
-  const index = PRIMARY_NAV.findIndex((item) => item.key === activeKey);
-  const active = PRIMARY_NAV[index];
-  const before = PRIMARY_NAV.slice(0, index);
-  const after = PRIMARY_NAV.slice(index + 1);
-  const label = (item: (typeof PRIMARY_NAV)[number]) => item.label[locale];
+  const active = PRIMARY_NAV.find((item) => item.key === activeKey);
 
   return (
-    <div className="flex shrink-0 items-center overflow-hidden py-1.5">
-      <div className="flex flex-1 basis-0 justify-end gap-6 overflow-hidden pr-3">
-        {before.map((item) => (
-          <span
-            key={item.key}
-            className="shrink-0 text-body font-semibold whitespace-nowrap text-white/50"
-          >
-            {label(item)}
-          </span>
-        ))}
-      </div>
-      <span className="shrink-0 text-body font-bold whitespace-nowrap text-white">
-        {active ? label(active) : null}
+    <div className="flex shrink-0 items-center gap-2.5 px-5 pt-1.5">
+      <span className="flex-1 truncate text-screen font-extrabold">
+        {active ? active.label[locale] : null}
       </span>
-      <div className="flex flex-1 basis-0 justify-start gap-6 overflow-hidden pl-3">
-        {after.map((item) => (
+      <span className="flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card">
+        <Search className="h-[1.125rem] w-[1.125rem]" />
+      </span>
+      <span className="flex h-11 w-11 items-center justify-center rounded-full bg-coral text-on-coral">
+        <Plus className="h-5 w-5" strokeWidth={2.5} />
+      </span>
+    </div>
+  );
+}
+
+/** The floating capsule navigation, in its resting position. */
+export function DemoTabBar({ activeKey }: { activeKey: string }) {
+  const { locale } = useLocale();
+
+  return (
+    <div className="absolute inset-x-4 bottom-4 z-10 grid h-16 grid-cols-5 rounded-full border border-border bg-surface-2/85 px-1.5 shadow-3 backdrop-blur-xl">
+      {PRIMARY_NAV.map((item) => {
+        const Icon = item.icon;
+        const active = item.key === activeKey;
+        return (
           <span
             key={item.key}
-            className="shrink-0 text-body font-semibold whitespace-nowrap text-white/50"
+            className={cn(
+              "flex flex-col items-center justify-center gap-1",
+              active ? "text-coral" : "text-muted-foreground"
+            )}
           >
-            {label(item)}
+            <Icon
+              className={cn("h-[1.375rem] w-[1.375rem]", active && "stroke-[2.25]")}
+            />
+            <span
+              className={cn(
+                "text-nav tracking-tight",
+                active ? "font-extrabold" : "font-semibold"
+              )}
+            >
+              {item.label[locale]}
+            </span>
           </span>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
@@ -120,12 +138,12 @@ export function DemoHero({
   );
 }
 
-/** The ink band that carries the rail and the figure. */
+/** The top band that carries the header row and the figure. */
 export function DemoChrome({ children }: { children: ReactNode }) {
   return <div className="up-chrome shrink-0 pb-3.5">{children}</div>;
 }
 
-/** The white transactional layer that rides over the chrome. */
+/** The card-coloured list layer beneath the top band. */
 export function DemoSheet({
   children,
   className,
@@ -137,14 +155,5 @@ export function DemoSheet({
     <div className={cn("up-sheet flex-1 rounded-t-2xl", className)}>
       {children}
     </div>
-  );
-}
-
-/** The capture FAB, in its resting position over the sheet. */
-export function DemoFab() {
-  return (
-    <span className="up-fab-glow absolute right-5 bottom-6 flex h-14 w-14 items-center justify-center rounded-full bg-primary text-2xl font-normal text-primary-foreground">
-      +
-    </span>
   );
 }

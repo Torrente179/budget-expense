@@ -230,7 +230,7 @@ export default function InvestmentStocksPage() {
       }
       subheader={<WealthBreadcrumb current={t("Investments", "Inversiones")} />}
     >
-      <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+      <div className="-mx-4 bg-background sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
         <WealthCategoryHero
           eyebrow={t("Portfolio value", "Valor de tus inversiones")}
           amount={

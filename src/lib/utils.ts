@@ -1,14 +1,10 @@
-import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
 import { format, parseISO } from "date-fns";
 import { enUS, es } from "date-fns/locale";
 import { CURRENCIES } from "./constants";
 
-export type AppLocale = "en" | "es";
+export { cn } from "./cn";
 
-export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+export type AppLocale = "en" | "es";
 
 function getDocumentLocale() {
   if (typeof document === "undefined") {
@@ -111,6 +107,25 @@ export function formatCurrency(
   locale?: string | null
 ) {
   return getCurrencyFormatter(currencyCode, locale).format(amount);
+}
+
+/**
+ * Currency with the cents dropped when there are none: `€124`, but `€124.50`.
+ * For headline phrases like "€124 left", where `.00` is noise.
+ */
+export function formatCurrencyTrim(
+  amount: number,
+  currencyCode: string = "EUR",
+  locale?: string | null
+) {
+  const whole = Math.abs(amount - Math.round(amount)) < 0.005;
+  if (!whole) return formatCurrency(amount, currencyCode, locale);
+  return new Intl.NumberFormat(getIntlLocale(locale), {
+    style: "currency",
+    currency: currencyCode,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(Math.round(amount));
 }
 
 /** Preserve Intl formatting while allowing a line break before the unit. */

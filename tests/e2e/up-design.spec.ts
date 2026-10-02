@@ -35,6 +35,12 @@ async function expectNoHorizontalOverflow(page: Page) {
 test.beforeEach(async ({ page }) => {
   runtimeErrorsByPage.set(page, collectRuntimeErrors(page));
   await page.goto(reviewPath);
+  // Hydration must finish first: a screenshot styles inputs to hide the caret,
+  // and doing that mid-hydration makes React report a mismatch.
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-review-ready",
+    "true"
+  );
   await expect(page).toHaveTitle(/UP Design Review/);
   await expect(
     page.getByRole("heading", {
@@ -102,7 +108,7 @@ test("all deterministic stress states remain reachable and stable", async ({
 
     if (state === "long spanish") {
       await expect(
-        page.getByRole("heading", { name: "Inicio", exact: true })
+        page.getByRole("heading", { name: /agosto/i }).first()
       ).toBeVisible();
     }
     if (state === "large number") {
@@ -146,6 +152,59 @@ test("all deterministic stress states remain reachable and stable", async ({
   }
 
   expect(runtimeErrorsByPage.get(page)).toEqual([]);
+});
+
+test.describe("light appearance", () => {
+  // The preference is a cookie, so it is in place before the first request.
+  test.use({
+    storageState: {
+      cookies: [
+        {
+          name: "be_theme",
+          value: "light",
+          domain: "127.0.0.1",
+          path: "/",
+          expires: -1,
+          httpOnly: false,
+          secure: false,
+          sameSite: "Lax",
+        },
+      ],
+      origins: [],
+    },
+  });
+
+  test.beforeEach(async ({ page }) => {
+    await expect(page.locator("html")).toHaveAttribute("data-theme", "light");
+  });
+
+  test("@visual populated full-app review, light", async ({ page }) => {
+    await expectNoHorizontalOverflow(page);
+    await expect(page).toHaveScreenshot("up-full-app-review-light.png", {
+      animations: "disabled",
+      fullPage: false,
+      mask: [page.locator("nextjs-portal")],
+    });
+    expect(runtimeErrorsByPage.get(page)).toEqual([]);
+  });
+
+  test("@a11y populated full-app review is axe-clean, light", async ({
+    page,
+  }) => {
+    const results = await new AxeBuilder({ page })
+      .exclude("nextjs-portal")
+      .analyze();
+    const violationSummary = results.violations.flatMap((violation) =>
+      violation.nodes.map((node) =>
+        [
+          violation.id,
+          node.target.join(" "),
+          node.failureSummary?.replace(/\s+/g, " "),
+        ].join(" | ")
+      )
+    );
+    expect(violationSummary, violationSummary.join("\n")).toEqual([]);
+  });
 });
 
 test.describe("normal motion", () => {

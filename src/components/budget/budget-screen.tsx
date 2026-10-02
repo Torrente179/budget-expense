@@ -33,11 +33,12 @@ import { formatCurrency } from "@/lib/utils";
 import type { BudgetingMethod } from "@/lib/budgeting-methods";
 import { Screen } from "@/components/patterns/screen";
 import { SectionHeader } from "@/components/patterns/section-header";
+import { BudgetSummaryFigure } from "@/components/budget/budget-summary-figure";
 import { BudgetSummaryHero } from "@/components/budget/budget-summary-hero";
 import { EnvelopeListCard } from "@/components/budget/envelope-list-card";
 import { PlanDistributionCard } from "@/components/budget/plan-distribution-card";
 import { BudgetRecommendationCard } from "@/components/budget/budget-recommendation-card";
-import { MonthPicker } from "@/components/shared/month-picker";
+import { MonthTitle } from "@/components/shared/month-title";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -79,7 +80,7 @@ const MethodSelector = dynamic(() =>
 );
 
 export function BudgetScreen() {
-  const { t } = useLocale();
+  const { t, intlLocale } = useLocale();
   const { month, year, isCurrentMonth, setMonthYear } = useMonth();
   const { baseCurrency, convert } = useCurrency();
 
@@ -497,6 +498,69 @@ export function BudgetScreen() {
     );
   }
 
+  /**
+   * The headline figure follows the open view. Trackers: what is left across
+   * every spending limit, or how far over. Savers: what has been put toward
+   * the goals. With no trackers yet, it falls back to the month's plan.
+   */
+  const summaryFigure = (() => {
+    const money = (value: number) =>
+      formatCurrency(value, baseCurrency, intlLocale);
+    const daysLeft = isCurrentMonth
+      ? t(
+          `${cashflow.daysRemaining} ${cashflow.daysRemaining === 1 ? "day" : "days"} to go`,
+          `quedan ${cashflow.daysRemaining} ${cashflow.daysRemaining === 1 ? "día" : "días"}`
+        )
+      : null;
+
+    if (activeView === "savers") {
+      const saved = contributionGoals.reduce((sum, row) => sum + row.spent, 0);
+      const targeted = contributionGoals.reduce(
+        (sum, row) => sum + row.resolved,
+        0
+      );
+      return {
+        amount: saved,
+        lead: t("Put toward Savers", "Aportado a Metas"),
+        detail: null,
+        meta:
+          targeted > 0
+            ? t(
+                `of ${money(targeted)} targeted this month`,
+                `de ${money(targeted)} como objetivo este mes`
+              )
+            : null,
+        tone: "default" as const,
+      };
+    }
+
+    if (spendingLimits.length === 0) {
+      return {
+        amount: cashflow.remaining,
+        lead: t("Left in this month's plan", "Queda en el plan del mes"),
+        detail: daysLeft,
+        meta: null,
+        tone: "default" as const,
+      };
+    }
+
+    const limit = spendingLimits.reduce((sum, row) => sum + row.resolved, 0);
+    const spent = spendingLimits.reduce((sum, row) => sum + row.spent, 0);
+    const over = spent > limit;
+    return {
+      amount: Math.abs(limit - spent),
+      lead: over
+        ? t("Over in Trackers", "De más en Presupuestos")
+        : t("Left in Trackers", "Queda en Presupuestos"),
+      detail: daysLeft,
+      meta: t(
+        `${money(spent)} of ${money(limit)} spent`,
+        `${money(spent)} de ${money(limit)} gastado`
+      ),
+      tone: over ? ("over" as const) : ("default" as const),
+    };
+  })();
+
   const isLoading = loading || planLoading;
 
   const buildBudgetsActions = (
@@ -531,27 +595,25 @@ export function BudgetScreen() {
       title={t("Budget", "Presupuesto")}
       mode="dark-canvas"
       width="wide"
-      subheader={
-        <div className="flex justify-center md:justify-end [&>div]:border-white/12 [&>div]:bg-white/8 [&>div]:text-white [&_button]:text-white [&_button:hover]:bg-white/10 [&_button:hover]:text-white">
-          <MonthPicker
-            month={month}
-            year={year}
-            onChange={setMonthYear}
-            onInk
-          />
-        </div>
+      actions={
+        <MonthTitle
+          variant="pill"
+          month={month}
+          year={year}
+          onChange={setMonthYear}
+        />
       }
     >
       {isLoading ? (
-        <div className="space-y-4 pt-3">
-          <Skeleton className="h-40 rounded-xl bg-white/8" />
-          <Skeleton className="h-64 rounded-xl bg-white/8" />
-          <Skeleton className="h-32 rounded-xl bg-white/8" />
+        <div className="space-y-4 pt-1">
+          <Skeleton className="h-11 w-56 rounded-full bg-card" />
+          <Skeleton className="h-28 w-64 rounded-2xl bg-card" />
+          <Skeleton className="h-72 rounded-3xl bg-card" />
         </div>
       ) : (
         <>
           {needsSetup ? (
-            <Card className="mt-3">
+            <Card className="mt-1">
               <CardHeader>
                 <SectionHeader
                   eyebrow={t("First time here", "Primera vez")}
@@ -624,186 +686,58 @@ export function BudgetScreen() {
               </CardContent>
             </Card>
           ) : (
-            <div className="space-y-4 pt-3">
-              <div className="flex flex-wrap items-center justify-end gap-1.5">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 border-white/12 bg-white/5 text-white hover:border-white/20 hover:bg-white/10 hover:text-white"
-                  disabled={seeding}
-                  onClick={openMethodSheet}
-                >
-                  {seeding ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <BookOpen className="h-3.5 w-3.5" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {t("Methods", "Métodos")}
-                  </span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5 border-white/12 bg-white/5 text-white hover:border-white/20 hover:bg-white/10 hover:text-white"
-                  onClick={handleCopy}
-                  disabled={copying}
-                >
-                  {copying ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Copy className="h-4 w-4" />
-                  )}
-                  <span className="hidden md:inline">
-                    {t("Copy last month", "Copiar mes anterior")}
-                  </span>
-                </Button>
-                <Button size="sm" className="gap-1.5" onClick={openPlanSheet}>
-                  {hasPlan ? (
-                    <Pencil className="h-4 w-4" />
-                  ) : (
-                    <CircleDollarSign className="h-4 w-4" />
-                  )}
-                  <span className="hidden lg:inline">
-                    {hasPlan
-                      ? t("Edit income", "Editar ingreso")
-                      : t("Income", "Ingreso")}
-                  </span>
-                </Button>
-                {hasPlan ? (
+            <div className="xl:grid xl:grid-cols-[minmax(0,1fr)_minmax(20rem,24rem)] xl:items-start xl:gap-8">
+              <div className="min-w-0 space-y-6">
+                <div className="flex items-center gap-3 border-b border-border">
+                  <div
+                    className="flex min-w-0 flex-1 gap-6"
+                    role="tablist"
+                    aria-label={t("Budget views", "Vistas de presupuesto")}
+                  >
+                    {(
+                      [
+                        {
+                          key: "trackers",
+                          label: t("Trackers", "Presupuestos"),
+                          count: spendingLimits.length,
+                        },
+                        {
+                          key: "savers",
+                          label: t("Savers", "Metas"),
+                          count: contributionGoals.length,
+                        },
+                      ] as const
+                    ).map((tab) => {
+                      const active = activeView === tab.key;
+                      return (
+                        <button
+                          key={tab.key}
+                          type="button"
+                          role="tab"
+                          id={`budget-${tab.key}-tab`}
+                          aria-controls="budget-view-panel"
+                          aria-selected={active}
+                          tabIndex={active ? 0 : -1}
+                          onClick={() => setActiveView(tab.key)}
+                          onKeyDown={handleBudgetViewKeyDown}
+                          className={`relative -mb-px flex min-h-11 items-center gap-2 border-b-2 text-base transition-colors duration-[var(--motion-standard)] ${
+                            active
+                              ? "border-primary font-extrabold text-foreground"
+                              : "border-transparent font-bold text-muted-foreground hover:text-foreground"
+                          }`}
+                        >
+                          {tab.label}
+                          <span className="rounded-full bg-secondary px-2 py-0.5 text-label font-bold tabular-nums text-muted-foreground">
+                            {tab.count}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 border-white/12 bg-white/5 text-white/65 hover:border-danger/40 hover:bg-danger/15 hover:text-danger"
-                    onClick={() => setConfirmDeletePlan(true)}
-                    disabled={deletingPlan}
-                    aria-label={t(
-                      "Delete monthly income",
-                      "Eliminar ingreso mensual"
-                    )}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                ) : null}
-                <Button
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => openBudgetSheet()}
-                >
-                  <Plus className="h-4 w-4" />
-                  <span className="hidden sm:inline">{t("New", "Nuevo")}</span>
-                </Button>
-              </div>
-
-              <BudgetSummaryHero
-                cashflow={cashflow}
-                dayOfMonth={dayOfMonth}
-                daysInMonth={daysInMonth}
-              />
-
-              {needsBudgets ? (
-                <Card>
-                  <CardContent className="space-y-3 py-5">
-                    <p className="text-body text-muted-foreground">
-                      {t(
-                        "Income is set. Create budgets and contribution goals — or let a method do it.",
-                        "El ingreso está listo. Crea presupuestos y metas de aportación — o deja que un método lo haga."
-                      )}
-                    </p>
-                    {buildBudgetsActions}
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              <div
-                className="relative grid grid-cols-2 border-b border-white/10"
-                role="tablist"
-                aria-label={t("Budget views", "Vistas de presupuesto")}
-              >
-                <span
-                  aria-hidden
-                  className={`absolute inset-x-0 bottom-0 h-0.5 w-1/2 bg-coral transition-transform duration-[var(--motion-standard)] motion-reduce:transition-none ${
-                    activeView === "savers" ? "translate-x-full" : "translate-x-0"
-                  }`}
-                />
-                <button
-                  type="button"
-                  role="tab"
-                  id="budget-trackers-tab"
-                  aria-controls="budget-view-panel"
-                  aria-selected={activeView === "trackers"}
-                  tabIndex={activeView === "trackers" ? 0 : -1}
-                  onClick={() => setActiveView("trackers")}
-                  onKeyDown={handleBudgetViewKeyDown}
-                  className={`flex min-h-11 items-center justify-center gap-2 px-3 py-2 text-body font-medium transition-colors duration-[var(--motion-standard)] ${
-                    activeView === "trackers"
-                      ? "text-white"
-                      : "text-white/50 hover:text-white/75"
-                  }`}
-                >
-                  {t("Trackers", "Presupuestos")}
-                  <span className="rounded-full bg-white/8 px-2 py-0.5 font-mono text-label tabular-nums text-white/55">
-                    {spendingLimits.length}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  role="tab"
-                  id="budget-savers-tab"
-                  aria-controls="budget-view-panel"
-                  aria-selected={activeView === "savers"}
-                  tabIndex={activeView === "savers" ? 0 : -1}
-                  onClick={() => setActiveView("savers")}
-                  onKeyDown={handleBudgetViewKeyDown}
-                  className={`flex min-h-11 items-center justify-center gap-2 px-3 py-2 text-body font-medium transition-colors duration-[var(--motion-standard)] ${
-                    activeView === "savers"
-                      ? "text-white"
-                      : "text-white/50 hover:text-white/75"
-                  }`}
-                >
-                  {t("Savers", "Metas")}
-                  <span className="rounded-full bg-white/8 px-2 py-0.5 font-mono text-label tabular-nums text-white/55">
-                    {contributionGoals.length}
-                  </span>
-                </button>
-              </div>
-
-              <section
-                key={activeView}
-                id="budget-view-panel"
-                role="tabpanel"
-                aria-labelledby={
-                  activeView === "trackers"
-                    ? "budget-trackers-tab"
-                    : "budget-savers-tab"
-                }
-                className="animate-in space-y-3 fade-in-0 slide-in-from-bottom-1 duration-[var(--motion-standard)] motion-reduce:animate-none"
-              >
-                <div className="flex items-end justify-between gap-4">
-                  <div className="min-w-0">
-                    <p className="label-caps text-white/50">
-                      {t("This month", "Este mes")}
-                    </p>
-                    <h2 className="mt-1 text-title font-semibold text-white">
-                      {activeView === "trackers"
-                        ? t("Trackers", "Presupuestos")
-                        : t("Savers", "Metas")}
-                    </h2>
-                    <p className="mt-1 max-w-2xl text-caption text-white/50">
-                      {activeView === "trackers"
-                        ? t(
-                            "See what remains in each spending limit. Red appears only after a limit is exceeded.",
-                            "Mira cuánto queda en cada límite de gasto. El rojo aparece solo después de excederlo."
-                          )
-                        : t(
-                            "See what you have contributed toward each target. Reaching the target is success.",
-                            "Mira cuánto has aportado a cada objetivo. Alcanzar la meta es un logro."
-                          )}
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    className="shrink-0 gap-1.5"
+                    className="mb-1.5 shrink-0 gap-1.5"
                     onClick={() => openBudgetSheet()}
                   >
                     <Plus className="h-3.5 w-3.5" />
@@ -811,124 +745,232 @@ export function BudgetScreen() {
                   </Button>
                 </div>
 
-                <EnvelopeListCard
-                  kind={
-                    activeView === "trackers"
-                      ? "spending_limit"
-                      : "contribution_goal"
-                  }
-                  rows={(activeView === "trackers"
-                    ? spendingLimits
-                    : contributionGoals
-                  ).map((row) => ({
-                    id: row.id,
-                    name: row.name,
-                    kind: row.kind,
-                    target: row.resolved,
-                    progressAmount: row.spent,
-                    ratio: row.ratio,
-                    icon: row.icon,
-                    color: row.color,
-                    categoryName: row.categoryName,
-                  }))}
-                  onEdit={(id) => {
-                    const budget = customBudgets.find((b) => b.id === id);
-                    if (budget) openBudgetSheet(budget);
-                  }}
-                  onDelete={(id) => setDeleteId(id)}
-                  emptyAction={
-                    <Button
-                      size="sm"
-                      className="gap-1.5"
-                      onClick={() => openBudgetSheet()}
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      {t("Create one", "Crear uno")}
-                    </Button>
-                  }
-                />
+                <BudgetSummaryFigure {...summaryFigure} />
 
-                {activeView === "trackers" && unallocatedSpent > 0 ? (
-                  <p className="text-caption text-white/50">
-                    +{" "}
-                    <span className="font-mono tabular-nums text-white/75">
-                      {formatCurrency(unallocatedSpent, baseCurrency)}
-                    </span>{" "}
-                    {t(
-                      "spent outside these trackers",
-                      "gastado fuera de estos presupuestos"
-                    )}
-                  </p>
-                ) : null}
-              </section>
-
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <SectionHeader
-                      eyebrow={t("This month", "Este mes")}
-                      title={t("Plan distribution", "Distribución del plan")}
-                      description={t(
-                        "Planned budget amounts vs monthly income — not actual spend.",
-                        "Montos planificados de presupuestos vs ingreso mensual — no el gasto real."
-                      )}
-                    />
-                  </CardHeader>
-                  <CardContent>
-                    {planSlices.length === 0 ? (
+                {needsBudgets ? (
+                  <Card>
+                    <CardContent className="space-y-3 py-5">
                       <p className="text-body text-muted-foreground">
                         {t(
-                          "Add budgets to see how the plan is allocated.",
-                          "Añade presupuestos para ver cómo se reparte el plan."
+                          "Income is set. Create budgets and contribution goals — or let a method do it.",
+                          "El ingreso está listo. Crea presupuestos y metas de aportación — o deja que un método lo haga."
                         )}
                       </p>
-                    ) : (
-                      <PlanDistributionCard
-                        monthlyIncome={incomeAmount}
-                        slices={planSlices}
-                      />
-                    )}
-                    {hasPlan && (
-                      <p className="mt-3 text-caption text-muted-foreground">
-                        {t(
-                          `Income: ${formatCurrency(incomeAmount ?? 0, baseCurrency)}`,
-                          `Ingreso: ${formatCurrency(incomeAmount ?? 0, baseCurrency)}`
-                        )}
-                        {totalBudgeted > 0
-                          ? ` · ${t(
-                              `Allocated ${formatCurrency(totalBudgeted, baseCurrency)}`,
-                              `Asignado ${formatCurrency(totalBudgeted, baseCurrency)}`
-                            )}`
-                          : ""}
-                      </p>
-                    )}
-                  </CardContent>
-                </Card>
+                      {buildBudgetsActions}
+                    </CardContent>
+                  </Card>
+                ) : null}
 
-                {recommendation ? (
-                  <BudgetRecommendationCard
-                    name={recommendation.name}
-                    overBy={recommendation.overBy}
+                <section
+                  key={activeView}
+                  id="budget-view-panel"
+                  role="tabpanel"
+                  aria-labelledby={
+                    activeView === "trackers"
+                      ? "budget-trackers-tab"
+                      : "budget-savers-tab"
+                  }
+                  className="animate-in space-y-3 fade-in-0 slide-in-from-bottom-1 duration-[var(--motion-standard)] motion-reduce:animate-none"
+                >
+                  <EnvelopeListCard
+                    kind={
+                      activeView === "trackers"
+                        ? "spending_limit"
+                        : "contribution_goal"
+                    }
+                    daysRemaining={
+                      isCurrentMonth ? cashflow.daysRemaining : undefined
+                    }
+                    rows={(activeView === "trackers"
+                      ? spendingLimits
+                      : contributionGoals
+                    ).map((row) => ({
+                      id: row.id,
+                      name: row.name,
+                      kind: row.kind,
+                      target: row.resolved,
+                      progressAmount: row.spent,
+                      ratio: row.ratio,
+                      icon: row.icon,
+                      color: row.color,
+                      categoryName: row.categoryName,
+                    }))}
+                    onEdit={(id) => {
+                      const budget = customBudgets.find((b) => b.id === id);
+                      if (budget) openBudgetSheet(budget);
+                    }}
+                    onDelete={(id) => setDeleteId(id)}
+                    emptyAction={
+                      <Button
+                        size="sm"
+                        className="gap-1.5"
+                        onClick={() => openBudgetSheet()}
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        {t("Create one", "Crear uno")}
+                      </Button>
+                    }
                   />
-                ) : (
+
+                  {activeView === "trackers" && unallocatedSpent > 0 ? (
+                    <p className="text-caption text-muted-foreground">
+                      +{" "}
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {formatCurrency(unallocatedSpent, baseCurrency)}
+                      </span>{" "}
+                      {t(
+                        "spent outside these trackers",
+                        "gastado fuera de estos presupuestos"
+                      )}
+                    </p>
+                  ) : null}
+                </section>
+              </div>
+
+              <section className="mt-8 space-y-3 xl:sticky xl:top-24 xl:mt-0">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h2 className="text-heading font-extrabold">
+                    {t("Plan", "Plan")}
+                  </h2>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      disabled={seeding}
+                      onClick={openMethodSheet}
+                    >
+                      {seeding ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <BookOpen className="h-3.5 w-3.5" />
+                      )}
+                      {t("Methods", "Métodos")}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={handleCopy}
+                      disabled={copying}
+                      aria-label={t("Copy last month", "Copiar mes anterior")}
+                    >
+                      {copying ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                      <span className="hidden sm:inline">
+                        {t("Copy last month", "Copiar mes anterior")}
+                      </span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={openPlanSheet}
+                    >
+                      {hasPlan ? (
+                        <Pencil className="h-4 w-4" />
+                      ) : (
+                        <CircleDollarSign className="h-4 w-4" />
+                      )}
+                      {hasPlan
+                        ? t("Edit income", "Editar ingreso")
+                        : t("Income", "Ingreso")}
+                    </Button>
+                    {hasPlan ? (
+                      <Button
+                        variant="outline"
+                        size="icon-sm"
+                        className="text-muted-foreground hover:border-danger/40 hover:bg-danger-subtle hover:text-danger"
+                        onClick={() => setConfirmDeletePlan(true)}
+                        disabled={deletingPlan}
+                        aria-label={t(
+                          "Delete monthly income",
+                          "Eliminar ingreso mensual"
+                        )}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    ) : null}
+                  </div>
+                </div>
+
+                <BudgetSummaryHero
+                  cashflow={cashflow}
+                  dayOfMonth={dayOfMonth}
+                  daysInMonth={daysInMonth}
+                />
+
+                <div className="grid gap-4">
                   <Card>
                     <CardHeader>
                       <SectionHeader
-                        eyebrow={t("Guidance", "Guía")}
-                        title={t("Recommendation", "Recomendación")}
+                        eyebrow={t("This month", "Este mes")}
+                        title={t("Plan distribution", "Distribución del plan")}
+                        description={t(
+                          "Planned budget amounts vs monthly income — not actual spend.",
+                          "Montos planificados de presupuestos vs ingreso mensual — no el gasto real."
+                        )}
                       />
                     </CardHeader>
                     <CardContent>
-                      <p className="text-body text-muted-foreground">
-                        {t(
-                          "No budgets are over their limit right now.",
-                          "Ningún presupuesto está excedido ahora mismo."
-                        )}
-                      </p>
+                      {planSlices.length === 0 ? (
+                        <p className="text-body text-muted-foreground">
+                          {t(
+                            "Add budgets to see how the plan is allocated.",
+                            "Añade presupuestos para ver cómo se reparte el plan."
+                          )}
+                        </p>
+                      ) : (
+                        <PlanDistributionCard
+                          monthlyIncome={incomeAmount}
+                          slices={planSlices}
+                        />
+                      )}
+                      {hasPlan && (
+                        <p className="mt-3 text-caption text-muted-foreground">
+                          {t(
+                            `Income: ${formatCurrency(incomeAmount ?? 0, baseCurrency)}`,
+                            `Ingreso: ${formatCurrency(incomeAmount ?? 0, baseCurrency)}`
+                          )}
+                          {totalBudgeted > 0
+                            ? ` · ${t(
+                                `Allocated ${formatCurrency(totalBudgeted, baseCurrency)}`,
+                                `Asignado ${formatCurrency(totalBudgeted, baseCurrency)}`
+                              )}`
+                            : ""}
+                        </p>
+                      )}
                     </CardContent>
                   </Card>
-                )}
-              </div>
+
+                  {recommendation ? (
+                    <BudgetRecommendationCard
+                      name={recommendation.name}
+                      overBy={recommendation.overBy}
+                    />
+                  ) : (
+                    <Card>
+                      <CardHeader>
+                        <SectionHeader
+                          eyebrow={t("Guidance", "Guía")}
+                          title={t("Recommendation", "Recomendación")}
+                        />
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-body text-muted-foreground">
+                          {t(
+                            "No budgets are over their limit right now.",
+                            "Ningún presupuesto está excedido ahora mismo."
+                          )}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
+              </section>
             </div>
           )}
         </>

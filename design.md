@@ -7,27 +7,40 @@
 > canonical token definitions in [`src/app/globals.css`](src/app/globals.css)
 > win; update this file to match.
 >
-> **Superseded 2026-08-13** by the Up design pass. The previous version
-> described the Hybrid v1 system (light-first, machined chrome figures, groove
-> meters, percentage rings, a liquid-glass bottom tab bar). This version
-> describes the Up system that replaced it. Reference: captures of the real Up
-> app (up.com.au), extracted in
-> [`changes/2026-08-13-up-true-mockups.md`](changes/2026-08-13-up-true-mockups.md);
-> mockups in [`mockups/up-true/`](mockups/up-true/).
+> **Superseded 2026-10-02** by the **Card Stream** pass, chosen by JP from the
+> "2 + 3 · Card Stream" mockup. It replaced the Up-derived system (ink chrome
+> over a white sheet, Inter, flat coral figures, a floating capture FAB).
+> This version describes Card Stream as implemented. The change is recorded in
+> [`changes/2026-10-02-card-stream-redesign.md`](changes/2026-10-02-card-stream-redesign.md).
+>
+> Card Stream was built screen-by-screen for **Home** and **Budget** and applied
+> as a theme everywhere else. Sections below that describe Movements,
+> Patrimonio, Insights and the secondary routes still describe their layouts
+> correctly, but read every mention of a "white sheet" or "ink chrome" there as
+> the card surface and the page ground: those screens took the new colours,
+> type, header and navigation without being recomposed.
 
 - **Product:** Budget & Expense — a bilingual (EN/ES) personal stewardship,
   budgeting, and expense-tracking app.
 - **Stack:** Next.js 16 (App Router) · React 19 · Tailwind CSS v4 (CSS-first
   config) · Base UI primitives · shadcn (`base-nova`) · Framer Motion ·
   Recharts · Supabase · Vercel.
-- **Theme model:** **one appearance.** There is no runtime theme provider or
-  toggle. The `dark` variant remains declared only so legacy utilities compile;
-  nothing sets it. The unused `next-themes` dependency was removed with the
-  completed full-app propagation on 2026-08-24.
-- **Surface model:** **dark chrome over a white sheet.** The page ground and
-  `--foreground` stay light/ink so text inside cards reads normally; the dark
-  layer is applied per surface (`up-chrome`, `up-canvas`, `HERO_SURFACE`, the
-  desktop sidebar). This is the single most identity-carrying rule here.
+- **Theme model:** **two appearances** (JP's decision, 2026-10-02): the dark
+  Card Stream ground, which is the default, and **Porcelain**, a cool
+  near-white ground with white cards. The preference is Light, Dark or Match
+  device, chosen in Settings (and the phone profile sheet), stored in the
+  `be_theme` cookie and rendered by the server as `data-theme` on `<html>`.
+  The stylesheet does the rest, including following the device for "system",
+  so there is no script before first paint. `ThemeProvider`
+  (`src/providers/theme-provider.tsx`) only holds and changes the preference.
+  The public pages (landing, auth, onboarding, error, 404) pin themselves dark
+  with `data-theme="dark"` on their root; they have no light version yet.
+- **Surface model:** **one flat ground, with slightly lifted surfaces on it**
+  — warm near-black in the dark appearance, cool near-white in Porcelain. The
+  page ground is `--background`; cards, sheets and rows that need an edge use
+  `--card` with a one-pixel `--border` ring. There is no separate chrome band.
+  Each palette is one block in `globals.css` — changing a palette means editing
+  its block and nothing else.
 
 ---
 
@@ -35,20 +48,30 @@
 
 Five core sections; everything else is secondary navigation. The single source
 of truth for every nav surface is
-[`src/lib/navigation.ts`](src/lib/navigation.ts) (`PRIMARY_NAV` +
-`SECONDARY_NAV`). No component may define its own nav list.
+[`src/lib/navigation.ts`](src/lib/navigation.ts) (`PRIMARY_NAV`, `MENU_NAV`,
+`REVIEW_NAV`, `IMPORT_NAV`, and `SECONDARY_NAV` as the full list for search).
+No component may define its own nav list.
 
 | Section | Route | Owns |
 |---|---|---|
-| **Home** | `/home` | "How am I doing right now" — centered checkpoint-backed **available balance** in ink chrome, followed by a compact income/spent/daily-guide/pace strip. UP-style **Trackers** show remaining or over amounts; a stacked spending strip and ranked category rows replace the donut. Upcoming context and recent movements share one continuous white sheet. Desktop: amount/activity left, Trackers and spending analysis right. **Savers/Metas** (`contribution_goal`) live on `/budget`, never on Home. See [`docs/balance-carryover.md`](docs/balance-carryover.md). |
+| **Home** | `/home` | "How am I doing right now". The header's title is the month (a popover month switch). Phone: the **balance card** (checkpoint-backed available balance on a physical accent card, with the daily guide and pace status printed on it), In/Out beneath it, **Trackers as one swipeable row of pills**, then the **feed** — the next scheduled payment first, then movements grouped by day, each day headed by its own out/in totals — and the month's category split last. Desktop (from `xl`, 1280px; narrower windows keep the phone composition next to the sidebar): the balance card sits beside a **This month** panel (In, Out, Left in plan, pace bar); below, the feed takes the wide column and a rail carries a Trackers panel and the category split. **Savers/Metas** (`contribution_goal`) live on `/budget`, never on Home. See [`docs/balance-carryover.md`](docs/balance-carryover.md). |
 | **Movements** | `/movements` (+`/recurring`) | Dense unified ledger: one net-month hero, secondary money-in/out context, subdued URL-backed search/filters, chronological white sheet, swipe-delete/edit/undo, and a day-rail recurring schedule. |
-| **Budget** | `/budget` | Two explicit views: **Trackers/Presupuestos** (ceilings; remaining-first and red only when exceeded) and **Savers/Metas** (contribution floors; completion is positive). The existing plan, recommendation, setup, percentage, warning, and CRUD engines remain unchanged behind contextual actions. |
+| **Budget** | `/budget` | Two explicit views behind underline tabs: **Trackers/Presupuestos** (ceilings; remaining-first and red only when exceeded) and **Savers/Metas** (contribution floors; completion is positive). The headline is one large figure on the page ground — what is left across all Trackers, or what has been put toward Savers. Trackers render as a **wallet**: one coloured card per limit, stacked, one open at a time. The plan tools (income, methods, copy last month, distribution, recommendation) sit in a **Plan** section: below on a phone, a sticky right column from `xl` (1280px). The plan, recommendation, setup, percentage, warning, and CRUD engines are unchanged. |
 | **Patrimonio** | `/wealth` (+`/accounts`, `/investments`, `/savings`, `/liabilities`, `/loans`) | The personal balance sheet: `netWorth = (accounts + savings + investments + moneyLent) − debts`. One dominant ink net-worth hero flows into a continuous white asset/debt sheet with dense category rows, trend/cushion analysis, by-currency context, and pushed workflows. If it's a balance, it lives here. **Available money is not a Patrimonio headline** — spendable "now" belongs to Home. |
 | **Insights** | `/insights` (+`/calendar`, `/categories/[id]`) | What happened and what are the patterns: one month-spend chrome hero followed by a continuous divided report containing ratios, pillars, clickable 12-month + daily spend bars, Tracker utilization, anomalies, monthly analysis, giving, income sources, and calendar/category drilldowns. No decorative unsupported time controls and no data-entry CTAs. |
 
 Secondary: `/review`, `/import`, `/wisdom`, `/settings` — compact list/sheet
-surfaces reachable from the sidebar (desktop), the profile sheet (mobile), and
-the command menu (⌘K). Import copy remains Santander/Wise.
+surfaces. All four are in the command menu (⌘K). Where each one lives
+otherwise (JP's pick, 2026-10-02, option C on the "Open Choices" canvas):
+
+- **Wisdom, Settings** — the "More" group: desktop sidebar, phone profile sheet.
+- **Review** — no menu row. Home shows a `ReviewPrompt` card whenever movements
+  are waiting (under the Tracker pills on a phone, top of the right rail from
+  `xl`); with nothing waiting the card is absent.
+- **Import** — an action, not a section: a button at the foot of the desktop
+  sidebar, and a pill beside the month picker on Movements below `md`.
+
+Import copy remains Santander/Wise.
 
 **Public landing page:** `/` — the only marketing surface, and the only route a
 signed-out visitor reaches besides the auth forms. It is not an app screen: it
@@ -80,8 +103,17 @@ live in more than one section.
 
 ## 2. Foundations
 
-All tokens live in [`src/app/globals.css`](src/app/globals.css): one set of raw
-values on `:root`, exposed to Tailwind through `@theme inline`. Never hard-code
+All tokens live in [`src/app/globals.css`](src/app/globals.css): the dark values
+on `:root`, the Porcelain values in the `theme-light` block after it, both
+exposed to Tailwind through `@theme inline`. Components never branch on the
+theme; they use tokens, and a colour that must differ between appearances gets
+a token. `text-white`, `bg-white/…`, `border-white/…` and `bg-ink` are not
+used on app screens (the pinned-dark public pages and the coloured wallet and
+balance cards are the exceptions). The accent has two roles: `--coral` is the
+fill (balance card, buttons) and `--coral-ink` is the accent as text or an
+icon — `text-coral` and `text-primary` resolve to it. In Porcelain it is a
+burnt orange and `--danger` is a cool crimson, so accent text and an
+over-limit figure never read as the same colour. Never hard-code
 hex, shadow, radius, or font-size values in components except:
 
 1. Dynamic **category color** (DB hex via `CategoryBadge` / donut inline style).
@@ -89,15 +121,15 @@ hex, shadow, radius, or font-size values in components except:
    (Presupuesto trackers). Cashflow amounts use CSS vars
    (`income` / `available` / `expense`). **Patrimonio category accents** come
    from `WEALTH_ACCENTS` in the same file (accounts / savings / investments /
-   lent / debts). The **ink chrome surface** is the summary chrome for the three
-   screens that lead with one headline figure — **Home, Budget and
-   Patrimonio** — import it from
+   lent / debts). The **hero band** (`HERO_SURFACE`) opens Movements, Recurring
+   and Patrimonio — import it from
    [`src/components/patterns/hero-surface.tsx`](src/components/patterns/hero-surface.tsx)
    (`HERO_SURFACE`, `HERO_TILE`, `HERO_ICON_TILE`, `HERO_RULE`, `HERO_TRACK`,
    `HERO_ACCENT`, `HERO_ACCENT_NEGATIVE`, `HERO_ACCENT_WARNING`) rather than
    writing ad-hoc `white/xx` values, and do not reuse the surface on ordinary
-   cards. It is full-bleed and square on mobile so it continues the rail's ink
-   band, and a rounded card on desktop. `HeroSheen` is **gone** — Up is flat.
+   cards. It is flush with the page ground and full-bleed on mobile, and a
+   rounded card on desktop. Home and Budget no longer use it: Home leads with
+   the balance card and Budget with a bare figure.
 3. **Insights spend series** `SPEND_CHART_COLOR` (`#EC4899`) in
    [`src/components/charts/chart-theme.tsx`](src/components/charts/chart-theme.tsx)
    — soft magenta for bar fills (matches clarity Health); not `--expense`
@@ -114,25 +146,25 @@ hex, shadow, radius, or font-size values in components except:
   - `warning` — needs attention, review queue
   - `danger` — destructive intent (hue-aligned with `destructive`)
   - `info` — neutral information, upcoming bills
-- **Up hues** are exposed directly as `--coral` / `--coral-deep` / `--lemon` /
-  `--ink` / `--ink-2` / `--ink-3`, usable as `bg-ink`, `text-coral`, etc.
-  **Coral `#FF7A64` is both the action colour and the money colour** — that
-  double duty is a large part of why the app reads as Up. Raw coral is paired
-  with ink on the FAB, primary buttons, navigation, and dark chrome. Small text,
-  selected controls, and focus rings on white use the contrast-safe deep coral
-  `#CC4937` through `--primary`; this is an accessibility tonal pair, not a
-  second brand colour.
-- **Cashflow tokens** (Home stats; also aliased into amount semantics):
-  - `income` — `#087D4F` on white; bright `#3DDC97` on ink — money in
-  - `available` — `#FF7A64` (coral) — the spendable headline, matching Up's hero
-  - `expense` — `#1A1B23` (**ink**) — money out
+- **Accent** is coral `--coral` (`#FF7A64`), usable as `bg-coral` /
+  `text-coral`, and aliased to `--primary`. On the dark ground coral passes
+  contrast as text, so there is no separate "deep" text variant;
+  `--coral-deep` is now the *lighter* hover tone. Text and icons that sit on a
+  coral fill use `--on-coral` (`text-on-coral`). **Coral is the accent and the
+  balance card; it is not a status.**
+- **`--ink`, `--ink-2`, `--ink-3`** survive as aliases for the ground, the card
+  surface and the raised surface, so older `bg-ink` chrome blends into the
+  page. New work uses `bg-background`, `bg-card`, `bg-surface-2`.
+- **Cashflow tokens**:
+  - `income` — mint `#6FE3B0` — money in
+  - `available` — coral — the spendable headline
+  - `expense` — the foreground text colour — money out
   - `positive` → `var(--income)`; `negative` → `var(--expense)`
-  - Utilities: `text-income`, `text-available`, `text-expense`, `bg-income`, etc.
-  - **Outflows are ink, not red.** Up renders money leaving as plain text and
-    spends red only on a tracker actually over its limit. Do not "restore" a red
-    expense colour — it makes every ordinary purchase read as an alarm.
+  - **Outflows are plain text, not red.** Red is spent only on a tracker
+    actually over its limit. Do not "restore" a red expense colour — it makes
+    every ordinary purchase read as an alarm.
   - Earlier palettes (`PALETTE_OG` / `PALETTE_V2` / `PALETTE_HYBRID`) remain in
-    `src/lib/palette.ts` for a one-flip revert via `ACTIVE_PALETTE`.
+    `src/lib/palette.ts`.
 - **Budget usage bands** (Presupuesto trackers; source of truth
   `src/lib/palette.ts`, not month-pace):
 
@@ -144,7 +176,7 @@ hex, shadow, radius, or font-size values in components except:
   | Exceeded | 100–119% | `#F65B50` |
   | Critical | 120%+ | `#F65B50` |
 
-  **Up does not grade a tracker on its way to the limit.** The bar holds one
+  **A tracker is not graded on its way to the limit.** The bar holds one
   colour the whole way and only turns red once the limit is passed. The five
   bands survive so the API and legends keep working, but the three under-limit
   tones deliberately resolve to the same coral. Do not reintroduce a
@@ -164,52 +196,45 @@ hex, shadow, radius, or font-size values in components except:
 - Usage: `text-success`, `bg-warning-subtle`, `ring-danger/25`, `text-income`,
   etc.
 
-### 2.1.1 Home Presupuesto trackers (composition)
+### 2.1.1 Trackers (composition)
 
-- Component: `src/components/home/budget-pace-chart.tsx` (shared with Budget).
-- **Remaining-first.** The headline is what is *left* (`€124 left` /
-  `quedan 124 €`) or, past the limit, what it is *over* by (`€38 over` /
-  `38 € de más`). **Up never shows a bare percentage**, so the usage ring, the
-  `%` numeral and the month-pace mark on the ring are all gone. The only
-  quantity on a tracker is an amount.
-- Up **Tracker** tiles laid out **side by side, two per row on compact screens**: dark
-  (`bg-ink-2`) card, category-accent glyph top-left, name in small grey, the
-  remaining amount in bold, and a thin accent bar **hugging the card's bottom
-  edge, full-bleed to its corners** — not inset. The bar turns red past the
-  limit.
-- Tile glyph = the `icon` of the category carrying most of that budget's spend;
-  no linked categories falls back to `Target`.
-- Tiles are compact enough for the canonical two-column phone grid and expand
-  responsively without changing their information hierarchy.
-- Home lists **only** `spending_limit` envelopes (Presupuestos). Metas stay on
-  `/budget`.
-- Home preserves every Tracker. Up to four appear in each compact responsive
-  grid page; additional Trackers remain reachable through a swipeable,
-  labelled pager rather than an arbitrary first-three cutoff.
-- Never treat 100% as success green — that is reserved for Metas on the Budget
-  tab. Past the limit the headline amount takes the band colour (red).
-- Home: cards link to `/budget`. Budget tab: pass `onSelect` to open the
-  edit sheet; a compact manage list below carries delete.
-- Hero math: `src/lib/home/month-cashflow.ts` + `HomeSummaryCard`.
-  Home's headline prefers the tracked cash balance (latest checkpoint plus all
-  later movements), so a month-end balance carries forward. Without tracking,
-  it falls back to `monthlyIncome − actualOutflows`. The daily guide uses the
-  same headline amount. Budget's hero remains month-only plan pace.
-- Budget desktop layout: budgets column left (`lg:col-span-3`); plan column
-  right (`lg:col-span-2`). Plan meters use `max-w-xs` — never full-bleed.
+- **Remaining-first, everywhere.** A tracker's headline is what is *left*
+  (`€124 left` / `quedan 124 €`) or, past the limit, what it is *over* by
+  (`€38 over` / `38 € de más`). **Never a bare percentage.** Cents are dropped
+  when there are none (`formatCurrencyTrim`).
+- **Home, phone:** `TrackerPills` in `src/components/home/tracker-pills.tsx` —
+  one horizontally scrolling row of pills, each a category-tinted dot, the
+  name and the headline. Every tracker is in the row; it scrolls, it does not
+  page. An over-limit pill takes the danger tint.
+- **Home, desktop:** `TrackerList` (same file) — a panel in the right rail, one
+  row per tracker with a thin bar.
+- **Budget:** `TrackerWallet` in `src/components/budget/tracker-wallet.tsx` — a
+  stack of coloured cards, each card's top strip always visible (glyph, name,
+  headline, thin bar). One card is open at a time and shows spent-of-limit, a
+  thicker bar, "Resets in N days", Edit and Delete. A card's colour is its
+  leading category's colour mixed about half with black so white text stays
+  legible; an over-limit card takes one fixed red whatever its category.
+- Bars are the accent under the limit and red once past it — never a
+  safe → watch → near gradient.
+- Home lists **only** `spending_limit` envelopes. Metas stay on `/budget`.
+- Never treat 100% as success green — that is reserved for Metas.
+- Hero math: `src/lib/home/month-cashflow.ts`. Home's balance card prefers the
+  tracked cash balance (latest checkpoint plus all later movements), so a
+  month-end balance carries forward. Without tracking it falls back to
+  `monthlyIncome − actualOutflows`. Budget's headline is tracker-level (sum of
+  limits − sum of spend); its Plan card remains month-only plan pace.
 
 ### 2.2 Typography
 
-**Inter** throughout, loaded via `next/font` in
-[`src/app/layout.tsx`](src/app/layout.tsx) as `--font-inter`. `font-sans`,
+**Manrope** throughout, loaded via `next/font` in
+[`src/app/layout.tsx`](src/app/layout.tsx) as `--font-manrope`. `font-sans`,
 `font-mono` and `font-heading` all resolve to it; `font-mono` survives as a
 semantic marker for numerals, whose alignment comes from `tabular-nums`.
 
-> **Inter is a STAND-IN.** Up's real typeface is unconfirmed — Brandfetch
-> returns 403 and Up's design blog never names it. From the captures it is a
-> tight geometric sans with heavy, negatively-tracked numerals. Swap the three
-> `--font-*` lines in `globals.css` and the `next/font` import when the real
-> family is identified. Do not present Inter as the chosen face.
+Hero figures use `<MoneyFigure>` (`patterns/money-figure.tsx`): a very large
+whole number with the currency sign and cents set small and raised beside it,
+stepping down in size as the figure gets longer. It is the one sanctioned place
+for hero-size numerals — the balance card and Budget's headline.
 
 The scale is tokenized; arbitrary `text-[…rem]` values are banned outside
 `components/ui/`:
@@ -229,11 +254,13 @@ uppercase micro-badges. Arbitrary `tracking-[…]` values are banned.
 
 ### 2.3 Elevation
 
-**Up is flat.** Surfaces separate from the ground by contrast and one-pixel
-rules, not by lift. `<Card>`, popovers, menus, buttons, and sheets carry no
-decorative drop shadow or hover lift; contextual overlays use an opaque surface
-plus a restrained ring. The FAB alone uses `up-fab-glow` — a coral action halo,
-not a neutral material shadow. One-off `shadow-[…]` values are banned.
+Surfaces separate from the ground by a one-step lighter fill and a one-pixel
+`ring-border`, not by lift. `<Card>`, popovers, menus, buttons and sheets carry
+no decorative drop shadow. Three things do cast one, because they are objects
+rather than regions: the **balance card** (`balance-card`, an accent-coloured
+shadow), the **wallet cards** (`wallet-card`, a shadow onto the card beneath)
+and the **floating tab bar** (`shadow-3`). One-off `shadow-[…]` values are
+banned.
 
 ### 2.4 Radius & spacing
 
@@ -333,12 +360,17 @@ src/components/
               segmented, create+edit modes, amount-first, as-you-type category
               suggestion) + capture-fab.tsx + hooks/use-capture.ts (optimistic
               expense add with Undo). There is exactly ONE movement form.
-              After a successful expense save, envelope-limit toasts may fire
-              (see §9).
+              `capture-button.tsx` holds `CaptureProvider` (one persistent
+              sheet host in the app layout) and `CaptureButton`, the accent
+              circle `Screen` puts last in every header. There is no floating
+              FAB. After a successful expense save, envelope-limit toasts may
+              fire (see §9).
   onboarding/ First-run wizard + reusable `OnboardingStoryShell` + soft client
               gate (`OnboardingGate` in the app layout). Not primary nav.
-  layout/     sidebar (desktop, flat ink chrome),
-              tab-bar (mobile, 5 tabs, flat opaque 60px ink capsule),
+  layout/     sidebar (desktop; on the page ground behind one hairline, the
+              active section a raised pill with an accent icon — `SidebarView`
+              is the presentational half the fixtures render),
+              tab-bar (mobile, 5 tabs, a floating translucent capsule),
               profile-sheet (mobile secondary nav + language row + logout),
               command-menu (⌘K), site-brand. All consume lib/navigation.ts.
               Desktop search, language, and currency controls are integrated
@@ -367,17 +399,16 @@ error states. No blank areas while fetching.
 
 ## 4. Mobile-native rules
 
-- `< md`: no topbar. Bottom **`TabBar`** with the 5 sections — a flat opaque
-  60px ink capsule with coral active state — plus the floating capture FAB bottom-right
-  (thumb zone), sitting above it. Main content padding clears the bar +
+- `< md`: no topbar. Bottom **`TabBar`** with the 5 sections — a floating,
+  slightly translucent capsule with a coral active state. There is **no
+  floating capture button**: adding a movement is the accent `+` at the end of
+  every screen header. Main content padding clears the bar +
   `env(safe-area-inset-bottom)`.
 
-  > Mobile keeps the product's existing five-destination order. The decision is
-  > settled: use the opaque ink capsule, not a top rail and not liquid glass.
-
-- Each screen renders a solid header via `patterns/screen.tsx` — avatar
-  (profile sheet) on root screens, back chevron on pushed screens. The header
-  joins its ink hero without a light seam in `chrome-sheet` mode.
+- Each screen renders one header row via `patterns/screen.tsx`: back chevron
+  (pushed screens), title, the screen's own actions, search, the profile
+  trigger (below `lg`), then the accent add-movement button. Language and
+  currency join the row from `lg` up. Home's title is the month.
 - **Back** on pushed screens = previous page (`router.back()`), with
   `backHref` as the safe fallback when there is no history (refresh / deep
   link). Do not replace this with a hardcoded `/home` Link.
@@ -387,8 +418,9 @@ error states. No blank areas while fetching.
   swipe-to-delete (+ undo toast) and pull-to-refresh; desktop wraps the same
   rows in a Card and reveals delete on hover.
 - Horizontal stat rows scroll with snap on mobile, grid on desktop.
-- Viewport: `viewportFit: "cover"`; theme color is the canonical ink
-  (`#1A1B23`) in both metadata and `manifest.ts`.
+- Viewport: `viewportFit: "cover"`; `generateViewport` sets the theme color to
+  the page ground of the chosen appearance (per device scheme for "Match
+  device"). `manifest.ts` stays on the dark ground.
 
 ---
 
@@ -429,20 +461,23 @@ error states. No blank areas while fetching.
 | Continuous primary report | `<ContinuousSheet>` + `<SheetSection>` |
 | Compact secondary panel | `<Card>` (flat, no shadow) |
 | Section/metric label | `label-caps` |
-| Big number | `up-figure font-mono text-display tabular-nums` (coral, chrome only) |
+| Big number | `<MoneyFigure amount currency>` — the balance card and Budget's headline only |
 | Money | `<AmountText amount currency tone signed>` |
 | Ledger row | `<TransactionRow>` |
 | Stat tile | `<StatCard label value detail href?>` |
 | Budget/tithe progress | `<ProgressMeter ratio>` — default colors = usage bands; pass `tone` to override (Giving) |
-| Home Trackers | `BudgetPaceChart` — remaining-first responsive tiles; optional `onSelect` |
+| Home Trackers | `TrackerPills` (phone row) / `TrackerList` (desktop panel) — remaining-first |
+| Budget Trackers | `TrackerWallet` — stacked cards, one open at a time |
 | Home spending breakdown | `SpendingBreakdown` — compact stacked strip + ranked category rows |
-| Home/activity sheet | `HomeActivitySheet` — Upcoming and recent movements in one continuous white sheet |
+| Home feed | `HomeActivitySheet` — next scheduled payment, then movements by day with per-day totals |
 | Create / edit a budget | `<BudgetWizard mode="create" \| "edit">` — centered modal (bottom sheet on mobile), 3 steps branching by kind |
 | Any 3-step creation flow | `<WizardModal>` in `patterns/wizard-modal.tsx` — Dialog/Sheet switch, step indicator, footer; `useDiscardPanel()` for the discard guard |
 | Wizard consequence block | `<FinancialImpact>` + `lib/wealth/transaction-effects.ts` — step 3 must state what the write does |
 | Confirm a destructive action | `<ConfirmDialog>` — `window.confirm` is banned |
 | Patrimonio category hero | `<WealthCategoryHero>` (ink `HERO_SURFACE`) |
-| Home month hero | `HomeSummaryCard` + `lib/home/month-cashflow.ts` |
+| Home hero | `HomeBalanceCard` (+ `HomeMonthPanel` on desktop) + `lib/home/month-cashflow.ts` |
+| Add-movement entry | `<CaptureButton>` — rendered by `Screen`; do not add a second one |
+| Month switch in a header | `<MonthTitle variant="title" \| "pill">` |
 | Net worth math | `lib/wealth/net-worth.ts` (pure) + `useNetWorth()` — never re-derive a total in a screen |
 | Patrimonio hero | `<PatrimonioHero>` (ink `HERO_SURFACE`) |
 | Patrimonio category accent | `WEALTH_ACCENTS` in `lib/palette.ts` |
@@ -472,12 +507,27 @@ error states. No blank areas while fetching.
    plumbing exempt).
 2. No legacy material effects or magic values: `backdrop-blur`, gradients,
    decorative `shadow-*`, `rounded-[…rem]`, `text-[…rem]`, `tracking-[…]`, or
-   `bg-card/96` outside explicit owned artwork/geometry exceptions.
+   `bg-card/96` outside explicit owned artwork/geometry exceptions. Card
+   Stream owns these exceptions and no others:
+   - `backdrop-blur-xl` on the `Screen` header and the phone tab bar;
+   - the gradient, grain and glow of the `balance-card` utility, and the
+     colour fill of the `wallet-card` utility (both defined once in
+     `globals.css`);
+   - `MoneyFigure`'s hero size steps, which are arbitrary `text-[…rem]`
+     values because the integer has to shrink as it gets longer.
+   Every other size comes from the type scale (`text-display`, `text-screen`,
+   `text-title`, `text-heading`, `text-body`, `text-detail`, `text-caption`,
+   `text-label`, `text-nav`). New names added to the scale must also be added
+   to the `font-size` group in `src/lib/cn.ts`, or `cn()` will drop them next
+   to a text colour.
 3. No stale route strings outside their redirect stubs.
 4. Nav items come only from `lib/navigation.ts`.
-5. No language switcher in `Screen` headers — Settings / profile sheet only.
-6. No theme switching: `next-themes`, `useTheme`, or an appearance toggle
-   anywhere in `src/` means the one-appearance rule has been broken.
+5. Language and currency switches appear in the `Screen` header from `lg` up
+   only. Below `lg` they stay in Settings / the profile sheet.
+6. One theme mechanism: the `be_theme` cookie, `data-theme` on `<html>` and
+   the token blocks in `globals.css`. No `next-themes`, no `.dark` class
+   toggling, no component reading the theme to pick a colour, and no
+   `text-white` / `bg-white/…` / `bg-ink` on app screens.
 7. No percentage as a budget headline: a bare `%` numeral on a Presupuesto
    tracker contradicts remaining-first (§2.1.1).
 

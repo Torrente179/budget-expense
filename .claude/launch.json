@@ -4,20 +4,50 @@
     {
       "name": "dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 3000
     },
     {
       "name": "mockups-up-true",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8781", "--directory", "mockups/up-true"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8781",
+        "--directory",
+        "mockups/up-true"
+      ],
       "port": 8781
     },
     {
       "name": "mockups-landing",
       "runtimeExecutable": "python3",
-      "runtimeArgs": ["-m", "http.server", "8782"],
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8782"
+      ],
       "port": 8782
+    },
+    {
+      "name": "design-review",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "ENABLE_UP_DESIGN_REVIEW=true",
+        "VERCEL_ENV=preview",
+        "npm",
+        "run",
+        "dev",
+        "--",
+        "--hostname",
+        "127.0.0.1",
+        "--port",
+        "3100"
+      ],
+      "port": 3100
     }
   ]
 }

@@ -3,7 +3,8 @@
 import { Toaster as Sonner, type ToasterProps } from "sonner"
 import { CircleCheckIcon, InfoIcon, TriangleAlertIcon, OctagonXIcon, Loader2Icon } from "lucide-react"
 
-/* One appearance — toasts render on the light sheet, so the theme is fixed. */
+/* Toast colours come from the popover tokens below, so they follow the
+   active appearance; Sonner's own theme prop only picks its fallback palette. */
 const Toaster = ({ ...props }: ToasterProps) => {
   return (
     <Sonner

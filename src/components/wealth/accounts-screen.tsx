@@ -90,7 +90,7 @@ export function AccountsScreen() {
           <Skeleton className="h-48 rounded-xl" />
         </>
       ) : (
-        <div className="-mx-4 bg-ink sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
+        <div className="-mx-4 bg-background sm:-mx-5 md:mx-0 md:overflow-hidden md:rounded-xl">
           <section
             className={cn(
               HERO_SURFACE,
@@ -99,7 +99,7 @@ export function AccountsScreen() {
           >
             <div className="relative space-y-4">
               <div className="space-y-1.5">
-                <p className="label-caps text-white/55">
+                <p className="label-caps text-muted-foreground">
                   {t("Total liquid", "Total líquido")}
                 </p>
                 <p className="up-figure font-mono text-display tabular-nums tracking-tight">
@@ -108,7 +108,7 @@ export function AccountsScreen() {
               </div>
               <div className={cn("grid grid-cols-2 gap-4 border-t pt-4", HERO_RULE)}>
                 <div className="min-w-0">
-                  <p className="label-caps text-white/55">
+                  <p className="label-caps text-muted-foreground">
                     {t("Spendable", "Disponible")}
                   </p>
                   <p
@@ -119,10 +119,10 @@ export function AccountsScreen() {
                   </p>
                 </div>
                 <div className="min-w-0">
-                  <p className="label-caps text-white/55">
+                  <p className="label-caps text-muted-foreground">
                     {t("Accounts", "Cuentas")}
                   </p>
-                  <p className="mt-1 font-mono text-heading font-semibold tabular-nums text-white">
+                  <p className="mt-1 font-mono text-heading font-semibold tabular-nums text-foreground">
                     {activeAccounts.length}
                   </p>
                 </div>

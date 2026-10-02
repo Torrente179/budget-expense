@@ -455,7 +455,7 @@ export function CaptureSheet({
 
         <form
           onSubmit={handleSubmit}
-          className="flex min-h-0 flex-1 flex-col bg-white"
+          className="flex min-h-0 flex-1 flex-col bg-popover"
         >
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto px-5 pb-4 pt-5">
             <div className="space-y-1.5">
@@ -530,7 +530,7 @@ export function CaptureSheet({
               >
                 <SelectTrigger
                   id="capture-category"
-                  className="h-11 w-full min-w-0 border-border bg-white"
+                  className="h-11 w-full min-w-0 border-border bg-card"
                 >
                   <SelectValue placeholder={t("Select", "Selecciona")}>
                     {selectedCategory ? (
@@ -650,7 +650,7 @@ export function CaptureSheet({
             </div>
           </div>
 
-          <div className="shrink-0 space-y-2 border-t border-border bg-white px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="shrink-0 space-y-2 border-t border-border bg-popover px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
             <Button
               type="submit"
               disabled={!canSubmit}
